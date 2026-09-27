@@ -1,0 +1,212 @@
+{
+  "security_arrival": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "Red emergency lights sweep across blast doors and bulletproof glass. The Security Deck smells of ozone and scorched metal.",
+        "next": "b"
+      },
+      "b": {
+        "speaker": "halcyon",
+        "text": "Warning: atmospheric breach in the lift lobby. Bridge lockdown active by order of Chief Marcus Dray.",
+        "next": "c"
+      },
+      "c": {
+        "speaker": "bolt",
+        "text": "Dray's deck. His robots are still running his last orders: burn everything that glows. I glow, Kai. A little.",
+        "next": "d"
+      },
+      "d": {
+        "speaker": "bolt",
+        "text": "We need to override the lockdown at the command gate, north. And let's patch that breach first.",
+        "end": true
+      }
+    }
+  },
+  "security_hall": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "bolt",
+        "text": "Security bots are armored against wrenches and bullets. Use EMP, hack them, or switch to the cutter. And Scan first!",
+        "end": true
+      }
+    }
+  },
+  "security_tanaka": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "tanaka:met" }, "to": "again" }], "next": "a" },
+      "a": {
+        "speaker": "narrator",
+        "text": "Behind the bars of a holding cell, a woman in a security uniform sits against the wall. Bloom spots crawl up her arm. She looks up, hollow-eyed.",
+        "effects": [{ "type": "flag", "key": "tanaka:met" }],
+        "next": "b"
+      },
+      "b": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "You're not one of Dray's. Good. I'm Officer Tanaka. I'm in here because I finally said no. Too late.",
+        "next": "c"
+      },
+      "c": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "You'll need the armory to get past WARDOG. Here. My keycard.",
+        "effects": [{ "type": "item", "id": "keycard_armory" }],
+        "next": "d"
+      },
+      "d": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "WARDOG guards the command gate. It has a shield matrix. Your drone can crack it with an intrusion suite. After that, EMP hurts it.",
+        "next": "e"
+      },
+      "e": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "I'm infected. If you have a serum, I'd like to live long enough to apologize to the Captain.",
+        "next": "ask"
+      },
+      "again": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "Still here. Did the keycard work?",
+        "next": "ask"
+      },
+      "ask": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "Whatever you decide, I won't blame you.",
+        "choices": [
+          {
+            "text": "Give her a serum and get her out (1h 30m)",
+            "if": { "item": "serum" },
+            "lockedHint": "Requires Anti-Spore Serum",
+            "effects": [
+              { "type": "item", "id": "serum", "qty": -1 },
+              { "type": "time", "minutes": 90 },
+              { "type": "flag", "key": "tanaka:done" },
+              { "type": "survivor", "id": "tanaka" },
+              { "type": "xp", "qty": 80 }
+            ],
+            "next": "saved"
+          },
+          { "text": "I'll come back for you.", "end": true }
+        ]
+      },
+      "saved": {
+        "speaker": "tanaka",
+        "name": "Officer Tanaka",
+        "text": "Thank you. Take these grenades. And one more thing: Dray kept a spare keycard in the barracks, under his bunk. Whatever he hid in his office is still there.",
+        "effects": [{ "type": "item", "id": "emp_grenade", "qty": 2 }],
+        "end": true
+      }
+    }
+  },
+  "security_rifle": {
+    "start": "a",
+    "nodes": {
+      "a": { "speaker": "kai", "text": "A pulse rifle.", "next": "b" },
+      "b": { "speaker": "bolt", "text": "Point it at the bad guys, not at me. I say that with love.", "next": "c" },
+      "c": {
+        "speaker": "narrator",
+        "name": "New weapon",
+        "text": "PULSE RIFLE: kinetic damage with a high critical rate. Deadly against infected flesh, weak against armor.",
+        "end": true
+      }
+    }
+  },
+  "security_nanites": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "bolt",
+        "text": "Repair nanites! Now I can patch you up mid-battle. I'm basically a doctor now. Doctor BOLT.",
+        "next": "b"
+      },
+      "b": { "speaker": "narrator", "name": "New ability", "text": "BOLT learned REPAIR: restores 35% of Kai's HP.", "end": true }
+    }
+  },
+  "security_wardog_intro": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "The command gate is guarded by WARDOG: a four-legged riot mech bristling with guns, its shield matrix shimmering blue.",
+        "next": "b"
+      },
+      "b": {
+        "speaker": "halcyon",
+        "name": "WARDOG",
+        "text": "UNAUTHORIZED PERSONNEL. BLOOM CONTAMINATION DETECTED. PURGE AUTHORIZED.",
+        "next": "c"
+      },
+      "c": {
+        "speaker": "bolt",
+        "text": "It thinks we're contaminated! ...Okay, we are, a little. That shield blocks most of our damage. Let me HACK it down!",
+        "effects": [{ "type": "fight" }],
+        "end": true
+      }
+    }
+  },
+  "security_wardog_outro": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "WARDOG staggers, sparks pouring from its joints, and collapses in a heap of armor.",
+        "next": "b"
+      },
+      "b": { "speaker": "bolt", "text": "Good dog. Bad dog. Sleeping dog.", "end": true }
+    }
+  },
+  "security_override": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "security:repaired" }, "to": "done" }], "next": "a" },
+      "a": {
+        "speaker": "narrator",
+        "text": "The lockdown override. Chief Dray's authorization is wrapped in a dozen redundant locks. BOLT can brute-force them, but it will take a while.",
+        "choices": [
+          {
+            "text": "Override the lockdown (2h 30m)",
+            "effects": [
+              { "type": "time", "minutes": 150 },
+              { "type": "flag", "key": "security:repaired" },
+              { "type": "xp", "qty": 60 }
+            ],
+            "next": "b"
+          },
+          { "text": "Not yet", "end": true }
+        ]
+      },
+      "b": {
+        "speaker": "halcyon",
+        "text": "Bridge lockdown lifted. Lift access restored. Captain Voss's command codes remain... unresponsive.",
+        "end": true
+      },
+      "done": { "speaker": "narrator", "text": "The lockdown is lifted. The bridge lift is open.", "end": true }
+    }
+  },
+  "security_elevator": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "security:repaired" }, "to": "a" }], "next": "off" },
+      "off": {
+        "speaker": "halcyon",
+        "text": "Bridge lift sealed. Lockdown authority: Chief Marcus Dray.",
+        "end": true
+      },
+      "a": {
+        "speaker": "halcyon",
+        "text": "Lift to the Bridge ready. This is the last deck, Engineer Reyes. Whatever waits up there, you will face it with {time} remaining.",
+        "choices": [
+          { "text": "Go up to the Bridge", "effects": [{ "type": "travel", "deck": "bridge" }], "end": true },
+          { "text": "Not yet", "end": true }
+        ]
+      }
+    }
+  }
+}

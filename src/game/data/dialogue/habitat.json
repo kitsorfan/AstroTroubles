@@ -1,0 +1,239 @@
+{
+  "habitat_arrival": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "The Habitation Ring curves overhead: a city of apartments, shops and parks, lit in soft purple dusk. It is completely silent.",
+        "next": "b"
+      },
+      "b": {
+        "speaker": "bolt",
+        "text": "Ten thousand beds up here. Everyone was supposed to wake up in this place. It looks like a city holding its breath.",
+        "next": "c"
+      },
+      "c": { "speaker": "halcyon", "text": "Warning. Hull breach detected on the main street. Atmosphere venting.", "next": "d" },
+      "d": {
+        "speaker": "bolt",
+        "text": "Breach is at the west end of the main street. Let's patch it before we pass out. The lift up is past the park, through the holo-theater.",
+        "end": true
+      }
+    }
+  },
+  "habitat_decoy": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "bolt",
+        "text": "A holo-projector from the theater! I can project a hologram of myself. A handsome, dazzling, irresistible hologram.",
+        "next": "b"
+      },
+      "b": { "speaker": "kai", "text": "So... a decoy.", "next": "c" },
+      "c": { "speaker": "bolt", "text": "A DAZZLING decoy.", "next": "d" },
+      "d": {
+        "speaker": "narrator",
+        "name": "New ability",
+        "text": "BOLT learned DECOY: every enemy attack targets BOLT for 2 turns. Keep BOLT's health up!",
+        "end": true
+      }
+    }
+  },
+  "habitat_hollis": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "hollis:met" }, "to": "again" }], "next": "a" },
+      "a": {
+        "speaker": "narrator",
+        "text": "An old man sits in his armchair with a blanket over his knees. Bloom spots spread across his hands like lichen. He's awake, and smiling.",
+        "effects": [{ "type": "flag", "key": "hollis:met" }],
+        "next": "b"
+      },
+      "b": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Well. Visitors. Forgive me for not getting up. The fungus has opinions about my knees.",
+        "next": "c"
+      },
+      "c": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Hollis Grant. Forty years mining asteroids, and a flower gets me. They say a serum stops it. I'd need an arm to lean on to reach the shelter, too.",
+        "next": "ask"
+      },
+      "again": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Still here. The flowers are coming along nicely, if you're into that sort of thing.",
+        "next": "ask"
+      },
+      "ask": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Well, kid?",
+        "choices": [
+          {
+            "text": "Give him a serum and help him to the shelter (2h)",
+            "if": { "item": "serum" },
+            "lockedHint": "Requires Anti-Spore Serum",
+            "effects": [
+              { "type": "item", "id": "serum", "qty": -1 },
+              { "type": "time", "minutes": 120 },
+              { "type": "flag", "key": "hollis:done" },
+              { "type": "survivor", "id": "hollis" },
+              { "type": "xp", "qty": 60 }
+            ],
+            "next": "saved"
+          },
+          { "text": "I'll be back, Hollis.", "end": true },
+          { "text": "I'm sorry. I can't.", "next": "leave" }
+        ]
+      },
+      "saved": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Ha! I feel twenty years younger. Well, nineteen. Take these, I won't need them. And kid? Mind the big lady in the park. She's the one who took the neighbors.",
+        "effects": [
+          { "type": "item", "id": "stim" },
+          { "type": "scrap", "qty": 30 }
+        ],
+        "end": true
+      },
+      "leave": {
+        "speaker": "hollis",
+        "name": "Hollis",
+        "text": "Don't apologize. You've got a whole ship on your back. Go on.",
+        "end": true
+      }
+    }
+  },
+  "habitat_juno": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "juno:met" }, "to": "again" }], "next": "a" },
+      "a": {
+        "speaker": "narrator",
+        "text": "Behind the last row of seats, a girl with a flashlight is curled up in a blanket fort. She points the light straight at BOLT.",
+        "effects": [{ "type": "flag", "key": "juno:met" }],
+        "next": "b"
+      },
+      "b": { "speaker": "juno", "name": "Juno", "text": "Are you a robot? Are you a good robot or a bad robot?", "next": "c" },
+      "c": {
+        "speaker": "bolt",
+        "text": "I'm a GREAT robot. The best one. Ask anyone. Well, don't, they're all asleep.",
+        "next": "d"
+      },
+      "d": {
+        "speaker": "juno",
+        "name": "Juno",
+        "text": "I'm Juno. Mom went to the store and didn't come back, so I'm waiting. The glowing lady in the park waves at me through the window. With lights.",
+        "next": "e"
+      },
+      "e": {
+        "speaker": "juno",
+        "name": "Juno",
+        "text": "I figured out how to wave back. Blue, blue, yellow! I think it means hi.",
+        "next": "ask"
+      },
+      "again": { "speaker": "juno", "name": "Juno", "text": "You came back! Is it time to go now?", "next": "ask" },
+      "ask": {
+        "speaker": "juno",
+        "name": "Juno",
+        "text": "The shelter's really far and it's really dark out there.",
+        "choices": [
+          {
+            "text": "Let's get you to the shelter, Juno (1h)",
+            "effects": [
+              { "type": "time", "minutes": 60 },
+              { "type": "flag", "key": "juno:done" },
+              { "type": "survivor", "id": "juno" },
+              { "type": "xp", "qty": 60 }
+            ],
+            "next": "saved"
+          },
+          { "text": "Stay hidden. I'll come back for you.", "end": true }
+        ]
+      },
+      "saved": {
+        "speaker": "juno",
+        "name": "Juno",
+        "text": "Okay. But BOLT has to hold my hand. Wait, do you have hands? ...Here. A star sticker, for being brave.",
+        "effects": [{ "type": "item", "id": "sticker" }],
+        "next": "saved2"
+      },
+      "saved2": { "speaker": "bolt", "text": "I have been awarded a STAR. Kai. KAI. Look at my star.", "end": true }
+    }
+  },
+  "habitat_matron_intro": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "The park fountain has become a nest. In its center sways the Hive Matron: dozens of infected colonists woven into one flowering body. Her many faces turn toward you.",
+        "next": "b"
+      },
+      "b": { "speaker": "bolt", "text": "Oh no. Kai, those are the neighbors. The people from the apartments.", "next": "c" },
+      "c": { "speaker": "kai", "text": "I know. We can't help them like this. Maybe if we stop what's controlling them...", "next": "d" },
+      "d": {
+        "speaker": "bolt",
+        "text": "She'll keep birthing spore swarms and feeding on them. Thin out the swarms, and burn her!",
+        "effects": [{ "type": "fight" }],
+        "end": true
+      }
+    }
+  },
+  "habitat_matron_outro": {
+    "start": "a",
+    "nodes": {
+      "a": {
+        "speaker": "narrator",
+        "text": "The Matron shudders and comes apart in a rain of petals. For a moment, the faces look peaceful.",
+        "next": "b"
+      },
+      "b": { "speaker": "bolt", "text": "...I didn't like that one, Kai.", "next": "c" },
+      "c": { "speaker": "kai", "text": "Me neither. Come on. The junction is behind the gate.", "end": true }
+    }
+  },
+  "habitat_junction": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "habitat:repaired" }, "to": "done" }], "next": "a" },
+      "a": {
+        "speaker": "narrator",
+        "text": "The Ring's power junction is a mess of scorched breakers and Bloom tendrils. Restoring it will reconnect the lift to the Security Deck.",
+        "choices": [
+          {
+            "text": "Restore the junction (3h)",
+            "effects": [
+              { "type": "time", "minutes": 180 },
+              { "type": "flag", "key": "habitat:repaired" },
+              { "type": "xp", "qty": 60 }
+            ],
+            "next": "b"
+          },
+          { "text": "Not yet", "end": true }
+        ]
+      },
+      "b": {
+        "speaker": "bolt",
+        "text": "Lights on in the Ring! Somewhere out there, a vending machine just rebooted and it is very, very happy.",
+        "end": true
+      },
+      "done": { "speaker": "narrator", "text": "The junction thrums with power.", "end": true }
+    }
+  },
+  "habitat_elevator": {
+    "start": "r",
+    "nodes": {
+      "r": { "jump": [{ "if": { "flag": "habitat:repaired" }, "to": "a" }], "next": "off" },
+      "off": { "speaker": "narrator", "text": "The lift is dark. The Ring's power junction is offline.", "end": true },
+      "a": {
+        "speaker": "halcyon",
+        "text": "Lift to the Security Deck ready. This lift only travels up. You will not be able to return to the Ring.",
+        "choices": [
+          { "text": "Go up to the Security Deck", "effects": [{ "type": "travel", "deck": "security" }], "end": true },
+          { "text": "Not yet", "end": true }
+        ]
+      }
+    }
+  }
+}
