@@ -1,0 +1,132 @@
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge';
+export type ThemeId = DeckId;
+export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
+export type Ability = 'doubleJump' | 'dash' | 'glide' | 'shield';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart';
+
+/** Conditions that open doors or arm triggers. */
+export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
+
+interface Base {
+  /** Floor height (in world units) under this entity. Defaults to the neighbours' height. */
+  h?: number;
+  /** Tile kind under this entity (defaults to floor, or void for moving platforms). */
+  floor?: TileKind;
+}
+
+export type Spec = Base &
+  (
+    | { type: 'spawn'; facing?: number }
+    | { type: 'bolt' }
+    | { type: 'crate'; loot?: 'bolts' | 'heart' | 'big'; metal?: boolean }
+    | { type: 'heart' }
+    | { type: 'canister'; id: string }
+    | { type: 'shard'; id: string }
+    | { type: 'upgrade'; ability: Ability; id: string }
+    | { type: 'checkpoint'; id: string }
+    | { type: 'enemy'; enemy: EnemyKind; room?: string; variant?: string }
+    | { type: 'boss'; boss: BossKind; room: string }
+    | { type: 'door'; id: string; open: Cond; color?: string }
+    | { type: 'switch'; flag: string; timed?: number }
+    | { type: 'terminal'; flag: string; length?: number; label?: string }
+    | { type: 'cell' }
+    | { type: 'socket'; flag: string }
+    | {
+        type: 'platform';
+        /** Waypoints relative to the start, in cells: [dx, dz, dy]. */
+        path: [number, number, number?][];
+        speed?: number;
+        wait?: number;
+        size?: number;
+        needs?: Cond;
+      }
+    | { type: 'faller' }
+    | { type: 'bounce' }
+    | { type: 'vent'; period?: number; offset?: number }
+    | { type: 'laser'; axis: 'x' | 'z'; length: number; period?: number; offset?: number; always?: boolean; off?: Cond; low?: boolean }
+    | { type: 'zap'; period?: number; offset?: number }
+    | { type: 'conveyor'; dx: number; dz: number; speed?: number }
+    | { type: 'cocoon'; id: string; name: string; line: string }
+    | { type: 'vendor' }
+    | { type: 'sign'; text: string }
+    | { type: 'trigger'; id: string; dialogue?: string; event?: string; w?: number; d?: number; when?: Cond }
+    | { type: 'dark' }
+    | { type: 'exit' }
+    | { type: 'breakwall' }
+    | { type: 'boltfind' }
+    | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
+  );
+
+export type DecorKind =
+  | 'pod'
+  | 'console'
+  | 'crystal'
+  | 'pipes'
+  | 'tank'
+  | 'tree'
+  | 'mushroom'
+  | 'flowers'
+  | 'crops'
+  | 'barrel'
+  | 'generator'
+  | 'lamp'
+  | 'bench'
+  | 'kiosk'
+  | 'fountain'
+  | 'locker'
+  | 'camera'
+  | 'barrier'
+  | 'globe'
+  | 'bloom'
+  | 'screen';
+
+export type Speaker = 'kai' | 'bolt' | 'halcyon' | 'colonist' | 'vendy' | 'bloom' | 'captain';
+
+export interface Line {
+  who: Speaker;
+  text: string;
+  name?: string;
+}
+
+export interface LevelDef {
+  id: DeckId;
+  index: number;
+  name: string;
+  subtitle: string;
+  music: string;
+  map: string;
+  legend: Record<string, Spec>;
+  intro?: string;
+  outro?: string;
+  objectives: { until: Cond; text: string }[];
+  /** Shards in this deck, for the pause menu and results. */
+  shardIds: string[];
+  colonistIds?: string[];
+  dialogues: Record<string, Line[]>;
+  boss?: BossKind;
+}
+
+export interface Cell {
+  kind: TileKind;
+  /** Top of the floor (walls report their visual top). */
+  h: number;
+  dark: boolean;
+}
+
+export interface PlacedEntity {
+  id: string;
+  spec: Spec;
+  cx: number;
+  cz: number;
+  h: number;
+}
+
+export interface ParsedLevel {
+  def: LevelDef;
+  width: number;
+  depth: number;
+  cells: Cell[];
+  entities: PlacedEntity[];
+  spawn: { cx: number; cz: number; h: number; facing: number };
+}

@@ -42,5 +42,6 @@ example
 /ios
 /android
 
-# Skia web runtime (npm run web:setup)
-public/canvaskit.wasm
+# 3D game browser build (npm run game:build)
+game/dist/
+src/generated/
