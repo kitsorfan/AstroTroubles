@@ -1,0 +1,349 @@
+import * as THREE from 'three';
+
+import { audio } from '../core/audio';
+import { haptic } from '../core/bridge';
+import { CELL, MAX_HEARTS, PLAYER } from '../core/constants';
+import type { World } from '../game/world';
+import { Grid } from '../world/grid';
+import type { Ability } from '../world/levelTypes';
+import { Entity } from './entity';
+import { blobShadow, cone, cyl, glowSprite, mat, mesh, sphere, torus } from './models';
+
+interface BoltItem {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  loose: boolean;
+  alive: boolean;
+  t: number;
+  life: number;
+  pull: boolean;
+}
+
+const m4 = new THREE.Matrix4();
+const q = new THREE.Quaternion();
+const up = new THREE.Vector3(0, 1, 0);
+const one = new THREE.Vector3(1, 1, 1);
+const p3 = new THREE.Vector3();
+
+/** Every bolt on the deck, drawn as one instanced mesh. */
+export class BoltField {
+  private mesh: THREE.InstancedMesh;
+  private items: BoltItem[] = [];
+  private combo = 0;
+  private comboT = 0;
+
+  constructor(private world: World) {
+    const hex = new THREE.CylinderGeometry(0.26, 0.26, 0.14, 6);
+    hex.rotateX(Math.PI / 2);
+    this.mesh = new THREE.InstancedMesh(hex, mat('#ffd166', { emissive: '#ffb020', ei: 0.55, metal: 0.8, rough: 0.25 }), 700);
+    this.mesh.count = 0;
+    this.mesh.frustumCulled = false;
+    world.scene.add(this.mesh);
+  }
+
+  add(x: number, y: number, z: number, loose = false) {
+    const item: BoltItem = { x, y, z, vx: 0, vy: 0, vz: 0, loose, alive: true, t: Math.random() * 6, life: 14, pull: false };
+    if (loose) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 2 + Math.random() * 2.5;
+      item.vx = Math.cos(a) * s;
+      item.vz = Math.sin(a) * s;
+      item.vy = 6 + Math.random() * 3;
+    }
+    this.items.push(item);
+  }
+
+  update(dt: number) {
+    const w = this.world;
+    const p = w.player.body;
+    const magnet = PLAYER.magnetRange + (w.save.upgrades.magnet ?? 0) * 1.6;
+    this.comboT -= dt;
+    if (this.comboT <= 0) this.combo = 0;
+    let n = 0;
+    for (const it of this.items) {
+      if (!it.alive) continue;
+      it.t += dt;
+      if (it.loose) {
+        it.life -= dt;
+        if (it.life <= 0) {
+          it.alive = false;
+          continue;
+        }
+        it.vy -= 22 * dt;
+        it.x += it.vx * dt;
+        it.y += it.vy * dt;
+        it.z += it.vz * dt;
+        const c = w.grid.cell(Grid.toCell(it.x), Grid.toCell(it.z));
+        const floor = c.kind === 'void' || c.kind === 'wall' ? -99 : c.h;
+        if (c.kind === 'wall') {
+          it.x -= it.vx * dt;
+          it.z -= it.vz * dt;
+          it.vx *= -0.4;
+          it.vz *= -0.4;
+        } else if (it.y < floor + 0.3) {
+          it.y = floor + 0.3;
+          it.vy = Math.abs(it.vy) > 2 ? -it.vy * 0.35 : 0;
+          it.vx *= 0.7;
+          it.vz *= 0.7;
+        }
+        if (it.y < -20) it.alive = false;
+      }
+      const dx = p.x - it.x;
+      const dy = p.y + 0.9 - it.y;
+      const dz = p.z - it.z;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < magnet * magnet || it.pull) {
+        it.pull = true;
+        const d = Math.sqrt(d2) || 1;
+        const sp = 16 * dt;
+        it.x += (dx / d) * Math.min(d, sp);
+        it.y += (dy / d) * Math.min(d, sp);
+        it.z += (dz / d) * Math.min(d, sp);
+        it.loose = false;
+      }
+      if (d2 < 0.8) {
+        it.alive = false;
+        w.save.bolts += 1;
+        this.combo += 1;
+        this.comboT = 0.5;
+        audio.play('bolt', 1 + Math.min(this.combo, 12) * 0.035);
+        w.hooks.hud();
+        continue;
+      }
+      const bob = it.loose ? 0 : Math.sin(it.t * 3) * 0.12;
+      q.setFromAxisAngle(up, it.t * 3);
+      p3.set(it.x, it.y + bob, it.z);
+      m4.compose(p3, q, one);
+      this.mesh.setMatrixAt(n++, m4);
+    }
+    this.mesh.count = n;
+    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.items.length > 400 && this.items.length - n > 200) this.items = this.items.filter((i) => i.alive);
+  }
+}
+
+/* ---------------- floating collectibles ---------------- */
+
+abstract class Floater extends Entity {
+  protected baseY: number;
+  protected t = Math.random() * 5;
+  protected radius = 1.1;
+
+  constructor(world: World, id: string, cx: number, cz: number, h: number, lift = 1) {
+    super(world, id);
+    this.baseY = h + lift;
+    this.obj.position.set(cx * CELL + CELL / 2, this.baseY, cz * CELL + CELL / 2);
+  }
+
+  protected abstract collect(): void;
+
+  update(dt: number) {
+    this.t += dt;
+    this.obj.position.y = this.baseY + Math.sin(this.t * 2.4) * 0.15;
+    this.obj.rotation.y += dt * 1.8;
+    const p = this.world.player.body;
+    const dx = p.x - this.obj.position.x;
+    const dz = p.z - this.obj.position.z;
+    const dy = p.y + 0.8 - this.obj.position.y;
+    if (dx * dx + dz * dz < this.radius * this.radius && Math.abs(dy) < 1.6 && !this.world.player.down) this.collect();
+  }
+}
+
+export class HeartPickup extends Floater {
+  constructor(world: World, id: string, cx: number, cz: number, h: number, private persistId?: string) {
+    super(world, id, cx, cz, h, 0.9);
+    this.build();
+  }
+
+  static at(world: World, pos: THREE.Vector3) {
+    const h = new HeartPickup(world, `drop${Math.random()}`, Grid.toCell(pos.x), Grid.toCell(pos.z), pos.y - 0.9);
+    h.obj.position.set(pos.x, pos.y, pos.z);
+    h.baseY = Math.max(pos.y - 0.2, h.baseY);
+    return h;
+  }
+
+  private build() {
+    const red = mat('#ff4d6d', { emissive: '#ff2d55', ei: 0.7, rough: 0.3 });
+    const g = new THREE.Group();
+    g.add(mesh(sphere(0.2, 14), red, -0.13, 0.08, 0), mesh(sphere(0.2, 14), red, 0.13, 0.08, 0));
+    const c = mesh(cone(0.29, 0.42, 16), red, 0, -0.16, 0);
+    c.rotation.z = Math.PI;
+    g.add(c);
+    g.scale.setScalar(1.25);
+    this.obj.add(g, glowSprite('#ff4d6d', 1.6, 0.45));
+  }
+
+  protected collect() {
+    const w = this.world;
+    if (w.player.hearts >= w.save.maxHearts) {
+      w.save.bolts += 5;
+      audio.play('bolt');
+    } else {
+      w.player.heal(1);
+      audio.play('heart');
+    }
+    w.particles.emit(this.obj.position.x, this.obj.position.y, this.obj.position.z, { count: 16, color: '#ff8aa0', speed: 4, life: 0.5, size: 0.5 });
+    if (this.persistId) w.markTaken(this.persistId);
+    w.hooks.hud();
+    this.remove();
+  }
+}
+
+export class Shard extends Floater {
+  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+    super(world, id, cx, cz, h, 1.2);
+    const pink = mat('#ffc6ef', { emissive: '#ff5fc8', ei: 1.4, rough: 0.1, metal: 0.3 });
+    const crystal = mesh(new THREE.OctahedronGeometry(0.42), pink);
+    crystal.scale.set(0.7, 1.25, 0.7);
+    this.obj.add(crystal, glowSprite('#ff6fcf', 2.8, 0.55));
+    const ring = mesh(torus(0.62, 0.03), mat('#ffffff', { emissive: '#ffc6ef', ei: 1 }), 0, 0, 0, false);
+    ring.rotation.x = Math.PI / 2;
+    this.obj.add(ring);
+  }
+
+  update(dt: number) {
+    super.update(dt);
+    if (Math.random() < 0.15) {
+      const o = this.obj.position;
+      this.world.particles.emit(o.x, o.y, o.z, { count: 1, color: '#ff9ae0', speed: 1.5, life: 0.8, size: 0.35, gravity: -1 });
+    }
+  }
+
+  protected collect() {
+    const w = this.world;
+    audio.play('shard');
+    haptic('success');
+    const o = this.obj.position;
+    w.particles.emit(o.x, o.y, o.z, { count: 40, color: '#ff9ae0', speed: 7, life: 0.9, size: 0.6 });
+    w.collect('shard', this.id);
+    this.remove();
+  }
+}
+
+export class Canister extends Floater {
+  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+    super(world, id, cx, cz, h, 1.1);
+    const glass = mat('#ffd0da', { emissive: '#ff4d6d', ei: 0.6, rough: 0.1, opacity: 0.85 });
+    const cap = mat('#e6edf7', { metal: 0.6, rough: 0.3 });
+    this.obj.add(mesh(cyl(0.34, 0.34, 0.6, 18), glass), mesh(cyl(0.38, 0.38, 0.12, 18), cap, 0, 0.36, 0), mesh(cyl(0.38, 0.38, 0.12, 18), cap, 0, -0.36, 0));
+    const red = mat('#ff2d55', { emissive: '#ff2d55', ei: 1 });
+    const heart = new THREE.Group();
+    heart.add(mesh(sphere(0.12, 10), red, -0.08, 0.05, 0), mesh(sphere(0.12, 10), red, 0.08, 0.05, 0));
+    const c = mesh(cone(0.17, 0.26, 12), red, 0, -0.1, 0);
+    c.rotation.z = Math.PI;
+    heart.add(c);
+    this.obj.add(heart, glowSprite('#ff4d6d', 2.4, 0.5));
+  }
+
+  protected collect() {
+    const w = this.world;
+    audio.play('upgrade');
+    haptic('success');
+    const o = this.obj.position;
+    w.particles.emit(o.x, o.y, o.z, { count: 40, color: '#ff8aa0', speed: 7, life: 0.9, size: 0.6 });
+    w.collect('canister', this.id);
+    w.save.maxHearts = Math.min(MAX_HEARTS, w.save.maxHearts + 1);
+    w.player.heal(99);
+    w.hooks.toast('Heart Canister! Max hearts +1', 'bolt');
+    this.remove();
+  }
+}
+
+const ABILITY_LOOK: Record<Ability, { color: string; name: string }> = {
+  doubleJump: { color: '#7fe6ff', name: 'Jet Boots' },
+  dash: { color: '#ffd166', name: 'Dash Thrusters' },
+  glide: { color: '#c6ff7a', name: 'Hover Pack' },
+  shield: { color: '#ff8ad8', name: 'BOLT Shield' },
+};
+
+export class UpgradePickup extends Floater {
+  private ped: THREE.Group;
+
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    private ability: Ability,
+  ) {
+    super(world, id, cx, cz, h, 1.4);
+    const look = ABILITY_LOOK[ability];
+    const core = mat(look.color, { emissive: look.color, ei: 1.3, rough: 0.2 });
+    const shell = mat('#e6edf7', { metal: 0.6, rough: 0.25 });
+    this.obj.add(mesh(sphere(0.38, 20), core), mesh(torus(0.5, 0.07), shell), glowSprite(look.color, 3.4, 0.6));
+    const ped = new THREE.Group();
+    ped.add(mesh(cyl(0.7, 0.9, 0.5, 20), mat('#3a4458', { metal: 0.5, rough: 0.4 }), 0, 0.25, 0));
+    ped.add(mesh(cyl(0.72, 0.72, 0.06, 24), mat(look.color, { emissive: look.color, ei: 1 }), 0, 0.52, 0, false));
+    ped.position.set(this.obj.position.x, h, this.obj.position.z);
+    world.scene.add(ped);
+    this.ped = ped;
+  }
+
+  protected collect() {
+    const w = this.world;
+    audio.play('upgrade');
+    haptic('success');
+    const o = this.obj.position;
+    w.particles.emit(o.x, o.y, o.z, { count: 60, color: ABILITY_LOOK[this.ability].color, speed: 8, life: 1, size: 0.7 });
+    w.unlock(this.ability, this.id);
+    this.ped.children[1].visible = false;
+    this.remove();
+  }
+}
+
+export class PowerCell extends Entity {
+  private t = 0;
+  private held = false;
+  readonly model: THREE.Group;
+  private home: THREE.Vector3;
+
+  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+    super(world, id);
+    this.model = new THREE.Group();
+    this.model.add(mesh(cyl(0.26, 0.26, 0.7, 16), mat('#bfffd0', { emissive: '#3dff8a', ei: 1.3, rough: 0.1, opacity: 0.9 })));
+    this.model.add(mesh(cyl(0.3, 0.3, 0.12, 16), mat('#e6edf7', { metal: 0.6 }), 0, 0.4, 0), mesh(cyl(0.3, 0.3, 0.12, 16), mat('#e6edf7', { metal: 0.6 }), 0, -0.4, 0));
+    this.model.add(glowSprite('#3dff8a', 2, 0.5));
+    this.home = new THREE.Vector3(cx * CELL + CELL / 2, h + 1, cz * CELL + CELL / 2);
+    this.model.position.copy(this.home);
+    this.obj.add(this.model);
+    this.obj.add(blobShadow(1).translateX(this.home.x).translateZ(this.home.z).translateY(h + 0.03));
+  }
+
+  get isHeld() {
+    return this.held;
+  }
+
+  place() {
+    this.held = false;
+    this.world.player.carrying = null;
+    this.world.markTaken(this.id);
+    this.remove();
+  }
+
+  update(dt: number) {
+    this.t += dt;
+    const pl = this.world.player;
+    if (!this.held) {
+      this.model.position.y = this.home.y + Math.sin(this.t * 2) * 0.15;
+      this.model.rotation.y += dt;
+      const dx = pl.body.x - this.home.x;
+      const dz = pl.body.z - this.home.z;
+      if (dx * dx + dz * dz < 1.4 && Math.abs(pl.body.y + 1 - this.home.y) < 1.6 && !pl.carrying) {
+        this.held = true;
+        pl.carrying = this.model;
+        this.obj.children[1].visible = false;
+        audio.play('upgrade');
+        this.world.hooks.toast('Power cell! Bring it to an empty socket.', 'bolt');
+      }
+    } else {
+      this.model.position.set(pl.body.x, pl.body.y + 2.35 + Math.sin(this.t * 3) * 0.08, pl.body.z);
+      this.model.rotation.y += dt * 2;
+    }
+  }
+}
+
