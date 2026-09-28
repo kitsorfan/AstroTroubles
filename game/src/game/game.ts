@@ -1,0 +1,510 @@
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+import { audio, type Track } from '../core/audio';
+import { haptic, inApp, post, setHaptics } from '../core/bridge';
+import { MAX_HEARTS } from '../core/constants';
+import { Input } from '../core/input';
+import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
+import { LEVELS, LEVEL_ORDER } from '../levels';
+import type { DeckId, Line } from '../world/levelTypes';
+import { THEMES } from '../world/themes';
+import { UI, type ShopItem } from '../ui/ui';
+import { STORY, endingText } from './story';
+import { TitleScene } from './title';
+import { World, type WorldHooks } from './world';
+
+type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending';
+
+const ABILITY_LINES: Record<string, Line[]> = {
+  doubleJump: [
+    { who: 'bolt', text: 'JET BOOTS! Now you can jump again while you are in the air. Double jump!' },
+    { who: 'kai', text: 'Up, up and away!' },
+  ],
+  dash: [
+    { who: 'bolt', text: 'DASH THRUSTERS! Press DASH to zoom forward, even in mid-air. Great for long gaps!' },
+    { who: 'kai', text: 'Nyoom!' },
+  ],
+  glide: [
+    { who: 'bolt', text: 'A HOVER PACK! Hold JUMP while you fall to float gently down. Wheee!' },
+    { who: 'kai', text: 'I can glide across the whole Ring with this!' },
+  ],
+  shield: [
+    { who: 'bolt', text: 'SHIELD MODULE installed! Press my button to make a force bubble. It blocks lasers and shots for a few seconds.' },
+    { who: 'kai', text: 'Now those laser walls are no problem.' },
+  ],
+};
+
+export class Game {
+  readonly renderer: THREE.WebGLRenderer;
+  private input: Input;
+  private ui: UI;
+  private save: SaveData;
+  private world: World | null = null;
+  private title = new TitleScene();
+  private envMap: THREE.Texture;
+  private state: State = 'boot';
+  private last = performance.now();
+  private deckTime = 0;
+  private boltsAtStart = 0;
+  private frames = 0;
+  private fpsT = 0;
+  private hudT = 0;
+
+  constructor(
+    private canvas: HTMLCanvasElement,
+    touch: HTMLElement,
+    uiRoot: HTMLElement,
+  ) {
+    this.save = loadSave() ?? newSave();
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.save.settings.quality !== 'low', powerPreference: 'high-performance' });
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // A soft studio environment gives metal and glossy toys their shine.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+    this.title.scene.environment = this.envMap;
+    this.title.scene.environmentIntensity = 0.55;
+    this.input = new Input(touch);
+    this.ui = new UI(uiRoot, this.input);
+    this.ui.onPause = () => this.pause();
+    this.applySettings(this.save.settings);
+    window.addEventListener('resize', () => this.resize());
+    this.resize();
+    window.__onBack = () => this.back();
+    window.__onPause = () => {
+      if (this.state === 'play') this.pause();
+      audio.suspend(true);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (this.state === 'play') this.pause();
+        this.persist();
+        audio.suspend(true);
+      } else {
+        audio.suspend(false);
+      }
+    });
+    window.__game = this;
+    requestAnimationFrame((t) => this.frame(t));
+    this.ui.tapToStart(() => {
+      audio.unlock();
+      this.toTitle();
+    });
+  }
+
+  private applySettings(s: Settings) {
+    audio.setVolumes(s.music, s.sfx);
+    setHaptics(s.haptics);
+    const ratio = Math.min(window.devicePixelRatio || 1, s.quality === 'high' ? 2 : s.quality === 'medium' ? 1.5 : 1);
+    this.renderer.setPixelRatio(ratio);
+    this.resize();
+  }
+
+  private resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.renderer.setSize(w, h, false);
+    this.title.resize(w, h);
+    this.world?.resize(w, h);
+  }
+
+  private persist() {
+    if (this.world && this.state !== 'ending') {
+      this.save.resume = { deck: this.world.def.id, ...this.world.resumeState() };
+    }
+    writeSave(this.save);
+  }
+
+  /* ---------------- menus ---------------- */
+
+  private toTitle() {
+    this.disposeWorld();
+    this.state = 'title';
+    this.ui.showHud(false);
+    audio.music('title');
+    const r = this.save.resume;
+    this.ui.title({
+      canContinue: !!r,
+      continueText: r ? LEVELS[r.deck].name : '',
+      hasDecks: this.save.unlocked > 1 || this.save.completed.length > 0,
+      onContinue: () => r && this.startDeck(r.deck, true),
+      onNew: () => {
+        if (this.save.resume || this.save.completed.length) {
+          this.ui.confirm('Start a brand new adventure? Your current progress will be erased.', () => this.newGame(), () => this.toTitle());
+        } else this.newGame();
+      },
+      onDecks: () => this.deckSelect(),
+      onSettings: () => this.settings(() => this.toTitle(), true),
+    });
+  }
+
+  private newGame() {
+    const settings = this.save.settings;
+    this.save = newSave();
+    this.save.settings = settings;
+    writeSave(this.save);
+    this.state = 'menu';
+    audio.music('title');
+    this.ui.story(STORY, () => this.startDeck('cryo', false));
+  }
+
+  private deckSelect() {
+    this.state = 'menu';
+    this.ui.decks(
+      LEVEL_ORDER.map((id) => {
+        const d = LEVELS[id];
+        return {
+          index: d.index,
+          id,
+          name: d.name,
+          color: THEMES[id].accent,
+          shards: d.shardIds.filter((s) => this.save.shards.includes(`${id}.${s}`)).length,
+          shardTotal: d.shardIds.length,
+          unlocked: d.index <= this.save.unlocked,
+          completed: this.save.completed.includes(id),
+        };
+      }),
+      (id) => this.startDeck(id as DeckId, false),
+      () => this.toTitle(),
+    );
+  }
+
+  private settings(back: () => void, allowReset = false) {
+    const prev = this.state;
+    this.state = 'menu';
+    this.ui.settings(
+      this.save.settings,
+      (s) => {
+        this.save.settings = s;
+        this.applySettings(s);
+        writeSave(this.save);
+      },
+      () => {
+        this.state = prev === 'menu' ? 'menu' : prev;
+        back();
+      },
+      allowReset
+        ? () =>
+            this.ui.confirm(
+              'Erase ALL progress, shards and upgrades?',
+              () => {
+                clearSave();
+                this.save = newSave();
+                this.toTitle();
+              },
+              () => this.settings(back, allowReset),
+            )
+        : undefined,
+    );
+  }
+
+  private pause() {
+    if (this.state !== 'play' || !this.world) return;
+    this.state = 'pause';
+    this.input.reset();
+    this.ui.showControls(false);
+    const w = this.world;
+    const d = w.def;
+    this.ui.pause({
+      deck: d.name.toUpperCase(),
+      shards: `${d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length} / ${d.shardIds.length} here · ${this.save.shards.length} / 18 total`,
+      colonists: `${this.save.colonists.length} / 12`,
+      onResume: () => this.resume(),
+      onHelp: () => this.ui.help(() => this.pauseAgain()),
+      onSettings: () => this.settings(() => this.pauseAgain()),
+      onRestart: () => {
+        this.resume();
+        w.respawn();
+      },
+      onQuit: () => {
+        this.persist();
+        this.toTitle();
+      },
+    });
+  }
+
+  private pauseAgain() {
+    this.state = 'play';
+    this.pause();
+  }
+
+  private resume() {
+    this.ui.close();
+    this.ui.showControls(true);
+    this.input.flush();
+    this.state = 'play';
+  }
+
+  private back() {
+    switch (this.state) {
+      case 'play':
+        this.pause();
+        break;
+      case 'pause':
+        this.resume();
+        break;
+      case 'title':
+        post({ type: 'exit' });
+        break;
+      default:
+        break;
+    }
+  }
+
+  /* ---------------- decks ---------------- */
+
+  private disposeWorld() {
+    if (!this.world) return;
+    this.world.scene.traverse((o) => {
+      if (o instanceof THREE.InstancedMesh) o.dispose();
+      if (o instanceof THREE.Points) o.geometry.dispose();
+    });
+    this.world = null;
+    this.renderer.renderLists.dispose();
+  }
+
+  private startDeck(id: DeckId, resume: boolean) {
+    this.disposeWorld();
+    const def = LEVELS[id];
+    this.state = 'card';
+    this.ui.showHud(false);
+    audio.music(def.music as Track);
+    this.ui.card(def.index, def.name, def.subtitle, THEMES[id].accent, () => {
+      const r = resume && this.save.resume?.deck === id ? this.save.resume : null;
+      this.world = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
+      this.world.scene.environment = this.envMap;
+      this.world.resize(window.innerWidth, window.innerHeight);
+      this.deckTime = 0;
+      this.boltsAtStart = this.save.bolts;
+      this.save.resume = { deck: id, ...this.world.resumeState() };
+      writeSave(this.save);
+      this.state = 'play';
+      this.ui.showHud(true);
+      this.ui.showControls(true);
+      this.ui.setShards(def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)));
+      this.refreshHud();
+      this.input.flush();
+      if (!r && def.intro) this.hooks().say(def.dialogues[def.intro] ?? []);
+    });
+  }
+
+  private refreshHud() {
+    const w = this.world;
+    if (!w) return;
+    this.ui.setHearts(w.player.hearts, this.save.maxHearts);
+    this.ui.setBolts(this.save.bolts);
+    this.ui.setDash(this.save.abilities.includes('dash'));
+  }
+
+  private hooks(): WorldHooks {
+    return {
+      say: (lines, then) => {
+        if (!lines.length) {
+          then?.();
+          return;
+        }
+        const prev = this.state;
+        this.state = 'dialogue';
+        this.input.reset();
+        this.ui.showControls(false);
+        this.ui.dialogue(lines, () => {
+          this.state = prev === 'dialogue' ? 'play' : prev === 'play' ? 'play' : prev;
+          if (this.state === 'play') this.ui.showControls(true);
+          this.input.flush();
+          then?.();
+        });
+      },
+      toast: (text, who) => this.ui.toast(text, who ?? 'bolt'),
+      hack: (length, done) => {
+        this.state = 'hack';
+        this.input.reset();
+        this.ui.showControls(false);
+        this.ui.hack(length, (ok) => {
+          this.state = 'play';
+          this.ui.showControls(true);
+          this.input.flush();
+          done(ok);
+        });
+      },
+      shop: () => {
+        this.state = 'shop';
+        this.input.reset();
+        this.ui.showControls(false);
+        this.ui.shop(
+          this.save,
+          (item) => this.buy(item),
+          () => {
+            this.ui.close();
+            this.state = 'play';
+            this.ui.showControls(true);
+            this.input.flush();
+            this.refreshHud();
+            writeSave(this.save);
+          },
+        );
+      },
+      complete: () => this.completeDeck(),
+      checkpoint: () => this.persist(),
+      collect: (kind, id) => {
+        const w = this.world;
+        if (!w) return;
+        if (kind === 'shard') {
+          const d = w.def;
+          this.ui.setShards(d.shardIds.map((s) => this.save.shards.includes(`${d.id}.${s}`)));
+          const key = id.split('.')[1];
+          const lines = d.dialogues[`shard:${key}`];
+          this.persist();
+          haptic('success');
+          if (lines) this.hooks().say(lines);
+          else this.ui.toast(`Memory shard! ${this.save.shards.length} / 18`, 'bolt');
+        } else if (kind === 'ability') {
+          this.persist();
+          this.refreshHud();
+          this.hooks().say(ABILITY_LINES[id] ?? []);
+        } else {
+          this.persist();
+        }
+      },
+      hud: () => this.refreshHud(),
+      bossBar: (name, frac) => this.ui.setBoss(name, frac),
+      down: () => {
+        this.state = 'down';
+        this.input.reset();
+        this.ui.showControls(false);
+        haptic('warning');
+        audio.play('fail');
+        this.ui.down(() => {
+          this.world?.respawn();
+          this.state = 'play';
+          this.ui.showControls(true);
+          this.input.flush();
+          this.refreshHud();
+        });
+      },
+      music: (t) => audio.music(t),
+      objective: (t) => this.ui.setObjective(t),
+      ending: (kind) => this.ending(kind),
+    };
+  }
+
+  private buy(item: ShopItem) {
+    const lvl = this.save.upgrades[item.id] ?? 0;
+    const price = item.prices[lvl];
+    if (price === undefined || this.save.bolts < price) return;
+    if (item.id === 'heart' && this.save.maxHearts >= MAX_HEARTS) return;
+    this.save.bolts -= price;
+    this.save.upgrades[item.id] = lvl + 1;
+    if (item.id === 'heart') {
+      this.save.maxHearts = Math.min(MAX_HEARTS, this.save.maxHearts + 1);
+      this.world?.player.heal(99);
+    }
+    audio.play('upgrade');
+    haptic('success');
+    writeSave(this.save);
+  }
+
+  private completeDeck() {
+    const w = this.world;
+    if (!w) return;
+    const d = w.def;
+    this.state = 'results';
+    this.input.reset();
+    this.ui.showControls(false);
+    this.ui.showHud(false);
+    audio.play('success');
+    if (!this.save.completed.includes(d.id)) this.save.completed.push(d.id);
+    const nextId = LEVEL_ORDER[d.index] as DeckId | undefined;
+    this.save.unlocked = Math.max(this.save.unlocked, Math.min(6, d.index + 1));
+    const best = this.save.bestTimes[d.id];
+    if (!best || this.deckTime < best) this.save.bestTimes[d.id] = Math.round(this.deckTime);
+    this.save.resume = nextId ? { deck: nextId, checkpoint: null, flags: [], taken: [], dead: [] } : null;
+    writeSave(this.save);
+    const m = Math.floor(this.deckTime / 60);
+    const s = Math.floor(this.deckTime % 60);
+    const colonistsHere = d.colonistIds?.length ?? 0;
+    this.ui.results(
+      {
+        deck: d.name,
+        time: `${m}:${String(s).padStart(2, '0')}`,
+        bolts: this.save.bolts - this.boltsAtStart,
+        shards: `${d.shardIds.filter((x) => this.save.shards.includes(`${d.id}.${x}`)).length} / ${d.shardIds.length}`,
+        colonists: colonistsHere ? `${d.colonistIds?.filter((c) => this.save.colonists.includes(`${d.id}.${c}`)).length} / ${colonistsHere}` : '',
+        next: nextId ? LEVELS[nextId].name : null,
+      },
+      () => {
+        this.ui.close();
+        if (nextId) this.startDeck(nextId, false);
+        else this.toTitle();
+      },
+    );
+  }
+
+  private ending(kind: 'saved' | 'friends') {
+    this.state = 'ending';
+    this.input.reset();
+    this.ui.showHud(false);
+    if (!this.save.endings.includes(kind)) this.save.endings.push(kind);
+    if (!this.save.completed.includes('bridge')) this.save.completed.push('bridge');
+    this.save.resume = null;
+    writeSave(this.save);
+    audio.music('ending');
+    const hours = Math.floor(this.save.playSeconds / 3600);
+    const mins = Math.floor((this.save.playSeconds % 3600) / 60);
+    this.ui.ending(
+      kind,
+      endingText(kind, this.save),
+      [
+        ['Memory shards', `${this.save.shards.length} / 18`],
+        ['Colonists rescued', `${this.save.colonists.length} / 12`],
+        ['Bolts in pocket', String(this.save.bolts)],
+        ['Play time', `${hours}h ${mins}m`],
+      ],
+      () => this.toTitle(),
+    );
+  }
+
+  /* ---------------- loop ---------------- */
+
+  private frame(t: number) {
+    requestAnimationFrame((n) => this.frame(n));
+    const dt = Math.min(0.05, Math.max(0, (t - this.last) / 1000));
+    this.last = t;
+    this.frames += 1;
+    this.fpsT += dt;
+    if (this.fpsT >= 1) {
+      if (!inApp() && location.hash.includes('fps')) this.ui.setFps(`${this.frames} fps`);
+      this.frames = 0;
+      this.fpsT = 0;
+    }
+    this.input.poll();
+    const w = this.world;
+    if (w && (this.state === 'play' || this.state === 'dialogue' || this.state === 'hack' || this.state === 'shop' || this.state === 'pause' || this.state === 'down' || this.state === 'results')) {
+      if (this.state === 'play') {
+        this.deckTime += dt;
+        this.save.playSeconds += dt;
+        if (this.input.take('pause')) {
+          this.pause();
+        } else {
+          w.update(dt, this.input, this.save.settings.camSpeed);
+          this.hudT -= dt;
+          if (this.hudT <= 0) {
+            this.hudT = 0.1;
+            const f = w.focus;
+            if (f) this.ui.setAction(f.label(), 'action');
+            else if (w.shieldReady) this.ui.setAction('SHIELD', 'shield');
+            else this.ui.setAction(null);
+          }
+        }
+      }
+      this.renderer.render(w.scene, w.camera);
+      return;
+    }
+    this.title.update(dt);
+    this.renderer.render(this.title.scene, this.title.camera);
+  }
+}
