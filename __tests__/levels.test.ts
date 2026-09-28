@@ -1,0 +1,84 @@
+import { deckAbilities } from '../game/tools/deckAbilities';
+import { isCollectible, reach } from '../game/tools/reach';
+import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
+import { parseLevel } from '../game/src/world/grid';
+import type { Ability } from '../game/src/world/levelTypes';
+
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'shield'];
+const parsed = LEVEL_ORDER.map((id) => parseLevel(LEVELS[id]));
+
+describe('deck data', () => {
+  it('has six decks in order', () => {
+    expect(LEVEL_ORDER).toHaveLength(6);
+    LEVEL_ORDER.forEach((id, i) => expect(LEVELS[id].index).toBe(i + 1));
+  });
+
+  it('hides 18 memory shards and 12 colonists across the ship', () => {
+    let shards = 0;
+    let colonists = 0;
+    for (const level of parsed) {
+      const ids = level.entities.filter((e) => e.spec.type === 'shard').map((e) => e.id.split('.')[1]);
+      expect(ids.sort()).toEqual([...level.def.shardIds].sort());
+      const cocoons = level.entities.filter((e) => e.spec.type === 'cocoon').map((e) => e.id.split('.')[1]);
+      expect(cocoons.sort()).toEqual([...(level.def.colonistIds ?? [])].sort());
+      shards += ids.length;
+      colonists += cocoons.length;
+    }
+    expect(shards).toBe(18);
+    expect(colonists).toBe(12);
+  });
+
+  it('gives every shard a memory and every deck its story beats', () => {
+    for (const level of parsed) {
+      const d = level.def;
+      for (const s of d.shardIds) expect(d.dialogues[`shard:${s}`]?.length).toBeGreaterThan(0);
+      if (d.intro) expect(d.dialogues[d.intro]?.length).toBeGreaterThan(0);
+      expect(d.dialogues.boss?.length).toBeGreaterThan(0);
+      expect(d.dialogues.bossDown?.length).toBeGreaterThan(0);
+      for (const e of level.entities) {
+        if (e.spec.type === 'trigger' && e.spec.dialogue) expect(d.dialogues[e.spec.dialogue]?.length).toBeGreaterThan(0);
+      }
+    }
+    expect(LEVELS.cryo.dialogues.bolt?.length).toBeGreaterThan(0);
+    expect(LEVELS.bridge.dialogues.speak?.length).toBeGreaterThan(0);
+    expect(LEVELS.bridge.dialogues.friends?.length).toBeGreaterThan(0);
+  });
+
+  it('has exactly one boss per deck and an exit lift on every deck but the last', () => {
+    for (const level of parsed) {
+      const bosses = level.entities.filter((e) => e.spec.type === 'boss');
+      expect(bosses).toHaveLength(1);
+      const exits = level.entities.filter((e) => e.spec.type === 'exit');
+      expect(exits).toHaveLength(level.def.id === 'bridge' ? 0 : 1);
+    }
+  });
+
+  it('hands out each ability exactly once, in order', () => {
+    const found = parsed.flatMap((l) => l.entities.filter((e) => e.spec.type === 'upgrade').map((e) => (e.spec.type === 'upgrade' ? e.spec.ability : null)));
+    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'shield']);
+  });
+});
+
+describe.each(LEVEL_ORDER)('%s layout', (id) => {
+  const level = parseLevel(LEVELS[id]);
+  const { before, after } = deckAbilities(level);
+
+  it('lets Kai reach every door, switch, terminal, checkpoint and the boss', () => {
+    const r = reach(level, after);
+    const stuck = r.missing.filter((e) => !isCollectible(e.spec)).map((e) => `${e.id} at ${e.cx},${e.cz}`);
+    expect(stuck).toEqual([]);
+  });
+
+  it('keeps every collectible reachable (some may need later abilities)', () => {
+    expect(reach(level, ALL).missing.map((e) => e.id)).toEqual([]);
+  });
+
+  it('makes the new ability necessary to finish the deck', () => {
+    const upgrade = level.entities.find((e) => e.spec.type === 'upgrade');
+    if (!upgrade) return;
+    const r = reach(level, before);
+    expect(r.missing.map((e) => e.id)).not.toContain(upgrade.id);
+    const boss = level.entities.find((e) => e.spec.type === 'boss');
+    expect(r.missing.map((e) => e.id)).toContain(boss?.id);
+  });
+});
