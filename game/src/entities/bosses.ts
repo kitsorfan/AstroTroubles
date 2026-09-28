@@ -128,6 +128,9 @@ export abstract class Boss extends Entity {
 
 /* ---------------- 1. Frost Warden ---------------- */
 
+/** The Warden's ring lasers are red-hot so they stand out on the pale ice. */
+const WARDEN_LASER = '#ff2f55';
+
 class Warden extends Boss implements Target {
   protected focusHeight = 2.4;
   readonly title = 'FROST WARDEN';
@@ -229,11 +232,11 @@ class Warden extends Boss implements Target {
       case 'ring':
         this.model.position.y = damp(this.model.position.y, c.y, 12, dt);
         if (this.stateT <= 0.6 && this.stateT + dt > 0.6) {
-          this.world.addEntity(new Shockwave(this.world, c.x, c.y, c.z, 16, angry ? 10 : 8));
+          this.world.addEntity(new Shockwave(this.world, c.x, c.y, c.z, 16, angry ? 10 : 8, WARDEN_LASER));
           audio.play('pound');
           this.world.shake(0.4);
         }
-        if (angry && this.stateT <= 0.05 && this.stateT + dt > 0.05) this.world.addEntity(new Shockwave(this.world, c.x, c.y, c.z, 16, 8));
+        if (angry && this.stateT <= 0.05 && this.stateT + dt > 0.05) this.world.addEntity(new Shockwave(this.world, c.x, c.y, c.z, 16, 8, WARDEN_LASER));
         if (this.stateT <= 0) {
           this.state = 'idle';
           this.stateT = 1.4;

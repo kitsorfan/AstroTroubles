@@ -7,10 +7,58 @@ import { capsule, cone, mat, mesh, sphere } from './models';
 
 /* ---------------- shared hazards ---------------- */
 
-/** Expanding ring along the floor. Jump over it! */
+/** Height of the laser band above the floor; anything higher than this (any hop) is safe. */
+const WAVE_TOP = 0.42;
+const SEGMENTS = 96;
+
+/** A flat ring whose width stays fixed while its radius changes (the vertices are moved each frame). */
+class FlatRing {
+  readonly mesh: THREE.Mesh;
+  private pos: THREE.BufferAttribute;
+
+  constructor(
+    private width: number,
+    mat: THREE.Material,
+  ) {
+    const g = new THREE.BufferGeometry();
+    this.pos = new THREE.BufferAttribute(new Float32Array((SEGMENTS + 1) * 2 * 3), 3);
+    this.pos.setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('position', this.pos);
+    const idx: number[] = [];
+    for (let i = 0; i < SEGMENTS; i++) {
+      const a = i * 2;
+      idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+    }
+    g.setIndex(idx);
+    this.mesh = new THREE.Mesh(g, mat);
+    this.mesh.frustumCulled = false;
+  }
+
+  set(r: number) {
+    const inner = Math.max(0.01, r - this.width / 2);
+    const outer = r + this.width / 2;
+    const a = this.pos.array as Float32Array;
+    for (let i = 0; i <= SEGMENTS; i++) {
+      const t = (i / SEGMENTS) * Math.PI * 2;
+      const c = Math.cos(t);
+      const s = Math.sin(t);
+      a.set([c * inner, 0, s * inner, c * outer, 0, s * outer], i * 6);
+    }
+    this.pos.needsUpdate = true;
+  }
+}
+
+/**
+ * An expanding laser ring skimming the floor. It keeps the same thin width at every size and only
+ * hits Kai while his feet are on the ground, so a quick hop at any moment clears it.
+ */
 export class Shockwave extends Entity {
   private r = 0.5;
-  private ring: THREE.Mesh;
+  private beam: FlatRing;
+  private hot: FlatRing;
+  private halo: FlatRing;
+  private wall: THREE.Mesh;
+  private mats: [THREE.MeshBasicMaterial, number][] = [];
   private hitDone = false;
 
   constructor(
@@ -23,21 +71,49 @@ export class Shockwave extends Entity {
     color = '#7fe6ff',
   ) {
     super(world, `wave${Math.random()}`);
-    this.ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1, 0.18, 8, 48).rotateX(Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }),
-    );
-    this.ring.position.set(x, y + 0.25, z);
-    this.obj.add(this.ring);
+    const m = (c: string, opacity: number, additive: boolean) => {
+      const mt = new THREE.MeshBasicMaterial({
+        color: c,
+        transparent: true,
+        opacity,
+        blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      });
+      this.mats.push([mt, opacity]);
+      return mt;
+    };
+    // Seen from above: a solid band of laser colour, a thin white-hot line down its middle, and a soft glow.
+    this.halo = new FlatRing(1.1, m(color, 0.28, true));
+    this.beam = new FlatRing(0.34, m(color, 0.95, false));
+    this.hot = new FlatRing(0.07, m('#ffffff', 0.9, true));
+    const h = y + WAVE_TOP;
+    this.halo.mesh.position.set(x, y + 0.03, z);
+    this.beam.mesh.position.set(x, h, z);
+    this.hot.mesh.position.set(x, h + 0.01, z);
+    // Seen from the side: a low wall of light down to the floor, so its height is easy to judge.
+    this.wall = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, WAVE_TOP, SEGMENTS, 1, true), m(color, 0.35, true));
+    this.wall.position.set(x, y + WAVE_TOP / 2, z);
+    this.obj.add(this.halo.mesh, this.wall, this.beam.mesh, this.hot.mesh);
+    this.place();
+  }
+
+  private place() {
+    this.halo.set(this.r);
+    this.beam.set(this.r);
+    this.hot.set(this.r);
+    this.wall.scale.set(this.r, 1, this.r);
   }
 
   update(dt: number) {
     this.r += this.speed * dt;
-    this.ring.scale.setScalar(this.r);
-    (this.ring.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - this.r / this.maxR) * 0.9 + 0.1;
+    this.place();
+    const fade = Math.min(1, (this.maxR - this.r) / 2);
+    for (const [mt, o] of this.mats) mt.opacity = o * fade;
     const p = this.world.player.body;
     const d = Math.hypot(p.x - this.x, p.z - this.z);
-    if (!this.hitDone && Math.abs(d - this.r) < 0.6 && p.y < this.y + 0.7) {
+    if (!this.hitDone && Math.abs(d - this.r) < p.r + 0.17 && p.y < this.y + WAVE_TOP) {
       this.hitDone = true;
       this.world.player.hurt(1, this.x, this.z);
     }
