@@ -2,7 +2,7 @@ import type { Ability, DeckId } from '../world/levelTypes';
 import { post } from './bridge';
 import { START_HEARTS } from './constants';
 
-export type UpgradeId = 'blaster' | 'rapid' | 'boltZap' | 'magnet' | 'heart';
+export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart';
 export type Quality = 'low' | 'medium' | 'high';
 
 export interface Settings {
@@ -23,6 +23,14 @@ export interface SaveData {
   maxHearts: number;
   abilities: Ability[];
   upgrades: Partial<Record<UpgradeId, number>>;
+  /** Enemy kinds Kai has already met (their threat card has been shown). */
+  bestiary?: string[];
+  /** Vault prizes already opened. */
+  prizes?: string[];
+  /** First-time hints BOLT has already given (about cocoons, shards, bolts...). */
+  hints?: string[];
+  /** Side quests finished (their reward has been paid). */
+  quests?: string[];
   shards: string[];
   canisters: string[];
   colonists: string[];

@@ -36,6 +36,17 @@ export class Player {
   private spinHit = new Set<unknown>();
   private shootCd = 0;
   private shootPose = 0;
+  /** Shots left in the clip; the clip refills after a reload. */
+  ammo: number;
+  /** Seconds left on the current reload (0 = not reloading). */
+  reloadT = 0;
+  /** 0..1 fireball charge while BLAST is held. */
+  charge = 0;
+  private holdT = 0;
+  private wasHeld = false;
+  private sinceShot = 99;
+  private chargedFx = false;
+  private blinkT = 2;
   gliding = false;
   private squash = 0;
   private phase = 0;
@@ -67,6 +78,7 @@ export class Player {
     this.model = makeKai();
     this.facing = facing;
     this.hearts = world.save.maxHearts;
+    this.ammo = this.clipSize;
     this.renderY = y;
     this.safe.set(x, y, z);
     world.scene.add(this.model.root);
@@ -75,6 +87,31 @@ export class Player {
 
   has(a: Ability) {
     return this.world.save.abilities.includes(a);
+  }
+
+  get clipSize() {
+    return PLAYER.clip + (this.world.save.upgrades.clip ?? 0) * 2;
+  }
+
+  get reloading() {
+    return this.reloadT > 0;
+  }
+
+  /** 0..1 while reloading. */
+  get reloadProgress() {
+    return this.reloadT > 0 ? 1 - this.reloadT / this.reloadTime : 0;
+  }
+
+  private get reloadTime() {
+    return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
+  }
+
+  private startReload() {
+    if (this.reloadT > 0 || this.ammo >= this.clipSize) return;
+    this.reloadT = this.reloadTime;
+    this.charge = 0;
+    audio.play('reload', 0.8);
+    this.world.hooks.hud();
   }
 
   get pos() {
@@ -148,6 +185,9 @@ export class Player {
   revive() {
     this.down = false;
     this.hearts = this.world.save.maxHearts;
+    this.ammo = this.clipSize;
+    this.reloadT = 0;
+    this.charge = 0;
     this.invuln = 1.5;
     this.world.hooks.hud();
   }
@@ -293,8 +333,8 @@ export class Player {
       }
     }
 
-    // Shooting.
-    if (input.isHeld('shoot') && this.shootCd <= 0 && this.spinT <= 0) this.shoot();
+    // Blaster: tap to shoot (limited clip, then reload); hold to charge a big fireball.
+    this.updateBlaster(dt, input);
 
     // Ride moving platforms.
     if (b.grounded && b.ground?.box) {
@@ -353,13 +393,66 @@ export class Player {
     return c.kind === 'void' || c.kind === 'wall' ? -99 : c.h;
   }
 
-  private shoot() {
+  private updateBlaster(dt: number, input: Input) {
+    const held = input.isHeld('shoot');
+    const pressed = input.take('shoot');
+    this.sinceShot += dt;
+    if (this.reloadT > 0) {
+      this.reloadT -= dt;
+      if (this.reloadT <= 0) {
+        this.reloadT = 0;
+        this.ammo = this.clipSize;
+        audio.play('reload', 1.3);
+        this.world.hooks.hud();
+      }
+    } else if (!held && this.ammo < this.clipSize && this.sinceShot > 1.8) {
+      // Top the clip up after a short break from shooting.
+      this.startReload();
+    }
+    if (pressed && this.spinT <= 0) {
+      if (this.reloadT > 0) audio.play('empty');
+      else if (this.ammo <= 0) {
+        audio.play('empty');
+        this.startReload();
+      } else if (this.shootCd <= 0) this.shoot();
+    }
+    // Holding BLAST charges a fireball (it needs a few shots' worth of energy in the clip).
+    if (held) {
+      this.holdT += dt;
+      const canCharge = this.reloadT <= 0 && this.ammo >= PLAYER.fireballCost && this.spinT <= 0;
+      if (this.holdT > 0.22 && canCharge) {
+        if (this.charge === 0) audio.play('charge');
+        this.charge = Math.min(1, this.charge + dt / PLAYER.chargeTime);
+        if (this.charge >= 1 && !this.chargedFx) {
+          this.chargedFx = true;
+          audio.play('charged');
+          haptic('light');
+        }
+        const b = this.body;
+        const gx = b.x + Math.sin(this.facing) * 0.6 + Math.cos(this.facing) * 0.3;
+        const gz = b.z + Math.cos(this.facing) * 0.6 - Math.sin(this.facing) * 0.3;
+        if (Math.random() < 0.5 + this.charge * 0.5) {
+          const a = Math.random() * Math.PI * 2;
+          this.world.particles.emit(gx + Math.cos(a) * 1.1, b.y + 1 + Math.sin(a) * 0.8, gz + Math.sin(a) * 1.1, { count: 1, color: this.charge >= 1 ? '#ffd166' : '#ff9a3d', speed: 0.2, life: 0.25, size: 0.35, gravity: 0 });
+        }
+      } else if (this.holdT > 0.22 && this.ammo < PLAYER.fireballCost && this.reloadT <= 0 && this.charge === 0) {
+        this.startReload();
+      }
+    } else if (this.wasHeld) {
+      if (this.charge >= 1) this.fireball();
+      this.charge = 0;
+      this.holdT = 0;
+      this.chargedFx = false;
+    }
+    this.wasHeld = held;
+  }
+
+  /** Where shots leave the blaster, and which way they fly (auto-aiming at the best target). */
+  private aimShot(range: number): [THREE.Vector3, THREE.Vector3] {
     const w = this.world;
     const b = this.body;
-    const rapid = w.save.upgrades.rapid ?? 0;
-    this.shootCd = PLAYER.shootCooldown * (1 - rapid * 0.18);
     const origin = new THREE.Vector3(b.x, b.y + 1.05, b.z);
-    const target = w.findAimTarget(origin, this.facing, PLAYER.aimRange);
+    const target = w.findAimTarget(origin, this.facing, range);
     let dir: THREE.Vector3;
     if (target) {
       dir = target.aim.clone().sub(origin);
@@ -370,9 +463,41 @@ export class Player {
     dir.normalize();
     origin.x += Math.sin(this.facing) * 0.55 + Math.cos(this.facing) * 0.3;
     origin.z += Math.cos(this.facing) * 0.55 - Math.sin(this.facing) * 0.3;
+    return [origin, dir];
+  }
+
+  private shoot() {
+    const w = this.world;
+    const rapid = w.save.upgrades.rapid ?? 0;
+    this.shootCd = PLAYER.shootCooldown * (1 - rapid * 0.15);
+    const [origin, dir] = this.aimShot(PLAYER.aimRange);
     w.shots.fire('player', origin, dir, PLAYER.shotSpeed, 1 + (w.save.upgrades.blaster ?? 0));
+    this.ammo -= 1;
+    this.sinceShot = 0;
     this.shootPose = 0.18;
     audio.play('shoot', 0.95 + Math.random() * 0.1);
+    if (this.ammo <= 0) this.startReload();
+    w.hooks.hud();
+  }
+
+  private fireball() {
+    const w = this.world;
+    const [origin, dir] = this.aimShot(PLAYER.aimRange + 4);
+    const dmg = 4 + (w.save.upgrades.blaster ?? 0) * 2;
+    w.shots.fire('fireball', origin, dir, PLAYER.fireballSpeed, dmg);
+    this.ammo = Math.max(0, this.ammo - PLAYER.fireballCost);
+    this.sinceShot = 0;
+    this.shootPose = 0.4;
+    this.shootCd = 0.4;
+    // A kick of recoil.
+    this.vx -= dir.x * 4;
+    this.vz -= dir.z * 4;
+    audio.play('fireball');
+    haptic('medium');
+    w.shake(0.25);
+    w.flash(origin.x, origin.y, origin.z, '#ffb04a', 30, 0.25);
+    if (this.ammo <= 0) this.startReload();
+    w.hooks.hud();
   }
 
   private animate(dt: number, speedFrac: number) {
@@ -395,7 +520,7 @@ export class Player {
     m.armL.rotation.x = air ? -2.4 : -s * 0.7 * walk;
     m.armL.rotation.z = this.gliding ? -1.3 : air ? -0.3 : 0.05;
     m.armR.rotation.z = this.gliding ? 1.3 : 0;
-    m.armR.rotation.x = this.shootPose > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
+    m.armR.rotation.x = this.shootPose > 0 || this.charge > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
     m.body.position.y = air ? 0 : Math.abs(s) * 0.07 * walk + Math.sin(this.phase * 0.5) * 0.01;
     // Ground pound: a quick front flip while hanging in the air, then feet-first down.
     const flip = this.poundHang > 0 ? (1 - this.poundHang / POUND_HANG) * Math.PI * 2 : 0.2;
@@ -411,6 +536,13 @@ export class Player {
       j.scale.setScalar(damp(j.scale.x, target, 20, dt));
     }
     m.visor.emissiveIntensity = 0.35 + this.world.darkness * 1.2;
+    const glow = this.charge > 0 ? 0.4 + this.charge * 1.6 + (this.charge >= 1 ? Math.sin(this.phase * 3) * 0.3 : 0) : 0;
+    m.gunGlow.scale.setScalar(Math.max(0.001, glow));
+    m.gunGlow.material.color.set(this.charge >= 1 ? '#ffd166' : '#ff9a3d');
+    this.blinkT -= dt;
+    const blink = this.blinkT < 0.12;
+    if (this.blinkT < 0) this.blinkT = 2 + Math.random() * 3;
+    for (const e of m.eyes) e.scale.y = blink ? 0.12 : 1;
     m.root.visible = this.invuln <= 0 || Math.floor(this.invuln * 12) % 2 === 0 || this.down;
     if (this.carrying) this.carrying.rotation.y += dt * 2;
     this.fx.update(dt, b.x, this.renderY, b.z, { pounding: this.pounding, hang: this.poundHang, hangMax: POUND_HANG, airborne: !b.grounded });

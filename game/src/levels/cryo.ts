@@ -71,17 +71,17 @@ export const cryo: LevelDef = {
     #........2222..........#
     #.x......22R2........x.#
     #........2222..........#
-    #......................#
-    #..........y...........#
-    ###########D############
-    #.......#T.............#
-    #.m..m..#..............#
-    #.o.o.o.#..............#
-    #.x.....O..............#
-    #.......#..............#
-    #.r...%.#..............#
-    #!....F.#......g.......#
-    #########..............#
+    #......................#############
+    #..........y...........#...........#
+    ###########D############.a.......v.#
+    #.......#T.............#...........#####
+    #.m..m..#..............#.....u.....#...#
+    #.o.o.o.#..............#...........#...#
+    #.x.....O...................s......Z.Y.#
+    #.......#..............#...........#...#
+    #.r...%.#..............#...........#####
+    #!....F.#......g.......#.x.......x.#
+    #########..............#############
     ##############...#######
                   111
               3333333
@@ -106,6 +106,12 @@ export const cryo: LevelDef = {
      ######################
 `,
   legend: {
+    a: { type: 'rune', group: 'vault', order: 1, color: '#ffd166' },
+    u: { type: 'rune', group: 'vault', order: 2, color: '#ff6fcf' },
+    v: { type: 'rune', group: 'vault', order: 3, color: '#5ee0ff' },
+    s: { type: 'sign', text: "SECRET VAULT LOCK. Step on the glowing tiles in this order: GOLD, then PINK, then BLUE. Step on a wrong one and the code resets!" },
+    Z: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
+    Y: { type: 'prize', id: 'vault', reward: 'clip' },
     W: { type: 'boss', boss: 'warden', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },
     L: { type: 'exit' },

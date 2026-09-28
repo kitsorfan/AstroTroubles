@@ -128,10 +128,15 @@ export async function holoLog(d: Director, w: World, holo: Holo) {
   const side = V(dir.z, 0, -dir.x);
   const mid = k.clone().lerp(s, 0.5);
   try {
-    await d.cam(mid.clone().addScaledVector(side, 6).addScaledVector(dir, -1.5).add(V(0, 2.6, 0)), mid.clone().add(V(0, 1.2, 0)), 1.1, ease.inOut, 44);
+    // Over Kai's shoulder at first, then close on the hologram's face while it talks.
+    await d.cam(mid.clone().addScaledVector(side, 4.5).addScaledVector(dir, -1.5).add(V(0, 2.4, 0)), mid.clone().add(V(0, 1.4, 0)), 1.1, ease.inOut, 44);
     audio.play('zap', 0.6);
     audio.play('blip', 0.5);
     await d.tween(1, (x) => holo.show(x < 0.6 ? (Math.random() < 0.5 ? x : 0.1) : x), ease.linear);
+    const headY = s.y + 1.9;
+    const close = s.clone().addScaledVector(dir, -2.6).addScaledVector(side, 0.9);
+    close.y = headY + 0.15;
+    void d.cam(close, V(s.x, headY - 0.05, s.z), 1.6, ease.inOut, 34);
     await d.say(w.dialogue(holo.log));
     await d.tween(0.7, (x) => holo.show(1 - x), ease.in);
   } finally {
@@ -318,6 +323,63 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
   }
   const back = follow(w);
   await d.cam(back.pos, back.look, 1.1);
+}
+
+/** The Heart falls... and the Bloom pulls every vine on the ship into it and rises again. */
+export async function rebirth(d: Director, w: World, heart: Boss) {
+  const c = heart.where.clone();
+  const k = kai(w);
+  face(w, c);
+  const u = toward(c, k);
+  const side = V(u.z, 0, -u.x);
+  const color = BOSS_CARD.reborn.color;
+  d.timeScale = 0.35;
+  // Victory... for a moment.
+  await d.cam(c.clone().addScaledVector(u, 11).addScaledVector(side, 3).add(V(0, 5, 0)), c.clone().add(V(0, 2.5, 0)), 1.6);
+  d.timeScale = 1;
+  await d.say(w.dialogue('fallen'));
+  // Then the whole deck starts to shake, and every vine rushes back to the Heart.
+  audio.play('roar', 0.7);
+  d.glitch(0.8);
+  await d.tween(
+    2.6,
+    (x) => {
+      w.shake(0.25 + x * 0.5);
+      for (let i = 0; i < 3; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 5 + Math.random() * 10;
+        const from = V(c.x + Math.cos(a) * r, c.y + 0.3, c.z + Math.sin(a) * r);
+        w.particles.emit(from.x, from.y, from.z, { count: 1, color: Math.random() < 0.5 ? '#ff2a8a' : '#ff4fd8', speed: 0.2, up: 0, life: 0.8, size: 0.8, gravity: 0 });
+        w.beams.zap(from, c.clone().add(V(0, 1.5, 0)), color);
+      }
+      if (Math.random() < 0.2) w.flash(c.x, c.y + 1, c.z, color, 40 + x * 60, 0.2);
+    },
+    ease.in,
+  );
+  // It rises: bigger, angrier, with one great eye.
+  const reborn = w.spawnBoss('reborn', heart);
+  const titan = reborn as Boss & Partial<{ rise: number; glare: number }>;
+  titan.rise = 0;
+  audio.play('explode');
+  audio.play('roar');
+  w.flash(c.x, c.y + 3, c.z, color, 120, 1);
+  w.rings.burst(c.x, c.y, c.z, 12, color, 0.9);
+  w.particles.emit(c.x, c.y + 2, c.z, { count: 90, color, speed: 12, life: 1.2, size: 1.1, up: 4 });
+  haptic('heavy');
+  await Promise.all([
+    d.tween(2.4, (x) => (titan.rise = x), ease.out),
+    d.cam(c.clone().addScaledVector(u, 9).addScaledVector(side, 2).add(V(0, 1.2, 0)), c.clone().add(V(0, 4.4, 0)), 2.4, ease.inOut, 46),
+  ]);
+  titan.rise = 1;
+  // Its great eye snaps open.
+  audio.play('roar', 0.8);
+  await d.tween(0.5, (x) => (titan.glare = x), ease.out);
+  w.shake(0.9);
+  await d.title(reborn.title, BOSS_CARD.reborn.sub, color);
+  await d.say(w.dialogue('reborn'));
+  titan.glare = 0;
+  const fight = follow(w, 17);
+  await d.cam(fight.pos, fight.look, 1.1, ease.inOut, fight.fov);
 }
 
 /** The secret ending: BOLT speaks to the Bloom Heart in lights, and it answers. */

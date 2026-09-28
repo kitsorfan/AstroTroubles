@@ -58,18 +58,18 @@ export const bridge: LevelDef = {
     #                         #
     #.................j.......#
     #............C............#
-    #############N#############
-    #.........................#
-    #...T.................k...#
-    #.........o.o.o.o.........#
-    #.........................#
-    #.......s.........s.......#
+    #############N###################
+    #.p.......................#.....#
+    #...T.................k...#..I..#
+    #.........o.o.o.o.......H.D.....#
+    #...................J.....#.....#
+    #.......s.........s.......#######
     #.........................#
     #............r............####
     #....x...............x....G.+#
     #.........................####
     #.Q..........C............#
-    #.........................#
+    #.z.....................t.#
  ###############...############
  #....#....##.........#
  #....#...o##a........#
@@ -108,6 +108,13 @@ export const bridge: LevelDef = {
           ###############
 `,
   legend: {
+    p: { type: 'switch', flag: 'bs1', timed: 18 },
+    t: { type: 'switch', flag: 'bs2', timed: 18 },
+    z: { type: 'switch', flag: 'bs3', timed: 18 },
+    J: { type: 'switch', flag: 'bs4', timed: 18 },
+    H: { type: 'sign', text: "SECRET VAULT. All FOUR red switches in this room must be down at the same time. They pop back up after 18 seconds, so plan your route and GROUND POUND fast!" },
+    D: { type: 'door', id: 'secretvault', open: { all: [{ flag: 'bs1' }, { flag: 'bs2' }, { flag: 'bs3' }, { flag: 'bs4' }] }, latch: true },
+    I: { type: 'prize', id: 'vault', reward: 'bolts' },
     W: { type: 'boss', boss: 'heart', room: 'heart' },
     V: { type: 'vendor' },
     C: { type: 'checkpoint', id: 'cp' },
@@ -176,6 +183,15 @@ export const bridge: LevelDef = {
       { who: 'bolt', text: 'The Heart is shrinking... it is turning into a tiny little seed!' },
       { who: 'halcyon', text: 'The vines are letting go of the controls! Kai, the steering wheel!' },
       { who: 'kai', text: 'Hold on, everybody! Turning the ship... NOW!' },
+    ],
+    fallen: [
+      { who: 'bolt', text: 'We did it... did we do it? Kai, why is the floor shaking?' },
+    ],
+    reborn: [
+      { who: 'halcyon', text: 'Warning! The Bloom is pulling EVERY vine on the ship back into the Heart!' },
+      { who: 'bloom', text: 'NO! Home is RIGHT THERE! I will NOT go back into the cold and the dark!' },
+      { who: 'kai', text: 'It’s so scared, it’s fighting with everything it has left.' },
+      { who: 'bolt', text: 'It only gets hurt when its big eye opens! Charge up a FIREBALL for that! And JUMP over its thorn rings and vine beams!' },
     ],
     speak: [
       { who: 'bolt', text: 'Kai, wait! I learned the Bloom’s light-words from the shards. Blue is hello. Pink is safe. Gold is together.' },

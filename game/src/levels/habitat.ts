@@ -19,17 +19,17 @@ export const habitat: LevelDef = {
 ##########################################
 #!844.....o.o.o.......#..x..x#+#.........#
 #8844.z...............#TR....RY#.......V.#
-#..x........e.........#...R....#.........#
+#..x........e.........#...Rq...#.........#
 #.....................#####.####.....C...#
 #........u.....C.669999...........h......#
 #...............w669999..................#
-###X###                            ......#
-#......                            ......#
-#......                            ....x.#
-#......                            .t....#
-#......                            ..e...#
-#..e...                            ...z..#
-#......                            .....t#
+###X###                            ......############
+#......                            ......#......#...#
+#......                            ....x.#.a..c.#.I.#
+#......                            .t...........D...#
+#......                            ..e...#.m..p.#...#
+#..e...                            ...z..#......#...#
+#......                            .....t############
 #o.....       ..............       ......#
 #......       .l....C.....l.       t.~~~.#
 #o.....       ..............       ..~.~.#
@@ -44,7 +44,7 @@ export const habitat: LevelDef = {
 #......       ..............       ....i.#
 #......       .l....L.....l.       .i....#
 #......       ..............       ...P.x#
-#......                            oo.g..#
+#.r....                            oo.g..#
 #....e.                            z...9U#
 #......                          ......89#
 #......                          Q4b...88#
@@ -60,6 +60,14 @@ export const habitat: LevelDef = {
 ##########################################
 `,
   legend: {
+    a: { type: 'rune', group: 'vault', order: 4, color: '#5ee0ff' },
+    c: { type: 'rune', group: 'vault', order: 2, color: '#ffd166' },
+    m: { type: 'rune', group: 'vault', order: 1, color: '#7dff9a' },
+    p: { type: 'rune', group: 'vault', order: 3, color: '#ff6fcf' },
+    q: { type: 'sign', text: "Scribbled on the school whiteboard: \"Vault code, first half: GREEN, then GOLD...\" The rest must be written somewhere else on the Ring!" },
+    r: { type: 'sign', text: "Scratched on a lamp post: \"...Vault code, second half: then PINK, and last of all BLUE.\" The vault is on the far east side of the Ring." },
+    D: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
+    I: { type: 'prize', id: 'vault', reward: 'rapid' },
     W: { type: 'boss', boss: 'bloblin', room: 'arena' },
     L: { type: 'exit' },
     V: { type: 'vendor' },

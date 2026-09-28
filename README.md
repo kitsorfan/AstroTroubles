@@ -40,7 +40,7 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | Left side of the screen | Joystick: move |
 | Drag on the right side | Turn the camera |
 | **JUMP** | Jump. Hold for higher jumps; with the Jet Boots, press again in mid-air |
-| **BLAST** | Shoots; aims at the nearest enemy automatically |
+| **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Kai reloads. **Hold** to charge a big fireball that bursts on impact |
 | **SPIN** | Spin attack. In mid-air it becomes a **ground pound**, which presses red switches and hurts more |
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core) |
 | BOLT button | Appears near terminals, pylons, signs and lifts. Also triggers BOLT's shield once you have it |
@@ -54,13 +54,48 @@ Kai finds a new ability on each deck, and it's needed to finish that deck:
 | 3. Engine Core | Dash Thrusters | Magma Golem |
 | 4. Habitat Ring | Hover Pack (hold JUMP to float) | King Bloblin |
 | 5. Security Deck | BOLT Shield (blocks lasers and shots) | WARDOG |
-| 6. The Bridge | Everything at once | The Bloom Heart |
+| 6. The Bridge | Everything at once | The Bloom Heart, then the Bloom Reborn |
 
 - **Hacking** is a light-pattern memory game: watch BOLT's lights, then repeat them.
-- **Bolts** are money. Spend them at VENDY's shop on extra hearts, blaster power, rapid fire, a stronger BOLT zap and a bolt magnet.
-- **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and defeated enemies stay defeated.
-- **Collectibles:** 18 memory shards (3 per deck), 12 colonists trapped in Bloom cocoons (blast them free), and a hidden heart canister on every deck. Some are tucked behind cracked walls (spin or blast them) or out over the void. The Elevator on the title screen lets you replay any deck you've reached.
-- **Two endings.** Beat the Bloom Heart to save the ship. Collect all 18 shards and BOLT learns to *speak* to it instead, which unlocks the secret ending.
+- **BOLT** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at VENDY's shop to make it hurt.
+- **Bolts** are money. Spend them at VENDY's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger BOLT zap and a bolt magnet.
+- **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
+- **The final battle.** Beating the Bloom Heart isn't the end: it pulls every vine on the ship into itself and rises again as the Bloom Reborn, a floating titan that is only hurt while its great eye is open.
+
+### Enemies
+
+Each enemy type has a floating icon and a health bar, and the first time you meet one, a card explains what it is and what it's up to:
+
+| Enemy | Its plan |
+| --- | --- |
+| Spore Crawler | Hunts in packs. When one spots you it calls the others, and they surround you |
+| Maw Plant | Hides among the roots and bites when you walk too close |
+| Stinger Wasp | Circles you, shoots where you're going, and dives in while you reload |
+| Warden Bot | Patrols, and sounds an alarm that wakes every guard nearby. Hit it from behind its shield |
+| Spitter Pod | Lobs acid at where you'll be when it lands |
+| Horned Brute | Charges; if it misses, it stomps in anger |
+
+Enemies get tougher deck by deck: more health, faster attacks, sharper senses. They also scale up a little with every weapon upgrade you buy. From the Engine Core on, some are **elites** with a gold crown: bigger, tougher and worth more bolts.
+
+### Side quests and rewards
+
+Every deck has four side quests, listed with their rewards in the pause menu. BOLT also explains each kind of collectible the first time you get close to one.
+
+- **Free the colonists** trapped in pink Bloom cocoons (blast them open): 25 bolts each, plus a bonus when the whole deck is free.
+- **Find the memory shards** (glowing pink crystals): a bolt bonus per deck and an extra heart for every 6. All 18 unlock the secret ending, where BOLT *speaks* to the Bloom instead of fighting it.
+- **Find the hidden heart canister** for one more max heart. They're often behind cracked walls (spin or blast them).
+- **Crack the secret vault.** Each deck has one, locked behind a harder puzzle, and the chest inside holds a free upgrade:
+
+| Deck | Vault puzzle | Prize |
+| --- | --- | --- |
+| Cryo Deck | Step on the colour pads in the order a sign gives | Bigger Clip |
+| Hydroponics | Ground-pound three timed switches before any pop back up | +1 max heart |
+| Engine Core | A four-colour code on islands in the lava | Blaster Power |
+| Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
+| Security Deck | A 7-light hack switches off a laser corridor | BOLT Zapper |
+| The Bridge | Four timed switches spread across the navigation room | 300 bolts |
+
+The Elevator on the title screen lets you replay any deck you've reached.
 
 Progress saves at every checkpoint and when you leave the app.
 

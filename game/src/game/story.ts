@@ -1,5 +1,6 @@
 import type { SaveData } from '../core/save';
 import { LEVELS, LEVEL_ORDER } from '../levels';
+import type { BadgeKind } from '../entities/badges';
 import type { BossKind, DeckId, Line } from '../world/levelTypes';
 
 /**
@@ -77,6 +78,23 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   bloblin: { sub: 'The wobbliest king in space', color: '#ff7fd0' },
   wardog: { sub: 'Chief security robot · controlled by the pollen', color: '#ff3a4c' },
   heart: { sub: 'The Bloom itself · steering the ship', color: '#ff6fcf' },
+  reborn: { sub: 'Every vine on the ship · its very last stand', color: '#ff2a8a' },
+};
+
+/**
+ * What each kind of enemy is, and what it's trying to do. The Bloom's plan is simple: keep growing
+ * toward the Bridge, keep the ship pointed at the star, and keep everyone asleep. Every creature
+ * (and every robot the pollen got to) has a job in that plan.
+ */
+export const INTEL: Record<BadgeKind | 'elite', { name: string; plan: string }> = {
+  sporeling: { name: 'Spore Crawler', plan: 'The Bloom’s scouts. They hunt in packs: when one spots you, it calls the others, and they try to surround you.' },
+  snapper: { name: 'Maw Plant', plan: 'Guards the Bloom’s roots. It hides underground and bites anything that walks too close. Watch for its jaws opening wide!' },
+  buzzer: { name: 'Stinger Wasp', plan: 'Carries pollen to the robots (that’s how they went haywire). It circles you and dives in when you stop to reload.' },
+  sentry: { name: 'Warden Bot', plan: 'A security robot full of pollen. If it sees you, it sounds the ALARM and every guard nearby comes running. Hit it from behind its shield.' },
+  turret: { name: 'Spitter Pod', plan: 'Rooted Bloom artillery that guards the cocoons. It aims where you are GOING, so change direction to dodge.' },
+  brute: { name: 'Horned Brute', plan: 'The Bloom’s muscle. It charges in a straight line; if it misses, it stomps in anger. Dodge sideways and hit it while it’s dizzy.' },
+  blob: { name: 'Bloblin', plan: 'Wobbly goo that splits when popped. Pop the big ones, then mop up the little ones.' },
+  elite: { name: 'Elite!', plan: 'Enemies with a gold crown are elites: bigger, tougher, and they drop more bolts. Charged fireballs work wonders.' },
 };
 
 /** Narration for the two ending cinematics. */

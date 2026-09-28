@@ -3,7 +3,7 @@ export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'shield';
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -27,7 +27,12 @@ export type Spec = Base &
     | { type: 'checkpoint'; id: string }
     | { type: 'enemy'; enemy: EnemyKind; room?: string; variant?: string }
     | { type: 'boss'; boss: BossKind; room: string }
-    | { type: 'door'; id: string; open: Cond; color?: string }
+    /** `latch` doors stay open once opened (for puzzles whose switches time out). */
+    | { type: 'door'; id: string; open: Cond; color?: string; latch?: boolean }
+    /** A floor pad in a code puzzle: step on every pad of the group in order to set the group's flag. */
+    | { type: 'rune'; group: string; order: number; color: string }
+    /** A vault chest with a reward: an upgrade level (or bolts, if that upgrade is maxed). */
+    | { type: 'prize'; id: string; reward: 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart' | 'bolts' }
     | { type: 'switch'; flag: string; timed?: number }
     | { type: 'terminal'; flag: string; length?: number; label?: string }
     | { type: 'cell' }

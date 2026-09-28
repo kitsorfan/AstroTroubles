@@ -5,7 +5,7 @@ import { damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { makeBolt, type BoltModel } from './models';
 
-const ZAP_RANGE = 8;
+const ZAP_RANGE = 6;
 
 /** BOLT follows Kai, zaps nearby enemies, and lights up dark rooms. */
 export class Bolt {
@@ -76,10 +76,11 @@ export class Bolt {
     // Zap assist.
     this.zapCd -= dt;
     if (threat && this.zapCd <= 0 && !w.cutscene) {
+      // BOLT is a helper, not a weapon: his zap only stuns until it is upgraded at VENDY's.
       const lvl = w.save.upgrades.boltZap ?? 0;
-      this.zapCd = 3.2 - lvl * 0.7;
+      this.zapCd = [8, 6, 4.5][lvl] ?? 4.5;
       w.beams.zap(this.pos.clone().add(new THREE.Vector3(0, 0, 0)), threat.aim.clone());
-      threat.hit(1 + (lvl >= 2 ? 1 : 0), 'zap', this.pos);
+      threat.hit(lvl, 'zap', this.pos);
       audio.play('zap');
       this.model.iris.emissiveIntensity = 4;
     }

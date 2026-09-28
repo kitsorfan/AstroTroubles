@@ -35,12 +35,18 @@ export const PLAYER = {
   ventV: 17,
   invuln: 1.4,
   knockback: 9,
-  shootCooldown: 0.24,
+  shootCooldown: 0.3,
+  /** Shots per clip, reload time, and the charged fireball (hold BLAST). */
+  clip: 6,
+  reloadTime: 1.5,
+  chargeTime: 0.8,
+  fireballCost: 3,
+  fireballSpeed: 17,
   shotSpeed: 24,
   shotRange: 22,
   spinTime: 0.4,
   spinRadius: 2.1,
-  aimRange: 15,
+  aimRange: 12,
   magnetRange: 3.2,
 };
 

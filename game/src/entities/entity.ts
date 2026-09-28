@@ -2,7 +2,8 @@ import * as THREE from 'three';
 
 import type { World } from '../game/world';
 
-export type HitKind = 'shot' | 'spin' | 'pound' | 'zap';
+/** `blast` is the charged fireball's explosion. */
+export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast';
 
 export abstract class Entity {
   alive = true;

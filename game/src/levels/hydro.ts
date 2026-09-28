@@ -79,20 +79,20 @@ export const hydro: LevelDef = {
     #fA~~~~~~~~~~~~~~~~~~~~#
     #f~~~~~~~~~~~~~~~~~~~~~#
     #......................#
-    #.t....t.......t....t.#
-    #......................#
+    #.t....t.......t....t..#
+    #.k...............u....#
     #..2222........2222..66#
     #..2cc2...e....2cc2..6K#
     #..2cc2........2cc2..o6#
     #..2222....n...2222..66#
-  ###..........x.........o6#
-  #*G.....b..............66#
-  ###.z..................o6#
-    #..2222........2222..66#
-    #..2cc2....n...2cc2..66#
-    #..2cc2........2cc2.b66#
+  ###..........x.........o6#######
+  #*G.....b..............66#66666#
+  ###.z..................o6#66I66#
+    #..2222........2222..66Z66666#
+    #..2cc2....n...2cc2.w66#66666#
+    #..2cc2........2cc2.b66#######
     #..2222..e.....2222..66#
-    #...o.o.o......o.o.o...#
+    #...o.o.o..l...o.o.o...#
     ##########...###########
          #.............#
          #.....@.......#
@@ -100,6 +100,12 @@ export const hydro: LevelDef = {
          ###############
 `,
   legend: {
+    k: { type: 'switch', flag: 'hs1', timed: 12 },
+    l: { type: 'switch', flag: 'hs2', timed: 12 },
+    u: { type: 'switch', flag: 'hs3', timed: 12 },
+    w: { type: 'sign', text: "SECRET VAULT (up on the ledge). It opens when all THREE red switches in this garden are down at the same time. Each one pops back up after 12 seconds. GROUND POUND fast!" },
+    Z: { type: 'door', id: 'secretvault', open: { all: [{ flag: 'hs1' }, { flag: 'hs2' }, { flag: 'hs3' }] }, latch: true },
+    I: { type: 'prize', id: 'vault', reward: 'heart' },
     W: { type: 'boss', boss: 'queen', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },
     L: { type: 'exit' },

@@ -261,6 +261,8 @@ export const TARGET_TYPES = [
   'checkpoint',
   'vendor',
   'holo',
+  'prize',
+  'rune',
 ] as const;
 
 function isTarget(s: Spec) {

@@ -15,7 +15,9 @@ import type { DeckId, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { UI, type ShopItem } from '../ui/ui';
 import { PostFx } from './post';
-import { creditsHtml, endingText } from './story';
+import { enemyIconUrl } from '../entities/badges';
+import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
+import { INTEL, creditsHtml, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
 
@@ -119,7 +121,19 @@ export class Game {
     });
     window.__game = this;
     requestAnimationFrame((t) => this.frame(t));
-    this.ui.tapToStart(() => {
+    // Warm up while the splash plays: fonts, and every shader the title scene needs.
+    const renderer = this.renderer;
+    const title = this.title;
+    const ready = (async () => {
+      await new Promise((r) => setTimeout(r, 60));
+      try {
+        await document.fonts?.ready;
+      } catch {
+        // fonts are embedded; carry on without waiting
+      }
+      renderer.compile(title.scene, title.camera);
+    })();
+    this.ui.tapToStart(ready, () => {
       audio.unlock();
       this.toTitle();
     });
@@ -246,6 +260,7 @@ export class Game {
       deck: d.name.toUpperCase(),
       shards: `${d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length} / ${d.shardIds.length} here · ${this.save.shards.length} / 18 total`,
       colonists: `${this.save.colonists.length} / 12`,
+      quests: deckQuests(d.id, this.save),
       onResume: () => this.resume(),
       onHelp: () => this.ui.help(() => this.pauseAgain()),
       onSettings: () => this.settings(() => this.pauseAgain()),
@@ -483,10 +498,12 @@ export class Game {
           this.ui.setShards(d.shardIds.map((s) => this.save.shards.includes(`${d.id}.${s}`)));
           const key = id.split('.')[1];
           const lines = d.dialogues[`shard:${key}`];
+          const milestone = shardMilestone(this.save);
+          if (milestone) this.ui.reward(milestone);
+          if (this.save.shards.length % 6 === 0) w.player.heal(99);
           this.persist();
           haptic('success');
           if (lines) this.hooks().say(lines);
-          else this.ui.toast(`Memory shard! ${this.save.shards.length} / 18`, 'bolt');
         } else if (kind === 'ability') {
           this.persist();
           this.refreshHud();
@@ -494,6 +511,8 @@ export class Game {
         } else {
           this.persist();
         }
+        for (const msg of payQuests(w.def.id, this.save)) this.ui.reward(msg);
+        this.refreshHud();
       },
       hud: () => this.refreshHud(),
       bossBar: (name, frac) => this.ui.setBoss(name, frac),
@@ -515,6 +534,24 @@ export class Game {
       objective: (t) => this.ui.setObjective(t),
       ending: (kind) => this.ending(kind),
       cutscene: (script) => this.cutscene(script),
+      prize: (reward) => {
+        const w = this.world;
+        const msg = givePrize(reward, this.save);
+        this.ui.reward(msg);
+        if (w) {
+          w.player.heal(99);
+          for (const m of payQuests(w.def.id, this.save)) this.ui.reward(m);
+        }
+        this.persist();
+        this.refreshHud();
+      },
+      reward: (text) => this.ui.reward(text),
+      threat: (kind) => {
+        const info = INTEL[kind];
+        const icon = enemyIconUrl(kind === 'elite' ? 'brute' : kind, kind === 'elite');
+        this.ui.threat(icon, info.name, info.plan, kind === 'elite' ? '#ffd166' : '#ff8a9a');
+        audio.play('alarm', 1);
+      },
     };
   }
 
@@ -636,6 +673,8 @@ export class Game {
           this.pause();
         } else {
           w.update(dt, this.input, this.save.settings.camSpeed);
+          const pl = w.player;
+          this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
           this.hudT -= dt;
           if (this.hudT <= 0) {
             this.hudT = 0.1;

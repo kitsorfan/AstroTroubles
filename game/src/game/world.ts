@@ -10,7 +10,10 @@ import type { Director, Rig } from '../cinema/director';
 import * as scenes from '../cinema/scenes';
 import { Bolt } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
+import type { BadgeKind } from '../entities/badges';
 import { makeEnemy, type Enemy } from '../entities/enemies';
+import { difficultyFor, type Difficulty } from './difficulty';
+import { COLONIST_BOLTS, HINTS } from './quests';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { Impacts } from '../entities/moveFx';
@@ -28,6 +31,8 @@ import {
   Exit,
   Faller,
   Holo,
+  Prize,
+  Rune,
   FloorSwitch,
   Laser,
   Platform,
@@ -44,7 +49,7 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, Cond, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
 import { Ambience, Particles } from '../world/particles';
 import { pointBlocked, type Box, type Ground } from '../world/physics';
 import { buildSky } from '../world/sky';
@@ -66,6 +71,12 @@ export interface WorldHooks {
   music(track: Track): void;
   objective(text: string): void;
   ending(kind: 'saved' | 'friends'): void;
+  /** A vault chest was opened. */
+  prize(reward: string): void;
+  /** A gold banner for rewards (bolts, hearts, quests). */
+  reward(text: string): void;
+  /** The first time Kai meets a kind of enemy (or an elite), show what it is and what it's up to. */
+  threat(kind: BadgeKind | 'elite'): void;
   /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
   cutscene(script: (d: Director) => Promise<void>): Promise<void>;
 }
@@ -110,6 +121,10 @@ export class World {
   readonly flags = new Set<string>();
   readonly taken = new Set<string>();
   readonly dead = new Set<string>();
+  /** How tough this deck's enemies are: it rises deck by deck and with Kai's weapon upgrades. */
+  readonly difficulty: Difficulty;
+  private levelEnemies = new Set<string>();
+  private runes: Rune[] = [];
   private entities: Entity[] = [];
   private movers: Entity[] = [];
   private targets: Target[] = [];
@@ -144,6 +159,7 @@ export class World {
   private objT = 0;
   private lastObjective = '';
   private shieldCd = 0;
+  private hintT = 1;
   private shadowTexel = 0;
   /** Kai's ground height, smoothed and ignoring jumps; the shadow map is centred on it. */
   private groundY = 0;
@@ -172,6 +188,9 @@ export class World {
       for (const d of resume.dead) this.dead.add(d);
     }
     if (def.index > 1) this.flags.add('bolt');
+    this.difficulty = difficultyFor(def.index, save);
+    // Enemies always come back when a deck is re-entered; only cleared rooms stay open.
+    this.dead.clear();
 
     const th = this.theme;
     this.fogColor = new THREE.Color(th.fog);
@@ -289,22 +308,34 @@ export class World {
         this.checkpoints.push(cp);
         break;
       }
-      case 'enemy':
-        if (!this.dead.has(id)) {
-          const e = makeEnemy(this, id, spec.enemy, cx, cz, h, spec.variant);
-          e.room = spec.room;
-          this.addEntity(e);
-          this.registerEnemy(e);
-        }
+      case 'enemy': {
+        this.levelEnemies.add(id);
+        const e = makeEnemy(this, id, spec.enemy, cx, cz, h, spec.variant);
+        e.room = spec.room;
+        this.addEntity(e);
+        this.registerEnemy(e);
         break;
+      }
       case 'boss':
         if (!this.flags.has('boss')) {
-          const b = this.addEntity(makeBoss(this, id, spec.boss, cx, cz, h));
+          // If Kai already beat the Bloom Heart once, its reborn form is waiting instead.
+          const kind = spec.boss === 'heart' && this.flags.has('reborn') ? 'reborn' : spec.boss;
+          const b = this.addEntity(makeBoss(this, id, kind, cx, cz, h));
+          if (kind === 'reborn') b.introSeen = true;
           this.boss = b;
         }
         break;
       case 'door':
-        this.addEntity(new Door(this, id, cx, cz, h, spec.open));
+        this.addEntity(new Door(this, id, cx, cz, h, spec.open, spec.latch));
+        break;
+      case 'rune': {
+        const r = this.addEntity(new Rune(this, id, cx, cz, h, spec.group, spec.order, spec.color));
+        this.runes.push(r);
+        if (this.flags.has(spec.group)) r.setLit(true);
+        break;
+      }
+      case 'prize':
+        this.addEntity(new Prize(this, id, cx, cz, h, spec.reward));
         break;
       case 'switch':
         this.addEntity(new FloorSwitch(this, id, cx, cz, h, spec.flag, spec.timed));
@@ -452,7 +483,7 @@ export class World {
 
   cond(c: Cond): boolean {
     if ('flag' in c) return this.flags.has(c.flag) || (c.flag.startsWith('ability:') && this.save.abilities.includes(c.flag.slice(8) as Ability));
-    if ('clear' in c) return !this.enemies.some((e) => e.alive && e.room === c.clear);
+    if ('clear' in c) return this.flags.has(`cleared:${c.clear}`) || !this.enemies.some((e) => e.alive && e.room === c.clear);
     if ('boss' in c) return this.flags.has('boss');
     if ('all' in c) return c.all.every((x) => this.cond(x));
     return false;
@@ -492,7 +523,11 @@ export class World {
     const s = this.save;
     if (kind === 'shard' && !s.shards.includes(id)) s.shards.push(id);
     if (kind === 'canister' && !s.canisters.includes(id)) s.canisters.push(id);
-    if (kind === 'colonist' && !s.colonists.includes(id)) s.colonists.push(id);
+    if (kind === 'colonist' && !s.colonists.includes(id)) {
+      s.colonists.push(id);
+      s.bolts += COLONIST_BOLTS;
+      this.hooks.reward(`Colonist rescued! +${COLONIST_BOLTS} bolts · ${s.colonists.length} / 12 saved`);
+    }
     this.hooks.collect(kind, id);
     this.hooks.hud();
   }
@@ -556,12 +591,14 @@ export class World {
   }
 
   private hitAll(p: THREE.Vector3, r: number, dmg: number, kind: HitKind, skip?: Set<unknown>) {
+    // Explosions reach a little higher than spins and pounds.
+    const reachY = kind === 'blast' ? 3 : 2.2;
     for (const t of [...this.targets]) {
       if (!t.alive || skip?.has(t)) continue;
       const dx = t.aim.x - p.x;
       const dz = t.aim.z - p.z;
       const dy = t.aim.y - p.y;
-      if (dx * dx + dz * dz < (r + t.radius) ** 2 && Math.abs(dy) < 2.2) {
+      if (dx * dx + dz * dz < (r + t.radius) ** 2 && Math.abs(dy) < reachY) {
         skip?.add(t);
         t.hit(dmg, kind, p);
       }
@@ -621,10 +658,92 @@ export class World {
     const i = this.enemies.indexOf(e);
     if (i >= 0) this.enemies.splice(i, 1);
     this.removeTarget(e);
-    if (e.room && !this.enemies.some((x) => x.alive && x.room === e.room)) {
+    if (e.room && !this.flags.has(`cleared:${e.room}`) && !this.enemies.some((x) => x.alive && x.room === e.room)) {
+      // Remember the room is cleared, so its doors stay open even when the enemies come back.
+      this.flags.add(`cleared:${e.room}`);
       audio.play('success');
       this.hooks.toast('Area clear!', 'bolt');
     }
+  }
+
+  /** Kai stepped on a code pad: right pad lights up, wrong pad resets the whole code. */
+  stepRune(r: Rune) {
+    if (this.flags.has(r.group) || r.lit) return;
+    const group = this.runes.filter((x) => x.group === r.group);
+    const progress = group.filter((x) => x.lit).length;
+    if (r.order === progress + 1) {
+      r.setLit(true);
+      audio.play(`tone${Math.min(3, progress)}` as 'tone0');
+      this.particles.emit(r.spot.x, r.spot.y + 0.3, r.spot.z, { count: 14, color: '#ffffff', speed: 3, up: 2, life: 0.5, size: 0.4 });
+      if (progress + 1 === group.length) {
+        this.setFlag(r.group);
+        audio.play('success');
+        this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+      }
+    } else {
+      for (const x of group) x.setLit(false);
+      audio.play('fail');
+      this.particles.emit(r.spot.x, r.spot.y + 0.4, r.spot.z, { count: 20, color: '#ff4f5e', speed: 5, life: 0.4, size: 0.4 });
+      this.hooks.toast('Wrong order! The code reset. Try again!', 'bolt');
+    }
+  }
+
+  /** Kai opened a vault chest. */
+  openPrize(p: Prize) {
+    const s = this.save;
+    (s.prizes ??= []).push(p.id);
+    audio.play('upgrade');
+    haptic('success');
+    this.flash(p.spot.x, p.spot.y + 1, p.spot.z, '#ffd166', 50, 0.6);
+    this.hooks.prize(p.reward);
+  }
+
+  /** Wakes enemies near a point: a pack calling for help, or a guard sounding the alarm. */
+  alertNear(x: number, z: number, radius: number, kind: BadgeKind | null, alarm = false) {
+    for (const e of this.enemies) {
+      if (!e.alive || (kind && e.kind !== kind)) continue;
+      if ((e.body.x - x) ** 2 + (e.body.z - z) ** 2 < radius * radius) e.alert(alarm);
+    }
+  }
+
+  meetEnemy(kind: BadgeKind, elite: boolean) {
+    const seen = (this.save.bestiary ??= []);
+    for (const k of elite ? [kind, 'elite'] : [kind]) {
+      if (seen.includes(k)) continue;
+      seen.push(k);
+      this.hooks.threat(k as BadgeKind | 'elite');
+    }
+  }
+
+  /** Brings every enemy on the deck back (after Kai is knocked out). */
+  private respawnEnemies() {
+    for (const e of [...this.enemies]) if (this.levelEnemies.has(e.id) || e.id.startsWith('spawn')) e.remove();
+    this.dead.clear();
+    for (const pe of this.level.entities) if (pe.spec.type === 'enemy') this.spawnSpec(pe);
+  }
+
+  /** True if anything that can be hit overlaps this sphere (used by fireballs to know when to burst). */
+  targetAt(p: THREE.Vector3, r: number): boolean {
+    for (const t of this.targets) {
+      if (!t.alive) continue;
+      const rr = r + t.radius;
+      if (t.aim.distanceToSquared(p) < rr * rr) return true;
+    }
+    return false;
+  }
+
+  /** The charged fireball bursts: everything close by takes the hit. */
+  explode(p: THREE.Vector3, radius: number, dmg: number) {
+    this.hitAll(p, radius, dmg, 'blast');
+    this.impacts.slam(p.x, p.y - 0.8, p.z, radius * 1.6, '#ffb04a');
+    this.rings.burst(p.x, p.y - 0.8, p.z, radius * 2.2, '#ffb04a', 0.45);
+    this.particles.emit(p.x, p.y, p.z, { count: 44, color: '#ffb04a', speed: 10, life: 0.7, size: 0.9, up: 2 });
+    this.particles.emit(p.x, p.y, p.z, { count: 20, color: '#fff2c0', speed: 5, life: 0.4, size: 0.6 });
+    this.flash(p.x, p.y + 0.5, p.z, '#ff9a3d', 80, 0.35);
+    this.shake(0.5);
+    this.hitStop(0.05);
+    audio.play('explode');
+    haptic('heavy');
   }
 
   shake(a: number) {
@@ -664,6 +783,7 @@ export class World {
     this.player.teleport(x, y, z);
     this.player.revive();
     this.shots.clear();
+    this.respawnEnemies();
     this.bolt.place(x - 1, y + 2, z + 1);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();
@@ -691,6 +811,14 @@ export class World {
   }
 
   bossDefeated(b: Boss) {
+    if (this.def.id === 'bridge' && b.kind === 'heart' && !this.flags.has('reborn')) {
+      // It isn't over: the Bloom pulls every vine on the ship into the Heart and rises again.
+      this.flags.add('reborn');
+      this.hooks.bossBar(null, 0);
+      this.hooks.checkpoint();
+      void this.hooks.cutscene((d) => scenes.rebirth(d, this, b)).then(() => this.boss?.engage());
+      return;
+    }
     this.flags.add('boss');
     this.hooks.bossBar(null, 0);
     this.hooks.checkpoint();
@@ -705,6 +833,17 @@ export class World {
     this.flags.add('boss');
     this.hooks.music('ending');
     void this.hooks.cutscene((d) => scenes.befriend(d, this)).then(() => this.hooks.ending('friends'));
+  }
+
+  /** Replaces the current boss with a new one at the same spot (the Bloom's rebirth). */
+  spawnBoss(kind: BossKind, old: Boss): Boss {
+    const cx = Math.floor(old.center.x / CELL);
+    const cz = Math.floor(old.center.z / CELL);
+    old.remove();
+    const b = this.addEntity(makeBoss(this, `${this.def.id}.${kind}`, kind, cx, cz, old.center.y));
+    b.introSeen = true;
+    this.boss = b;
+    return b;
   }
 
   /** Kai steps onto the lift and rides it up out of the deck. */
@@ -767,6 +906,12 @@ export class World {
     this.sun.intensity = this.theme.sunI * (1 - 0.92 * this.darkness);
     this.fog.color.copy(this.fogColor).multiplyScalar(1 - 0.7 * this.darkness);
 
+    this.hintT -= dt;
+    if (this.hintT <= 0 && !this.cutscene) {
+      this.hintT = 0.5;
+      this.checkHints();
+    }
+
     this.objT -= dt;
     if (this.objT <= 0) {
       this.objT = 0.3;
@@ -783,6 +928,30 @@ export class World {
     this.placeCamera(dt);
     const p = this.player.body;
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
+  }
+
+  /** BOLT explains each kind of collectible the first time Kai gets close to one. */
+  private checkHints() {
+    const seen = (this.save.hints ??= []);
+    const p = this.player.body;
+    const near = (x: number, z: number, r = 7) => (x - p.x) ** 2 + (z - p.z) ** 2 < r * r;
+    const tell = (key: string) => {
+      if (seen.includes(key)) return false;
+      seen.push(key);
+      this.hooks.toast(HINTS[key], 'bolt');
+      return true;
+    };
+    if (this.bolt.active === false && !seen.includes('bolt')) {
+      // Before BOLT joins, the first hint is about bolts (Kai spots them on his own).
+    }
+    for (const e of this.entities) {
+      if (!e.alive) continue;
+      const kind = e instanceof Cocoon ? 'cocoon' : e instanceof Shard ? 'shard' : e instanceof Canister ? 'canister' : e instanceof Prize ? 'prize' : e instanceof Rune ? 'rune' : e instanceof Vendor ? 'vendor' : null;
+      if (!kind || seen.includes(kind)) continue;
+      const at = (e as unknown as { spot?: THREE.Vector3; aim?: THREE.Vector3 }).spot ?? (e as unknown as { aim?: THREE.Vector3 }).aim ?? e.obj.position;
+      if (near(at.x, at.z) && tell(kind)) return;
+    }
+    if (!seen.includes('bolt') && this.save.bolts > 0) tell('bolt');
   }
 
   get shieldReady() {

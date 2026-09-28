@@ -28,6 +28,12 @@ export type Sfx =
   | 'break'
   | 'glide'
   | 'shield'
+  | 'reload'
+  | 'empty'
+  | 'charge'
+  | 'charged'
+  | 'fireball'
+  | 'alarm'
   | 'tone0'
   | 'tone1'
   | 'tone2'
@@ -397,6 +403,32 @@ export class AudioEngine {
       case 'shield':
         this.tone(t, 'sine', 300, 900, 0.35, 0.2, b, 0.03);
         this.tone(t, 'triangle', 450, 1350, 0.35, 0.08, b, 0.03);
+        break;
+      case 'reload':
+        this.tone(t, 'square', 260, 520, 0.05, 0.08, b);
+        this.hiss(t + 0.08, 0.06, 0.18, 'bandpass', 3000, 2000, b);
+        this.tone(t + 0.16, 'square', 700, 700, 0.04, 0.09, b);
+        break;
+      case 'empty':
+        this.tone(t, 'square', 180, 160, 0.04, 0.08, b);
+        this.hiss(t, 0.03, 0.12, 'bandpass', 2500, 2500, b);
+        break;
+      case 'charge':
+        this.tone(t, 'sawtooth', 160, 900, 0.75, 0.06, b, 0.05);
+        this.tone(t, 'sine', 320, 1800, 0.75, 0.08, b, 0.05);
+        break;
+      case 'charged':
+        this.tone(t, 'triangle', 1400, 1400, 0.12, 0.12, b);
+        this.tone(t + 0.07, 'triangle', 1870, 1870, 0.16, 0.1, b);
+        break;
+      case 'fireball':
+        this.tone(t, 'sawtooth', 420, 90, 0.45, 0.22, b);
+        this.hiss(t, 0.5, 0.4, 'lowpass', 3000, 300, b);
+        break;
+      case 'alarm':
+        for (let i = 0; i < 3; i++) {
+          this.tone(t + i * 0.26, 'square', 880, 660, 0.22, 0.09, b);
+        }
         break;
       case 'tone0':
       case 'tone1':

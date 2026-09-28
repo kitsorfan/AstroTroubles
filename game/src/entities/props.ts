@@ -9,7 +9,7 @@ import type { Cond, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
-import { blobShadow, boxG, cyl, glowSprite, makeBolt, mat, mesh, ownMat, sphere, torus } from './models';
+import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus } from './models';
 import type { Player } from './player';
 
 export interface FloorFx {
@@ -19,6 +19,12 @@ export interface FloorFx {
 }
 
 const cx2x = (c: number) => c * CELL + CELL / 2;
+
+function hashId(id: string) {
+  let h = 7;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 100003;
+  return h / 100003;
+}
 
 function makeBox(x: number, z: number, hw: number, hd: number, bottom: number, top: number, owner?: unknown): Box {
   return { minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd, bottom, top, solid: true, dx: 0, dy: 0, dz: 0, owner };
@@ -63,7 +69,7 @@ export class Crate extends Entity implements Target {
 
   hit(_dmg: number, kind: HitKind): boolean {
     if (!this.alive) return false;
-    if (this.metal && kind !== 'pound') {
+    if (this.metal && kind !== 'pound' && kind !== 'blast') {
       audio.play('zap', 2);
       return true;
     }
@@ -141,6 +147,8 @@ export class Door extends Entity {
   private wasOpen = false;
   private lampMat: THREE.MeshStandardMaterial;
 
+  private latched: boolean;
+
   constructor(
     world: World,
     id: string,
@@ -148,8 +156,10 @@ export class Door extends Entity {
     cz: number,
     h: number,
     private cond: Cond,
+    private latch = false,
   ) {
     super(world, id);
+    this.latched = latch && world.hasFlag(`latch:${id}`);
     const x = cx2x(cx);
     const z = cx2x(cz);
     const g = world.grid;
@@ -172,7 +182,11 @@ export class Door extends Entity {
   }
 
   update(dt: number) {
-    const open = this.world.cond(this.cond);
+    const open = this.latched || this.world.cond(this.cond);
+    if (open && this.latch && !this.latched) {
+      this.latched = true;
+      this.world.setFlag(`latch:${this.id}`);
+    }
     if (open !== this.wasOpen) {
       this.wasOpen = open;
       audio.play('door');
@@ -360,6 +374,125 @@ export class Socket extends Entity implements Interactable {
       haptic('success');
       this.world.particles.emit(this.spot.x, this.spot.y + 1.3, this.spot.z, { count: 30, color: '#3dff8a', speed: 6, life: 0.7 });
     }
+  }
+}
+
+/* ---------------- puzzles ---------------- */
+
+/** A glowing floor pad in a code puzzle. Step on the pads of a group in the right order. */
+export class Rune extends Entity {
+  readonly spot: THREE.Vector3;
+  lit = false;
+  private padMat: THREE.MeshStandardMaterial;
+  private ringMat: THREE.MeshStandardMaterial;
+  private onIt = false;
+  private base: THREE.Color;
+  private pulse = 0;
+
+  constructor(
+    world: World,
+    id: string,
+    readonly cx: number,
+    readonly cz: number,
+    h: number,
+    readonly group: string,
+    readonly order: number,
+    color: string,
+  ) {
+    super(world, id);
+    const x = cx2x(cx);
+    const z = cx2x(cz);
+    this.spot = new THREE.Vector3(x, h, z);
+    this.base = new THREE.Color(color);
+    this.obj.add(mesh(cyl(0.95, 1, 0.12, 6), mat('#252a36', { metal: 0.6, rough: 0.4 }), x, h + 0.06, z));
+    this.padMat = ownMat(color, { emissive: color, ei: 0.25, rough: 0.3 });
+    this.obj.add(mesh(cyl(0.72, 0.72, 0.08, 6), this.padMat, x, h + 0.14, z, false));
+    this.ringMat = ownMat(color, { emissive: color, ei: 0.8 });
+    const ring = mesh(torus(0.86, 0.05), this.ringMat, x, h + 0.16, z, false);
+    ring.rotation.x = Math.PI / 2;
+    this.obj.add(ring);
+  }
+
+  setLit(on: boolean) {
+    this.lit = on;
+    this.pulse = on ? 1 : 0;
+  }
+
+  update(dt: number) {
+    const p = this.world.player;
+    const b = p.body;
+    const on = b.grounded && p.cellX === this.cx && p.cellZ === this.cz && Math.abs(b.y - this.spot.y) < 0.7;
+    if (on && !this.onIt) this.world.stepRune(this);
+    this.onIt = on;
+    this.pulse = Math.max(0, this.pulse - dt * 1.5);
+    const solved = this.world.hasFlag(this.group);
+    this.padMat.emissiveIntensity = this.lit || solved ? 1.6 + this.pulse * 2 : 0.25 + Math.sin(this.world.time * 3 + this.order) * 0.12;
+    this.ringMat.emissiveIntensity = this.lit || solved ? 2 : 0.8;
+  }
+}
+
+/** A golden vault chest. Opening it gives a free upgrade (or a pile of bolts). */
+export class Prize extends Entity implements Interactable {
+  readonly spot: THREE.Vector3;
+  range = 2.6;
+  private lid: THREE.Group;
+  private glow: THREE.Sprite;
+  private opened: boolean;
+  private openT = 0;
+
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    readonly reward: string,
+  ) {
+    super(world, id);
+    const x = cx2x(cx);
+    const z = cx2x(cz);
+    this.spot = new THREE.Vector3(x, h, z);
+    this.opened = (world.save.prizes ?? []).includes(id);
+    const gold = mat('#e8b440', { metal: 0.8, rough: 0.28 });
+    const dark = mat('#5a3a14', { rough: 0.6 });
+    const g = new THREE.Group();
+    g.position.set(x, h, z);
+    g.add(mesh(boxG(1.4, 0.8, 0.9), dark, 0, 0.4, 0));
+    for (const sx of [-0.62, 0, 0.62]) g.add(mesh(boxG(0.14, 0.84, 0.94), gold, sx, 0.42, 0));
+    this.lid = new THREE.Group();
+    this.lid.position.set(0, 0.8, -0.45);
+    const top = mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.4, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2), dark, 0, 0, 0.45);
+    this.lid.add(top);
+    for (const sx of [-0.62, 0, 0.62]) this.lid.add(mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.14, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateX(-Math.PI / 2), gold, sx, 0, 0.45));
+    this.lid.add(mesh(boxG(0.24, 0.3, 0.1), mat('#ffd166', { emissive: '#ffb020', ei: 0.8 }), 0, -0.05, 0.94, false));
+    g.add(this.lid);
+    this.obj.add(g);
+    this.glow = glowSprite('#ffd166', 3, this.opened ? 0 : 0.5);
+    this.glow.position.set(x, h + 1.2, z);
+    this.obj.add(this.glow);
+    if (this.opened) this.lid.rotation.x = -1.9;
+    world.boxes.push(makeBox(x, z, 0.7, 0.45, h, h + 1));
+    world.addInteractable(this);
+  }
+
+  label() {
+    return this.opened ? null : 'OPEN VAULT';
+  }
+
+  interact() {
+    if (this.opened) return;
+    this.opened = true;
+    this.openT = 0.001;
+    this.world.openPrize(this);
+  }
+
+  update(dt: number) {
+    if (this.openT > 0 && this.openT < 1) {
+      this.openT = Math.min(1, this.openT + dt * 1.6);
+      this.lid.rotation.x = -1.9 * (1 - (1 - this.openT) ** 3);
+      if (Math.random() < 0.6) this.world.particles.emit(this.spot.x, this.spot.y + 0.9, this.spot.z, { count: 2, color: '#ffd166', speed: 2, up: 4, life: 0.8, size: 0.45, gravity: 2 });
+    }
+    this.glow.material.opacity = this.opened ? Math.max(0, this.glow.material.opacity - dt) : 0.45 + Math.sin(this.world.time * 3) * 0.12;
   }
 }
 
@@ -839,7 +972,7 @@ export class Cocoon extends Entity implements Target {
     this.pod.add(glowSprite('#ff6fcf', 3, 0.35).translateY(1.2));
     this.pod.position.set(x, h, z);
     this.obj.add(this.pod);
-    this.person = makeColonist();
+    this.person = makeColonist(hashId(id));
     this.person.position.set(x, h, z);
     this.person.visible = false;
     this.obj.add(this.person);
@@ -880,8 +1013,8 @@ export class Cocoon extends Entity implements Target {
     if (this.freedT >= 0) {
       this.freedT += dt;
       this.person.rotation.y = Math.atan2(this.world.player.body.x - this.person.position.x, this.world.player.body.z - this.person.position.z);
-      const arm = this.person.children[3];
-      arm.rotation.z = -2.4 + Math.sin(this.freedT * 10) * 0.5;
+      const arm = this.person.userData.arm as THREE.Object3D;
+      arm.rotation.z = 2.4 + Math.sin(this.freedT * 10) * 0.5;
       if (this.freedT > 4) {
         this.person.scale.setScalar(Math.max(0.01, 1 - (this.freedT - 4) * 2));
         if (this.freedT > 4.5) {
@@ -891,25 +1024,6 @@ export class Cocoon extends Entity implements Target {
       }
     }
   }
-}
-
-function makeColonist(): THREE.Group {
-  const g = new THREE.Group();
-  const suit = mat('#e6edf7', { rough: 0.5 });
-  const skin = mat('#f0c8a0', { rough: 0.6 });
-  g.add(mesh(capsule2(0.28, 0.5), suit, 0, 0.8, 0));
-  g.add(mesh(sphere(0.3, 16), skin, 0, 1.45, 0));
-  g.add(mesh(sphere(0.31, 16), mat('#5a3a22'), 0, 1.55, -0.05));
-  const arm = new THREE.Group();
-  arm.position.set(0.32, 1.1, 0);
-  arm.add(mesh(capsule2(0.08, 0.3), suit, 0, -0.25, 0));
-  g.add(arm);
-  g.add(blobShadow(1));
-  return g;
-}
-
-function capsule2(r: number, l: number) {
-  return new THREE.CapsuleGeometry(r, l, 4, 10);
 }
 
 export class Vendor extends Entity implements Interactable {
@@ -1072,7 +1186,7 @@ export class Holo extends Entity implements Interactable {
   played: boolean;
   /** The translucent figure of whoever recorded the message. */
   readonly figure = new THREE.Group();
-  private figMat: THREE.MeshBasicMaterial;
+  private figMats: THREE.MeshBasicMaterial[];
   private beamMat: THREE.MeshBasicMaterial;
   private ring: THREE.Mesh;
   private shown = 0;
@@ -1099,19 +1213,12 @@ export class Holo extends Entity implements Interactable {
     this.obj.add(this.ring);
     this.beamMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
     this.obj.add(mesh(new THREE.CylinderGeometry(0.45, 0.6, 2.4, 20, 1, true), this.beamMat, x, h + 1.5, z, false));
-    // A simple figure made of light: body, head, arms and (for the Captain) a peaked cap.
-    this.figMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    // A figure made of light, with a face and uniform, like an old recording.
+    const holo = makeHoloFigure(who, color);
+    this.figMats = holo.mats;
     const f = this.figure;
-    f.add(mesh(new THREE.CapsuleGeometry(0.26, 0.55, 4, 12), this.figMat, 0, 0.75, 0, false));
-    f.add(mesh(sphere(0.24, 16), this.figMat, 0, 1.42, 0, false));
-    for (const sx of [-1, 1]) f.add(mesh(new THREE.CapsuleGeometry(0.08, 0.45, 4, 8), this.figMat, sx * 0.34, 0.85, 0, false));
-    if (who === 'captain') {
-      f.add(mesh(cyl(0.27, 0.27, 0.1, 16), this.figMat, 0, 1.62, 0, false));
-      f.add(mesh(boxG(0.34, 0.03, 0.22), this.figMat, 0, 1.58, 0.2, false));
-    } else {
-      f.add(mesh(sphere(0.13, 10), this.figMat, 0, 1.62, -0.12, false));
-    }
-    f.position.set(x, h + 0.35, z);
+    f.add(holo.group);
+    f.position.set(x, h + 0.3, z);
     f.visible = false;
     this.obj.add(f);
     world.addInteractable(this);
@@ -1144,7 +1251,7 @@ export class Holo extends Entity implements Interactable {
     // The projection flickers like an old recording.
     const flicker = this.shown > 0 ? 0.75 + Math.sin(this.t * 37) * 0.08 + (Math.random() < 0.04 ? -0.4 : 0) : 0;
     this.figure.visible = this.shown > 0.01;
-    this.figMat.opacity = this.shown * flicker * 0.75;
+    for (const m of this.figMats) m.opacity = this.shown * flicker * 0.8;
     this.figure.scale.set(1, Math.max(0.01, this.shown), 1);
     const p = this.world.player.body;
     this.figure.rotation.y = Math.atan2(p.x - this.spot.x, p.z - this.spot.z);

@@ -68,17 +68,17 @@ export const engine: LevelDef = {
     #~~~~~~~~....e.....8888#
     #~~~~~~~~..........8u88#
     #~~~~~~~~..........8888#
-    #~~~~~~~~....x.....8888#
-    #~~~~~~~~..........8888#
-    #~~~~~~~~...r......8888#
-    #~~~~~~A~..........8888#
-    #~~~~~~~~.......g..8888#
-    #.............e..v.....#
-    #......................#
-    #..x.......C.......x...#
-    #P.....................#
-    ##########...###########
-    #......................#
+    #~~~~~~~~....x.....8888#############
+    #~~~~~~~~..........8888#...........#
+    #~~~~~~~~...r......8888#.~~~~~~~~~.#
+    #~~~~~~A~..........8888#.~a~~~~~i~.#
+    #~~~~~~~~.......g..8888#.~~~~~~~~~.#####
+    #.............e..v.....#.~~~~l~~~~.#...#
+    #.......................n~~~~~~~~~.D.I.#
+    #..x.......C.......x...#.~~~~m~~~~.#...#
+    #P.....................#.~~~~~~~~~.#####
+    ##########...###########...........#
+    #......................#############
     #~~~~~~~~~ccc~~~~~~444!#
     #~~~~~~~~~ccc~~~~~~4444#
     #~~~~~~~~~ccc~~~~~~4u44#
@@ -99,6 +99,13 @@ export const engine: LevelDef = {
          ###############
 `,
   legend: {
+    a: { type: 'rune', group: 'vault', order: 1, color: '#5ee0ff', floor: 'floor', h: 0 },
+    i: { type: 'rune', group: 'vault', order: 2, color: '#ffd166', floor: 'floor', h: 0 },
+    l: { type: 'rune', group: 'vault', order: 3, color: '#7dff9a', floor: 'floor', h: 0 },
+    m: { type: 'rune', group: 'vault', order: 4, color: '#ff4f5e', floor: 'floor', h: 0 },
+    n: { type: 'sign', text: "COOLANT VAULT. Cool the lava in this order: BLUE, then GOLD, then GREEN, then RED. The pads sit on little islands, so jump carefully!" },
+    D: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
+    I: { type: 'prize', id: 'vault', reward: 'blaster' },
     W: { type: 'boss', boss: 'golem', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },
     L: { type: 'exit' },

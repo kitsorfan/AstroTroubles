@@ -2,6 +2,7 @@ import { audio } from '../core/audio';
 import type { ButtonName, Input } from '../core/input';
 import type { Quality, SaveData, Settings, UpgradeId } from '../core/save';
 import type { Line, Speaker } from '../world/levelTypes';
+import { emblemSvg } from './emblem';
 import { ICON, PORTRAIT, SPEAKER_COLOR, SPEAKER_NAME } from './icons';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -22,9 +23,10 @@ export interface ShopItem {
 
 export const SHOP: ShopItem[] = [
   { id: 'heart', name: 'Heart Plating', desc: '+1 max heart', prices: [150, 300, 500], icon: ICON.heart(true) },
-  { id: 'blaster', name: 'Blaster Power', desc: '+1 damage for blasts, spins and pounds', prices: [250, 600], icon: ICON.shoot },
-  { id: 'rapid', name: 'Rapid Fire', desc: 'Shoot faster', prices: [200, 450], icon: ICON.dash },
-  { id: 'boltZap', name: 'BOLT Zapper', desc: 'BOLT zaps enemies more often', prices: [180, 420], icon: ICON.star },
+  { id: 'blaster', name: 'Blaster Power', desc: '+1 damage for blasts, spins and pounds (fireballs +2)', prices: [250, 600], icon: ICON.shoot },
+  { id: 'clip', name: 'Bigger Clip', desc: '+2 shots before you need to reload', prices: [160, 380], icon: ICON.cell },
+  { id: 'rapid', name: 'Quick Reload', desc: 'Shoot and reload faster', prices: [200, 450], icon: ICON.dash },
+  { id: 'boltZap', name: 'BOLT Zapper', desc: 'BOLT’s zap only stuns. Upgrade it to hurt, and to zap more often', prices: [180, 420], icon: ICON.star },
   { id: 'magnet', name: 'Bolt Magnet', desc: 'Pull in bolts from farther away', prices: [120, 300], icon: ICON.bolt },
 ];
 
@@ -72,12 +74,14 @@ export class UI {
       <div class="stick-hint">MOVE</div>
       <div class="buttons">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}<span>JUMP</span></div>
-        <div class="btn shoot clickable" data-b="shoot">${ICON.shoot}<span>BLAST</span></div>
+        <div class="btn shoot clickable" data-b="shoot">${ICON.shoot}<span>BLAST</span><svg class="charge-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg></div>
+        <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
         <div class="btn spin clickable" data-b="spin">${ICON.spin}<span>SPIN</span></div>
         <div class="btn dash clickable hidden" data-b="dash">${ICON.dash}<span>DASH</span></div>
       </div>
       <div class="action clickable hidden">${PORTRAIT.bolt}<b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
+      <div class="threat"><img alt=""/><div><div class="tag">NEW THREAT</div><b></b><p></p></div></div>
       <div class="fps"></div>
     </div>`);
     this.overlay = h(`<div class="overlay hidden"></div>`);
@@ -88,7 +92,7 @@ export class UI {
     </div>`);
     this.skipBtn = h(`<button class="skip clickable hidden">SKIP ▶▶</button>`);
     // Order matters: fades under everything, cutscene bars under dialogue, and the skip button on top.
-    root.append(this.fadeEl, this.hud, this.cine, this.overlay, this.skipBtn);
+    root.append(this.fadeEl, this.hud, this.cine, this.overlay, this.skipBtn, h(`<div class="reward-banner"></div>`));
     this.skipBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -203,6 +207,80 @@ export class UI {
 
   setDash(on: boolean) {
     this.dashBtn.classList.toggle('hidden', !on);
+  }
+
+  private rewardQueue: string[] = [];
+  private rewardBusy = false;
+
+  /** A gold banner across the top of the screen for rewards. Several in a row queue up. */
+  reward(text: string) {
+    this.rewardQueue.push(text);
+    if (!this.rewardBusy) this.nextReward();
+  }
+
+  private nextReward() {
+    const el = $(this.root, '.reward-banner');
+    const text = this.rewardQueue.shift();
+    if (!text) {
+      this.rewardBusy = false;
+      return;
+    }
+    this.rewardBusy = true;
+    el.textContent = text;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    audio.play('bolt', 1.2);
+    setTimeout(() => this.nextReward(), 2600);
+  }
+
+  private lastAmmo = '';
+
+  /** Ammo pips above BLAST, the reload bar, and the fireball charge ring. */
+  setAmmo(ammo: number, clip: number, reload: number, charge: number) {
+    const key = `${ammo}|${clip}|${Math.round(reload * 20)}|${Math.round(charge * 20)}`;
+    if (key === this.lastAmmo) return;
+    this.lastAmmo = key;
+    const box = $(this.hud, '.ammo');
+    const pips = $(box, '.pips');
+    if (pips.childElementCount !== clip) pips.innerHTML = '<i></i>'.repeat(clip);
+    pips.querySelectorAll('i').forEach((el, i) => el.classList.toggle('full', i < ammo));
+    box.classList.toggle('reloading', reload > 0);
+    $<HTMLElement>(box, '.reload i').style.width = `${Math.round(reload * 100)}%`;
+    const ring = this.hud.querySelector<SVGCircleElement>('.charge-ring circle');
+    if (ring) {
+      ring.style.strokeDashoffset = String(100 - charge * 100);
+      ring.classList.toggle('full', charge >= 1);
+    }
+  }
+
+  private threatQueue: [string, string, string, string][] = [];
+  private threatBusy = false;
+
+  /** Slides in a card about an enemy the first time Kai meets one (one card at a time). */
+  threat(icon: string, name: string, plan: string, color: string) {
+    this.threatQueue.push([icon, name, plan, color]);
+    if (!this.threatBusy) this.nextThreat();
+  }
+
+  private nextThreat() {
+    const next = this.threatQueue.shift();
+    const el = $(this.hud, '.threat');
+    if (!next) {
+      this.threatBusy = false;
+      return;
+    }
+    this.threatBusy = true;
+    const [icon, name, plan, color] = next;
+    $<HTMLImageElement>(el, 'img').src = icon;
+    $(el, 'b').textContent = name;
+    $(el, 'b').style.color = color;
+    $(el, 'p').textContent = plan;
+    el.classList.add('show');
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => this.nextThreat(), 600);
+    }, 6000);
   }
 
   setFps(text: string) {
@@ -472,16 +550,44 @@ export class UI {
     this.button(el, '.settings', opts.onSettings);
   }
 
-  tapToStart(done: () => void) {
-    const el = this.open(`<div class="overlay title-screen" style="position:absolute">
-      <div class="title-logo"><div class="kicker">HULL BREACH</div><div class="name logo">LEVIATHAN</div></div>
-      <div class="tap-start">Tap to start</div></div>`, false);
+  /**
+   * The boot splash: emblem and logo animate in over black, a loading bar fills while the game warms
+   * up (`ready`), then the 3D title scene fades in behind "TAP TO START".
+   */
+  tapToStart(ready: Promise<void>, done: () => void) {
+    const el = this.open(`<div class="boot">
+      <div class="boot-bg"></div>
+      <div class="boot-core">
+        <div class="boot-emblem">${emblemSvg(180)}</div>
+        <div class="boot-kicker">HULL BREACH</div>
+        <div class="boot-logo"><span>LEVIATHAN</span></div>
+        <div class="boot-tag">Six decks. One brave engineer. One very nervous robot.</div>
+        <div class="boot-load"><i></i></div>
+        <div class="boot-tap">TAP TO START</div>
+      </div>
+      <div class="boot-foot">Headphones on for the best adventure</div>
+    </div>`, false);
     el.style.padding = '0';
+    const bar = $<HTMLElement>(el, '.boot-load i');
+    let loaded = false;
+    let fake = 0;
+    const tick = setInterval(() => {
+      fake = Math.min(0.9, fake + 0.04);
+      bar.style.width = `${Math.round((loaded ? 1 : fake) * 100)}%`;
+    }, 50);
+    const minShow = new Promise((r) => setTimeout(r, 1500));
+    void Promise.all([ready, minShow]).then(() => {
+      loaded = true;
+      clearInterval(tick);
+      bar.style.width = '100%';
+      setTimeout(() => el.querySelector('.boot')?.classList.add('ready'), 250);
+    });
     const go = () => {
+      if (!loaded) return;
       window.removeEventListener('keydown', go);
       done();
     };
-    el.addEventListener('pointerdown', go, { once: true });
+    el.addEventListener('pointerdown', go);
     window.addEventListener('keydown', go);
   }
 
@@ -522,7 +628,7 @@ export class UI {
     }, 2300);
   }
 
-  pause(opts: { deck: string; shards: string; colonists: string; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
+  pause(opts: { deck: string; shards: string; colonists: string; quests: { text: string; done: boolean; progress: string; reward: string }[]; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
     const el = this.open(`<div class="panel" style="width:min(760px,90vw)">
       <h2>PAUSED · ${opts.deck}</h2>
       <div class="row">
@@ -536,7 +642,9 @@ export class UI {
         <div style="flex:1">
           <div class="stat"><span>Memory shards</span><b>${opts.shards}</b></div>
           <div class="stat"><span>Colonists rescued</span><b>${opts.colonists}</b></div>
-          <p style="color:var(--dim);font-size:14px;line-height:1.4">Find all 18 memory shards across the ship to learn BOLT's secret... and see the hidden ending.</p>
+          <div class="quests"><div class="qh">SIDE QUESTS ON THIS DECK</div>${opts.quests
+            .map((q) => `<div class="q ${q.done ? 'done' : ''}"><i>${q.done ? '✔' : ''}</i><div><b>${q.text}</b><small>${q.progress} · Reward: ${q.reward}</small></div></div>`)
+            .join('')}</div>
         </div>
       </div></div>`);
     this.button(el, '.resume', opts.onResume);
@@ -551,7 +659,7 @@ export class UI {
       <div class="grid2" style="font-size:16px;line-height:1.4">
         <div><b style="color:var(--accent)">Move</b>: drag anywhere on the left side.<br/><b style="color:var(--accent)">Camera</b>: drag on the right side.</div>
         <div><b style="color:#7dff9a">JUMP</b>: tap for a hop, hold for a big jump. With Jet Boots, jump again in the air!</div>
-        <div><b style="color:#7fe6ff">BLAST</b>: shoots at the nearest enemy. Hold to keep firing.</div>
+        <div><b style="color:#7fe6ff">BLAST</b>: tap to shoot (it aims for you). You get 6 shots, then a quick reload. <b style="color:#ffb04a">HOLD</b> it to charge a big <b style="color:#ffb04a">FIREBALL</b>, then let go!</div>
         <div><b style="color:#ffd166">SPIN</b>: spin attack on the ground. In the air it becomes a <b>GROUND POUND</b>, which presses big red switches!</div>
         <div><b style="color:#ff9ae0">DASH</b>: zoom across gaps (after you find the Dash Thrusters).</div>
         <div><b style="color:#5ee0ff">BOLT button</b>: appears near things BOLT can use: hacking, power cells, the shop.</div>

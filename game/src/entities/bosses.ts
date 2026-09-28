@@ -11,101 +11,10 @@ import { makeBody, moveBody, type Body, type Box } from '../world/physics';
 import { Enemy } from './enemies';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
 import { makeGooBlob } from './aliens';
+import { Shockwave, Strike } from './hazards';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 const tmp = new THREE.Vector3();
-
-/* ---------------- shared hazards ---------------- */
-
-/** Expanding ring along the floor. Jump over it! */
-export class Shockwave extends Entity {
-  private r = 0.5;
-  private ring: THREE.Mesh;
-  private hitDone = false;
-
-  constructor(
-    world: World,
-    private x: number,
-    private y: number,
-    private z: number,
-    private maxR = 14,
-    private speed = 9,
-    color = '#7fe6ff',
-  ) {
-    super(world, `wave${Math.random()}`);
-    this.ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1, 0.18, 8, 48).rotateX(Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }),
-    );
-    this.ring.position.set(x, y + 0.25, z);
-    this.obj.add(this.ring);
-  }
-
-  update(dt: number) {
-    this.r += this.speed * dt;
-    this.ring.scale.setScalar(this.r);
-    (this.ring.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - this.r / this.maxR) * 0.9 + 0.1;
-    const p = this.world.player.body;
-    const d = Math.hypot(p.x - this.x, p.z - this.z);
-    if (!this.hitDone && Math.abs(d - this.r) < 0.6 && p.y < this.y + 0.7) {
-      this.hitDone = true;
-      this.world.player.hurt(1, this.x, this.z);
-    }
-    if (this.r > this.maxR) this.remove();
-  }
-}
-
-/** Glowing warning circle, then a strike from above. */
-export class Strike extends Entity {
-  private t = 0;
-  private disc: THREE.Mesh;
-  private rock: THREE.Mesh;
-
-  constructor(
-    world: World,
-    private x: number,
-    private y: number,
-    private z: number,
-    private delay = 1.1,
-    private radius = 1.3,
-    private color = '#ff5e6a',
-    kind: 'ice' | 'rock' | 'missile' = 'rock',
-  ) {
-    super(world, `strike${Math.random()}`);
-    this.disc = new THREE.Mesh(
-      new THREE.CircleGeometry(radius, 32).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthWrite: false }),
-    );
-    this.disc.position.set(x, y + 0.05, z);
-    this.obj.add(this.disc);
-    const g = kind === 'ice' ? cone(0.35, 1.4, 6) : kind === 'missile' ? capsule(0.18, 0.7) : sphere(0.55, 12);
-    const m =
-      kind === 'ice'
-        ? mat('#dff6ff', { emissive: '#7fe6ff', ei: 0.8, rough: 0.1 })
-        : kind === 'missile'
-          ? mat('#c0c8d4', { emissive: '#ff5e6a', ei: 0.4, metal: 0.6 })
-          : mat('#5a3a22', { emissive: '#ff7a1a', ei: 1.2 });
-    this.rock = mesh(g, m, x, y + 14, z);
-    if (kind === 'ice') this.rock.rotation.x = Math.PI;
-    this.obj.add(this.rock);
-  }
-
-  update(dt: number) {
-    this.t += dt;
-    const k = Math.min(1, this.t / this.delay);
-    (this.disc.material as THREE.MeshBasicMaterial).opacity = 0.2 + k * 0.45 + (k > 0.7 ? Math.sin(this.t * 30) * 0.15 : 0);
-    this.rock.position.y = this.y + 14 * (1 - k * k);
-    if (this.t >= this.delay) {
-      const w = this.world;
-      const p = w.player.body;
-      if (Math.hypot(p.x - this.x, p.z - this.z) < this.radius + p.r && p.y < this.y + 1.6) w.player.hurt(1, this.x, this.z);
-      audio.play('explode');
-      w.particles.emit(this.x, this.y + 0.3, this.z, { count: 22, color: this.color, speed: 6, up: 3, life: 0.6, size: 0.6 });
-      w.shake(0.12);
-      this.remove();
-    }
-  }
-}
 
 /* ---------------- base ---------------- */
 
@@ -116,7 +25,7 @@ export abstract class Boss extends Entity {
   started = false;
   defeated = false;
   protected t = 0;
-  protected readonly center: THREE.Vector3;
+  readonly center: THREE.Vector3;
 
   constructor(
     world: World,
@@ -151,12 +60,17 @@ export abstract class Boss extends Entity {
     this.onIntro();
     void this.world.bossIntro(this).then(() => {
       this.introPlaying = false;
-      this.introSeen = true;
-      if (this.defeated || this.started) return;
-      this.started = true;
-      this.onStart();
-      this.world.bossStarted(this);
+      this.engage();
     });
+  }
+
+  /** Starts the fight right away (used after a cutscene that already introduced the boss). */
+  engage() {
+    this.introSeen = true;
+    if (this.defeated || this.started) return;
+    this.started = true;
+    this.onStart();
+    this.world.bossStarted(this);
   }
 
   /** Called as the entrance begins (before the cutscene). */
@@ -266,7 +180,7 @@ class Warden extends Boss implements Target {
       audio.play('zap', 2);
       return true;
     }
-    this.damage(kind === 'zap' ? 1 : dmg);
+    this.damage(kind === 'zap' ? Math.min(1, dmg) : dmg);
     this.core.emissiveIntensity = 3;
     audio.play('hit');
     return true;
@@ -771,6 +685,8 @@ class Blob extends Enemy {
     this.bolts = size >= 3 ? 0 : size >= 2 ? 4 : 2;
     this.heartChance = size < 2 ? 0.25 : 0;
     this.aimHeight = 0.5 * size;
+    this.badgeY = 1.35;
+    this.kind = 'blob';
     this.aggro = true;
   }
 
@@ -1216,13 +1132,24 @@ export class Heart extends Boss implements Target, Interactable {
       const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
       this.pods.push(world.addEntity(new Pod(world, `${id}.pod${i}`, this.center.x + Math.cos(a) * 6.5, h, this.center.z + Math.sin(a) * 6.5, this)));
     }
-    world.boxes.push({ minX: this.center.x - 2, maxX: this.center.x + 2, minZ: this.center.z - 2, maxZ: this.center.z + 2, bottom: h, top: h + 5.5, solid: true, dx: 0, dy: 0, dz: 0 });
+    this.box = { minX: this.center.x - 2, maxX: this.center.x + 2, minZ: this.center.z - 2, maxZ: this.center.z + 2, bottom: h, top: h + 5.5, solid: true, dx: 0, dy: 0, dz: 0 };
+    world.boxes.push(this.box);
     world.addTarget(this);
     world.addInteractable(this);
   }
 
   get time() {
     return this.t;
+  }
+
+  /** When the Heart leaves (its rebirth), its pods go with it. */
+  private box: Box;
+
+  remove() {
+    for (const p of this.pods) if (p.alive) p.remove();
+    const i = this.world.boxes.indexOf(this.box);
+    if (i >= 0) this.world.boxes.splice(i, 1);
+    super.remove();
   }
 
   /** The friendship ending: the Heart calms down, glows gold and opens up like a flower. */
@@ -1358,6 +1285,306 @@ export class Heart extends Boss implements Target, Interactable {
   }
 }
 
+/* ---------------- 7. The Bloom Reborn (the final, final battle) ---------------- */
+
+type RebornState = 'idle' | 'storm' | 'sweep' | 'rain' | 'open';
+
+/**
+ * After the Bloom Heart falls, every vine on the ship pulls back into it and it rises again: a
+ * floating thorn titan with one great eye. It attacks in patterns that speed up as it weakens,
+ * and it is only hurt while its eye is open.
+ */
+export class Reborn extends Boss implements Target, Interactable {
+  readonly title = 'THE BLOOM REBORN';
+  protected focusHeight = 4.4;
+  readonly aim = new THREE.Vector3();
+  radius = 2.2;
+  aimable = false;
+  readonly spot: THREE.Vector3;
+  range = 10;
+  calm = false;
+  private model = new THREE.Group();
+  private core: THREE.MeshStandardMaterial;
+  private iris: THREE.MeshStandardMaterial;
+  private lidTop: THREE.Mesh;
+  private lidBottom: THREE.Mesh;
+  private thorns = new THREE.Group();
+  private arms: THREE.Group[] = [];
+  private beams: THREE.Mesh[] = [];
+  private state: RebornState = 'idle';
+  private stateT = 2;
+  private count = 0;
+  private wave = 0;
+  private waveT = 0;
+  private sweepA = 0;
+  private summoned = 0;
+  private yaw = 0;
+  private open = 0;
+  /** 0 while it rises out of the floor in its entrance, 1 when fully formed. */
+  rise = 1;
+  /** Lets a cutscene force the great eye open. */
+  glare = 0;
+  private cx: number;
+  private cz: number;
+
+  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+    super(world, id, cx, cz, h, 44);
+    this.cx = cx;
+    this.cz = cz;
+    this.spot = this.center.clone();
+    this.core = ownMat('#3a0a1a', { emissive: '#ff2a5a', ei: 0.7, rough: 0.35 });
+    this.iris = ownMat('#fff0c0', { emissive: '#ffb030', ei: 2.5 });
+    const m = this.model;
+    const body = mesh(sphere(2, 32), this.core, 0, 0, 0);
+    body.scale.set(1, 0.92, 1);
+    m.add(body);
+    // The great eye, with lids that open when it is vulnerable.
+    m.add(mesh(sphere(0.95, 24), mat('#1a0610'), 0, 0.1, 1.45, false));
+    const pupil = mesh(sphere(0.62, 20), this.iris, 0, 0.1, 1.72, false);
+    pupil.scale.set(0.55, 1, 0.4);
+    m.add(pupil);
+    const lidMat = mat('#4a0c22', { emissive: '#ff2a5a', ei: 0.25, rough: 0.4 });
+    this.lidTop = mesh(new THREE.SphereGeometry(1.02, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), lidMat, 0, 0.1, 1.45, false);
+    this.lidBottom = mesh(new THREE.SphereGeometry(1.02, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), lidMat, 0, 0.1, 1.45, false);
+    this.lidTop.rotation.x = Math.PI / 2;
+    this.lidBottom.rotation.x = Math.PI / 2;
+    m.add(this.lidTop, this.lidBottom);
+    // A crown of glowing thorns.
+    const thorn = mat('#2a0616', { rough: 0.5 });
+    const glow = mat('#ff4fd8', { emissive: '#ff4fd8', ei: 2 });
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const t = mesh(cone(0.32, 2.2 + (i % 3) * 0.6, 6), thorn, Math.cos(a) * 1.6, 0.4, Math.sin(a) * 1.6);
+      t.lookAt(Math.cos(a) * 4, 1.6, Math.sin(a) * 4);
+      t.rotateX(Math.PI / 2);
+      this.thorns.add(t);
+      this.thorns.add(mesh(sphere(0.16, 8), glow, Math.cos(a) * 2.2, 0.9, Math.sin(a) * 2.2, false));
+    }
+    m.add(this.thorns);
+    // Four vine arms reaching down to the floor.
+    const vine = mat('#3a1030', { emissive: '#ff2a5a', ei: 0.15, rough: 0.6 });
+    for (let i = 0; i < 4; i++) {
+      const arm = new THREE.Group();
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      arm.position.set(Math.cos(a) * 1.3, -1.2, Math.sin(a) * 1.3);
+      arm.rotation.y = -a;
+      let parent: THREE.Object3D = arm;
+      for (let k = 0; k < 5; k++) {
+        const seg = new THREE.Group();
+        seg.position.set(k === 0 ? 0 : 0.85, k === 0 ? 0 : -0.25, 0);
+        seg.add(mesh(capsule(0.28 - k * 0.04, 0.7), vine, 0.42, 0, 0).rotateZ(Math.PI / 2));
+        parent.add(seg);
+        parent = seg;
+      }
+      m.add(arm);
+      this.arms.push(arm);
+    }
+    m.add(glowSprite('#ff2a5a', 14, 0.35));
+    m.position.copy(this.center);
+    this.obj.add(m);
+    // Two sweeping vine-beams along the floor.
+    const bgeo = new THREE.CylinderGeometry(0.16, 0.16, 15, 8).rotateZ(Math.PI / 2).translate(7.5, 0, 0);
+    for (let i = 0; i < 2; i++) {
+      const b = new THREE.Mesh(bgeo, new THREE.MeshBasicMaterial({ color: '#ff2a8a', transparent: true, opacity: 0.95, depthWrite: false, toneMapped: false }));
+      b.position.set(this.center.x, h + 0.45, this.center.z);
+      b.visible = false;
+      this.obj.add(b);
+      this.beams.push(b);
+    }
+    world.addTarget(this);
+    world.addInteractable(this);
+  }
+
+  get time() {
+    return this.t;
+  }
+
+  /** The secret path still works here: with every memory shard, BOLT can talk it down. */
+  label() {
+    if (!this.started || this.defeated || this.calm) return null;
+    return this.world.save.shards.length >= 18 ? 'SPEAK' : null;
+  }
+
+  interact() {
+    this.calm = true;
+    this.world.hooks.say(this.world.dialogue('speak'), () => {
+      this.world.hooks.hack(6, (ok) => {
+        if (!ok) {
+          this.calm = false;
+          this.world.hooks.toast('It is too angry to listen... try again!', 'bolt');
+          return;
+        }
+        this.defeated = true;
+        this.world.hooks.bossBar(null, 0);
+        this.world.communed();
+      });
+    });
+  }
+
+  befriend(k: number) {
+    this.calm = true;
+    this.core.color.set('#3a0a1a').lerp(new THREE.Color('#fff0b0'), k);
+    this.core.emissive.set('#ff2a5a').lerp(new THREE.Color('#ffb020'), k);
+    this.open = Math.max(this.open, k);
+  }
+
+  hit(dmg: number, kind: HitKind): boolean {
+    if (!this.started || this.calm) return true;
+    if (this.state !== 'open') {
+      audio.play('zap', 1.6);
+      return true;
+    }
+    this.damage(kind === 'blast' ? Math.round(dmg * 1.5) : dmg);
+    this.iris.emissiveIntensity = 5;
+    audio.play('hit');
+    return true;
+  }
+
+  reset() {
+    this.hp = this.maxHp;
+    this.state = 'idle';
+    this.stateT = 2.5;
+    this.count = 0;
+    this.calm = false;
+    for (const b of this.beams) b.visible = false;
+  }
+
+  private get phase() {
+    const f = this.hp / this.maxHp;
+    return f > 0.66 ? 1 : f > 0.33 ? 2 : 3;
+  }
+
+  update(dt: number) {
+    this.t += dt;
+    const c = this.center;
+    const hover = c.y + 3.4 + Math.sin(this.t * 1.3) * 0.3;
+    this.model.position.set(c.x, c.y - 6 + (hover - c.y + 6) * this.rise, c.z);
+    this.thorns.rotation.y += dt * (0.4 + (this.started ? this.phase * 0.25 : 0));
+    this.arms.forEach((arm, i) => {
+      let seg: THREE.Object3D | undefined = arm.children.find((o) => o instanceof THREE.Group);
+      let k = 0;
+      while (seg) {
+        seg.rotation.z = -0.25 - Math.sin(this.t * 1.6 + i * 1.3 + k * 0.7) * 0.18;
+        seg = seg.children.find((o) => o instanceof THREE.Group);
+        k += 1;
+      }
+    });
+    const p = this.player.body;
+    this.yaw = dampAngle(this.yaw, Math.atan2(p.x - c.x, p.z - c.z), 2.5, dt);
+    this.model.rotation.y = this.yaw;
+    const wantOpen = this.state === 'open' || this.calm ? 1 : Math.max(0.05, this.glare);
+    this.open = damp(this.open, wantOpen, 8, dt);
+    this.lidTop.rotation.x = Math.PI / 2 - this.open * 1.2;
+    this.lidBottom.rotation.x = Math.PI / 2 + this.open * 1.2;
+    this.iris.emissiveIntensity = damp(this.iris.emissiveIntensity, 2.5, 4, dt);
+    const eye = new THREE.Vector3(Math.sin(this.yaw) * 1.7, 0.1, Math.cos(this.yaw) * 1.7);
+    this.aim.copy(this.model.position).add(eye);
+    this.aimable = this.state === 'open' && !this.calm;
+    if (!this.started) {
+      if (this.rise >= 1 && this.playerDist() < 13) this.begin();
+      return;
+    }
+    if (this.defeated) {
+      this.model.scale.setScalar(damp(this.model.scale.x, 0.25, 1.2, dt));
+      for (const b of this.beams) b.visible = false;
+      return;
+    }
+    if (this.calm) return;
+    const ph = this.phase;
+    const pace = ph === 3 ? 0.8 : 1;
+    this.stateT -= dt;
+    switch (this.state) {
+      case 'idle':
+        if (this.stateT <= 0) {
+          this.count += 1;
+          const cycle: RebornState[] = ph === 1 ? ['storm', 'open', 'rain', 'open'] : ph === 2 ? ['storm', 'sweep', 'open', 'rain', 'open'] : ['storm', 'sweep', 'rain', 'open'];
+          this.state = cycle[this.count % cycle.length];
+          this.stateT = { idle: 1, storm: 2.2, sweep: 5, rain: 1.6, open: ph === 3 ? 3 : 3.6 }[this.state] * pace;
+          this.wave = 0;
+          this.waveT = 0.3;
+          if (this.state === 'sweep') {
+            this.sweepA = this.yaw;
+            this.world.hooks.toast('Vine beams! JUMP over them!', 'bolt');
+            for (const b of this.beams) b.visible = true;
+          }
+          if (this.state === 'open') {
+            audio.play('vent', 0.7);
+            this.world.hooks.toast('Its eye is open! BLAST it! Charge a FIREBALL!', 'bolt');
+          }
+          if (this.state === 'storm' || this.state === 'rain') audio.play('roar');
+        }
+        break;
+      case 'storm': {
+        // Rings of glowing thorns: find a gap, or jump over them.
+        this.waveT -= dt;
+        if (this.waveT <= 0 && this.wave < 3) {
+          this.waveT = 0.55 * pace;
+          const n = 10 + ph * 3;
+          const off = this.wave * 0.3 + Math.random() * 0.2;
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2 + off;
+            const dir = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
+            const from = new THREE.Vector3(c.x + dir.x * 2.6, c.y + 1, c.z + dir.z * 2.6);
+            this.world.shots.fire('enemy', from, dir, 6 + ph, 1);
+          }
+          audio.play('enemyShoot', 0.6);
+          this.wave += 1;
+        }
+        if (this.stateT <= 0) {
+          this.state = 'idle';
+          this.stateT = 0.9 * pace;
+        }
+        break;
+      }
+      case 'sweep': {
+        const dir = this.count % 2 ? 1 : -1;
+        this.sweepA += dt * (0.9 + ph * 0.25) * dir;
+        const r = Math.hypot(p.x - c.x, p.z - c.z);
+        const ang = Math.atan2(p.z - c.z, p.x - c.x);
+        this.beams.forEach((b, i) => {
+          const a = this.sweepA + i * Math.PI;
+          b.rotation.y = -a;
+          let diff = Math.abs((((ang - a) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2));
+          diff = Math.min(diff, Math.PI * 2 - diff);
+          if (diff < 0.11 && r < 15 && r > 2.4 && p.y < c.y + 0.8) this.player.hurt(1, c.x, c.z);
+        });
+        if (this.stateT <= 0) {
+          for (const b of this.beams) b.visible = false;
+          this.state = 'idle';
+          this.stateT = 1 * pace;
+        }
+        break;
+      }
+      case 'rain':
+        if (this.stateT <= 1.1 * pace && this.stateT + dt > 1.1 * pace) {
+          const n = 5 + ph * 2;
+          for (let i = 0; i < n; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = i === 0 ? 0 : 1.6 + Math.random() * 4;
+            this.world.addEntity(new Strike(this.world, p.x + Math.cos(a) * r, c.y, p.z + Math.sin(a) * r, 1.1, 1.2, '#ff2a8a', 'ice'));
+          }
+          if (ph >= 2 && this.summoned < 6) {
+            this.summoned += 2;
+            for (const s of [-1, 1]) this.world.spawnEnemy('sporeling', this.cx + s * 4, this.cz + 3, 'default');
+          }
+        }
+        if (this.stateT <= 0) {
+          this.state = 'idle';
+          this.stateT = 1.2 * pace;
+        }
+        break;
+      case 'open':
+        if (Math.random() < 0.3) this.world.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 1, color: '#ffd166', speed: 1.5, life: 0.5, size: 0.5, gravity: 0 });
+        if (this.stateT <= 0) {
+          this.state = 'idle';
+          this.stateT = 1 * pace;
+        }
+        break;
+    }
+    if (Math.hypot(p.x - c.x, p.z - c.z) < 2.6 && p.y < c.y + 5) this.player.hurt(1, c.x, c.z);
+  }
+}
+
 function build(world: World, id: string, kind: BossKind, cx: number, cz: number, h: number): Boss {
   switch (kind) {
     case 'warden':
@@ -1372,6 +1599,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Wardog(world, id, cx, cz, h);
     case 'heart':
       return new Heart(world, id, cx, cz, h);
+    case 'reborn':
+      return new Reborn(world, id, cx, cz, h);
   }
 }
 
