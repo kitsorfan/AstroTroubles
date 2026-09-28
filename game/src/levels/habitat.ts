@@ -1,0 +1,123 @@
+import type { LevelDef } from '../world/levelTypes';
+
+/**
+ * Deck 4 — the Habitat Ring, where the colonists live. A loop of streets around an open atrium:
+ * houses, a goo canal, the playground with the HOVER PACK, a timed market gate, the park and the
+ * school. Glide from the launch tower to King Bloblin's island in the middle.
+ */
+export const habitat: LevelDef = {
+  id: 'habitat',
+  index: 4,
+  name: 'Habitat Ring',
+  subtitle: 'Home sweet (gooey) home',
+  music: 'habitat',
+  intro: 'intro',
+  boss: 'bloblin',
+  shardIds: ['s1', 's2', 's3'],
+  colonistIds: ['c1', 'c2'],
+  map: `
+##########################################
+#!844.....o.o.o.......#..x..x#+#.........#
+#8844.z...............#TR....RY#.......V.#
+#..x........e.........#...R....#.........#
+#.....................#####.####.....C...#
+#........u.....C.669999...........h......#
+#...............w669999..................#
+###X###                            ......#
+#......                            ......#
+#......                            ....x.#
+#......                            .t....#
+#......                            ..e...#
+#..e...                            ...z..#
+#......                            .....t#
+#o.....       ..............       ......#
+#......       .l....C.....l.       t.~~~.#
+#o.....       ..............       ..~.~.#
+#......       ..............       .s~?~.#
+#o..n..       ..............       ..~~~.#
+#......    #  ..............       .....t#
+#o....d   *#  ......W.......       t...s.#
+#......   .#  ..............       ......#
+#o.....    #  ..............       ##M####
+#......       ..............       ....~~#
+#.x....       ..............       .~~.~~#
+#......       ..............       ....i.#
+#......       .l....L.....l.       .i....#
+#......       ..............       ...P.x#
+#......                            oo.g..#
+#....e.                            z...9U#
+#......                          ......89#
+#......                          Q4b...88#
+#......                          44....88#
+#......                          .....666#
+#......                          ...e.666#
+#...l....l....l....l..~~~~~~..l..........#
+#....j...x...e........~~oo~~...y.22..44..#
+#..............n....e.~~..~~.....22..44..#
+#..@..C...444...444...~~..~~..C.....b....#
+#.........4o4...4K4...~~~~~~.............#
+#.......oo444.k.444x..ff~~ff.............#
+##########################################
+`,
+  legend: {
+    W: { type: 'boss', boss: 'bloblin', room: 'arena' },
+    L: { type: 'exit' },
+    V: { type: 'vendor' },
+    C: { type: 'checkpoint', id: 'cp' },
+    e: { type: 'enemy', enemy: 'sporeling', variant: 'goo' },
+    n: { type: 'enemy', enemy: 'snapper' },
+    z: { type: 'enemy', enemy: 'buzzer' },
+    s: { type: 'enemy', enemy: 'sentry' },
+    u: { type: 'enemy', enemy: 'turret' },
+    R: { type: 'enemy', enemy: 'sporeling', variant: 'goo', room: 'r1' },
+    T: { type: 'terminal', flag: 't1', length: 5 },
+    X: { type: 'door', id: 'westdoor', open: { flag: 't1' } },
+    Y: { type: 'door', id: 'cabinet', open: { clear: 'r1' } },
+    P: { type: 'switch', flag: 'gate', timed: 6 },
+    M: { type: 'door', id: 'gate', open: { flag: 'gate' } },
+    U: { type: 'upgrade', ability: 'glide', id: 'hover' },
+    f: { type: 'faller', h: 0, floor: 'hazard' },
+    j: { type: 'sign', text: 'Welcome to the Habitat Ring! Please do not feed the goo.' },
+    y: { type: 'sign', text: 'PLAYGROUND. Bounce pads, climbing towers and a very shiny thing on top of the tallest one!' },
+    g: { type: 'sign', text: 'The market gate only stays open for a few seconds after you pound the switch. Ready, set... DASH!' },
+    w: { type: 'sign', text: 'The launch tower! Jump off the top and HOLD JUMP to hover all the way to the island.' },
+    d: { type: 'sign', text: 'Something shiny is floating out there. Is that jump too far... or just far enough?' },
+    '?': { type: 'shard', id: 's1' },
+    '*': { type: 'shard', id: 's2' },
+    '!': { type: 'shard', id: 's3' },
+    K: { type: 'cocoon', id: 'c1', name: 'Mayor Ada', line: 'Oh my! The whole Ring owes you a parade!' },
+    Q: { type: 'cocoon', id: 'c2', name: 'Teacher Kofi', line: 'Class, this is what a hero looks like. Thank you!' },
+    '+': { type: 'canister', id: 'hc' },
+    l: { type: 'decor', kind: 'lamp' },
+    t: { type: 'decor', kind: 'tree' },
+    i: { type: 'decor', kind: 'kiosk' },
+    k: { type: 'decor', kind: 'bench' },
+  },
+  objectives: [
+    { until: { flag: 'ability:glide' }, text: 'Find the HOVER PACK in the playground' },
+    { until: { boss: true }, text: 'Glide from the launch tower to the island' },
+    { until: { flag: 'never' }, text: 'Ride the lift up to Security' },
+  ],
+  dialogues: {
+    intro: [
+      { who: 'halcyon', text: 'The Habitat Ring. Two thousand cosy homes, one school, one playground and... a lot of goo.' },
+      { who: 'bolt', text: 'Look at the middle! There is a floating island. And something BIG and wobbly on it.' },
+      { who: 'halcyon', text: 'That is where the Bloom has hidden the lift. You will need to fly... or at least hover.' },
+      { who: 'kai', text: 'The playground always had the best toys. Let’s start there!' },
+    ],
+    boss: [
+      { who: 'bolt', text: 'KING BLOBLIN! He is made of goo, and he wobbles when he is angry!' },
+      { who: 'halcyon', text: 'Every time you pop a blob, it splits into smaller ones. Pop them all! GROUND POUNDS hit extra hard.' },
+    ],
+    bossDown: [
+      { who: 'bolt', text: 'The last little blob went POP! The King is just a puddle now.' },
+      { who: 'halcyon', text: 'The lift to the Security Deck is working. Careful, the security system there is still angry.' },
+    ],
+    'shard:s1': [{ who: 'bloom', text: 'The ship-people grow flowers too! Maybe we are the same.' }],
+    'shard:s2': [
+      { who: 'bloom', text: 'I tried to say hello. I flashed my lights: hello... hello... hello...' },
+      { who: 'bolt', text: 'Flashing lights? That is how I talk to other robots!' },
+    ],
+    'shard:s3': [{ who: 'bloom', text: 'Nobody understood me. Nobody flashed back.' }],
+  },
+};
