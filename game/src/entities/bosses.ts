@@ -10,7 +10,8 @@ import type { BossKind } from '../world/levelTypes';
 import { makeBody, moveBody, type Body, type Box } from '../world/physics';
 import { Enemy } from './enemies';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
-import { blobShadow, boxG, capsule, cone, cyl, glowSprite, makeSporeling, mat, mesh, ownMat, sphere, torus } from './models';
+import { makeGooBlob } from './aliens';
+import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 const tmp = new THREE.Vector3();
 
@@ -716,7 +717,7 @@ class Blob extends Enemy {
     readonly size: number,
     private king: King,
   ) {
-    super(world, id, x, y, z, size >= 3 ? 10 : size >= 2 ? 5 : 3, 0.55 * size, makeSporeling('goo', size));
+    super(world, id, x, y, z, size >= 3 ? 10 : size >= 2 ? 5 : 3, 0.55 * size, makeGooBlob(size));
     this.bolts = size >= 3 ? 0 : size >= 2 ? 4 : 2;
     this.heartChance = size < 2 ? 0.25 : 0;
     this.aimHeight = 0.5 * size;

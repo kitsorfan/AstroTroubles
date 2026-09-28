@@ -96,7 +96,7 @@ export function makeKai(): KaiModel {
   const body = new THREE.Group();
   root.add(body);
   const suit = ownMat('#ff8a3d', { rough: 0.5 });
-  const white = mat('#eef3fa', { rough: 0.35 });
+  const white = mat('#cdd5e0', { rough: 0.45 });
   const grey = mat('#6f7a8e', { rough: 0.5, metal: 0.35 });
   const dark = mat('#2a3242', { rough: 0.6 });
 
@@ -173,7 +173,7 @@ export function makeBolt(): BoltModel {
   const root = new THREE.Group();
   const shell = new THREE.Group();
   root.add(shell);
-  const white = mat('#e6edf7', { rough: 0.3, metal: 0.2 });
+  const white = mat('#c9d2de', { rough: 0.4, metal: 0.2 });
   const grey = mat('#7b8699', { rough: 0.45, metal: 0.4 });
   shell.add(mesh(sphere(0.36, 26), white));
   const band = mesh(torus(0.355, 0.05), grey);
@@ -195,186 +195,4 @@ export function makeBolt(): BoltModel {
   glow.position.y = -0.45;
   root.add(glow);
   return { root, shell, iris, glow, lid };
-}
-
-/* ---------------- enemies ---------------- */
-
-export interface EnemyModel {
-  root: THREE.Group;
-  body: THREE.Group;
-  /** Materials that flash white when hit. */
-  flash: THREE.MeshStandardMaterial[];
-  parts: Record<string, THREE.Object3D>;
-  mats?: Record<string, THREE.MeshStandardMaterial>;
-}
-
-function eyes(parent: THREE.Object3D, y: number, z: number, spread: number, r: number, angry = false) {
-  const white = mat('#ffffff', { rough: 0.3 });
-  const black = mat('#111111', { rough: 0.3 });
-  for (const sx of [-1, 1]) {
-    parent.add(mesh(sphere(r, 14), white, sx * spread, y, z, false));
-    parent.add(mesh(sphere(r * 0.5, 10), black, sx * spread, y, z + r * 0.62, false));
-    if (angry) {
-      const brow = mesh(boxG(r * 2, r * 0.35, r * 0.4), black, sx * spread, y + r * 0.95, z + r * 0.3, false);
-      brow.rotation.z = sx * 0.4;
-      parent.add(brow);
-    }
-  }
-}
-
-const SPORE_COLORS: Record<string, [string, string]> = {
-  default: ['#9b4dd6', '#ff8ad8'],
-  frost: ['#8fd6ff', '#ffffff'],
-  magma: ['#ff6a2a', '#ffd166'],
-  goo: ['#ff5fa8', '#ffe0f0'],
-  toxic: ['#7fdc3a', '#e8ff9a'],
-};
-
-export function makeSporeling(variant = 'default', scale = 1): EnemyModel {
-  const [c1, c2] = SPORE_COLORS[variant] ?? SPORE_COLORS.default;
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const skin = ownMat(c1, { emissive: c1, ei: 0.18, rough: 0.4 });
-  const blob = mesh(sphere(0.55, 22), skin, 0, 0.5, 0);
-  blob.scale.set(1, 0.85, 1);
-  body.add(blob);
-  const spot = mat(c2, { emissive: c2, ei: 0.5 });
-  body.add(mesh(sphere(0.13, 10), spot, 0.3, 0.8, -0.2, false), mesh(sphere(0.1, 10), spot, -0.33, 0.7, -0.25, false), mesh(sphere(0.09, 10), spot, 0.05, 0.95, -0.3, false));
-  eyes(body, 0.6, 0.38, 0.19, 0.15);
-  body.add(mesh(sphere(0.12, 10), skin, -0.25, 0.08, 0.1), mesh(sphere(0.12, 10), skin, 0.25, 0.08, 0.1));
-  root.add(blobShadow(1.3));
-  root.scale.setScalar(scale);
-  return { root, body, flash: [skin], parts: { blob } };
-}
-
-export function makeSnapper(): EnemyModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const green = ownMat('#3fae4a', { emissive: '#3fae4a', ei: 0.15, rough: 0.45 });
-  const red = mat('#d63a5a', { emissive: '#d63a5a', ei: 0.3 });
-  const leaf = mat('#2e7a36', { rough: 0.6 });
-  for (let i = 0; i < 5; i++) {
-    const l = mesh(cone(0.28, 0.9, 6), leaf, Math.cos((i / 5) * Math.PI * 2) * 0.35, 0.15, Math.sin((i / 5) * Math.PI * 2) * 0.35);
-    l.rotation.z = Math.cos((i / 5) * Math.PI * 2) * 1.2;
-    l.rotation.x = -Math.sin((i / 5) * Math.PI * 2) * 1.2;
-    root.add(l);
-  }
-  const stem = mesh(cyl(0.12, 0.16, 1.2), green, 0, 0.6, 0);
-  body.add(stem);
-  const head = new THREE.Group();
-  head.position.y = 1.3;
-  const top = mesh(sphere(0.5, 18), green, 0, 0, 0);
-  top.scale.set(1, 0.62, 1);
-  const inner = mesh(sphere(0.44, 16), red, 0, -0.04, 0.06, false);
-  inner.scale.set(0.95, 0.4, 0.95);
-  head.add(top, inner);
-  const teeth = mat('#ffffff');
-  for (let i = 0; i < 6; i++) {
-    const t = mesh(cone(0.06, 0.16, 5), teeth, Math.cos((i / 6) * Math.PI - Math.PI) * 0.32, -0.12, 0.3 + Math.sin((i / 6) * Math.PI) * 0.1, false);
-    t.rotation.x = Math.PI;
-    head.add(t);
-  }
-  eyes(head, 0.26, 0.26, 0.17, 0.11, true);
-  body.add(head);
-  root.add(blobShadow(1.4));
-  return { root, body, flash: [green], parts: { head } };
-}
-
-export function makeBuzzer(): EnemyModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const metal = ownMat('#8a93a6', { rough: 0.35, metal: 0.6 });
-  body.add(mesh(sphere(0.42, 20), metal));
-  const eye = mat('#ff3b5c', { emissive: '#ff3b5c', ei: 1.6 });
-  body.add(mesh(sphere(0.14, 12), eye, 0, 0, 0.36, false));
-  const vine = mat('#e0479f', { emissive: '#e0479f', ei: 0.4 });
-  const t = mesh(torus(0.44, 0.05), vine);
-  t.rotation.set(1.2, 0.3, 0);
-  body.add(t);
-  body.add(mesh(sphere(0.1, 10), mat('#ff8ad8', { emissive: '#ff8ad8', ei: 0.8 }), 0.25, 0.3, -0.1, false));
-  const rotors: THREE.Object3D[] = [];
-  for (const sx of [-1, 1]) {
-    body.add(mesh(cyl(0.04, 0.04, 0.5), metal, sx * 0.45, 0.1, 0).rotateZ(Math.PI / 2));
-    const r = mesh(cyl(0.34, 0.34, 0.02, 18), mat('#dfe6f2', { opacity: 0.55 }), sx * 0.72, 0.18, 0, false);
-    body.add(r);
-    rotors.push(r);
-  }
-  const shadow = blobShadow(1.1);
-  root.add(shadow);
-  return { root, body, flash: [metal], parts: { rotorL: rotors[0], rotorR: rotors[1], shadow } };
-}
-
-export function makeSentry(): EnemyModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const shell = ownMat('#5b6272', { rough: 0.4, metal: 0.5 });
-  const red = mat('#c9354a', { rough: 0.5 });
-  body.add(mesh(boxG(1, 0.9, 0.9), shell, 0, 0.95, 0));
-  body.add(mesh(boxG(1.04, 0.16, 0.94), red, 0, 1.2, 0));
-  const dome = mesh(sphere(0.38, 18), shell, 0, 1.45, 0);
-  dome.scale.set(1, 0.7, 1);
-  body.add(dome);
-  const eyeMat = ownMat('#ff3040', { emissive: '#ff3040', ei: 1.8 });
-  body.add(mesh(sphere(0.12, 12), eyeMat, 0, 1.47, 0.3, false));
-  const wheel = mat('#23262d', { rough: 0.8 });
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) body.add(mesh(cyl(0.2, 0.2, 0.14, 14), wheel, sx * 0.45, 0.22, sz * 0.3).rotateZ(Math.PI / 2));
-  const shield = new THREE.Mesh(
-    boxG(1.25, 1.2, 0.08),
-    new THREE.MeshStandardMaterial({ color: '#5ecbff', emissive: '#3fb6ff', emissiveIntensity: 0.9, transparent: true, opacity: 0.45, depthWrite: false }),
-  );
-  shield.position.set(0, 1.05, 0.72);
-  body.add(shield);
-  root.add(blobShadow(1.6));
-  return { root, body, flash: [shell], parts: { shield }, mats: { eye: eyeMat } };
-}
-
-export function makeTurret(): EnemyModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  root.add(mesh(cyl(0.55, 0.7, 0.35, 16), mat('#3b3350', { rough: 0.6, metal: 0.3 }), 0, 0.17, 0));
-  const bulb = ownMat('#b53fbf', { emissive: '#b53fbf', ei: 0.2, rough: 0.4 });
-  const head = new THREE.Group();
-  head.position.y = 0.95;
-  head.add(mesh(sphere(0.52, 20), bulb));
-  const mouth = mesh(torus(0.2, 0.07), mat('#ffd166', { emissive: '#ffd166', ei: 1.2 }), 0, 0.05, 0.47, false);
-  head.add(mouth);
-  const petal = mat('#ff8ad8', { rough: 0.5 });
-  for (let i = 0; i < 6; i++) {
-    const p = mesh(cone(0.18, 0.5, 6), petal, Math.cos((i / 6) * Math.PI * 2) * 0.45, -0.25, Math.sin((i / 6) * Math.PI * 2) * 0.45);
-    p.rotation.z = Math.cos((i / 6) * Math.PI * 2) * 2.2;
-    p.rotation.x = -Math.sin((i / 6) * Math.PI * 2) * 2.2;
-    head.add(p);
-  }
-  body.add(head);
-  eyes(head, 0.28, 0.4, 0.2, 0.1, true);
-  root.add(blobShadow(1.6));
-  return { root, body, flash: [bulb], parts: { head } };
-}
-
-export function makeBrute(): EnemyModel {
-  const root = new THREE.Group();
-  const body = new THREE.Group();
-  root.add(body);
-  const skin = ownMat('#7a4fa0', { emissive: '#7a4fa0', ei: 0.12, rough: 0.5 });
-  const torso = mesh(sphere(1, 24), skin, 0, 1.25, 0);
-  torso.scale.set(1.1, 0.95, 0.95);
-  body.add(torso);
-  const armL = new THREE.Group();
-  const armR = new THREE.Group();
-  armL.position.set(-1.05, 1.5, 0.1);
-  armR.position.set(1.05, 1.5, 0.1);
-  armL.add(mesh(capsule(0.32, 0.8), skin, 0, -0.55, 0));
-  armR.add(mesh(capsule(0.32, 0.8), skin, 0, -0.55, 0));
-  body.add(armL, armR);
-  eyes(body, 1.55, 0.82, 0.3, 0.2, true);
-  const bulb = mat('#ff6fcf', { emissive: '#ff6fcf', ei: 0.9 });
-  body.add(mesh(sphere(0.25, 12), bulb, 0.4, 2.1, -0.4, false), mesh(sphere(0.2, 12), bulb, -0.5, 2.0, -0.3, false), mesh(sphere(0.18, 12), bulb, 0, 2.2, -0.6, false));
-  body.add(mesh(capsule(0.28, 0.2), skin, -0.45, 0.3, 0), mesh(capsule(0.28, 0.2), skin, 0.45, 0.3, 0));
-  root.add(blobShadow(3));
-  return { root, body, flash: [skin], parts: { armL, armR } };
 }

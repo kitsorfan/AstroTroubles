@@ -8,7 +8,7 @@ import { Grid } from '../world/grid';
 import type { EnemyKind } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
 import { Entity, type HitKind, type Target } from './entity';
-import { makeBrute, makeBuzzer, makeSentry, makeSnapper, makeSporeling, makeTurret, type EnemyModel } from './models';
+import { makeBrute, makeBuzzer, makeSentry, makeSnapper, makeSporeling, makeTurret, type EnemyModel } from './aliens';
 
 const v3 = new THREE.Vector3();
 const WHITE = new THREE.Color('#ffffff');
@@ -212,6 +212,13 @@ class Sporeling extends Enemy {
     this.squash = Math.max(0, this.squash - dt);
     const s = b.grounded ? 1 - this.squash * 1.5 : 1.12;
     this.model.body.scale.set(2 - s, s, 2 - s);
+    // Legs skitter while it runs and fold up when it leaps.
+    const moving = Math.hypot(b.vx, b.vz) > 0.5 ? 1 : 0.2;
+    (this.model.limbs ?? []).forEach((leg, i) => {
+      const side = i % 2 ? 1 : -1;
+      leg.rotation.x = b.grounded ? Math.sin(this.t * 18 + i * 1.9) * 0.4 * moving : 0.3;
+      leg.rotation.z = b.grounded ? 0 : side * 0.55;
+    });
   }
 }
 
@@ -221,6 +228,7 @@ class Snapper extends Enemy {
   private up = 0;
   private snapT = 1.2;
   private lunge = 0;
+  private jaw = 0.1;
 
   constructor(world: World, id: string, x: number, y: number, z: number) {
     super(world, id, x, y, z, 3, 0.6, makeSnapper());
@@ -242,6 +250,13 @@ class Snapper extends Enemy {
     this.facePlayer(dt, 6);
     const head = this.model.parts.head;
     this.model.body.position.y = (this.up - 1) * 1.4;
+    // Jaws breathe while it waits, gape wide just before a bite, and slam shut on it.
+    let open = 0.12 + Math.sin(this.t * 3) * 0.06;
+    if (near) open = this.snapT < 0.45 ? 1 : 0.35;
+    if (this.lunge > 0) open = 0.02;
+    this.jaw = damp(this.jaw, open, this.lunge > 0 ? 30 : 10, dt);
+    this.model.parts.jawTop.rotation.x = -this.jaw * 0.9;
+    this.model.parts.jawBottom.rotation.x = this.jaw * 0.55;
     if (near) {
       this.snapT -= dt;
       const tele = this.snapT < 0.45;
@@ -305,8 +320,10 @@ class Buzzer extends Enemy {
     }
     b.y = this.baseY + Math.sin(this.t * 3) * 0.25;
     this.facePlayer(dt, 5);
-    this.model.parts.rotorL.rotation.y += dt * 30;
-    this.model.parts.rotorR.rotation.y -= dt * 30;
+    const flap = Math.sin(this.t * 70) * 0.6;
+    this.model.parts.rotorL.rotation.z = flap;
+    this.model.parts.rotorR.rotation.z = -flap;
+    this.model.body.rotation.x = 0.15 + Math.sin(this.t * 2.2) * 0.06;
     const shadow = this.model.parts.shadow;
     const c = g.cell(Grid.toCell(b.x), Grid.toCell(b.z));
     shadow.visible = c.kind !== 'void';
@@ -441,7 +458,13 @@ class Brute extends Enemy {
     this.bolts = 15;
     this.heartChance = 0.7;
     this.aimHeight = 1.3;
+    const skin = this.model.flash[0];
+    this.calmGlow = skin.emissive.clone();
+    this.calmGlowI = skin.emissiveIntensity;
   }
+
+  private calmGlow: THREE.Color;
+  private calmGlowI: number;
 
   protected canBeHit() {
     return true;
@@ -535,8 +558,8 @@ class Brute extends Enemy {
         break;
     }
     if (this.state !== 'wind' && this.flashT <= 0) {
-      skin.emissive.set('#7a4fa0');
-      skin.emissiveIntensity = 0.12;
+      skin.emissive.copy(this.calmGlow);
+      skin.emissiveIntensity = this.calmGlowI;
     }
     this.contact = this.state !== 'dizzy';
   }
