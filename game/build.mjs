@@ -47,6 +47,7 @@ ${css}
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="vignette"></div>
 <div id="touch"></div>
 <div id="ui"></div>
 <script>

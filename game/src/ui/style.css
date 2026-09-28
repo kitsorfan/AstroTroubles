@@ -44,6 +44,15 @@ canvas#game {
   display: block;
 }
 
+/* Darkened screen corners for a cinematic frame. */
+#vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.28) 82%, rgba(0, 0, 0, 0.55) 100%);
+}
+
 #touch {
   position: fixed;
   inset: 0;

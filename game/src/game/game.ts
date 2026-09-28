@@ -10,6 +10,7 @@ import { LEVELS, LEVEL_ORDER } from '../levels';
 import type { DeckId, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { UI, type ShopItem } from '../ui/ui';
+import { PostFx } from './post';
 import { STORY, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
@@ -43,6 +44,7 @@ export class Game {
   private world: World | null = null;
   private title = new TitleScene();
   private envMap: THREE.Texture;
+  private post: PostFx;
   private state: State = 'boot';
   private last = performance.now();
   private deckTime = 0;
@@ -69,6 +71,7 @@ export class Game {
     pmrem.dispose();
     this.title.scene.environment = this.envMap;
     this.title.scene.environmentIntensity = 0.55;
+    this.post = new PostFx(this.renderer);
     this.input = new Input(touch);
     this.ui = new UI(uiRoot, this.input);
     this.ui.onPause = () => this.pause();
@@ -103,6 +106,7 @@ export class Game {
     const ratio = Math.min(window.devicePixelRatio || 1, s.quality === 'high' ? 2 : s.quality === 'medium' ? 1.5 : 1);
     this.renderer.setPixelRatio(ratio);
     this.resize();
+    this.post.configure(s.quality);
   }
 
   private resize() {
@@ -111,6 +115,7 @@ export class Game {
     this.renderer.setSize(w, h, false);
     this.title.resize(w, h);
     this.world?.resize(w, h);
+    this.post?.resize();
   }
 
   private persist() {
@@ -260,9 +265,18 @@ export class Game {
 
   private disposeWorld() {
     if (!this.world) return;
+    // Free every buffer, texture, material and shadow map the deck uploaded; phones have little GPU memory.
+    // Shared helpers (cached geometry, glow textures) are simply uploaded again when the next deck uses them.
     this.world.scene.traverse((o) => {
+      const any = o as THREE.Mesh;
+      any.geometry?.dispose();
+      const mats = Array.isArray(any.material) ? any.material : any.material ? [any.material] : [];
+      for (const m of mats) {
+        for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose();
+        m.dispose();
+      }
       if (o instanceof THREE.InstancedMesh) o.dispose();
-      if (o instanceof THREE.Points) o.geometry.dispose();
+      if (o instanceof THREE.Light) o.dispose();
     });
     this.world = null;
     this.renderer.renderLists.dispose();
@@ -274,11 +288,23 @@ export class Game {
     this.state = 'card';
     this.ui.showHud(false);
     audio.music(def.music as Track);
+    const r = resume && this.save.resume?.deck === id ? this.save.resume : null;
+    const build = () => {
+      const w = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
+      w.scene.environment = this.envMap;
+      w.resize(window.innerWidth, window.innerHeight);
+      // Compile every shader now so the first frames of play don't stutter.
+      this.renderer.compile(w.scene, w.camera);
+      return w;
+    };
+    // Build the deck behind its title card (after the card has painted) so the loading pause is hidden.
+    let ready: World | null = null;
+    const early = setTimeout(() => {
+      ready = build();
+    }, 80);
     this.ui.card(def.index, def.name, def.subtitle, THEMES[id].accent, () => {
-      const r = resume && this.save.resume?.deck === id ? this.save.resume : null;
-      this.world = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
-      this.world.scene.environment = this.envMap;
-      this.world.resize(window.innerWidth, window.innerHeight);
+      clearTimeout(early);
+      this.world = ready ?? build();
       this.deckTime = 0;
       this.boltsAtStart = this.save.bolts;
       this.save.resume = { deck: id, ...this.world.resumeState() };
@@ -501,10 +527,12 @@ export class Game {
           }
         }
       }
-      this.renderer.render(w.scene, w.camera);
+      this.post.setStrength(w.theme.bloom);
+      this.post.render(w.scene, w.camera);
       return;
     }
     this.title.update(dt);
-    this.renderer.render(this.title.scene, this.title.camera);
+    this.post.setStrength(0.35);
+    this.post.render(this.title.scene, this.title.camera);
   }
 }

@@ -18,8 +18,8 @@ export class TitleScene {
     this.scene.background = new THREE.Color(th.skyTop);
     this.scene.fog = new THREE.Fog(th.fog, 60, 400);
     this.scene.add(buildSky(th, new THREE.Vector3(0, 0, 0), 60));
-    this.scene.add(new THREE.HemisphereLight('#e8e0ff', '#1c1640', 1.3));
-    const sun = new THREE.DirectionalLight('#fff4e0', 2.2);
+    this.scene.add(new THREE.HemisphereLight('#e8e0ff', '#1c1640', 0.9));
+    const sun = new THREE.DirectionalLight('#fff4e0', 1.9);
     sun.position.set(20, 30, 20);
     this.scene.add(sun);
     const star = new THREE.PointLight('#ffb070', 900, 0, 2);
