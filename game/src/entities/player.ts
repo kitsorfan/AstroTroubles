@@ -10,6 +10,10 @@ import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
 import { makeKai, type KaiModel } from './models';
+import { KaiFx } from './moveFx';
+
+/** How long Kai hangs in the air (and flips) before a ground pound slams down. */
+const POUND_HANG = 0.18;
 
 const tmp = new THREE.Vector3();
 
@@ -45,6 +49,7 @@ export class Player {
   down = false;
   carrying: THREE.Object3D | null = null;
   shieldT = 0;
+  private fx: KaiFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
 
@@ -63,6 +68,7 @@ export class Player {
     this.renderY = y;
     this.safe.set(x, y, z);
     world.scene.add(this.model.root);
+    this.fx = new KaiFx(world.scene);
   }
 
   has(a: Ability) {
@@ -261,12 +267,13 @@ export class Player {
       if (b.grounded || this.airTime < 0.05) {
         if (this.spinT <= 0) {
           this.spinT = PLAYER.spinTime;
+          this.fx.spin(PLAYER.spinTime);
           this.spinHit.clear();
           audio.play('spin');
         }
       } else if (b.y > this.groundBelow() + 0.9) {
         this.pounding = true;
-        this.poundHang = 0.12;
+        this.poundHang = POUND_HANG;
         this.dashT = 0;
         audio.play('spin', 1.4);
       }
@@ -388,7 +395,9 @@ export class Player {
     m.armR.rotation.z = this.gliding ? 1.3 : 0;
     m.armR.rotation.x = this.shootPose > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
     m.body.position.y = air ? 0 : Math.abs(s) * 0.07 * walk + Math.sin(this.phase * 0.5) * 0.01;
-    m.body.rotation.x = this.dashT > 0 ? 0.45 : this.pounding ? 0.9 : walk * 0.08;
+    // Ground pound: a quick front flip while hanging in the air, then feet-first down.
+    const flip = this.poundHang > 0 ? (1 - this.poundHang / POUND_HANG) * Math.PI * 2 : 0.2;
+    m.body.rotation.x = this.dashT > 0 ? 0.45 : this.pounding ? flip : walk * 0.08;
     if (this.spinT > 0) m.body.rotation.y += dt * 28;
     else m.body.rotation.y = damp(m.body.rotation.y % (Math.PI * 2), 0, 20, dt);
     this.squash = Math.max(0, this.squash - dt);
@@ -402,6 +411,7 @@ export class Player {
     m.visor.emissiveIntensity = 0.35 + this.world.darkness * 1.2;
     m.root.visible = this.invuln <= 0 || Math.floor(this.invuln * 12) % 2 === 0 || this.down;
     if (this.carrying) this.carrying.rotation.y += dt * 2;
+    this.fx.update(dt, b.x, this.renderY, b.z, { pounding: this.pounding, hang: this.poundHang, hangMax: POUND_HANG, airborne: !b.grounded });
   }
 
   get cellX() {
