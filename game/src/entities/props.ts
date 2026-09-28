@@ -5,7 +5,6 @@ import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
 import { damp } from '../core/math';
 import type { World } from '../game/world';
-import { addCutaway } from '../world/builder';
 import type { Cond, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
@@ -163,8 +162,6 @@ export class Door extends Entity {
     const metal = ownMat('#4a5468', { metal: 0.5, rough: 0.4 });
     const seam = ownMat('#2a3242');
     this.lampMat = ownMat(color, { emissive: color, ei: 1.3 });
-    // A closed door between the camera and Kai turns see-through, just like the walls.
-    for (const m of [metal, seam, this.lampMat]) addCutaway(m, world.cutaway);
     this.slab.add(mesh(boxG(w, 3.2, d), metal, 0, 1.6, 0));
     this.slab.add(mesh(boxG(alongX ? w * 0.9 : d * 0.1 + 0.52, 0.18, alongX ? d + 0.04 : d * 0.9), this.lampMat, 0, 1.9, 0, false));
     this.slab.add(mesh(boxG(alongX ? 0.12 : 0.54, 2.8, alongX ? d + 0.02 : 0.12), seam, 0, 1.5, 0, false));

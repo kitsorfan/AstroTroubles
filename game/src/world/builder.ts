@@ -1,55 +1,83 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-import { CELL, FLOOR_BOTTOM } from '../core/constants';
+import { CELL, FLOOR_BOTTOM, WALL_H } from '../core/constants';
 import { hash2 } from '../core/math';
 import { Grid } from './grid';
-import type { ParsedLevel, TileKind } from './levelTypes';
-import { panelTexture } from './textures';
+import type { Cell, ParsedLevel } from './levelTypes';
+import { deckSurfaces, type Surface } from './surfaces';
 import type { Theme } from './themes';
 
 export interface BuiltLevel {
   group: THREE.Group;
   update(dt: number, time: number): void;
-  /** Camera and focus positions for the wall cut-away shader. */
-  cutaway: { uCam: { value: THREE.Vector3 }; uTarget: { value: THREE.Vector3 } };
 }
 
-/** Makes wall fragments between the camera and Kai see-through so walls never hide him. */
-export function addCutaway(m: THREE.Material, u: BuiltLevel['cutaway']) {
-  m.onBeforeCompile = (shader) => {
-    shader.uniforms.uCam = u.uCam;
-    shader.uniforms.uTarget = u.uTarget;
-    shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCutPos;').replace(
-      '#include <project_vertex>',
-      `#include <project_vertex>
-      #ifdef USE_INSTANCING
-        vCutPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;
-      #else
-        vCutPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
-      #endif`,
-    );
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vCutPos;\nuniform vec3 uCam;\nuniform vec3 uTarget;')
-      .replace(
-        'void main() {',
-        `void main() {
-        vec2 ab = uTarget.xz - uCam.xz;
-        float tt = clamp(dot(vCutPos.xz - uCam.xz, ab) / max(0.001, dot(ab, ab)), 0.0, 1.0);
-        float dd = length(vCutPos.xz - (uCam.xz + ab * tt));
-        if (tt > 0.2 && tt < 0.985 && vCutPos.y > uTarget.y + 0.25 && dd < 2.4) {
-          float n = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
-          if (dd < 1.3 || n < (2.4 - dd) / 1.1) discard;
-        }`,
-      );
-  };
+/** How deep the machinery shafts under the walkways go on enclosed decks. */
+const ABYSS_Y = -26;
+const HAZARD_BED = -1.1;
+
+type V3 = [number, number, number];
+
+/** Collects quads into one indexed BufferGeometry (position, normal, uv, grey vertex colour). */
+class Quads {
+  private pos: number[] = [];
+  private nor: number[] = [];
+  private uv: number[] = [];
+  private col: number[] = [];
+  private idx: number[] = [];
+
+  add(p: V3[], n: V3, uv: [number, number][], shade: number[]) {
+    const base = this.pos.length / 3;
+    for (let i = 0; i < 4; i++) {
+      this.pos.push(...p[i]);
+      this.nor.push(...n);
+      this.uv.push(...uv[i]);
+      this.col.push(shade[i], shade[i], shade[i]);
+    }
+    // Pick the winding whose face normal agrees with n.
+    const ax = p[1][0] - p[0][0];
+    const ay = p[1][1] - p[0][1];
+    const az = p[1][2] - p[0][2];
+    const bx = p[2][0] - p[0][0];
+    const by = p[2][1] - p[0][1];
+    const bz = p[2][2] - p[0][2];
+    const dot = (ay * bz - az * by) * n[0] + (az * bx - ax * bz) * n[1] + (ax * by - ay * bx) * n[2];
+    if (dot >= 0) this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    else this.idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+  }
+
+  get empty() {
+    return this.idx.length === 0;
+  }
+
+  geometry(): THREE.BufferGeometry {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    g.setIndex(this.idx);
+    g.computeBoundingSphere();
+    return g;
+  }
 }
 
-const box = new THREE.BoxGeometry(1, 1, 1);
-const m4 = new THREE.Matrix4();
-const q = new THREE.Quaternion();
-const pos = new THREE.Vector3();
-const scl = new THREE.Vector3();
-const col = new THREE.Color();
+/** A primitive baked in place with a flat colour, for merging props like ribs and pipes. */
+function part(geo: THREE.BufferGeometry, color: THREE.Color, m: THREE.Matrix4): THREE.BufferGeometry {
+  const g = geo.index ? geo.toNonIndexed() : geo.clone();
+  g.applyMatrix4(m);
+  const n = g.getAttribute('position').count;
+  const cols = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    cols[i * 3] = color.r;
+    cols[i * 3 + 1] = color.g;
+    cols[i * 3 + 2] = color.b;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  for (const key of Object.keys(g.attributes)) if (key !== 'position' && key !== 'normal' && key !== 'color') g.deleteAttribute(key);
+  return g;
+}
 
 function liquidTexture(a: string, b: string) {
   const S = 256;
@@ -86,157 +114,345 @@ function liquidTexture(a: string, b: string) {
   return t;
 }
 
-function instanced(geo: THREE.BufferGeometry, mat: THREE.Material | THREE.Material[], count: number, shadows: boolean) {
-  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
-  mesh.count = 0;
-  mesh.castShadow = shadows;
-  mesh.receiveShadow = true;
-  return mesh;
+function surfaceMat(s: Surface, opts: { rough: number; metal: number; glow?: number; normal?: number }): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({
+    map: s.map,
+    normalMap: s.normalMap,
+    normalScale: new THREE.Vector2(opts.normal ?? 1, opts.normal ?? 1),
+    roughness: opts.rough,
+    metalness: opts.metal,
+    vertexColors: true,
+  });
+  if (s.emissiveMap) {
+    m.emissive.set('#ffffff');
+    m.emissiveMap = s.emissiveMap;
+    m.emissiveIntensity = opts.glow ?? 1.4;
+  }
+  return m;
 }
 
-function put(mesh: THREE.InstancedMesh, x: number, y: number, z: number, sx: number, sy: number, sz: number, tint?: THREE.Color) {
-  pos.set(x, y, z);
-  scl.set(sx, sy, sz);
-  m4.compose(pos, q, scl);
-  mesh.setMatrixAt(mesh.count, m4);
-  if (tint) mesh.setColorAt(mesh.count, tint);
-  mesh.count += 1;
-}
+const DIRS: [number, number][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+const isWalk = (c: Cell) => c.kind === 'floor' || c.kind === 'grate' || c.kind === 'ice';
 
 export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows: boolean): BuiltLevel {
   const group = new THREE.Group();
-  const cutaway = { uCam: { value: new THREE.Vector3() }, uTarget: { value: new THREE.Vector3() } };
   const W = level.width;
   const D = level.depth;
-  const n = W * D;
+  const surf = deckSurfaces(theme, level.def.id);
+  const bottomY = theme.space ? FLOOR_BOTTOM : ABYSS_Y;
 
-  const sideMat = new THREE.MeshStandardMaterial({ color: theme.floorSide, roughness: 0.9, metalness: 0.1 });
-  const topMats: Record<'floor' | 'grate' | 'ice' | 'hazard', THREE.MeshStandardMaterial> = {
-    floor: new THREE.MeshStandardMaterial({
-      map: panelTexture(theme.floor, theme.floorLine, level.def.id === 'hydro' ? 'soil' : 'panel'),
-      roughness: 0.78,
-      metalness: 0.12,
-    }),
-    grate: new THREE.MeshStandardMaterial({ map: panelTexture(theme.floorSide, theme.floorLine, 'grate'), roughness: 0.6, metalness: 0.5 }),
-    ice: new THREE.MeshStandardMaterial({ map: panelTexture(theme.ice, '#ffffff', 'ice'), roughness: 0.15, metalness: 0.1 }),
-    hazard: new THREE.MeshStandardMaterial({ color: theme.hazardDeep, roughness: 1 }),
-  };
-  const meshes: Partial<Record<TileKind, THREE.InstancedMesh>> = {};
-  for (const k of ['floor', 'grate', 'ice', 'hazard'] as const) {
-    const mats = [sideMat, sideMat, topMats[k], sideMat, sideMat, sideMat];
-    meshes[k] = instanced(box, mats, n, false);
-  }
-  const wallMat = new THREE.MeshStandardMaterial({ color: theme.wall, roughness: 0.62, metalness: 0.25 });
-  const walls = instanced(box, wallMat, n, shadows);
-  const trimMat = new THREE.MeshStandardMaterial({
-    color: theme.wallTrim,
-    emissive: theme.wallTrim,
-    emissiveIntensity: 0.65,
-    roughness: 0.4,
-  });
-  const caps = instanced(box, trimMat, n, false);
-  addCutaway(wallMat, cutaway);
-  addCutaway(trimMat, cutaway);
-  const edgeMat = new THREE.MeshStandardMaterial({ color: theme.edge, emissive: theme.edge, emissiveIntensity: 0.9 });
-  const edges = instanced(box, edgeMat, n * 2, false);
-  const stepMat = new THREE.MeshStandardMaterial({ color: theme.floorLine, emissive: theme.accent, emissiveIntensity: 0.18 });
-  const steps = instanced(box, stepMat, n * 2, false);
-  // Raised floor blocks in front of Kai fade out too; floors at or below his feet are never cut.
-  for (const m of [sideMat, ...Object.values(topMats), edgeMat, stepMat]) addCutaway(m, cutaway);
-  const lampMat = new THREE.MeshStandardMaterial({ color: theme.accent, emissive: theme.accent, emissiveIntensity: 1.2 });
-  const lamps = instanced(box, lampMat, n, false);
-  const panelMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(theme.wall).multiplyScalar(0.7), roughness: 0.5, metalness: 0.4 });
-  const panels = instanced(box, panelMat, n, false);
+  const floorQ = [new Quads(), new Quads(), new Quads()];
+  const grateQ = new Quads();
+  const iceQ = new Quads();
+  const bedQ = new Quads();
+  const wallQ = [new Quads(), new Quads(), new Quads(), new Quads()];
+  const capQ = new Quads();
+  const sideQ = new Quads();
+  const metalParts: THREE.BufferGeometry[] = [];
+  const glowParts: THREE.BufferGeometry[] = [];
 
+  const plane = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const liquidTex = liquidTexture(theme.hazard, theme.hazardDeep);
   const liquidMat = new THREE.MeshStandardMaterial({
     map: liquidTex,
     emissive: new THREE.Color(theme.hazard),
     emissiveMap: liquidTex,
-    emissiveIntensity: 0.9,
-    roughness: 0.25,
+    emissiveIntensity: 1.1,
+    roughness: 0.2,
+    metalness: 0.1,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.93,
   });
-  const plane = new THREE.PlaneGeometry(1, 1);
-  plane.rotateX(-Math.PI / 2);
-  const liquids = instanced(plane, liquidMat, n, false);
-  liquids.receiveShadow = false;
+  const liquids = new THREE.InstancedMesh(plane, liquidMat, Math.max(1, W * D));
+  liquids.count = 0;
+  const m4 = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  const pipe = new THREE.CylinderGeometry(1, 1, 1, 10, 1).rotateZ(Math.PI / 2);
+  const ribColor = new THREE.Color(theme.wall).multiplyScalar(0.7);
+  const pipeColor = new THREE.Color(theme.floorSide).multiplyScalar(1.6);
+  const pipeColor2 = new THREE.Color(theme.wallTrim).lerp(new THREE.Color('#303640'), 0.7);
+  const trimColor = new THREE.Color(theme.wallTrim);
+  const edgeColor = new THREE.Color(theme.edge);
 
-  const isWalkable = (k: TileKind) => k === 'floor' || k === 'grate' || k === 'ice';
+  const place = (list: THREE.BufferGeometry[], geo: THREE.BufferGeometry, color: THREE.Color, x: number, y: number, z: number, sx: number, sy: number, sz: number, yaw = 0) => {
+    q.setFromAxisAngle(up, yaw);
+    m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(sx, sy, sz));
+    list.push(part(geo, color, m4));
+  };
+
+  /** Voxel-style ambient occlusion for one corner of a floor tile. */
+  const occludes = (c: Cell, x: number, z: number) => {
+    const n = grid.cell(x, z);
+    return n.kind === 'wall' || (isWalk(n) && n.h > c.h + 0.3) ? 1 : 0;
+  };
+  const cornerAO = (c: Cell, x: number, z: number, sx: number, sz: number) => {
+    const a = occludes(c, x + sx, z);
+    const b = occludes(c, x, z + sz);
+    const d = occludes(c, x + sx, z + sz);
+    const level = a && b ? 0 : 3 - (a + b + d);
+    return [0.42, 0.58, 0.78, 1][level];
+  };
 
   for (let z = 0; z < D; z++) {
     for (let x = 0; x < W; x++) {
       const c = grid.cell(x, z);
-      const cx = x * CELL + CELL / 2;
-      const cz = z * CELL + CELL / 2;
       if (c.kind === 'void') continue;
+      const x0 = x * CELL;
+      const z0 = z * CELL;
+      const x1 = x0 + CELL;
+      const z1 = z0 + CELL;
+      const cx = x0 + CELL / 2;
+      const cz = z0 + CELL / 2;
+
       if (c.kind === 'wall') {
-        const hgt = c.h - FLOOR_BOTTOM;
-        put(walls, cx, FLOOR_BOTTOM + hgt / 2, cz, CELL, hgt, CELL);
-        let open = false;
-        for (const [dx, dz] of [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ]) {
+        capQ.add(
+          [
+            [x0, c.h, z0],
+            [x1, c.h, z0],
+            [x1, c.h, z1],
+            [x0, c.h, z1],
+          ],
+          [0, 1, 0],
+          [
+            [0, 1],
+            [1, 1],
+            [1, 0],
+            [0, 0],
+          ],
+          [1, 1, 1, 1],
+        );
+        for (let di = 0; di < 4; di++) {
+          const [dx, dz] = DIRS[di];
           const nb = grid.cell(x + dx, z + dz);
-          if (nb.kind === 'wall' || nb.kind === 'void') continue;
-          open = true;
-          const r = hash2(x, z, dx * 3 + dz);
-          const fx = cx + dx * (CELL / 2 + 0.03);
-          const fz = cz + dz * (CELL / 2 + 0.03);
-          if (r < 0.28) {
-            put(lamps, fx, nb.h + 1.6, fz, dx ? 0.08 : 1.1, 0.14, dz ? 0.08 : 1.1);
-          } else if (r < 0.55) {
-            put(panels, fx, nb.h + 1.2, fz, dx ? 0.1 : 1.4, 1.5, dz ? 0.1 : 1.4);
+          let y0: number;
+          let floorBase = false;
+          if (nb.kind === 'wall') {
+            if (nb.h >= c.h - 0.01) continue;
+            y0 = nb.h;
+          } else if (nb.kind === 'void') y0 = bottomY;
+          else if (nb.kind === 'hazard') y0 = HAZARD_BED;
+          else {
+            y0 = nb.h;
+            floorBase = true;
+          }
+          const y1 = c.h;
+          // Face centre, outward normal and the direction that reads left-to-right when you face it.
+          const fx = cx + (dx * CELL) / 2;
+          const fz = cz + (dz * CELL) / 2;
+          const tx = dz;
+          const tz = -dx;
+          const r = hash2(x, z, di + 1);
+          const variant = !floorBase ? 0 : r < 0.42 ? 0 : r < 0.64 ? 3 : r < 0.86 ? 1 : 2;
+          const v0 = floorBase ? 0 : 1 - (y1 - y0) / WALL_H;
+          const v1 = floorBase ? (y1 - y0) / WALL_H : 1;
+          const low = floorBase ? 0.5 : nb.kind === 'void' ? 0.18 : 0.45;
+          wallQ[variant].add(
+            [
+              [fx - tx, y0, fz - tz],
+              [fx + tx, y0, fz + tz],
+              [fx + tx, y1, fz + tz],
+              [fx - tx, y1, fz - tz],
+            ],
+            [dx, 0, dz],
+            [
+              [0, v0],
+              [1, v0],
+              [1, v1],
+              [0, v1],
+            ],
+            [low, low, 1, 1],
+          );
+          if (!floorBase) continue;
+          const yaw = Math.atan2(dx, dz);
+          // A glowing trim line along the top edge of the wall.
+          place(glowParts, box, trimColor, fx + dx * 0.06, y1 - 0.07, fz + dz * 0.06, CELL - 0.04, 0.11, 0.1, yaw);
+          // Structural ribs where this wall continues to the right.
+          const rx = x + tx;
+          const rz = z + tz;
+          const right = grid.cell(rx, rz);
+          const rightOpen = grid.cell(rx + dx, rz + dz);
+          if (right.kind === 'wall' && isWalk(rightOpen) && Math.abs(rightOpen.h - nb.h) < 0.01 && hash2(x, z, di + 11) < 0.6) {
+            const top = Math.min(y1, right.h) - y0;
+            const ex = fx + tx;
+            const ez = fz + tz;
+            place(metalParts, box, ribColor, ex + dx * 0.12, y0 + top / 2, ez + dz * 0.12, 0.38, top, 0.24, yaw);
+            place(metalParts, box, ribColor.clone().multiplyScalar(0.7), ex + dx * 0.2, y0 + 0.35, ez + dz * 0.2, 0.52, 0.7, 0.28, yaw);
+            place(glowParts, box, trimColor, ex + dx * 0.245, y0 + top * 0.55, ez + dz * 0.245, 0.11, top * 0.42, 0.02, yaw);
+          }
+          // Pipe runs along whole rows of wall.
+          const rowA = dz !== 0 ? z : x;
+          const rowB = dz !== 0 ? dz + 5 : dx + 9;
+          if (hash2(rowA, rowB, 99) < 0.34) {
+            const py = y0 + 2.35;
+            place(metalParts, pipe, pipeColor, fx + dx * 0.3, py, fz + dz * 0.3, CELL, 0.09, 0.09, yaw);
+            if (hash2(rowA, rowB, 98) < 0.55) place(metalParts, pipe, pipeColor2, fx + dx * 0.24, py + 0.24, fz + dz * 0.24, CELL, 0.055, 0.055, yaw);
+            place(metalParts, box, ribColor, fx + dx * 0.16, py + 0.1, fz + dz * 0.16, 0.12, 0.42, 0.3, yaw);
           }
         }
-        if (open) put(caps, cx, c.h + 0.05, cz, CELL, 0.1, CELL);
         continue;
       }
-      const kind = c.kind === 'hazard' ? 'hazard' : c.kind;
-      const top = c.kind === 'hazard' ? -1.1 : c.h;
-      const hgt = top - FLOOR_BOTTOM;
-      const v = 0.93 + hash2(x, z) * 0.12;
-      col.setRGB(v, v, v);
-      const mesh = meshes[kind];
-      if (mesh) put(mesh, cx, FLOOR_BOTTOM + hgt / 2, cz, CELL, hgt, CELL, col);
+
       if (c.kind === 'hazard') {
-        put(liquids, cx, c.h, cz, CELL, 1, CELL);
-        continue;
+        bedQ.add(
+          [
+            [x0, HAZARD_BED, z0],
+            [x1, HAZARD_BED, z0],
+            [x1, HAZARD_BED, z1],
+            [x0, HAZARD_BED, z1],
+          ],
+          [0, 1, 0],
+          [
+            [0, 1],
+            [1, 1],
+            [1, 0],
+            [0, 0],
+          ],
+          [0.6, 0.6, 0.6, 0.6],
+        );
+        q.identity();
+        m4.compose(new THREE.Vector3(cx, c.h, cz), q, new THREE.Vector3(CELL, 1, CELL));
+        liquids.setMatrixAt(liquids.count++, m4);
+      } else {
+        // Floor tile: pick a plate variant and turn it a random quarter so the pattern never repeats.
+        const r = hash2(x, z, 3);
+        const target = c.kind === 'grate' ? grateQ : c.kind === 'ice' ? iceQ : floorQ[r < 0.64 ? 0 : r < 0.95 ? 1 : 2];
+        const rot = Math.floor(hash2(x, z, 4) * 4);
+        const uvs: [number, number][] = [
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0],
+        ];
+        const tint = 0.88 + hash2(x, z, 5) * 0.16;
+        target.add(
+          [
+            [x0, c.h, z0],
+            [x1, c.h, z0],
+            [x1, c.h, z1],
+            [x0, c.h, z1],
+          ],
+          [0, 1, 0],
+          [0, 1, 2, 3].map((i) => uvs[(i + rot) % 4]),
+          [cornerAO(c, x, z, -1, -1) * tint, cornerAO(c, x, z, 1, -1) * tint, cornerAO(c, x, z, 1, 1) * tint, cornerAO(c, x, z, -1, 1) * tint],
+        );
       }
-      if (!isWalkable(c.kind)) continue;
-      for (const [dx, dz] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ]) {
+
+      // Exposed sides of this block.
+      const top = c.kind === 'hazard' ? HAZARD_BED : c.h;
+      for (let di = 0; di < 4; di++) {
+        const [dx, dz] = DIRS[di];
         const nb = grid.cell(x + dx, z + dz);
         if (nb.kind === 'wall') continue;
-        const ex = cx + dx * (CELL / 2 - 0.07);
-        const ez = cz + dz * (CELL / 2 - 0.07);
-        const lx = dx ? 0.14 : CELL;
-        const lz = dz ? 0.14 : CELL;
-        if (nb.kind === 'void' || nb.kind === 'hazard') put(edges, ex, c.h + 0.03, ez, lx, 0.07, lz);
-        else if (nb.h < c.h - 0.2) put(steps, ex, c.h + 0.02, ez, lx, 0.05, lz);
+        let y0: number;
+        let low = 0.12;
+        if (nb.kind === 'void') y0 = bottomY;
+        else if (nb.kind === 'hazard') {
+          if (c.kind === 'hazard') continue;
+          y0 = HAZARD_BED;
+          low = 0.4;
+        } else {
+          if (nb.h >= top - 0.01) continue;
+          y0 = nb.h;
+          low = 0.55;
+        }
+        const fx = cx + (dx * CELL) / 2;
+        const fz = cz + (dz * CELL) / 2;
+        const tx = dz;
+        const tz = -dx;
+        sideQ.add(
+          [
+            [fx - tx, y0, fz - tz],
+            [fx + tx, y0, fz + tz],
+            [fx + tx, top, fz + tz],
+            [fx - tx, top, fz - tz],
+          ],
+          [dx, 0, dz],
+          [
+            [0, 1 - (top - y0) / CELL],
+            [1, 1 - (top - y0) / CELL],
+            [1, 1],
+            [0, 1],
+          ],
+          [low, low, 0.9, 0.9],
+        );
+        if (isWalk(c)) {
+          const yaw = Math.atan2(dx, dz);
+          const ex = cx + dx * (CELL / 2 - 0.06);
+          const ez = cz + dz * (CELL / 2 - 0.06);
+          if (nb.kind === 'void' || nb.kind === 'hazard') {
+            // Glowing safety edge where the floor ends.
+            place(glowParts, box, edgeColor, ex - dx * 0.04, c.h + 0.02, ez - dz * 0.04, CELL, 0.06, 0.16, yaw);
+          } else {
+            place(glowParts, box, trimColor.clone().multiplyScalar(0.5), ex - dx * 0.03, c.h + 0.012, ez - dz * 0.03, CELL, 0.04, 0.12, yaw);
+          }
+        }
       }
     }
   }
 
-  for (const m of [...Object.values(meshes), walls, caps, edges, steps, lamps, panels, liquids]) {
-    if (!m) continue;
-    m.instanceMatrix.needsUpdate = true;
-    if (m.instanceColor) m.instanceColor.needsUpdate = true;
-    m.computeBoundingSphere();
-    group.add(m);
+  const add = (qd: Quads, mat: THREE.Material, cast: boolean) => {
+    if (qd.empty) return;
+    const me = new THREE.Mesh(qd.geometry(), mat);
+    me.receiveShadow = true;
+    me.castShadow = cast && shadows;
+    group.add(me);
+  };
+  // Fairly rough, softly bumped metal: sharp glints on detailed normal maps sparkle as the camera moves.
+  surf.floors.forEach((s, i) => add(floorQ[i], surfaceMat(s, { rough: 0.74, metal: 0.25, glow: 0.8, normal: 0.7 }), false));
+  add(grateQ, surfaceMat(surf.grate, { rough: 0.62, metal: 0.4, glow: 1.1, normal: 0.8 }), false);
+  add(iceQ, surfaceMat(surf.ice, { rough: 0.32, metal: 0.05, normal: 0.5 }), false);
+  add(bedQ, new THREE.MeshStandardMaterial({ color: theme.hazardDeep, roughness: 1, vertexColors: true }), false);
+  surf.walls.forEach((s, i) => {
+    const m = surfaceMat(s, { rough: 0.68, metal: 0.3, glow: 1.5, normal: 0.8 });
+    m.shadowSide = THREE.DoubleSide;
+    add(wallQ[i], m, true);
+  });
+  add(capQ, surfaceMat(surf.cap, { rough: 0.72, metal: 0.35, normal: 0.8 }), true);
+  const sideMat = surfaceMat(surf.side, { rough: 0.78, metal: 0.3, normal: 0.8 });
+  sideMat.shadowSide = THREE.DoubleSide;
+  add(sideQ, sideMat, true);
+
+  if (metalParts.length) {
+    const me = new THREE.Mesh(mergeGeometries(metalParts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.5 }));
+    me.receiveShadow = true;
+    group.add(me);
+  }
+  if (glowParts.length) {
+    const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, emissive: '#ffffff', emissiveIntensity: 1.25 });
+    glowMat.onBeforeCompile = (shader) => {
+      // Each strip glows in its own vertex colour.
+      shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= vColor.rgb;');
+    };
+    group.add(new THREE.Mesh(mergeGeometries(glowParts), glowMat));
+  }
+  if (liquids.count) {
+    liquids.instanceMatrix.needsUpdate = true;
+    liquids.computeBoundingSphere();
+    group.add(liquids);
+  }
+  if (!theme.space) {
+    // The floor of the machinery shafts far below, with its own dim lights.
+    const span = Math.max(W, D) * CELL + 120;
+    const s = surf.abyss;
+    for (const t of [s.map, s.normalMap, s.emissiveMap]) t?.repeat.set(span / 16, span / 16);
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: '#ffffff', emissiveIntensity: 1.2, roughness: 0.8, metalness: 0.4 }),
+    );
+    floor.position.set((W * CELL) / 2, ABYSS_Y, (D * CELL) / 2);
+    group.add(floor);
   }
 
   return {
     group,
-    cutaway,
     update(dt: number) {
       liquidTex.offset.x += dt * 0.03;
       liquidTex.offset.y += dt * 0.018;

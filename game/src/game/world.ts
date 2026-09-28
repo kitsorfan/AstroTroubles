@@ -11,6 +11,7 @@ import { makeBoss, type Boss } from '../entities/bosses';
 import { makeEnemy, type Enemy } from '../entities/enemies';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
+import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
 import { Player } from '../entities/player';
 import {
@@ -71,10 +72,16 @@ export interface ResumeState {
   dead: string[];
 }
 
-const PITCH = 0.86;
+/** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Kai. */
+const PITCH = 1.0;
+const PITCH_MAX = 1.5;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
 const ENV_LIGHT = 0.45;
 const tmpV = new THREE.Vector3();
+/** Fixed sun direction, and the rotation into (and out of) the shadow camera's space. */
+const LIGHT_DIR = new THREE.Vector3(12, 30, 8).normalize();
+const LIGHT_ROT = new THREE.Matrix4().lookAt(LIGHT_DIR, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
+const LIGHT_INV = LIGHT_ROT.clone().transpose();
 const NO_BOXES: Box[] = [];
 
 export class World {
@@ -92,6 +99,7 @@ export class World {
   readonly shots: Shots;
   readonly beams: Beams;
   readonly rings: Rings;
+  readonly impacts: Impacts;
   readonly boltField: BoltField;
   readonly flags = new Set<string>();
   readonly taken = new Set<string>();
@@ -120,6 +128,16 @@ export class World {
   private objT = 0;
   private lastObjective = '';
   private shieldCd = 0;
+  private shadowTexel = 0;
+  /** Kai's ground height, smoothed and ignoring jumps; the shadow map is centred on it. */
+  private groundY = 0;
+  private pitch = PITCH;
+  private flashLight: THREE.PointLight | null = null;
+  private flashT = 0;
+  private flashMax = 1;
+  private flashPower = 0;
+  /** Remaining hit-stop: a split-second freeze that sells heavy impacts. */
+  private freezeT = 0;
 
   constructor(
     def: LevelDef,
@@ -160,11 +178,17 @@ export class World {
       cam.top = 22;
       cam.bottom = -22;
       cam.near = 1;
-      cam.far = 80;
-      this.sun.shadow.bias = -0.0008;
-      this.sun.shadow.normalBias = 0.04;
+      cam.far = 90;
+      this.sun.shadow.bias = -0.0006;
+      this.sun.shadow.normalBias = 0.05;
+      this.shadowTexel = (cam.right - cam.left) / size;
     }
     this.scene.add(this.sun, this.sun.target);
+    if (quality !== 'low') {
+      // One pooled light for impact flashes; it always exists so shaders never recompile mid-game.
+      this.flashLight = new THREE.PointLight('#ffffff', 0, 14, 2);
+      this.scene.add(this.flashLight);
+    }
 
     this.built = buildLevel(this.level, this.grid, th, shadows);
     this.scene.add(this.built.group);
@@ -177,6 +201,7 @@ export class World {
     this.scene.add(this.ambience.points);
     this.beams = new Beams(this.scene);
     this.rings = new Rings(this.scene);
+    this.impacts = new Impacts(this.scene);
 
     const sp = this.level.spawn;
     this.player = new Player(this, Grid.center(sp.cx), sp.h, Grid.center(sp.cz), sp.facing);
@@ -200,7 +225,23 @@ export class World {
     const pb = this.player.body;
     this.bolt.place(pb.x - 1, pb.y + 2, pb.z + 1);
     this.camTarget.set(pb.x, pb.y + 1.2, pb.z);
+    this.groundY = pb.y;
     this.placeCamera(0);
+  }
+
+  /** Lights up the surroundings for a moment (pounds, explosions, boss hits). */
+  flash(x: number, y: number, z: number, color: string, power = 30, time = 0.25) {
+    if (!this.flashLight || power < this.flashPower * (this.flashT / this.flashMax)) return;
+    this.flashLight.position.set(x, y, z);
+    this.flashLight.color.set(color);
+    this.flashPower = power;
+    this.flashT = time;
+    this.flashMax = time;
+  }
+
+  /** Freezes the action for a split second so a big hit lands with weight. */
+  hitStop(seconds: number) {
+    this.freezeT = Math.max(this.freezeT, seconds);
   }
 
   /* ---------------- spawning ---------------- */
@@ -512,18 +553,26 @@ export class World {
     const b = player.body;
     tmpV.set(b.x, b.y + 0.9, b.z);
     this.hitAll(tmpV.clone(), PLAYER.spinRadius, 1 + (this.save.upgrades.blaster ?? 0), 'spin', hitSet);
-    if (Math.random() < 0.5) this.particles.emit(b.x, b.y + 0.9, b.z, { count: 2, color: '#ffffff', speed: 6, life: 0.2, size: 0.35, gravity: 0 });
+    // Sparks thrown off the rim of the spin swoosh.
+    const a = Math.random() * Math.PI * 2;
+    this.particles.emit(b.x + Math.cos(a) * 1.9, b.y + 0.85, b.z + Math.sin(a) * 1.9, { count: 2, color: '#bff4ff', speed: 3, life: 0.3, size: 0.3, gravity: 0 });
   }
 
   groundPound(player: Player) {
     const b = player.body;
     const p = new THREE.Vector3(b.x, b.y + 0.3, b.z);
     this.hitAll(p, 2.8, 2 + (this.save.upgrades.blaster ?? 0), 'pound');
-    this.rings.burst(b.x, b.y, b.z, 5, '#ffffff', 0.45);
-    this.particles.emit(b.x, b.y + 0.2, b.z, { count: 26, color: '#ffffff', speed: 7, life: 0.5, size: 0.5, up: 1, gravity: 6 });
-    this.shake(0.4);
+    // Flash, two shockwaves, a scorched crater with glowing cracks, dust and sparks.
+    this.impacts.slam(b.x, b.y, b.z, 4.4, '#7fe6ff');
+    this.rings.burst(b.x, b.y, b.z, 6.5, '#bff4ff', 0.5);
+    this.rings.burst(b.x, b.y + 0.05, b.z, 3.6, '#ffffff', 0.28);
+    this.particles.emit(b.x, b.y + 0.25, b.z, { count: 34, color: '#8a95a8', speed: 9, life: 0.8, size: 0.8, up: 0.8, gravity: 2, drag: 3.5 });
+    this.particles.emit(b.x, b.y + 0.3, b.z, { count: 26, color: '#bff4ff', speed: 11, life: 0.55, size: 0.3, up: 7, gravity: 22 });
+    this.flash(b.x, b.y + 1.4, b.z, '#9fefff', 70, 0.35);
+    this.hitStop(0.06);
+    this.shake(0.6);
     audio.play('pound');
-    haptic('medium');
+    haptic('heavy');
   }
 
   nearestEnemy(x: number, z: number, range: number): Target | null {
@@ -641,6 +690,10 @@ export class World {
   /* ---------------- per frame ---------------- */
 
   update(dt: number, input: Input, camSpeed: number) {
+    if (this.freezeT > 0) {
+      this.freezeT -= dt;
+      dt *= 0.05;
+    }
     this.time += dt;
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
@@ -650,8 +703,14 @@ export class World {
     this.shots.update(dt);
     this.beams.update(dt);
     this.rings.update(dt);
+    this.impacts.update(dt);
     this.particles.update(dt);
     this.built.update(dt, this.time);
+    if (this.flashLight) {
+      this.flashT = Math.max(0, this.flashT - dt);
+      const k = this.flashT / this.flashMax;
+      this.flashLight.intensity = this.flashPower * k * k;
+    }
 
     // BOLT's shield when nothing else needs the action button.
     this.shieldCd -= dt;
@@ -690,11 +749,6 @@ export class World {
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
   }
 
-  /** Uniforms of the see-through shader, for props that should not hide Kai (doors). */
-  get cutaway() {
-    return this.built.cutaway;
-  }
-
   get shieldReady() {
     return this.save.abilities.includes('shield') && this.shieldCd <= 0;
   }
@@ -726,13 +780,24 @@ export class World {
       this.camTarget.z = damp(this.camTarget.z, look.z, 7, dt);
     }
     const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
-    const cp = Math.cos(PITCH);
+    // Walls never turn see-through: when one would hide Kai, the camera tips up until it can see all
+    // of him (or at least his head and shoulders when he is pressed right against a wall).
+    let want = -1;
+    for (const eye of [0.15, 1.0]) {
+      for (let a = PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
+      if (want >= 0) break;
+    }
+    if (want < 0) want = PITCH_MAX;
+    this.pitch = dt === 0 ? want : damp(this.pitch, want, want > this.pitch ? 7 : 1.6, dt);
+    const cp = Math.cos(this.pitch);
     const c = this.camera.position;
     c.set(
       this.camTarget.x + Math.sin(this.cameraYaw) * cp * dist,
-      this.camTarget.y + Math.sin(PITCH) * dist,
+      this.camTarget.y + Math.sin(this.pitch) * dist,
       this.camTarget.z + Math.cos(this.cameraYaw) * cp * dist,
     );
+    const ground = p.grounded ? p.y : Math.min(this.groundY, p.y);
+    this.groundY = dt === 0 ? ground : damp(this.groundY, ground, 5, dt);
     if (this.shakeAmt > 0) {
       c.x += (Math.random() - 0.5) * this.shakeAmt;
       c.y += (Math.random() - 0.5) * this.shakeAmt;
@@ -740,10 +805,43 @@ export class World {
       this.shakeAmt = Math.max(0, this.shakeAmt - dt * 2.5);
     }
     this.camera.lookAt(this.camTarget);
-    this.built.cutaway.uCam.value.copy(c);
-    this.built.cutaway.uTarget.value.set(p.x, p.y, p.z);
-    this.sun.position.set(p.x + 12, p.y + 30, p.z + 8);
-    this.sun.target.position.set(p.x, p.y, p.z);
+    this.placeSun(p.x, this.groundY, p.z);
+  }
+
+  /** True if a wall or raised floor sits between a point on Kai (`eye` above his feet) and a camera at this tilt. */
+  private viewBlocked(pitch: number, dist: number, eye: number): boolean {
+    const p = this.player.body;
+    const cp = Math.cos(pitch);
+    const sx = p.x;
+    const sy = p.y + eye;
+    const sz = p.z;
+    const ex = this.camTarget.x + Math.sin(this.cameraYaw) * cp * dist;
+    const ey = this.camTarget.y + Math.sin(pitch) * dist;
+    const ez = this.camTarget.z + Math.cos(this.cameraYaw) * cp * dist;
+    const len = Math.hypot(ex - sx, ey - sy, ez - sz);
+    const steps = Math.ceil(len / 0.3);
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const y = sy + (ey - sy) * t;
+      // Past the tallest wall on any deck the ray is in the clear.
+      if (y > p.y + 9) return false;
+      const c = this.grid.cell(Grid.toCell(sx + (ex - sx) * t), Grid.toCell(sz + (ez - sz) * t));
+      // A little headroom above every wall so Kai is shown clearly, not just peeking over the edge.
+      if (c.kind !== 'void' && c.kind !== 'hazard' && y < c.h + 0.35) return true;
+    }
+    return false;
+  }
+
+  /** Centres the shadow map on Kai, snapped to whole shadow texels so shadow edges never crawl. */
+  private placeSun(x: number, y: number, z: number) {
+    const t = tmpV.set(x, y, z).applyMatrix4(LIGHT_INV);
+    if (this.shadowTexel > 0) {
+      t.x = Math.round(t.x / this.shadowTexel) * this.shadowTexel;
+      t.y = Math.round(t.y / this.shadowTexel) * this.shadowTexel;
+    }
+    t.applyMatrix4(LIGHT_ROT);
+    this.sun.target.position.copy(t);
+    this.sun.position.copy(t).addScaledVector(LIGHT_DIR, 34);
   }
 
   resize(w: number, h: number) {
