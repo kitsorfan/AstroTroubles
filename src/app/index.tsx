@@ -1,5 +1,124 @@
-import Root from '@/ui/Root';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
+import { useKeepAwake } from 'expo-keep-awake';
+import * as NavigationBar from 'expo-navigation-bar';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
-export default function Index() {
-  return <Root />;
+import html from '@/generated/gameHtml';
+
+const SAVE_KEY = 'leviathan3d.save.v1';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+type GameMessage =
+  | { type: 'save'; data: string }
+  | { type: 'haptic'; kind: 'light' | 'medium' | 'heavy' | 'success' | 'warning' }
+  | { type: 'exit' }
+  | { type: 'error'; message: string };
+
+function haptic(kind: Extract<GameMessage, { type: 'haptic' }>['kind']) {
+  switch (kind) {
+    case 'light':
+      return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    case 'medium':
+      return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    case 'heavy':
+      return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    case 'success':
+      return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    case 'warning':
+      return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  }
 }
+
+/** Hosts the three.js game (a self-contained HTML page) full screen in a WebView. */
+export default function Game() {
+  useKeepAwake();
+  const web = useRef<WebView>(null);
+  // undefined while loading; null when there is no save yet.
+  const [save, setSave] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    AsyncStorage.getItem(SAVE_KEY)
+      .then((raw) => setSave(raw))
+      .catch(() => setSave(null));
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
+    if (Platform.OS === 'android') NavigationBar.setVisibilityAsync('hidden').catch(() => {});
+    // Never leave the splash up if the page is slow to report in.
+    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const back = BackHandler.addEventListener('hardwareBackPress', () => {
+      web.current?.injectJavaScript('window.__onBack && window.__onBack(); true;');
+      return true;
+    });
+    const app = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') web.current?.injectJavaScript('window.__onPause && window.__onPause(); true;');
+      else if (Platform.OS === 'android') NavigationBar.setVisibilityAsync('hidden').catch(() => {});
+    });
+    return () => {
+      back.remove();
+      app.remove();
+    };
+  }, []);
+
+  const onMessage = (e: WebViewMessageEvent) => {
+    let msg: GameMessage;
+    try {
+      msg = JSON.parse(e.nativeEvent.data) as GameMessage;
+    } catch {
+      return;
+    }
+    switch (msg.type) {
+      case 'save':
+        (msg.data ? AsyncStorage.setItem(SAVE_KEY, msg.data) : AsyncStorage.removeItem(SAVE_KEY)).catch(() => {});
+        break;
+      case 'haptic':
+        haptic(msg.kind)?.catch(() => {});
+        break;
+      case 'exit':
+        BackHandler.exitApp();
+        break;
+      case 'error':
+        console.warn('[game]', msg.message);
+        break;
+    }
+  };
+
+  if (save === undefined) return <View style={styles.root} />;
+
+  return (
+    <View style={styles.root}>
+      <WebView
+        ref={web}
+        style={styles.web}
+        source={{ html }}
+        originWhitelist={['*']}
+        injectedJavaScriptBeforeContentLoaded={`window.__SAVE__ = ${JSON.stringify(save ?? '')}; true;`}
+        onMessage={onMessage}
+        onLoadEnd={() => SplashScreen.hideAsync().catch(() => {})}
+        javaScriptEnabled
+        domStorageEnabled
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback
+        scrollEnabled={false}
+        bounces={false}
+        overScrollMode="never"
+        setSupportMultipleWindows={false}
+        androidLayerType="hardware"
+        webviewDebuggingEnabled={__DEV__}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#03040a' },
+  web: { flex: 1, backgroundColor: '#03040a' },
+});
