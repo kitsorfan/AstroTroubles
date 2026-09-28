@@ -9,11 +9,12 @@ attribute vec3 tint;
 varying float vAlpha;
 varying vec3 vTint;
 uniform float scale;
+uniform float maxPx;
 void main() {
   vAlpha = alpha;
   vTint = tint;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  gl_PointSize = size * scale / max(0.1, -mv.z);
+  gl_PointSize = min(maxPx, size * scale / max(0.1, -mv.z));
   gl_Position = projectionMatrix * mv;
 }`;
 
@@ -78,7 +79,7 @@ export class Particles {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
-      uniforms: { scale: { value: 400 } },
+      uniforms: { scale: { value: 400 }, maxPx: { value: 4096 } },
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -174,7 +175,7 @@ export class Ambience {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
     const size = new Float32Array(n).fill(this.cfg.size);
-    const alpha = new Float32Array(n).fill(0.55);
+    const alpha = new Float32Array(n).fill(0.32);
     const c = new THREE.Color(this.cfg.color);
     const tint = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
@@ -188,7 +189,7 @@ export class Ambience {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
-      uniforms: { scale: { value: 400 } },
+      uniforms: { scale: { value: 400 }, maxPx: { value: 12 } },
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -198,7 +199,9 @@ export class Ambience {
   }
 
   setViewportHeight(h: number) {
-    (this.points.material as THREE.ShaderMaterial).uniforms.scale.value = h * 0.9;
+    const u = (this.points.material as THREE.ShaderMaterial).uniforms;
+    u.scale.value = h * 0.9;
+    u.maxPx.value = Math.max(6, h * 0.022) * (window.devicePixelRatio || 1);
   }
 
   update(dt: number, time: number, cx: number, cy: number, cz: number) {

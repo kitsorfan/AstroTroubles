@@ -89,7 +89,7 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.save.settings.quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 0.92;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // A soft studio environment gives metal and glossy toys their shine.
@@ -654,7 +654,7 @@ export class Game {
     if (this.state === 'cinema' && this.ship && this.director) {
       this.director.update(dt);
       this.ship.update(dt, this.director.rig);
-      this.post.setStrength(0.7);
+      this.post.setStrength(0.4);
       this.post.render(this.ship.scene, this.ship.camera);
       return;
     }
@@ -690,7 +690,7 @@ export class Game {
       return;
     }
     this.title.update(dt);
-    this.post.setStrength(0.35);
+    this.post.setStrength(0.2);
     this.post.render(this.title.scene, this.title.camera);
   }
 }

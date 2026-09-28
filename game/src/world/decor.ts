@@ -221,7 +221,7 @@ export function buildDecor(items: DecorPlacement[], accent: string, boxes: Box[]
     else byKind.set(it.kind, [it]);
   }
   const solidMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.2 });
-  const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, emissive: '#ffffff', emissiveIntensity: 0.9 });
+  const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, emissive: '#ffffff', emissiveIntensity: 0.5 });
   glowMat.onBeforeCompile = (shader) => {
     // Emissive follows each vertex's own color so every glowing part keeps its hue.
     shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= vColor.rgb;');

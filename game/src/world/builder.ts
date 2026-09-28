@@ -160,12 +160,16 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
   const glowParts: THREE.BufferGeometry[] = [];
 
   const plane = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-  const liquidTex = liquidTexture(theme.hazard, theme.hazardDeep);
+  // Softer spots on the pools: the full hazard colour over large areas was glaring.
+  const spotColor = `#${new THREE.Color(theme.hazard).lerp(new THREE.Color(theme.hazardDeep), 0.4).getHexString()}`;
+  const liquidTex = liquidTexture(spotColor, theme.hazardDeep);
   const liquidMat = new THREE.MeshStandardMaterial({
+    // Toned down so big pools read as danger without glaring.
+    color: '#9a9a9a',
     map: liquidTex,
     emissive: new THREE.Color(theme.hazard),
     emissiveMap: liquidTex,
-    emissiveIntensity: 1.1,
+    emissiveIntensity: 0.4,
     roughness: 0.2,
     metalness: 0.1,
     transparent: true,
@@ -410,7 +414,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           const ez = cz + dz * (CELL / 2 - 0.06);
           if (nb.kind === 'void' || nb.kind === 'hazard') {
             // Glowing safety edge where the floor ends.
-            place(glowParts, box, edgeColor, ex - dx * 0.04, c.h + 0.02, ez - dz * 0.04, CELL, 0.06, 0.16, yaw);
+            place(glowParts, box, edgeColor, ex - dx * 0.04, c.h + 0.02, ez - dz * 0.04, CELL, 0.05, 0.1, yaw);
           } else {
             place(glowParts, box, trimColor.clone().multiplyScalar(0.5), ex - dx * 0.03, c.h + 0.012, ez - dz * 0.03, CELL, 0.04, 0.12, yaw);
           }
@@ -427,12 +431,12 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     group.add(me);
   };
   // Fairly rough, softly bumped metal: sharp glints on detailed normal maps sparkle as the camera moves.
-  surf.floors.forEach((s, i) => add(floorQ[i], surfaceMat(s, { rough: 0.74, metal: 0.25, glow: 0.8, normal: 0.7 }), false));
-  add(grateQ, surfaceMat(surf.grate, { rough: 0.62, metal: 0.4, glow: 1.1, normal: 0.8 }), false);
-  add(iceQ, surfaceMat(surf.ice, { rough: 0.32, metal: 0.05, normal: 0.5 }), false);
+  surf.floors.forEach((s, i) => add(floorQ[i], surfaceMat(s, { rough: 0.74, metal: 0.25, glow: 0.35, normal: 0.7 }), false));
+  add(grateQ, surfaceMat(surf.grate, { rough: 0.62, metal: 0.4, glow: 0.45, normal: 0.8 }), false);
+  add(iceQ, surfaceMat(surf.ice, { rough: 0.55, metal: 0.05, normal: 0.5 }), false);
   add(bedQ, new THREE.MeshStandardMaterial({ color: theme.hazardDeep, roughness: 1, vertexColors: true }), false);
   surf.walls.forEach((s, i) => {
-    const m = surfaceMat(s, { rough: 0.68, metal: 0.3, glow: 1.5, normal: 0.8 });
+    const m = surfaceMat(s, { rough: 0.68, metal: 0.3, glow: 0.55, normal: 0.8 });
     m.shadowSide = THREE.DoubleSide;
     add(wallQ[i], m, true);
   });
@@ -447,7 +451,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     group.add(me);
   }
   if (glowParts.length) {
-    const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, emissive: '#ffffff', emissiveIntensity: 1.25 });
+    const glowMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, emissive: '#ffffff', emissiveIntensity: 0.5 });
     glowMat.onBeforeCompile = (shader) => {
       // Each strip glows in its own vertex colour.
       shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= vColor.rgb;');
@@ -466,7 +470,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     for (const t of [s.map, s.normalMap, s.emissiveMap]) t?.repeat.set(span / 16, span / 16);
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: '#ffffff', emissiveIntensity: 1.8, roughness: 0.8, metalness: 0.4, color: '#c8d0e0' }),
+      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: '#ffffff', emissiveIntensity: 1, roughness: 0.8, metalness: 0.4, color: '#c8d0e0' }),
     );
     floor.position.set((W * CELL) / 2, ABYSS_Y, (D * CELL) / 2);
     group.add(floor);

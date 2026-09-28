@@ -30,7 +30,7 @@ export class PostFx {
     const target = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.HalfFloatType, samples: quality === 'high' ? 4 : 2 });
     const composer = new EffectComposer(this.renderer, target);
     this.pass = new RenderPass(new THREE.Scene(), new THREE.PerspectiveCamera());
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), this.strength, 0.42, 1.2);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), this.strength, 0.35, 1.35);
     composer.addPass(this.pass);
     composer.addPass(this.bloom);
     composer.addPass(new OutputPass());
