@@ -1,4 +1,4 @@
-// Rasterizes BOLT's face into the app icon, Android adaptive icon layers, splash image and favicon.
+// Rasterizes BOLT's face into the app icon, Android adaptive icon layers and favicon.
 // Run: node scripts/gen-icons.mjs
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -167,5 +167,5 @@ writePng('icon.png', 1024, 1024, render({ size: 1024, background: BG, stars: tru
 writePng('android-icon-background.png', 512, 512, render({ size: 512, background: BG, stars: true, scale: 0.0001 }));
 writePng('android-icon-foreground.png', 512, 512, render({ size: 512, scale: 0.62 }));
 writePng('android-icon-monochrome.png', 512, 512, render({ size: 512, scale: 0.62, mono: true }));
-writePng('splash-icon.png', 512, 512, render({ size: 512, scale: 0.95 }));
+// splash-icon.png is the game emblem (game/src/ui/emblem.ts, also saved as splash-emblem.svg), not BOLT's face.
 writePng('favicon.png', 48, 48, render({ size: 48, background: BG, scale: 0.95 }));

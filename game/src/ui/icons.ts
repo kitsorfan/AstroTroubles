@@ -17,25 +17,94 @@ export const ICON = {
   star: `<svg viewBox="0 0 24 24"><polygon points="12,2 14.9,8.6 22,9.3 16.6,14 18.2,21 12,17.3 5.8,21 7.4,14 2,9.3 9.1,8.6" fill="#ffd166"/></svg>`,
 };
 
-const face = (skin: string, hair: string, suit: string) => `<svg viewBox="0 0 80 80">
-  <rect x="14" y="56" width="52" height="30" rx="14" fill="${suit}"/>
-  <circle cx="40" cy="38" r="20" fill="${skin}"/>
-  <path d="M20 34c0-14 10-20 20-20s20 6 20 20c-6-6-12-8-20-8s-14 2-20 8z" fill="${hair}"/>
-  <circle cx="33" cy="40" r="3" fill="#1b1b2a"/><circle cx="47" cy="40" r="3" fill="#1b1b2a"/>
-  <path d="M34 49c4 3 8 3 12 0" stroke="#7a3a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  <circle cx="28" cy="46" r="3" fill="#ff9aa0" opacity=".5"/><circle cx="52" cy="46" r="3" fill="#ff9aa0" opacity=".5"/>
-</svg>`;
+interface Person {
+  id: string;
+  skin: string;
+  hair: string;
+  iris: string;
+  suit: string;
+  style: 'short' | 'bun' | 'long' | 'none';
+  extra?: string;
+  under?: string;
+}
+
+const shade = (hex: string, f: number) => {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * f)));
+  return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => c(v).toString(16).padStart(2, '0')).join('')}`;
+};
+
+/** A shaded cartoon portrait: shoulders, head, hair, big friendly eyes with sparkles, brows and a smile. */
+function person(p: Person): string {
+  const id = p.id;
+  const hair = {
+    short: `<path d="M19 37c-1-15 9-24 21-24s22 9 21 24c-3-7-8-11-13-12-4 4-12 5-18 2-5 2-9 5-11 10z" fill="${p.hair}"/>`,
+    bun: `<circle cx="40" cy="12" r="8" fill="${p.hair}"/><path d="M19 37c-1-15 9-23 21-23s22 8 21 23c-4-8-11-12-21-12s-17 4-21 12z" fill="${p.hair}"/>`,
+    long: `<path d="M17 60c-4-20-2-45 23-46 25 1 27 26 23 46l-6-2c2-10 2-19-2-26-5 3-18 4-28 0-4 7-4 16-2 26z" fill="${p.hair}"/>`,
+    none: '',
+  }[p.style];
+  return `<svg viewBox="0 0 80 80">
+    <defs>
+      <radialGradient id="${id}s" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="${shade(p.skin, 1.12)}"/><stop offset="1" stop-color="${shade(p.skin, 0.82)}"/></radialGradient>
+      <linearGradient id="${id}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.suit, 1.15)}"/><stop offset="1" stop-color="${shade(p.suit, 0.75)}"/></linearGradient>
+    </defs>
+    ${p.under ?? ''}
+    <path d="M10 82c1-14 12-22 30-22s29 8 30 22z" fill="url(#${id}c)"/>
+    <rect x="34" y="50" width="12" height="12" rx="4" fill="${shade(p.skin, 0.85)}"/>
+    <ellipse cx="20" cy="41" rx="4" ry="6" fill="${shade(p.skin, 0.9)}"/><ellipse cx="60" cy="41" rx="4" ry="6" fill="${shade(p.skin, 0.9)}"/>
+    <ellipse cx="40" cy="38" rx="19" ry="21" fill="url(#${id}s)"/>
+    ${hair}
+    <ellipse cx="32.5" cy="40" rx="5" ry="5.8" fill="#fff"/><ellipse cx="47.5" cy="40" rx="5" ry="5.8" fill="#fff"/>
+    <circle cx="33" cy="41" r="3.4" fill="${p.iris}"/><circle cx="47" cy="41" r="3.4" fill="${p.iris}"/>
+    <circle cx="33" cy="41.3" r="1.7" fill="#120c10"/><circle cx="47" cy="41.3" r="1.7" fill="#120c10"/>
+    <circle cx="31.8" cy="39.4" r="1.2" fill="#fff"/><circle cx="45.8" cy="39.4" r="1.2" fill="#fff"/>
+    <path d="M27 32.5q5.5-3 11 0M42 32.5q5.5-3 11 0" stroke="${shade(p.hair, 0.9)}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M39 44q1.4 3 3 1.2" stroke="${shade(p.skin, 0.7)}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M33.5 49.5q6.5 5.5 13 0" stroke="#7a2a24" stroke-width="2.4" fill="#fff" stroke-linecap="round"/>
+    <circle cx="26.5" cy="47" r="3.2" fill="#ff7a8a" opacity=".35"/><circle cx="53.5" cy="47" r="3.2" fill="#ff7a8a" opacity=".35"/>
+    ${p.extra ?? ''}
+  </svg>`;
+}
+
+const KAI = person({
+  id: 'pk',
+  skin: '#e8b48c',
+  hair: '#4a2a18',
+  iris: '#6a4020',
+  suit: '#ff8a3d',
+  style: 'short',
+  under: `<circle cx="40" cy="37" r="30" fill="#dfe6f0"/><circle cx="40" cy="37" r="30" fill="none" stroke="#9aa6ba" stroke-width="2"/>
+    <rect x="53" y="3" width="2.4" height="10" fill="#9aa6ba"/><circle cx="54.2" cy="3.5" r="3.4" fill="#ff5e6a"/>`,
+  extra: `<path d="M16 30a26 26 0 0 1 48 0" fill="none" stroke="#ff8a3d" stroke-width="3"/>
+    <path d="M24 22q8-6 16-6" stroke="#fff" stroke-width="2.5" opacity=".55" fill="none" stroke-linecap="round"/>
+    <rect x="35" y="66" width="10" height="6" rx="2" fill="#5ee0ff"/>`,
+});
+
+const CAPTAIN = person({
+  id: 'pc',
+  skin: '#8a5a3c',
+  hair: '#e8e8f0',
+  iris: '#3a2410',
+  suit: '#1c2a4f',
+  style: 'short',
+  extra: `<path d="M18 26q22-12 44 0v-6q-22-10-44 0z" fill="#1c2a4f"/><rect x="17" y="24" width="46" height="6" rx="3" fill="#0f1830"/>
+    <circle cx="40" cy="18" r="3.6" fill="#ffd166"/><rect x="24" y="66" width="10" height="4" rx="1" fill="#ffd166"/><rect x="46" y="66" width="10" height="4" rx="1" fill="#ffd166"/>`,
+});
+
+const ROSA = person({
+  id: 'pr',
+  skin: '#c68a5e',
+  hair: '#2a1a12',
+  iris: '#3a2410',
+  suit: '#8a1c26',
+  style: 'bun',
+  extra: `<path d="M34 64l6 6 6-6" fill="none" stroke="#ffd166" stroke-width="2.5"/><circle cx="25" cy="70" r="3.5" fill="#ffd166"/>`,
+});
+
+const COLONIST = person({ id: 'pn', skin: '#f0c8a0', hair: '#5a3a22', iris: '#2a6a8a', suit: '#e6edf7', style: 'long' });
 
 export const PORTRAIT: Record<Speaker, string> = {
-  kai: `<svg viewBox="0 0 80 80">
-    <rect x="14" y="58" width="52" height="28" rx="14" fill="#ff8a3d"/>
-    <circle cx="40" cy="36" r="25" fill="#eef3fa"/>
-    <rect x="21" y="27" width="38" height="20" rx="10" fill="#10223c"/>
-    <rect x="24" y="29" width="14" height="6" rx="3" fill="#7fe6ff" opacity=".7"/>
-    <circle cx="33" cy="37" r="2.6" fill="#7fe6ff"/><circle cx="47" cy="37" r="2.6" fill="#7fe6ff"/>
-    <path d="M36 42c2.5 2 5.5 2 8 0" stroke="#7fe6ff" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <circle cx="55" cy="12" r="3" fill="#ff5e6a"/><rect x="54" y="12" width="2" height="8" fill="#9aa6ba"/>
-  </svg>`,
+  kai: KAI,
   bolt: `<svg viewBox="0 0 80 80">
     <circle cx="40" cy="44" r="26" fill="#e6edf7"/>
     <rect x="14" y="48" width="52" height="5" fill="#9aa6ba"/>
@@ -59,28 +128,9 @@ export const PORTRAIT: Record<Speaker, string> = {
     <circle cx="40" cy="40" r="4" fill="#ffe0f4"/>
     <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="2" fill="none"/>
   </svg>`,
-  colonist: face('#f0c8a0', '#5a3a22', '#e6edf7'),
-  captain: `<svg viewBox="0 0 80 80">
-    <rect x="14" y="56" width="52" height="30" rx="14" fill="#1c2a4f"/>
-    <rect x="30" y="58" width="20" height="5" rx="2" fill="#ffd166"/>
-    <circle cx="40" cy="40" r="20" fill="#8a5a3c"/>
-    <path d="M20 36c0-14 10-19 20-19s20 5 20 19c-6-5-12-7-20-7s-14 2-20 7z" fill="#e8e8f0"/>
-    <rect x="18" y="16" width="44" height="10" rx="4" fill="#1c2a4f"/>
-    <rect x="22" y="24" width="36" height="4" rx="2" fill="#0f1830"/>
-    <circle cx="40" cy="20" r="3.4" fill="#ffd166"/>
-    <circle cx="33" cy="41" r="3" fill="#1b1b2a"/><circle cx="47" cy="41" r="3" fill="#1b1b2a"/>
-    <path d="M34 50c4 2.6 8 2.6 12 0" stroke="#3a1a10" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  </svg>`,
-  rosa: `<svg viewBox="0 0 80 80">
-    <rect x="14" y="56" width="52" height="30" rx="14" fill="#8a1c26"/>
-    <rect x="22" y="60" width="10" height="6" rx="2" fill="#ffd166"/>
-    <circle cx="40" cy="12" r="9" fill="#2a1a12"/>
-    <circle cx="40" cy="39" r="20" fill="#c68a5e"/>
-    <path d="M20 36c0-14 10-20 20-20s20 6 20 20c-4-7-10-10-20-10s-16 3-20 10z" fill="#2a1a12"/>
-    <circle cx="33" cy="41" r="3" fill="#1b1b2a"/><circle cx="47" cy="41" r="3" fill="#1b1b2a"/>
-    <path d="M33 49c4 3.4 10 3.4 14 0" stroke="#5a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    <circle cx="28" cy="46" r="3" fill="#ff9aa0" opacity=".45"/><circle cx="52" cy="46" r="3" fill="#ff9aa0" opacity=".45"/>
-  </svg>`,
+  colonist: COLONIST,
+  captain: CAPTAIN,
+  rosa: ROSA,
   vendy: `<svg viewBox="0 0 80 80">
     <rect x="14" y="12" width="52" height="62" rx="10" fill="#8a2a5a"/>
     <rect x="20" y="18" width="40" height="28" rx="6" fill="#ffe0f4"/>
