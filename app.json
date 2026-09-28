@@ -39,6 +39,13 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#05070d"
+    "backgroundColor": "#05070d",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7314affd-d748-45e9-8043-71e488ff0bf7"
+      }
+    },
+    "owner": "kitsosorfanopoulos"
   }
 }
