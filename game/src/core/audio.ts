@@ -34,6 +34,7 @@ export type Sfx =
   | 'charged'
   | 'fireball'
   | 'alarm'
+  | 'sputter'
   | 'tone0'
   | 'tone1'
   | 'tone2'
@@ -287,13 +288,19 @@ export class AudioEngine {
     src.stop(t + attack + dur + 0.05);
   }
 
-  play(name: Sfx, pitch = 1) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  /** Plays a sound effect. `volume` below 1 is for sounds out in the world, quieter the further away they are. */
+  play(name: Sfx, pitch = 1, volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running' || volume < 0.02) return;
     const now = this.ctx.currentTime;
     const last = this.lastPlay.get(name) ?? 0;
     if (now - last < 0.035) return;
     this.lastPlay.set(name, now);
-    const b = this.sfxBus;
+    let b = this.sfxBus;
+    if (volume < 0.999) {
+      b = this.ctx.createGain();
+      b.gain.value = volume;
+      b.connect(this.sfxBus);
+    }
     const t = now + 0.005;
     const p = pitch;
     switch (name) {
@@ -424,6 +431,11 @@ export class AudioEngine {
       case 'fireball':
         this.tone(t, 'sawtooth', 420, 90, 0.45, 0.22, b);
         this.hiss(t, 0.5, 0.4, 'lowpass', 3000, 300, b);
+        break;
+      case 'sputter':
+        // A soft electrical crackle (not a blaster "pew": no falling pitch).
+        this.hiss(t, 0.05, 0.1, 'highpass', 4000, 4000, b);
+        this.hiss(t + 0.06, 0.03, 0.06, 'highpass', 6000, 6000, b);
         break;
       case 'alarm':
         for (let i = 0; i < 3; i++) {

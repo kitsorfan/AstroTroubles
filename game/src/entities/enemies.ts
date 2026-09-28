@@ -455,7 +455,7 @@ class Buzzer extends Enemy {
         // Shoots where Kai is going, not where he is.
         const dir = this.lead(from.distanceTo(v3.set(p.x, p.y, p.z)) / speed).sub(from).normalize();
         this.world.shots.fire('enemy', from, dir, speed, 1);
-        audio.play('enemyShoot');
+        this.world.soundAt('enemyShoot', this.body.x, this.body.z, 1, 22);
       }
     }
     if (this.mode === 'dive') {
@@ -557,7 +557,7 @@ class Sentry extends Enemy {
         const from = new THREE.Vector3(b.x + fx * 0.8, b.y + 1.2, b.z + fz * 0.8);
         const speed = 10 * this.spd;
         this.world.shots.fire('enemy', from, this.lead(d / speed).sub(from).normalize(), speed, 1);
-        audio.play('enemyShoot', 1.3);
+        this.world.soundAt('enemyShoot', this.body.x, this.body.z, 1.3, 22);
       }
       return;
     }
@@ -623,7 +623,7 @@ class Turret extends Enemy {
           const speed = vel.length();
           this.world.shots.fire('enemy', from, vel.normalize(), speed, 1, g);
         }
-        audio.play('enemyShoot', 0.7);
+        this.world.soundAt('enemyShoot', this.body.x, this.body.z, 0.7, 22);
       }
     } else {
       head.scale.setScalar(1 + Math.sin(this.t * 2) * 0.03);

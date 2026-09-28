@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { audio, type Track } from '../core/audio';
+import { audio, type Sfx, type Track } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
@@ -664,6 +664,14 @@ export class World {
       audio.play('success');
       this.hooks.toast('Area clear!', 'bolt');
     }
+  }
+
+  /** A sound out in the world: it fades with distance from Kai and is silent beyond `range`. */
+  soundAt(name: Sfx, x: number, z: number, pitch = 1, range = 18) {
+    const p = this.player.body;
+    const d = Math.hypot(p.x - x, p.z - z);
+    if (d >= range) return;
+    audio.play(name, pitch, (1 - d / range) ** 1.5);
   }
 
   /** Kai stepped on a code pad: right pad lights up, wrong pad resets the whole code. */

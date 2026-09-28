@@ -189,7 +189,7 @@ export class Door extends Entity {
     }
     if (open !== this.wasOpen) {
       this.wasOpen = open;
-      audio.play('door');
+      this.world.soundAt('door', this.slab.position.x, this.slab.position.z, 1, 24);
       if (open) this.world.particles.emit(this.slab.position.x, this.baseY + 2, this.slab.position.z, { count: 12, color: '#ffffff', speed: 3, life: 0.5 });
     }
     this.t = damp(this.t, open ? 1 : 0, 5, dt);
@@ -731,7 +731,7 @@ export class Vent extends Entity implements FloorFx {
   update(dt: number) {
     const on = this.on;
     const soon = !on && (this.world.time + this.offset) % this.period > this.period - 0.6;
-    if (on && !this.wasOn) audio.play('vent');
+    if (on && !this.wasOn) this.world.soundAt('vent', this.x, this.z, 1, 16);
     this.wasOn = on;
     this.glow.material.opacity = damp(this.glow.material.opacity, on ? 0.55 : 0, 8, dt);
     const w = this.world;
@@ -811,7 +811,7 @@ export class Laser extends Entity {
     const on = this.on;
     if (on !== this.wasOn) {
       this.wasOn = on;
-      if (on) audio.play('zap', 0.7);
+      if (on) this.world.soundAt('zap', (this.a.x + this.b.x) / 2, (this.a.z + this.b.z) / 2, 0.7, 14);
     }
     const period = this.spec.period ?? 3;
     const phase = (this.world.time + (this.spec.offset ?? 0)) % period;
@@ -1293,9 +1293,9 @@ export class BoltFind extends Entity implements Interactable {
   update(dt: number) {
     this.t += dt;
     if (this.waking) return;
-    if (Math.random() < 0.04) {
+    if (Math.random() < 0.015) {
       this.world.particles.emit(this.spot.x + 0.3, this.spot.y + 0.6, this.spot.z, { count: 3, color: '#ffd166', speed: 3, life: 0.3, size: 0.3 });
-      audio.play('zap', 2.2);
+      this.world.soundAt('sputter', this.spot.x, this.spot.z, 1, 12);
     }
     this.model.iris.emissiveIntensity = Math.random() < 0.05 ? 1.2 : 0.2;
   }
