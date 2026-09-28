@@ -92,7 +92,7 @@ export interface ResumeState {
 const PITCH = 1.0;
 const PITCH_MAX = 1.5;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
-const ENV_LIGHT = 0.45;
+const ENV_LIGHT = 0.6;
 const tmpV = new THREE.Vector3();
 const tmpL = new THREE.Vector3();
 /** Fixed sun direction, and the rotation into (and out of) the shadow camera's space. */

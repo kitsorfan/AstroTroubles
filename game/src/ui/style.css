@@ -50,7 +50,7 @@ canvas#game {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.28) 82%, rgba(0, 0, 0, 0.55) 100%);
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.1) 85%, rgba(0, 0, 0, 0.26) 100%);
 }
 
 #touch {

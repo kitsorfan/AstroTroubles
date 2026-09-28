@@ -27,13 +27,15 @@ class Quads {
   private col: number[] = [];
   private idx: number[] = [];
 
-  add(p: V3[], n: V3, uv: [number, number][], shade: number[]) {
+  add(p: V3[], n: V3, uv: [number, number][], shade: (number | V3)[]) {
     const base = this.pos.length / 3;
     for (let i = 0; i < 4; i++) {
       this.pos.push(...p[i]);
       this.nor.push(...n);
       this.uv.push(...uv[i]);
-      this.col.push(shade[i], shade[i], shade[i]);
+      const s = shade[i];
+      if (typeof s === 'number') this.col.push(s, s, s);
+      else this.col.push(...s);
     }
     // Pick the winding whose face normal agrees with n.
     const ax = p[1][0] - p[0][0];
@@ -198,7 +200,26 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     const b = occludes(c, x, z + sz);
     const d = occludes(c, x + sx, z + sz);
     const level = a && b ? 0 : 3 - (a + b + d);
-    return [0.42, 0.58, 0.78, 1][level];
+    return [0.7, 0.8, 0.9, 1][level];
+  };
+  /** How much light from the wall strips reaches this floor corner (0 in the open, up to 1 in a nook). */
+  const spill = (x: number, z: number, sx: number, sz: number) => {
+    let n = 0;
+    for (const [dx, dz] of [
+      [sx, 0],
+      [0, sz],
+      [sx, sz],
+    ]) {
+      if (grid.cell(x + dx, z + dz).kind === 'wall') n += 1;
+    }
+    return Math.min(1, n / 2);
+  };
+  const glowTint = new THREE.Color(theme.wallTrim);
+  /** Final colour of a floor corner: shading, plus a wash of the wall lights' colour near walls. */
+  const floorCorner = (c: Cell, x: number, z: number, sx: number, sz: number, tint: number): V3 => {
+    const ao = cornerAO(c, x, z, sx, sz) * tint;
+    const k = spill(x, z, sx, sz) * 0.32;
+    return [ao + glowTint.r * k, ao + glowTint.g * k, ao + glowTint.b * k];
   };
 
   for (let z = 0; z < D; z++) {
@@ -253,7 +274,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           const variant = !floorBase ? 0 : r < 0.42 ? 0 : r < 0.64 ? 3 : r < 0.86 ? 1 : 2;
           const v0 = floorBase ? 0 : 1 - (y1 - y0) / WALL_H;
           const v1 = floorBase ? (y1 - y0) / WALL_H : 1;
-          const low = floorBase ? 0.5 : nb.kind === 'void' ? 0.18 : 0.45;
+          const low = floorBase ? 0.82 : nb.kind === 'void' ? 0.3 : 0.6;
           wallQ[variant].add(
             [
               [fx - tx, y0, fz - tz],
@@ -268,7 +289,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
               [1, v1],
               [0, v1],
             ],
-            [low, low, 1, 1],
+            [low, low, 1.12, 1.12],
           );
           if (!floorBase) continue;
           const yaw = Math.atan2(dx, dz);
@@ -341,7 +362,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           ],
           [0, 1, 0],
           [0, 1, 2, 3].map((i) => uvs[(i + rot) % 4]),
-          [cornerAO(c, x, z, -1, -1) * tint, cornerAO(c, x, z, 1, -1) * tint, cornerAO(c, x, z, 1, 1) * tint, cornerAO(c, x, z, -1, 1) * tint],
+          [floorCorner(c, x, z, -1, -1, tint), floorCorner(c, x, z, 1, -1, tint), floorCorner(c, x, z, 1, 1, tint), floorCorner(c, x, z, -1, 1, tint)],
         );
       }
 
@@ -445,7 +466,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     for (const t of [s.map, s.normalMap, s.emissiveMap]) t?.repeat.set(span / 16, span / 16);
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: '#ffffff', emissiveIntensity: 1.2, roughness: 0.8, metalness: 0.4 }),
+      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: '#ffffff', emissiveIntensity: 1.8, roughness: 0.8, metalness: 0.4, color: '#c8d0e0' }),
     );
     floor.position.set((W * CELL) / 2, ABYSS_Y, (D * CELL) / 2);
     group.add(floor);
