@@ -869,7 +869,10 @@ export class Cocoon extends Entity implements Target {
     const box = w.boxes.find((b) => b.owner === this);
     if (box) w.boxes.splice(w.boxes.indexOf(box), 1);
     w.collect('colonist', this.id);
-    w.hooks.toast(`${this.name}: "${this.line}"`, 'colonist');
+    // Story characters (Aunt Rosa, the Captain) get a proper conversation instead of a one-liner.
+    const lines = w.dialogue(`colonist:${this.id.split('.')[1]}`);
+    if (lines.length) w.hooks.say(lines);
+    else w.hooks.toast(`${this.name}: "${this.line}"`, 'colonist');
   }
 
   update(dt: number) {
@@ -1017,30 +1020,37 @@ export class Trigger extends Entity {
 export class Exit extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
+  /** The disc Kai stands on; it rises during the lift-ride cutscene. */
+  readonly pad = new THREE.Group();
   private ring: THREE.Mesh;
   private ringMat: THREE.MeshStandardMaterial;
+  private used = false;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id);
     const x = cx2x(cx);
     const z = cx2x(cz);
     this.spot = new THREE.Vector3(x, h, z);
-    this.obj.add(mesh(cyl(1.3, 1.4, 0.3, 28), mat('#3a4458', { metal: 0.5 }), x, h + 0.15, z));
+    this.pad.position.set(x, h, z);
+    this.pad.add(mesh(cyl(1.3, 1.4, 0.3, 28), mat('#3a4458', { metal: 0.5 }), 0, 0.15, 0));
     this.ringMat = ownMat('#ff5e6a', { emissive: '#ff5e6a', ei: 1 });
-    this.ring = mesh(torus(1.1, 0.1), this.ringMat, x, h + 0.35, z, false);
+    this.ring = mesh(torus(1.1, 0.1), this.ringMat, 0, 0.35, 0, false);
     this.ring.rotation.x = Math.PI / 2;
-    this.obj.add(this.ring);
+    this.pad.add(this.ring);
+    this.obj.add(this.pad);
     for (const sx of [-1, 1]) this.obj.add(mesh(boxG(0.3, 3.6, 0.3), mat('#56637e', { metal: 0.5 }), x + sx * 1.35, h + 1.8, z));
     this.obj.add(mesh(boxG(3, 0.3, 0.3), mat('#56637e', { metal: 0.5 }), x, h + 3.6, z));
     world.addInteractable(this);
   }
 
   label() {
-    return this.world.canExit() ? 'RIDE LIFT' : null;
+    return this.world.canExit() && !this.used ? 'RIDE LIFT' : null;
   }
 
   interact() {
-    this.world.hooks.complete();
+    if (this.used) return;
+    this.used = true;
+    this.world.rideLift(this);
   }
 
   update(dt: number) {
@@ -1049,8 +1059,96 @@ export class Exit extends Entity implements Interactable {
     this.ringMat.emissive.set(open ? '#3dff8a' : '#ff5e6a');
     this.ring.rotation.z += dt * (open ? 2 : 0.3);
     if (open && Math.random() < 0.2) {
-      this.world.particles.emit(this.spot.x + (Math.random() - 0.5) * 2, this.spot.y + 0.3, this.spot.z + (Math.random() - 0.5) * 2, { count: 1, color: '#3dff8a', speed: 0.5, up: 4, life: 0.8, size: 0.4, gravity: 0 });
+      const p = this.pad.position;
+      this.world.particles.emit(p.x + (Math.random() - 0.5) * 2, p.y + 0.3, p.z + (Math.random() - 0.5) * 2, { count: 1, color: '#3dff8a', speed: 0.5, up: 4, life: 0.8, size: 0.4, gravity: 0 });
     }
+  }
+}
+
+/** A hologram projector that plays a recorded message the first time Kai walks by. */
+export class Holo extends Entity implements Interactable {
+  readonly spot: THREE.Vector3;
+  range = 2.6;
+  played: boolean;
+  /** The translucent figure of whoever recorded the message. */
+  readonly figure = new THREE.Group();
+  private figMat: THREE.MeshBasicMaterial;
+  private beamMat: THREE.MeshBasicMaterial;
+  private ring: THREE.Mesh;
+  private shown = 0;
+  private t = 0;
+
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    readonly log: string,
+    readonly who: 'captain' | 'rosa',
+  ) {
+    super(world, id);
+    const x = cx2x(cx);
+    const z = cx2x(cz);
+    this.spot = new THREE.Vector3(x, h, z);
+    this.played = world.taken.has(id);
+    const color = who === 'rosa' ? '#ff9a9a' : '#7fe6ff';
+    this.obj.add(mesh(cyl(0.7, 0.85, 0.3, 20), mat('#2e3446', { metal: 0.6, rough: 0.4 }), x, h + 0.15, z));
+    this.ring = mesh(torus(0.55, 0.05), mat(color, { emissive: color, ei: 1.8 }), x, h + 0.32, z, false);
+    this.ring.rotation.x = Math.PI / 2;
+    this.obj.add(this.ring);
+    this.beamMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    this.obj.add(mesh(new THREE.CylinderGeometry(0.45, 0.6, 2.4, 20, 1, true), this.beamMat, x, h + 1.5, z, false));
+    // A simple figure made of light: body, head, arms and (for the Captain) a peaked cap.
+    this.figMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const f = this.figure;
+    f.add(mesh(new THREE.CapsuleGeometry(0.26, 0.55, 4, 12), this.figMat, 0, 0.75, 0, false));
+    f.add(mesh(sphere(0.24, 16), this.figMat, 0, 1.42, 0, false));
+    for (const sx of [-1, 1]) f.add(mesh(new THREE.CapsuleGeometry(0.08, 0.45, 4, 8), this.figMat, sx * 0.34, 0.85, 0, false));
+    if (who === 'captain') {
+      f.add(mesh(cyl(0.27, 0.27, 0.1, 16), this.figMat, 0, 1.62, 0, false));
+      f.add(mesh(boxG(0.34, 0.03, 0.22), this.figMat, 0, 1.58, 0.2, false));
+    } else {
+      f.add(mesh(sphere(0.13, 10), this.figMat, 0, 1.62, -0.12, false));
+    }
+    f.position.set(x, h + 0.35, z);
+    f.visible = false;
+    this.obj.add(f);
+    world.addInteractable(this);
+  }
+
+  label() {
+    return this.played ? 'PLAY LOG' : null;
+  }
+
+  interact() {
+    this.world.playLog(this);
+  }
+
+  /** 0 = hidden, 1 = fully projected. */
+  show(k: number) {
+    this.shown = k;
+  }
+
+  update(dt: number) {
+    this.t += dt;
+    this.ring.rotation.z += dt * 1.5;
+    if (!this.played && !this.world.cutscene) {
+      const p = this.world.player.body;
+      if (Math.hypot(p.x - this.spot.x, p.z - this.spot.z) < 3.4 && Math.abs(p.y - this.spot.y) < 2) {
+        this.played = true;
+        this.world.markTaken(this.id);
+        this.world.playLog(this);
+      }
+    }
+    // The projection flickers like an old recording.
+    const flicker = this.shown > 0 ? 0.75 + Math.sin(this.t * 37) * 0.08 + (Math.random() < 0.04 ? -0.4 : 0) : 0;
+    this.figure.visible = this.shown > 0.01;
+    this.figMat.opacity = this.shown * flicker * 0.75;
+    this.figure.scale.set(1, Math.max(0.01, this.shown), 1);
+    const p = this.world.player.body;
+    this.figure.rotation.y = Math.atan2(p.x - this.spot.x, p.z - this.spot.z);
+    this.beamMat.opacity = this.shown * 0.18 + (this.played ? 0 : 0.05 + Math.sin(this.t * 3) * 0.03);
   }
 }
 
@@ -1058,8 +1156,11 @@ export class Exit extends Entity implements Interactable {
 export class BoltFind extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
-  private model = makeBolt();
+  readonly model = makeBolt();
+  /** Set while the wake-up cutscene animates BOLT; stops the idle sputtering. */
+  waking = false;
   private t = 0;
+  private busy = false;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id);
@@ -1073,20 +1174,18 @@ export class BoltFind extends Entity implements Interactable {
   }
 
   label() {
-    return 'FIX DRONE';
+    return this.busy ? null : 'FIX DRONE';
   }
 
   interact() {
-    const w = this.world;
-    w.hooks.say(w.dialogue('bolt'), () => {
-      w.joinBolt();
-      w.bolt.place(this.spot.x, this.spot.y + 1, this.spot.z);
-      this.remove();
-    });
+    if (this.busy) return;
+    this.busy = true;
+    this.world.findBolt(this);
   }
 
   update(dt: number) {
     this.t += dt;
+    if (this.waking) return;
     if (Math.random() < 0.04) {
       this.world.particles.emit(this.spot.x + 0.3, this.spot.y + 0.6, this.spot.z, { count: 3, color: '#ffd166', speed: 3, life: 0.3, size: 0.3 });
       audio.play('zap', 2.2);

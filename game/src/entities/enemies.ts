@@ -130,7 +130,8 @@ export abstract class Enemy extends Entity implements Target {
     const dist = this.distToPlayer();
     if (!this.aggro && dist < 11 && Math.abs(this.player.body.y - this.body.y) < 5) this.aggro = true;
     if (this.aggro && dist > 30) this.aggro = false;
-    if (this.stagger > 0) {
+    if (this.stagger > 0 || this.world.cutscene) {
+      // Staggered, or holding still while a cutscene plays (gravity still applies).
       this.stagger -= dt;
       this.body.vx = damp(this.body.vx, 0, 6, dt);
       this.body.vz = damp(this.body.vz, 0, 6, dt);

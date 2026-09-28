@@ -69,7 +69,7 @@ export const security: LevelDef = {
     #.....................P..#
     ############D#############
     #.........T..............#
-    #...............e........#
+    #...............e..H.....#
     #........................#
     #######O##########O#######
     ######..............######
@@ -139,6 +139,7 @@ export const security: LevelDef = {
     '!': { type: 'shard', id: 's3' },
     K: { type: 'cocoon', id: 'c1', name: 'Aunt Rosa Reyes', line: 'Kai?! Is that really you? Oh, I am SO proud of you!' },
     P: { type: 'cocoon', id: 'c2', name: 'Chief Dana', line: 'Those lasers were my idea. Sorry about that! Thanks for the rescue.' },
+    H: { type: 'holo', log: 'log' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
     m: { type: 'decor', kind: 'camera', solid: false },
@@ -152,21 +153,41 @@ export const security: LevelDef = {
   ],
   dialogues: {
     intro: [
-      { who: 'halcyon', text: 'The Security Deck, home of the ship’s guard robots. The Bloom has made them extra grumpy.' },
-      { who: 'bolt', text: 'Lasers! Cameras! A giant robot DOG! Can we go home now?' },
-      { who: 'kai', text: 'Stay close, BOLT. We’ll find a way through together.' },
-      { who: 'halcyon', text: 'The armory has a SHIELD MODULE made for drones like BOLT. With it, lasers cannot touch you.' },
+      { who: 'glitch', text: 'INTRUDERS DETECTED. The Bloom must reach its home. Please... go... back...' },
+      { who: 'kai', text: 'HALCYON, it’s us! It’s Kai and BOLT!' },
+      { who: 'glitch', text: 'Kai...? H-help... The pollen is in my core. It makes me say things. WARDOG will protect the Bloom...' },
+      { who: 'bolt', text: 'We have to reach HALCYON’s core! The armory has a SHIELD MODULE for drones like me. With it, lasers can’t touch us.' },
+    ],
+    log: [
+      { who: 'captain', text: 'Captain’s log, day five. The pollen has reached HALCYON. The ship is fighting us now.' },
+      { who: 'captain', text: 'BOLT, if you ever find this: you were always my little light. Even when you were scared of the dark.' },
+      { who: 'captain', text: 'The Bloom speaks in lights. I’m sure of it now. If only someone could understand it...' },
+      { who: 'bolt', text: 'Speaks in... lights? I talk in lights to other robots! Blink, blink!' },
+    ],
+    'colonist:c1': [
+      { who: 'rosa', text: 'Kai?! Is that really you? Look at you, a real hero!' },
+      { who: 'kai', text: 'Aunt Rosa! I was scared the whole way up here.' },
+      { who: 'rosa', text: 'And you kept going anyway. That’s my Kai. Now go and save HALCYON. I’ll be right behind you!' },
     ],
     boss: [
-      { who: 'halcyon', text: 'That is WARDOG, the chief security robot! Its force field is powered by three pylons.' },
-      { who: 'bolt', text: 'Walk up to each pylon and HACK it to drop the shield, then BLAST away! And JUMP over the red laser sweep!' },
+      { who: 'glitch', text: 'WARDOG. PROTECT. THE BLOOM.' },
+      { who: 'bolt', text: 'Its force field runs on three pylons! Walk up to each pylon and HACK it, then BLAST away! And JUMP over the red laser!' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'WARDOG is down! Good doggy. Sleepy doggy.' },
-      { who: 'halcyon', text: 'Only the Bridge is left. The Bloom Heart is waiting there... and so are the ship’s controls.' },
+      { who: 'bolt', text: 'WARDOG is down! Now for HALCYON’s core. Hold still, HALCYON, I am going in!' },
+      { who: 'halcyon', text: 'Rebooting... Kai? BOLT? I am me again. Thank you. Thank you so much.' },
+      { who: 'halcyon', text: 'While the pollen was inside me, I could hear the Bloom. It is not angry, Kai. It is TERRIFIED.' },
+      { who: 'halcyon', text: 'It was lost in the dark for a very long time. Now it thinks that star is its home. It does not know the star will burn it... and us.' },
+      { who: 'kai', text: 'So it’s not a monster. It’s lost.' },
+      { who: 'bolt', text: 'Like me in the storeroom...' },
+      { who: 'halcyon', text: 'The Bridge is next. Be careful up there... and be kind.' },
     ],
-    'shard:s1': [{ who: 'bloom', text: 'Light patterns are words. Blue means hello. Pink means safe. Gold means together.' }],
-    'shard:s2': [{ who: 'bloom', text: 'The little drone flashes lights too. Maybe he will understand me.' }],
+    'shard:s1': [
+      { who: 'bloom', text: 'Light patterns are words. Blue means hello. Pink means safe. Gold means together.' },
+    ],
+    'shard:s2': [
+      { who: 'bloom', text: 'The little drone flashes lights too. Maybe he will understand me.' },
+    ],
     'shard:s3': [
       { who: 'bloom', text: 'If someone speaks to my Heart in lights, I will listen.' },
       { who: 'bolt', text: 'Speak in lights? I can do that! If we find every shard, maybe I can talk to the Bloom!' },

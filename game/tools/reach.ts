@@ -260,6 +260,7 @@ export const TARGET_TYPES = [
   'boltfind',
   'checkpoint',
   'vendor',
+  'holo',
 ] as const;
 
 function isTarget(s: Spec) {

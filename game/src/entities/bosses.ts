@@ -141,11 +141,54 @@ export abstract class Boss extends Entity {
     return Math.hypot(p.x - this.center.x, p.z - this.center.z);
   }
 
+  /** True once the entrance cutscene has played; retries after a knock-out skip straight to the fight. */
+  introSeen = false;
+  private introPlaying = false;
+
   begin() {
-    if (this.started || this.defeated) return;
-    this.started = true;
-    this.world.bossStarted(this);
+    if (this.started || this.defeated || this.introPlaying) return;
+    this.introPlaying = true;
+    this.onIntro();
+    void this.world.bossIntro(this).then(() => {
+      this.introPlaying = false;
+      this.introSeen = true;
+      if (this.defeated || this.started) return;
+      this.started = true;
+      this.onStart();
+      this.world.bossStarted(this);
+    });
   }
+
+  /** Called as the entrance begins (before the cutscene). */
+  protected onIntro() {}
+
+  /** Called when the fight actually begins, after the entrance. */
+  protected onStart() {}
+
+  /** Roughly how big the boss is, for framing cutscene shots. */
+  get size() {
+    return this.focusHeight;
+  }
+
+  /** How high the boss's "face" is, for cutscene cameras. */
+  protected focusHeight = 2.6;
+
+  /** Where the boss stands right now (bosses that walk override this). */
+  get where(): THREE.Vector3 {
+    return this.center;
+  }
+
+  /** Where cutscene cameras look: the boss's face. */
+  get focus(): THREE.Vector3 {
+    const w = this.where;
+    return new THREE.Vector3(w.x, w.y + this.focusHeight, w.z);
+  }
+
+  get kind(): BossKind {
+    return this.bossKind;
+  }
+
+  bossKind: BossKind = 'warden';
 
   damage(n: number) {
     if (this.defeated || !this.started) return;
@@ -172,6 +215,7 @@ export abstract class Boss extends Entity {
 /* ---------------- 1. Frost Warden ---------------- */
 
 class Warden extends Boss implements Target {
+  protected focusHeight = 2.4;
   readonly title = 'FROST WARDEN';
   readonly aim = new THREE.Vector3();
   radius = 1.1;
@@ -378,6 +422,7 @@ class Bulb extends Entity implements Target {
 }
 
 class Queen extends Boss {
+  protected focusHeight = 3.8;
   readonly title = 'VINE QUEEN';
   private bulbs: Bulb[] = [];
   private model = new THREE.Group();
@@ -537,6 +582,7 @@ class Queen extends Boss {
 /* ---------------- 3. Magma Golem ---------------- */
 
 class Golem extends Boss implements Target {
+  protected focusHeight = 2.4;
   readonly title = 'MAGMA GOLEM';
   readonly aim = new THREE.Vector3();
   radius = 1.4;
@@ -583,6 +629,10 @@ class Golem extends Boss implements Target {
     this.body.z = this.center.z;
     this.state = 'chase';
     this.stateT = 2.5;
+  }
+
+  get where(): THREE.Vector3 {
+    return new THREE.Vector3(this.body.x, this.body.y, this.body.z);
   }
 
   hit(dmg: number, kind: HitKind): boolean {
@@ -782,6 +832,7 @@ class Blob extends Enemy {
 }
 
 class King extends Boss {
+  protected focusHeight = 1.8;
   readonly title = 'KING BLOBLIN';
   private blobs: Blob[] = [];
   private crown: THREE.Group;
@@ -797,6 +848,12 @@ class King extends Boss {
     this.crown.visible = false;
   }
 
+  /** The camera follows the big crowned blob while it's around. */
+  get where(): THREE.Vector3 {
+    const king = this.blobs.find((b) => b.alive && b.size >= 3);
+    return king ? new THREE.Vector3(king.body.x, king.body.y, king.body.z) : this.center;
+  }
+
   spawn(x: number, y: number, z: number, size: number) {
     this.seq += 1;
     const b = this.world.addEntity(new Blob(this.world, `${this.id}.b${this.seq}`, x, y, z, size, this));
@@ -805,10 +862,12 @@ class King extends Boss {
     return b;
   }
 
-  begin() {
-    if (this.started) return;
-    super.begin();
+  protected onIntro() {
+    // The King drops in from above as his entrance begins.
     this.spawn(this.center.x, this.center.y + 6, this.center.z, 3.2);
+  }
+
+  protected onStart() {
     this.crown.visible = true;
   }
 
@@ -886,6 +945,7 @@ class Pylon extends Entity implements Interactable {
 }
 
 class Wardog extends Boss implements Target {
+  protected focusHeight = 2.6;
   readonly title = 'WARDOG';
   readonly aim = new THREE.Vector3();
   radius = 1.6;
@@ -1101,6 +1161,7 @@ class Pod extends Entity implements Target {
 type HeartState = 'idle' | 'roots' | 'nova' | 'open';
 
 export class Heart extends Boss implements Target, Interactable {
+  protected focusHeight = 3.6;
   readonly title = 'THE BLOOM HEART';
   readonly aim = new THREE.Vector3();
   radius = 1.8;
@@ -1162,6 +1223,14 @@ export class Heart extends Boss implements Target, Interactable {
 
   get time() {
     return this.t;
+  }
+
+  /** The friendship ending: the Heart calms down, glows gold and opens up like a flower. */
+  befriend(k: number) {
+    this.calm = true;
+    this.core.color.set('#ffc6ef').lerp(new THREE.Color('#fff0b0'), k);
+    this.core.emissive.set('#ff5fc8').lerp(new THREE.Color('#ffb020'), k);
+    for (const petal of this.shell.children) petal.rotation.x = 0.3 + k * 1.2;
   }
 
   /** The secret path: with every memory shard, BOLT can speak the Bloom's light-language. */
@@ -1289,7 +1358,7 @@ export class Heart extends Boss implements Target, Interactable {
   }
 }
 
-export function makeBoss(world: World, id: string, kind: BossKind, cx: number, cz: number, h: number): Boss {
+function build(world: World, id: string, kind: BossKind, cx: number, cz: number, h: number): Boss {
   switch (kind) {
     case 'warden':
       return new Warden(world, id, cx, cz, h);
@@ -1304,5 +1373,11 @@ export function makeBoss(world: World, id: string, kind: BossKind, cx: number, c
     case 'heart':
       return new Heart(world, id, cx, cz, h);
   }
+}
+
+export function makeBoss(world: World, id: string, kind: BossKind, cx: number, cz: number, h: number): Boss {
+  const b = build(world, id, kind, cx, cz, h);
+  b.bossKind = kind;
+  return b;
 }
 

@@ -54,7 +54,7 @@ export const habitat: LevelDef = {
 #...l....l....l....l..~~~~~~..l..........#
 #....j...x...e........~~oo~~...y.22..44..#
 #..............n....e.~~..~~.....22..44..#
-#..@..C...444...444...~~..~~..C.....b....#
+#..@..C.H.444...444...~~..~~..C.....b....#
 #.........4o4...4K4...~~~~~~.............#
 #.......oo444.k.444x..ff~~ff.............#
 ##########################################
@@ -88,6 +88,7 @@ export const habitat: LevelDef = {
     K: { type: 'cocoon', id: 'c1', name: 'Mayor Ada', line: 'Oh my! The whole Ring owes you a parade!' },
     Q: { type: 'cocoon', id: 'c2', name: 'Teacher Kofi', line: 'Class, this is what a hero looks like. Thank you!' },
     '+': { type: 'canister', id: 'hc' },
+    H: { type: 'holo', log: 'log', who: 'rosa' },
     l: { type: 'decor', kind: 'lamp' },
     t: { type: 'decor', kind: 'tree' },
     i: { type: 'decor', kind: 'kiosk' },
@@ -101,23 +102,37 @@ export const habitat: LevelDef = {
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'The Habitat Ring. Two thousand cosy homes, one school, one playground and... a lot of goo.' },
-      { who: 'bolt', text: 'Look at the middle! There is a floating island. And something BIG and wobbly on it.' },
-      { who: 'halcyon', text: 'That is where the Bloom has hidden the lift. You will need to fly... or at least hover.' },
+      { who: 'bolt', text: 'Look in the middle! A floating island. And something BIG and wobbly on it.' },
+      { who: 'halcyon', text: 'The Bloom has hidden the lift on that island. You will need to fly... or at least hover.' },
       { who: 'kai', text: 'The playground always had the best toys. Let’s start there!' },
+    ],
+    log: [
+      { who: 'rosa', text: 'Kai, sweetie, if you wake up before me: don’t panic! It’s Aunt Rosa.' },
+      { who: 'rosa', text: 'Something is in the air vents. I’m going up to the Security Deck to protect HALCYON’s computer core.' },
+      { who: 'rosa', text: 'Whatever happens, remember what I always say: brave isn’t not being scared. Brave is being scared and going anyway.' },
+      { who: 'kai', text: '...Brave is being scared and going anyway. Hang on, Aunt Rosa. I’m coming.' },
+      { who: 'bolt', text: 'I am VERY scared and I am still going. Does that count?' },
+      { who: 'kai', text: 'That totally counts.' },
     ],
     boss: [
       { who: 'bolt', text: 'KING BLOBLIN! He is made of goo, and he wobbles when he is angry!' },
-      { who: 'halcyon', text: 'Every time you pop a blob, it splits into smaller ones. Pop them all! GROUND POUNDS hit extra hard.' },
+      { who: 'halcyon', text: 'Every time you pop a blob, it splits into smaller ones. Pop them ALL! GROUND POUNDS hit extra hard.' },
     ],
     bossDown: [
       { who: 'bolt', text: 'The last little blob went POP! The King is just a puddle now.' },
-      { who: 'halcyon', text: 'The lift to the Security Deck is working. Careful, the security system there is still angry.' },
+      { who: 'halcyon', text: 'The lift to the Security Deck is re-re-ready. Bzzt.' },
+      { who: 'bolt', text: 'HALCYON? Your voice sounds funny.' },
+      { who: 'glitch', text: 'Just a h-h-hiccup. The air vents are full of... pollen. Nothing to w-w-worry about.' },
     ],
-    'shard:s1': [{ who: 'bloom', text: 'The ship-people grow flowers too! Maybe we are the same.' }],
+    'shard:s1': [
+      { who: 'bloom', text: 'The ship-people grow flowers too! Maybe we are the same.' },
+    ],
     'shard:s2': [
       { who: 'bloom', text: 'I tried to say hello. I flashed my lights: hello... hello... hello...' },
       { who: 'bolt', text: 'Flashing lights? That is how I talk to other robots!' },
     ],
-    'shard:s3': [{ who: 'bloom', text: 'Nobody understood me. Nobody flashed back.' }],
+    'shard:s3': [
+      { who: 'bloom', text: 'Nobody understood me. Nobody flashed back.' },
+    ],
   },
 };

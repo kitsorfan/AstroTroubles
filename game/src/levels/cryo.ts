@@ -122,7 +122,7 @@ export const cryo: LevelDef = {
     P: { type: 'switch', flag: 'bridge1' },
     p: { type: 'platform', path: [[0, -3]], size: 2, speed: 2.6, wait: 1.2, needs: { flag: 'bridge1' }, h: 0 },
     f: { type: 'faller', h: 1.5 },
-    g: { type: 'trigger', id: 'needbolt', dialogue: 'needbolt', w: 5, d: 2 },
+    g: { type: 'holo', log: 'log' },
     j: { type: 'sign', text: 'Tap JUMP to hop up the ledge. Hold JUMP longer to jump higher!' },
     y: { type: 'sign', text: 'Enemies ahead! Hold BLAST to shoot. It aims for you. The door opens when the room is clear.' },
     q: { type: 'sign', text: 'Red switches need a GROUND POUND. Jump, then press SPIN in mid-air to slam down!' },
@@ -148,41 +148,53 @@ export const cryo: LevelDef = {
     { until: { all: [{ boss: true }, { flag: 'never' }] }, text: 'Ride the lift up to Hydroponics' },
   ],
   dialogues: {
-    intro: [
-      { who: 'halcyon', text: 'Wake up! Wake up! Crew member detected. Hello! I am HALCYON, the ship computer.' },
-      { who: 'kai', text: 'Ugh... my head. Why is everything covered in ice?' },
-      { who: 'halcyon', text: 'A space plant called the Bloom has grown over the whole LEVIATHAN. The ship is drifting toward a star!' },
-      { who: 'halcyon', text: 'Please climb up to the Bridge, six decks above us, and steer us to safety. No pressure! (Lots of pressure.)' },
-      { who: 'kai', text: 'Junior engineer Kai Reyes, reporting for duty. Let’s go!' },
+    wake: [
+      { who: 'halcyon', text: 'Thawing complete! Good morning, crew member. You have been asleep for one hundred years. ...Just kidding. Six months.' },
+      { who: 'kai', text: 'Brrr... HALCYON? Why is everything covered in ice... and pink vines?' },
     ],
-    needbolt: [
-      { who: 'halcyon', text: 'Hmm. The door ahead is sealed, and only a repair drone can hack its terminal.' },
-      { who: 'halcyon', text: 'My sensors show a drone in the dark storeroom to the west. It is very dark in there. Be brave!' },
+    intro: [
+      { who: 'halcyon', text: 'A space plant called the Bloom has grown over the whole ship. Everyone else is frozen in their pods or wrapped up in cocoons.' },
+      { who: 'halcyon', text: 'Worse news: the Bloom has steered us toward a star. Someone has to climb up to the Bridge, six decks above us, and turn us around.' },
+      { who: 'kai', text: 'Someone? You mean... me?' },
+      { who: 'halcyon', text: 'You are the only person awake, junior engineer Kai Reyes. So yes! Congratulations!' },
+      { who: 'kai', text: 'Okay. Okay! Deep breath. Let’s do this.' },
+    ],
+    log: [
+      { who: 'captain', text: 'Captain’s log. This is Captain Ines Mbeki. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
+      { who: 'captain', text: 'It’s growing through the air vents! Everyone, stay in your pods. BOLT? BOLT, where did you go?' },
+      { who: 'captain', text: 'If anyone finds my little repair drone: he hides in the storeroom when he’s scared. Please look after him.' },
+      { who: 'halcyon', text: 'That sealed door needs a drone to hack it. The storeroom is to the west. It is very dark in there... be brave, Kai.' },
     ],
     bolt: [
-      { who: 'kai', text: 'Hey, little guy. Are you okay? Let me fix that loose wire...' },
-      { who: 'bolt', text: 'Bzzzt! BOLT online! Oh! A HUMAN! Hello, hello, hello!' },
-      { who: 'bolt', text: 'I was hiding in here. The dark is scary. But you are not scary!' },
-      { who: 'kai', text: 'I’m going up to the Bridge. Want to come?' },
-      { who: 'bolt', text: 'YES! I can light up dark rooms, zap bad guys, and HACK terminals. Walk up to one and press the ACTION button!' },
+      { who: 'kai', text: 'Hey, little guy. You must be BOLT. Hold still, I’ll fix that loose wire...' },
+      { who: 'bolt', text: 'Bzzzt! BOLT... online! Oh! Oh! A HUMAN! Hello, hello, hello!' },
+      { who: 'bolt', text: 'I was hiding. The dark is scary. And the vines are scary. And the big BANG was very, VERY scary.' },
+    ],
+    boltJoin: [
+      { who: 'kai', text: 'The Captain is looking for you. She left a message. Want to come with me to the Bridge?' },
+      { who: 'bolt', text: 'The Captain! YES! I can light up dark places, zap bad guys and HACK terminals. Walk up to one and press the button!' },
+      { who: 'bolt', text: 'Just... stay close, okay? I will be brave if you are brave.' },
     ],
     boss: [
-      { who: 'halcyon', text: 'Warning! The FROST WARDEN security robot is tangled in Bloom vines. It thinks you are an intruder!' },
-      { who: 'bolt', text: 'JUMP over its ice rings! When the chest hatch opens, BLAST the glowing core!' },
+      { who: 'halcyon', text: 'Warning! The FROST WARDEN guards the lift, and the Bloom’s vines have scrambled its brain!' },
+      { who: 'bolt', text: 'JUMP over its ice rings! When its chest hatch opens, BLAST the glowing core!' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'You did it! The Warden is just a sleepy old robot again.' },
-      { who: 'halcyon', text: 'The lift to the Hydroponics Deck is unlocked. Onward and upward!' },
+      { who: 'bolt', text: 'We did it! The Warden is just a sleepy old robot again.' },
+      { who: 'kai', text: 'Sorry, big guy. Sweet dreams.' },
+      { who: 'halcyon', text: 'The lift is unlocked. Next stop: Hydroponics!' },
     ],
     'shard:s1': [
       { who: 'bolt', text: 'A memory shard! Bloom crystals remember things. Look, it is showing a picture...' },
       { who: 'bloom', text: '...cold... so cold and dark out here between the stars...' },
       { who: 'bolt', text: 'That felt so lonely. There are 18 shards on the ship. Let’s find them all!' },
     ],
-    'shard:s2': [{ who: 'bloom', text: 'A giant warm ship, full of lights! Maybe... a friend?' }],
+    'shard:s2': [
+      { who: 'bloom', text: 'A giant warm ship, full of lights! Maybe... a friend?' },
+    ],
     'shard:s3': [
       { who: 'bloom', text: 'I held on tight to the ship. I only wanted to be warm.' },
-      { who: 'bolt', text: 'The Bloom was scared of the dark, just like me...' },
+      { who: 'bolt', text: 'The Bloom was scared of the dark... just like me.' },
     ],
   },
 };

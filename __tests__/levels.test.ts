@@ -1,5 +1,6 @@
 import { deckAbilities } from '../game/tools/deckAbilities';
 import { isCollectible, reach } from '../game/tools/reach';
+import { FLYOVER, TRANSITIONS } from '../game/src/game/story';
 import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
 import { parseLevel } from '../game/src/world/grid';
 import type { Ability } from '../game/src/world/levelTypes';
@@ -42,6 +43,21 @@ describe('deck data', () => {
     expect(LEVELS.cryo.dialogues.bolt?.length).toBeGreaterThan(0);
     expect(LEVELS.bridge.dialogues.speak?.length).toBeGreaterThan(0);
     expect(LEVELS.bridge.dialogues.friends?.length).toBeGreaterThan(0);
+  });
+
+  it('tells the story: a recorded log on every deck, and a scene for each story character', () => {
+    for (const level of parsed) {
+      const d = level.def;
+      const logs = level.entities.filter((e) => e.spec.type === 'holo');
+      expect(logs).toHaveLength(1);
+      for (const e of logs) if (e.spec.type === 'holo') expect(d.dialogues[e.spec.log]?.length).toBeGreaterThan(0);
+      for (const key of Object.keys(d.dialogues).filter((k) => k.startsWith('colonist:'))) {
+        expect(d.colonistIds).toContain(key.slice('colonist:'.length));
+      }
+    }
+    for (const key of ['wake', 'intro', 'bolt', 'boltJoin']) expect(LEVELS.cryo.dialogues[key]?.length).toBeGreaterThan(0);
+    for (const id of LEVEL_ORDER.slice(0, 5)) expect(TRANSITIONS[id].length).toBeGreaterThan(0);
+    for (const id of LEVEL_ORDER.slice(1)) expect(FLYOVER[id]).not.toBe('');
   });
 
   it('has exactly one boss per deck and an exit lift on every deck but the last', () => {

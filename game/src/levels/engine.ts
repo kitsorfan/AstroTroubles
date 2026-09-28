@@ -60,7 +60,7 @@ export const engine: LevelDef = {
     #######.........########
     ###########Y############
     #........k...K.........#
-    #......................#
+    #.................H....#
     #~~~~~~~~..........888?#
     #Z.~~~~~~..........88Z8#
     #..~~~~~~..........8888#
@@ -124,6 +124,7 @@ export const engine: LevelDef = {
     '*': { type: 'shard', id: 's3' },
     P: { type: 'cocoon', id: 'c1', name: 'Engineer Bo', line: 'Did somebody fix the pumps? Great job, kiddo!' },
     Q: { type: 'cocoon', id: 'c2', name: 'Grandpa Luis', line: 'I have not moved that fast in years. Thank you, young one!' },
+    H: { type: 'holo', log: 'log' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
   },
@@ -135,24 +136,35 @@ export const engine: LevelDef = {
   ],
   dialogues: {
     intro: [
-      { who: 'halcyon', text: 'This is the Engine Core. Please do not touch the lava. Or the other lava. Or that lava over there.' },
+      { who: 'halcyon', text: 'Welcome to the Engine Core. Please do not touch the lava. Or the other lava. Or that lava over there.' },
       { who: 'bolt', text: 'The coolant pumps are switched off! No wonder it is so hot in here.' },
       { who: 'halcyon', text: 'Plug two power cells into the pumps and the lab door will open. The DASH THRUSTERS are inside.' },
       { who: 'kai', text: 'Two cells, two pumps. Easy peasy!' },
     ],
+    log: [
+      { who: 'captain', text: 'Captain’s log, day three. Someone has locked the helm and pointed us at the star. It wasn’t me.' },
+      { who: 'captain', text: 'The Bloom’s roots have reached the Bridge controls. I think that star looks like home to it.' },
+      { who: 'captain', text: 'Engineering, if anyone is awake: restart the coolant pumps before the engines melt!' },
+      { who: 'kai', text: 'Engineering... that’s me! Junior engineer, but still!' },
+    ],
     boss: [
       { who: 'halcyon', text: 'The MAGMA GOLEM! It is made of melted engine parts and Bloom roots.' },
-      { who: 'bolt', text: 'It is way too hot to hurt! Wait for it to cool down and turn grey, then jump on its back and GROUND POUND!' },
+      { who: 'bolt', text: 'It is way too hot to hurt! Wait until it cools down and turns grey, then jump on its back and GROUND POUND!' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'Phew! It is just a pile of warm rocks now. Warm, sleepy rocks.' },
-      { who: 'halcyon', text: 'Next stop: the Habitat Ring, where the colonists live. Please wipe your feet.' },
+      { who: 'bolt', text: 'Phew! It is just a pile of warm, sleepy rocks now.' },
+      { who: 'halcyon', text: 'Engines cooling down. Great work! But we are still heading for that star.' },
+      { who: 'kai', text: 'Then we keep climbing. Next deck!' },
     ],
-    'shard:s1': [{ who: 'bloom', text: 'The engine felt so warm, like a little sun. I love suns.' }],
-    'shard:s2': [{ who: 'bloom', text: 'I pointed the ship at the big bright star. It looked just like home.' }],
+    'shard:s1': [
+      { who: 'bloom', text: 'The engine felt so warm, like a little sun. I love suns.' },
+    ],
+    'shard:s2': [
+      { who: 'bloom', text: 'I pointed the ship at the big bright star. It looked just like home.' },
+    ],
     'shard:s3': [
       { who: 'bloom', text: 'My home was a garden around a star. It went dark a long, long time ago.' },
-      { who: 'bolt', text: 'So the Bloom is trying to go home... but that star is too hot for the ship!' },
+      { who: 'bolt', text: 'So the Bloom is trying to go home... but that star is far too hot for the ship!' },
     ],
   },
 };

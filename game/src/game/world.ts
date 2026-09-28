@@ -6,6 +6,8 @@ import { CELL, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
+import type { Director, Rig } from '../cinema/director';
+import * as scenes from '../cinema/scenes';
 import { Bolt } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
 import { makeEnemy, type Enemy } from '../entities/enemies';
@@ -25,6 +27,7 @@ import {
   Door,
   Exit,
   Faller,
+  Holo,
   FloorSwitch,
   Laser,
   Platform,
@@ -63,6 +66,8 @@ export interface WorldHooks {
   music(track: Track): void;
   objective(text: string): void;
   ending(kind: 'saved' | 'friends'): void;
+  /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
+  cutscene(script: (d: Director) => Promise<void>): Promise<void>;
 }
 
 export interface ResumeState {
@@ -78,6 +83,7 @@ const PITCH_MAX = 1.5;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
 const ENV_LIGHT = 0.45;
 const tmpV = new THREE.Vector3();
+const tmpL = new THREE.Vector3();
 /** Fixed sun direction, and the rotation into (and out of) the shadow camera's space. */
 const LIGHT_DIR = new THREE.Vector3(12, 30, 8).normalize();
 const LIGHT_ROT = new THREE.Matrix4().lookAt(LIGHT_DIR, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
@@ -124,6 +130,16 @@ export class World {
   darkness = 0;
   cameraYaw = 0;
   private camTarget = new THREE.Vector3();
+  /** What the camera looked at on the last frame (cutscenes start from here). */
+  readonly cameraLook = new THREE.Vector3();
+  private follow: Rig = { pos: new THREE.Vector3(), look: new THREE.Vector3(), fov: 50 };
+  private camRig: Rig | null = null;
+  private blendFrom: Rig | null = null;
+  private blendT = 0;
+  private blendMax = 1;
+  private baseFov = 50;
+  /** The lift at the end of the deck, if there is one. */
+  exit: Exit | null = null;
   private shakeAmt = 0;
   private objT = 0;
   private lastObjective = '';
@@ -336,7 +352,10 @@ export class World {
         this.addEntity(new Trigger(this, id, cx, cz, spec));
         break;
       case 'exit':
-        this.addEntity(new Exit(this, id, cx, cz, h));
+        this.exit = this.addEntity(new Exit(this, id, cx, cz, h));
+        break;
+      case 'holo':
+        this.addEntity(new Holo(this, id, cx, cz, h, spec.log, spec.who ?? 'captain'));
         break;
       case 'breakwall':
         if (!this.taken.has(id)) this.addEntity(new BreakWall(this, id, cx, cz, h));
@@ -658,33 +677,49 @@ export class World {
     this.camTarget.set(x, y + 1.2, z);
   }
 
+  /** The boss's entrance: a full cinematic the first time, straight into the fight on a retry. */
+  bossIntro(b: Boss): Promise<void> {
+    if (b.introSeen) return Promise.resolve();
+    this.hooks.music('boss');
+    return this.hooks.cutscene((d) => scenes.bossIntro(d, this, b));
+  }
+
   bossStarted(b: Boss) {
     this.boss = b;
     this.hooks.bossBar(b.title, b.hp / b.maxHp);
     this.hooks.music('boss');
-    audio.play('roar');
-    this.shake(0.5);
-    const lines = this.dialogue('boss');
-    if (lines.length) this.hooks.say(lines);
   }
 
-  bossDefeated(_b: Boss) {
+  bossDefeated(b: Boss) {
     this.flags.add('boss');
     this.hooks.bossBar(null, 0);
-    this.hooks.music(this.def.music as Track);
     this.hooks.checkpoint();
-    const lines = this.dialogue('bossDown');
-    if (this.def.id === 'bridge') {
-      this.hooks.say(lines, () => this.hooks.ending('saved'));
-    } else if (lines.length) {
-      this.hooks.say(lines);
-    }
+    const last = this.def.id === 'bridge';
+    if (!last) this.hooks.music(this.def.music as Track);
+    void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b)).then(() => {
+      if (last) this.hooks.ending('saved');
+    });
   }
 
   communed() {
     this.flags.add('boss');
     this.hooks.music('ending');
-    this.hooks.say(this.dialogue('friends'), () => this.hooks.ending('friends'));
+    void this.hooks.cutscene((d) => scenes.befriend(d, this)).then(() => this.hooks.ending('friends'));
+  }
+
+  /** Kai steps onto the lift and rides it up out of the deck. */
+  rideLift(exit: Exit) {
+    void this.hooks.cutscene((d) => scenes.liftRide(d, this, exit)).then(() => this.hooks.complete());
+  }
+
+  /** Kai finds BOLT switched off in the dark and switches him back on. */
+  findBolt(find: BoltFind) {
+    void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
+  }
+
+  /** A hologram projector plays one of the Captain's (or Aunt Rosa's) recorded messages. */
+  playLog(holo: Holo) {
+    void this.hooks.cutscene((d) => scenes.holoLog(d, this, holo));
   }
 
   /* ---------------- per frame ---------------- */
@@ -714,8 +749,8 @@ export class World {
 
     // BOLT's shield when nothing else needs the action button.
     this.shieldCd -= dt;
-    this.focus = this.findFocus();
-    if (input.take('action')) {
+    this.focus = this.cutscene ? null : this.findFocus();
+    if (!this.cutscene && input.take('action')) {
       if (this.focus) this.focus.interact();
       else if (this.save.abilities.includes('shield') && this.shieldCd <= 0) {
         this.player.shieldT = 3;
@@ -743,7 +778,8 @@ export class World {
       }
     }
 
-    this.cameraYaw -= input.consumeCamDrag() * 0.0068 * camSpeed;
+    const drag = input.consumeCamDrag();
+    if (!this.cutscene) this.cameraYaw -= drag * 0.0068 * camSpeed;
     this.placeCamera(dt);
     const p = this.player.body;
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
@@ -772,12 +808,12 @@ export class World {
 
   private placeCamera(dt: number) {
     const p = this.player.body;
-    const look = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
-    if (dt === 0) this.camTarget.copy(look);
+    const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
+    if (dt === 0) this.camTarget.copy(aim);
     else {
-      this.camTarget.x = damp(this.camTarget.x, look.x, 7, dt);
-      this.camTarget.y = damp(this.camTarget.y, look.y, 4, dt);
-      this.camTarget.z = damp(this.camTarget.z, look.z, 7, dt);
+      this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
+      this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
+      this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
     const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
     // Walls never turn see-through: when one would hide Kai, the camera tips up until it can see all
@@ -789,23 +825,67 @@ export class World {
     }
     if (want < 0) want = PITCH_MAX;
     this.pitch = dt === 0 ? want : damp(this.pitch, want, want > this.pitch ? 7 : 1.6, dt);
-    const cp = Math.cos(this.pitch);
-    const c = this.camera.position;
-    c.set(
-      this.camTarget.x + Math.sin(this.cameraYaw) * cp * dist,
-      this.camTarget.y + Math.sin(this.pitch) * dist,
-      this.camTarget.z + Math.cos(this.cameraYaw) * cp * dist,
-    );
+    this.followPose(this.follow, dist);
     const ground = p.grounded ? p.y : Math.min(this.groundY, p.y);
     this.groundY = dt === 0 ? ground : damp(this.groundY, ground, 5, dt);
+
+    // Cutscenes steer the camera through a rig; afterwards it eases back to following Kai.
+    const c = this.camera.position;
+    const look = tmpL;
+    let fov = this.baseFov;
+    if (this.camRig) {
+      c.copy(this.camRig.pos);
+      look.copy(this.camRig.look);
+      fov = this.camRig.fov;
+    } else if (this.blendT > 0 && this.blendFrom) {
+      this.blendT = Math.max(0, this.blendT - dt);
+      const k = 1 - this.blendT / this.blendMax;
+      const e = k * k * (3 - 2 * k);
+      c.lerpVectors(this.blendFrom.pos, this.follow.pos, e);
+      look.lerpVectors(this.blendFrom.look, this.follow.look, e);
+      fov = this.blendFrom.fov + (this.baseFov - this.blendFrom.fov) * e;
+    } else {
+      c.copy(this.follow.pos);
+      look.copy(this.follow.look);
+    }
+    if (this.camera.fov !== fov) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
     if (this.shakeAmt > 0) {
       c.x += (Math.random() - 0.5) * this.shakeAmt;
       c.y += (Math.random() - 0.5) * this.shakeAmt;
       c.z += (Math.random() - 0.5) * this.shakeAmt;
       this.shakeAmt = Math.max(0, this.shakeAmt - dt * 2.5);
     }
-    this.camera.lookAt(this.camTarget);
-    this.placeSun(p.x, this.groundY, p.z);
+    this.camera.lookAt(look);
+    this.cameraLook.copy(look);
+    // Shadows follow whatever the camera is looking at.
+    if (this.camRig || this.blendT > 0) this.placeSun(look.x, look.y - 1.2, look.z);
+    else this.placeSun(p.x, this.groundY, p.z);
+  }
+
+  /** Where the follow camera would be right now, at the given distance from Kai. */
+  followPose(out: Rig, dist = 13): Rig {
+    const cp = Math.cos(this.pitch);
+    out.look.copy(this.camTarget);
+    out.pos.set(
+      this.camTarget.x + Math.sin(this.cameraYaw) * cp * dist,
+      this.camTarget.y + Math.sin(this.pitch) * dist,
+      this.camTarget.z + Math.cos(this.cameraYaw) * cp * dist,
+    );
+    out.fov = this.baseFov;
+    return out;
+  }
+
+  /** Hands the camera to a cutscene rig (null gives it back, easing over `blend` seconds). */
+  setCameraRig(rig: Rig | null, blend = 0.8) {
+    if (!rig && this.camRig) {
+      this.blendFrom = { pos: this.camRig.pos.clone(), look: this.camRig.look.clone(), fov: this.camRig.fov };
+      this.blendT = blend;
+      this.blendMax = Math.max(0.001, blend);
+    }
+    this.camRig = rig;
   }
 
   /** True if a wall or raised floor sits between a point on Kai (`eye` above his feet) and a camera at this tilt. */
@@ -846,7 +926,8 @@ export class World {
 
   resize(w: number, h: number) {
     this.camera.aspect = w / h;
-    this.camera.fov = w / h < 1.2 ? 62 : 50;
+    this.baseFov = w / h < 1.2 ? 62 : 50;
+    this.camera.fov = this.camRig ? this.camRig.fov : this.baseFov;
     this.camera.updateProjectionMatrix();
     this.particles.setViewportHeight(h);
     this.ambience.setViewportHeight(h);

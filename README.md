@@ -64,6 +64,24 @@ Kai finds a new ability on each deck, and it's needed to finish that deck:
 
 Progress saves at every checkpoint and when you leave the app.
 
+## The story
+
+A new game opens with a prologue out in space: a glowing seed strikes the *Leviathan*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
+
+- **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as the Bloom took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Kai's Aunt Rosa instead.
+- **Rescuing BOLT.** Kai finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
+- **HALCYON is infected.** By the Security Deck, Bloom pollen has scrambled the ship computer, who turns on you and sends WARDOG. Beating WARDOG lets BOLT reboot HALCYON. HALCYON then reveals that the Bloom isn't angry, it's lost, and thinks the star is its home.
+- **Story characters.** Freeing Aunt Rosa (Security) and the Captain (the Bridge) from their cocoons plays a scene with each of them.
+
+Cutscenes play in the game world with letterbox bars:
+
+- Every deck opens with a fly-over, and every boss makes an entrance with its own name card.
+- Boss defeats play in slow motion, and each deck ends with a lift ride.
+- Between decks the lift climbs the outside of the ship while the crew talks, and the star looks bigger every time.
+- Both endings have their own cinematic, followed by credits that list the colonists you rescued.
+
+Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
+
 ## Project layout
 
 ```text
@@ -72,6 +90,7 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/core/              input, audio (synthesized music and sound effects), save data, app bridge
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
   src/entities/          Kai, BOLT, enemies, bosses, pickups and interactive props
+  src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
   src/ui/                HUD, touch controls, menus, dialogue and hacking screens

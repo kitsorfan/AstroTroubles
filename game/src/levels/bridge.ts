@@ -128,7 +128,7 @@ export const bridge: LevelDef = {
     i: { type: 'laser', axis: 'x', length: 8, period: 2.8, offset: 1.4 },
     q: { type: 'laser', axis: 'x', length: 8, always: true },
     Y: { type: 'zap', period: 2.6 },
-    g: { type: 'trigger', id: 'captain', dialogue: 'captain', w: 5, d: 1 },
+    g: { type: 'holo', log: 'log' },
     l: { type: 'sign', text: 'Two of these lasers never switch off. Pop BOLT’s SHIELD and run for it, even while carrying a power cell!' },
     m: { type: 'sign', text: 'OBSERVATION GALLERY. The floor is broken! Cross the crumbling tiles quickly, or hover over the gap.' },
     w: { type: 'sign', text: 'Something shiny is floating outside the window. Only a long hover will get you there.' },
@@ -154,37 +154,48 @@ export const bridge: LevelDef = {
   ],
   dialogues: {
     intro: [
-      { who: 'halcyon', text: 'The Bridge. The star is getting very, very close. I can feel my circuits sweating.' },
-      { who: 'bolt', text: 'The Bloom Heart is up here somewhere. It is steering the whole ship!' },
-      { who: 'kai', text: 'Then we take the controls back. One last deck, BOLT. Let’s do this.' },
+      { who: 'halcyon', text: 'The Bridge. Temperature rising. Please hurry, Kai.' },
+      { who: 'bolt', text: 'The Heart is right at the top. It is steering the whole ship!' },
+      { who: 'kai', text: 'Then we take the wheel back. One last deck, BOLT.' },
     ],
-    captain: [
-      { who: 'captain', text: 'This is Captain Ines Mbeki. If anyone can hear this... the Bloom has taken the Bridge.' },
-      { who: 'captain', text: 'The navigation computer needs its power cell and a clean hack. Then the lift up the Spine will open. Good luck, whoever you are!' },
+    log: [
+      { who: 'captain', text: 'Captain’s log, last entry. The Bloom has taken the Bridge. I’m going up to try to talk to it.' },
+      { who: 'captain', text: 'To whoever finds this: the navigation computer needs its power cell and a hack. Then the lift up the Spine will open.' },
+      { who: 'captain', text: 'And if you reach the Heart... remember that it’s scared. Be brave. Be kind.' },
+    ],
+    'colonist:c1': [
+      { who: 'captain', text: 'Wha... BOLT? My little light! You found a friend!' },
+      { who: 'bolt', text: 'Captain! This is Kai. Kai is the BRAVEST!' },
+      { who: 'captain', text: 'Kai Reyes, the junior engineer? Well, I think you’ve just earned a promotion. Now go. The Heart is at the top of the Spine.' },
     ],
     boss: [
-      { who: 'halcyon', text: 'There it is: THE BLOOM HEART, steering us straight toward the star!' },
+      { who: 'halcyon', text: 'There it is: THE BLOOM HEART, steering us straight into the star!' },
       { who: 'bolt', text: 'Pop the four pods around it first. Then BLAST the Heart whenever its petals open up!' },
-      { who: 'bolt', text: 'Hmm... if we had ALL 18 memory shards, maybe I could learn to SPEAK to it instead...' },
     ],
     bossDown: [
       { who: 'bolt', text: 'The Heart is shrinking... it is turning into a tiny little seed!' },
-      { who: 'halcyon', text: 'The vines are letting go of the controls! Kai, grab the steering wheel!' },
+      { who: 'halcyon', text: 'The vines are letting go of the controls! Kai, the steering wheel!' },
       { who: 'kai', text: 'Hold on, everybody! Turning the ship... NOW!' },
     ],
     speak: [
       { who: 'bolt', text: 'Kai, wait! I learned the Bloom’s light-words from the shards. Blue is hello. Pink is safe. Gold is together.' },
-      { who: 'bolt', text: 'Help me flash them to the Heart. Repeat my pattern, gently, just like a hack!' },
+      { who: 'bolt', text: 'Help me flash them to the Heart. Copy my pattern, gently, just like a hack!' },
     ],
     friends: [
       { who: 'bloom', text: '...hello? ...safe? ...together?' },
-      { who: 'bolt', text: 'YES! Together! You do not have to be scared anymore!' },
-      { who: 'bloom', text: 'Friends... I never had friends before. I am sorry I made everyone so sleepy.' },
-      { who: 'kai', text: 'It’s okay. Can you help us turn the ship away from the star?' },
-      { who: 'bloom', text: 'I know a better place. A blue world, with warm rain and lots of room to grow. Hold on tight!' },
+      { who: 'bolt', text: 'YES! Together! You don’t have to be scared anymore!' },
+      { who: 'bloom', text: 'Friends... I never had friends before. I only wanted to go home.' },
+      { who: 'kai', text: 'That star isn’t your home. It would burn you... and all of us.' },
+      { who: 'bloom', text: 'Then... will you help me find a new one?' },
+      { who: 'kai', text: 'We’re looking for a new home too. Let’s find one together.' },
+      { who: 'bloom', text: 'Together. Hold on tight!' },
     ],
-    'shard:s1': [{ who: 'bloom', text: 'I am so tired of being scared all the time.' }],
-    'shard:s2': [{ who: 'bloom', text: 'The star is getting closer. It is too hot. I do not want anyone to get hurt.' }],
+    'shard:s1': [
+      { who: 'bloom', text: 'I am so tired of being scared all the time.' },
+    ],
+    'shard:s2': [
+      { who: 'bloom', text: 'The star is getting closer. It is too hot. I do not want anyone to get hurt.' },
+    ],
     'shard:s3': [
       { who: 'bloom', text: 'Please... someone... flash back.' },
       { who: 'bolt', text: 'I will. I promise.' },

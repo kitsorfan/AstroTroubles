@@ -52,6 +52,8 @@ export class Player {
   private fx: KaiFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
+  /** Lets a cutscene pose Kai's model (called after the normal animation each frame). */
+  pose: ((m: KaiModel, dt: number) => void) | null = null;
 
   constructor(
     private world: World,
@@ -412,6 +414,7 @@ export class Player {
     m.root.visible = this.invuln <= 0 || Math.floor(this.invuln * 12) % 2 === 0 || this.down;
     if (this.carrying) this.carrying.rotation.y += dt * 2;
     this.fx.update(dt, b.x, this.renderY, b.z, { pounding: this.pounding, hang: this.poundHang, hangMax: POUND_HANG, airborne: !b.grounded });
+    this.pose?.(m, dt);
   }
 
   get cellX() {

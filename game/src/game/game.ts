@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
+import { Director, type Rig } from '../cinema/director';
+import { flyover, wakeUp } from '../cinema/scenes';
+import { ShipScene } from '../cinema/shipScene';
+import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
 import { MAX_HEARTS } from '../core/constants';
@@ -11,11 +15,29 @@ import type { DeckId, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { UI, type ShopItem } from '../ui/ui';
 import { PostFx } from './post';
-import { STORY, endingText } from './story';
+import { creditsHtml, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
 
-type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending';
+type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending' | 'cutscene' | 'cinema';
+
+/** How a deck opens when it is entered fresh (not resumed from a checkpoint). */
+type Opening = 'auto' | 'wake' | 'fly';
+
+/** Frees everything a scene uploaded to the GPU. */
+function disposeScene(scene: THREE.Scene) {
+  scene.traverse((o) => {
+    const any = o as THREE.Mesh;
+    any.geometry?.dispose();
+    const mats = Array.isArray(any.material) ? any.material : any.material ? [any.material] : [];
+    for (const m of mats) {
+      for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose();
+      m.dispose();
+    }
+    if (o instanceof THREE.InstancedMesh) o.dispose();
+    if (o instanceof THREE.Light) o.dispose();
+  });
+}
 
 const ABILITY_LINES: Record<string, Line[]> = {
   doubleJump: [
@@ -52,6 +74,9 @@ export class Game {
   private frames = 0;
   private fpsT = 0;
   private hudT = 0;
+  private director: Director | null = null;
+  private ship: ShipScene | null = null;
+  private queue: { script: (d: Director) => Promise<void>; resolve: () => void }[] = [];
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -115,6 +140,7 @@ export class Game {
     this.renderer.setSize(w, h, false);
     this.title.resize(w, h);
     this.world?.resize(w, h);
+    this.ship?.resize(w, h);
     this.post?.resize();
   }
 
@@ -129,6 +155,7 @@ export class Game {
 
   private toTitle() {
     this.disposeWorld();
+    this.ui.fade('#000000', 0, 0.5);
     this.state = 'title';
     this.ui.showHud(false);
     audio.music('title');
@@ -155,7 +182,7 @@ export class Game {
     writeSave(this.save);
     this.state = 'menu';
     audio.music('title');
-    this.ui.story(STORY, () => this.startDeck('cryo', false));
+    void this.cinema((d, ship) => space.prologue(d, ship)).then(() => this.startDeck('cryo', false, 'wake'));
   }
 
   private deckSelect() {
@@ -256,6 +283,10 @@ export class Game {
       case 'title':
         post({ type: 'exit' });
         break;
+      case 'cutscene':
+      case 'cinema':
+        this.director?.skip();
+        break;
       default:
         break;
     }
@@ -267,22 +298,86 @@ export class Game {
     if (!this.world) return;
     // Free every buffer, texture, material and shadow map the deck uploaded; phones have little GPU memory.
     // Shared helpers (cached geometry, glow textures) are simply uploaded again when the next deck uses them.
-    this.world.scene.traverse((o) => {
-      const any = o as THREE.Mesh;
-      any.geometry?.dispose();
-      const mats = Array.isArray(any.material) ? any.material : any.material ? [any.material] : [];
-      for (const m of mats) {
-        for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose();
-        m.dispose();
-      }
-      if (o instanceof THREE.InstancedMesh) o.dispose();
-      if (o instanceof THREE.Light) o.dispose();
-    });
+    disposeScene(this.world.scene);
     this.world = null;
+    this.queue = [];
     this.renderer.renderLists.dispose();
   }
 
-  private startDeck(id: DeckId, resume: boolean) {
+  /* ---------------- cutscenes ---------------- */
+
+  /** Queues an in-deck cutscene. It starts as soon as nothing else (dialogue, menus) is on screen. */
+  private cutscene(script: (d: Director) => Promise<void>): Promise<void> {
+    return new Promise((resolve) => this.queue.push({ script, resolve }));
+  }
+
+  private runCutscene() {
+    const w = this.world;
+    const job = this.queue.shift();
+    if (!w || !job) return;
+    const rig: Rig = { pos: w.camera.position.clone(), look: w.cameraLook.clone(), fov: w.camera.fov };
+    const d = new Director(this.ui, rig);
+    this.director = d;
+    this.state = 'cutscene';
+    this.input.reset();
+    this.ui.showControls(false);
+    this.ui.showHud(false);
+    this.ui.setAction(null);
+    this.ui.cinema(true, () => d.skip(), () => d.tap());
+    w.cutscene = true;
+    w.setCameraRig(rig);
+    job
+      .script(d)
+      .catch((err: unknown) => console.error(err))
+      .finally(() => {
+        if (this.world === w) {
+          w.cutscene = false;
+          w.setCameraRig(null, d.skipping ? 0.35 : 0.9);
+        }
+        if (this.director === d) this.director = null;
+        this.ui.cinema(false);
+        if (this.state === 'cutscene') {
+          this.state = 'play';
+          this.ui.showHud(true);
+          this.ui.showControls(true);
+          this.input.flush();
+          this.refreshHud();
+        }
+        job.resolve();
+      });
+  }
+
+  /** Plays a cinematic out in space (prologue, the rides between decks, endings). */
+  private async cinema(script: (d: Director, ship: ShipScene) => Promise<void>) {
+    this.disposeWorld();
+    this.ui.close();
+    const ship = new ShipScene();
+    ship.scene.environment = this.envMap;
+    // Deep space has nothing bright to reflect: keep the studio reflections faint.
+    ship.scene.environmentIntensity = 0.18;
+    ship.resize(window.innerWidth, window.innerHeight);
+    const rig: Rig = { pos: ship.camera.position.clone(), look: new THREE.Vector3(), fov: 45 };
+    const d = new Director(this.ui, rig);
+    this.ship = ship;
+    this.director = d;
+    this.state = 'cinema';
+    this.input.reset();
+    this.ui.showHud(false);
+    this.ui.showControls(false);
+    this.ui.cinema(true, () => d.skip(), () => d.tap());
+    this.renderer.compile(ship.scene, ship.camera);
+    try {
+      await script(d, ship);
+    } catch (err) {
+      console.error(err);
+    }
+    this.ui.cinema(false);
+    if (this.director === d) this.director = null;
+    this.ship = null;
+    disposeScene(ship.scene);
+  }
+
+  private startDeck(id: DeckId, resume: boolean, opening: Opening = 'auto') {
     this.disposeWorld();
     const def = LEVELS[id];
     this.state = 'card';
@@ -315,7 +410,11 @@ export class Game {
       this.ui.setShards(def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)));
       this.refreshHud();
       this.input.flush();
-      if (!r && def.intro) this.hooks().say(def.dialogues[def.intro] ?? []);
+      const w = this.world;
+      const how = r ? null : opening === 'auto' ? (id === 'cryo' ? 'wake' : 'fly') : opening;
+      if (how !== 'wake') this.ui.fade('#000000', 0, 0.7);
+      if (how === 'wake') void this.cutscene((d) => wakeUp(d, w));
+      else if (how === 'fly') void this.cutscene((d) => flyover(d, w));
     });
   }
 
@@ -415,6 +514,7 @@ export class Game {
       music: (t) => audio.music(t),
       objective: (t) => this.ui.setObjective(t),
       ending: (kind) => this.ending(kind),
+      cutscene: (script) => this.cutscene(script),
     };
   }
 
@@ -464,7 +564,7 @@ export class Game {
       },
       () => {
         this.ui.close();
-        if (nextId) this.startDeck(nextId, false);
+        if (nextId) void this.cinema((dir, ship) => space.interlude(dir, ship, d.id, d.index)).then(() => this.startDeck(nextId, false, 'fly'));
         else this.toTitle();
       },
     );
@@ -481,17 +581,23 @@ export class Game {
     audio.music('ending');
     const hours = Math.floor(this.save.playSeconds / 3600);
     const mins = Math.floor((this.save.playSeconds % 3600) / 60);
-    this.ui.ending(
-      kind,
-      endingText(kind, this.save),
-      [
-        ['Memory shards', `${this.save.shards.length} / 18`],
-        ['Colonists rescued', `${this.save.colonists.length} / 12`],
-        ['Bolts in pocket', String(this.save.bolts)],
-        ['Play time', `${hours}h ${mins}m`],
-      ],
-      () => this.toTitle(),
-    );
+    void this.cinema((d, ship) => space.ending(d, ship, kind)).then(() => {
+      this.state = 'ending';
+      this.ui.credits(creditsHtml(kind, this.save), () => {
+        this.ui.fade('#000000', 0, 0.6);
+        this.ui.ending(
+          kind,
+          endingText(kind, this.save),
+          [
+            ['Memory shards', `${this.save.shards.length} / 18`],
+            ['Colonists rescued', `${this.save.colonists.length} / 12`],
+            ['Bolts in pocket', String(this.save.bolts)],
+            ['Play time', `${hours}h ${mins}m`],
+          ],
+          () => this.toTitle(),
+        );
+      });
+    });
   }
 
   /* ---------------- loop ---------------- */
@@ -508,8 +614,21 @@ export class Game {
       this.fpsT = 0;
     }
     this.input.poll();
+    if (this.state === 'cinema' && this.ship && this.director) {
+      this.director.update(dt);
+      this.ship.update(dt, this.director.rig);
+      this.post.setStrength(0.7);
+      this.post.render(this.ship.scene, this.ship.camera);
+      return;
+    }
     const w = this.world;
-    if (w && (this.state === 'play' || this.state === 'dialogue' || this.state === 'hack' || this.state === 'shop' || this.state === 'pause' || this.state === 'down' || this.state === 'results')) {
+    if (w && this.state === 'play' && this.queue.length) this.runCutscene();
+    if (w && this.state === 'cutscene' && this.director) {
+      const d = this.director;
+      d.update(dt);
+      w.update(dt * d.timeScale, this.input, 0);
+    }
+    if (w && (this.state === 'play' || this.state === 'cutscene' || this.state === 'dialogue' || this.state === 'hack' || this.state === 'shop' || this.state === 'pause' || this.state === 'down' || this.state === 'results')) {
       if (this.state === 'play') {
         this.deckTime += dt;
         this.save.playSeconds += dt;
