@@ -51,8 +51,36 @@ export const PORTRAIT: Record<Speaker, string> = {
     <circle cx="40" cy="40" r="12" fill="#ff7a3a"/>
     <circle cx="40" cy="40" r="4" fill="#ffe0c0"/>
   </svg>`,
+  glitch: `<svg viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="28" fill="#1b0a18"/>
+    <circle cx="40" cy="40" r="22" fill="none" stroke="#ff4fd8" stroke-width="3" stroke-dasharray="9 5"/>
+    <circle cx="43" cy="38" r="12" fill="#ff4fd8"/>
+    <circle cx="37" cy="42" r="12" fill="#5ee0ff" opacity=".45"/>
+    <circle cx="40" cy="40" r="4" fill="#ffe0f4"/>
+    <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="2" fill="none"/>
+  </svg>`,
   colonist: face('#f0c8a0', '#5a3a22', '#e6edf7'),
-  captain: face('#e8c4a8', '#8a6a4a', '#1c2a4f'),
+  captain: `<svg viewBox="0 0 80 80">
+    <rect x="14" y="56" width="52" height="30" rx="14" fill="#1c2a4f"/>
+    <rect x="30" y="58" width="20" height="5" rx="2" fill="#ffd166"/>
+    <circle cx="40" cy="40" r="20" fill="#8a5a3c"/>
+    <path d="M20 36c0-14 10-19 20-19s20 5 20 19c-6-5-12-7-20-7s-14 2-20 7z" fill="#e8e8f0"/>
+    <rect x="18" y="16" width="44" height="10" rx="4" fill="#1c2a4f"/>
+    <rect x="22" y="24" width="36" height="4" rx="2" fill="#0f1830"/>
+    <circle cx="40" cy="20" r="3.4" fill="#ffd166"/>
+    <circle cx="33" cy="41" r="3" fill="#1b1b2a"/><circle cx="47" cy="41" r="3" fill="#1b1b2a"/>
+    <path d="M34 50c4 2.6 8 2.6 12 0" stroke="#3a1a10" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  </svg>`,
+  rosa: `<svg viewBox="0 0 80 80">
+    <rect x="14" y="56" width="52" height="30" rx="14" fill="#8a1c26"/>
+    <rect x="22" y="60" width="10" height="6" rx="2" fill="#ffd166"/>
+    <circle cx="40" cy="12" r="9" fill="#2a1a12"/>
+    <circle cx="40" cy="39" r="20" fill="#c68a5e"/>
+    <path d="M20 36c0-14 10-20 20-20s20 6 20 20c-4-7-10-10-20-10s-16 3-20 10z" fill="#2a1a12"/>
+    <circle cx="33" cy="41" r="3" fill="#1b1b2a"/><circle cx="47" cy="41" r="3" fill="#1b1b2a"/>
+    <path d="M33 49c4 3.4 10 3.4 14 0" stroke="#5a2418" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <circle cx="28" cy="46" r="3" fill="#ff9aa0" opacity=".45"/><circle cx="52" cy="46" r="3" fill="#ff9aa0" opacity=".45"/>
+  </svg>`,
   vendy: `<svg viewBox="0 0 80 80">
     <rect x="14" y="12" width="52" height="62" rx="10" fill="#8a2a5a"/>
     <rect x="20" y="18" width="40" height="28" rx="6" fill="#ffe0f4"/>
@@ -77,8 +105,10 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   kai: 'Kai',
   bolt: 'BOLT',
   halcyon: 'HALCYON',
+  glitch: 'HALCYON?!',
   colonist: 'Colonist',
-  captain: 'Captain Voss',
+  captain: 'Captain Mbeki',
+  rosa: 'Aunt Rosa',
   vendy: 'Vendy',
   bloom: 'The Bloom',
 };
@@ -87,8 +117,10 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   kai: '#ffb07a',
   bolt: '#7fe6ff',
   halcyon: '#ff8a6a',
+  glitch: '#ff4fd8',
   colonist: '#ffd166',
   captain: '#ffd166',
+  rosa: '#ff8a8a',
   vendy: '#ff9ae0',
   bloom: '#ff6fcf',
 };

@@ -55,6 +55,8 @@ export type Spec = Base &
     | { type: 'exit' }
     | { type: 'breakwall' }
     | { type: 'boltfind' }
+    /** A hologram projector that plays a recorded message (a dialogue key) the first time Kai walks past. */
+    | { type: 'holo'; log: string; who?: 'captain' | 'rosa' }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -81,7 +83,8 @@ export type DecorKind =
   | 'bloom'
   | 'screen';
 
-export type Speaker = 'kai' | 'bolt' | 'halcyon' | 'colonist' | 'vendy' | 'bloom' | 'captain';
+/** `glitch` is HALCYON while Bloom pollen scrambles its circuits. */
+export type Speaker = 'kai' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'bloom' | 'captain' | 'rosa';
 
 export interface Line {
   who: Speaker;

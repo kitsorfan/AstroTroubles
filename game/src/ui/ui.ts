@@ -53,6 +53,12 @@ export class UI {
   private lastBolts = -1;
   onAction?: () => void;
   onPause?: () => void;
+  private fadeEl: HTMLElement;
+  private cine: HTMLElement;
+  private skipBtn: HTMLElement;
+  private onSkip: (() => void) | null = null;
+  private onCineTap: (() => void) | null = null;
+  private glitchT: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private root: HTMLElement,
@@ -75,7 +81,23 @@ export class UI {
       <div class="fps"></div>
     </div>`);
     this.overlay = h(`<div class="overlay hidden"></div>`);
-    root.append(this.hud, this.overlay);
+    this.fadeEl = h(`<div class="fade"></div>`);
+    this.cine = h(`<div class="cine">
+      <div class="tap"></div><div class="bar top"></div><div class="bar bottom"></div>
+      <div class="caption"></div><div class="bosscard"></div><div class="glitch-fx"></div>
+    </div>`);
+    this.skipBtn = h(`<button class="skip clickable hidden">SKIP ▶▶</button>`);
+    // Order matters: fades under everything, cutscene bars under dialogue, and the skip button on top.
+    root.append(this.fadeEl, this.hud, this.cine, this.overlay, this.skipBtn);
+    this.skipBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.onSkip?.();
+    });
+    $(this.cine, '.tap').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      this.onCineTap?.();
+    });
     this.toastEl = $(this.hud, '.toast');
     this.stickEl = $(this.hud, '.stick');
     this.actionEl = $(this.hud, '.action');
@@ -225,33 +247,45 @@ export class UI {
     });
   }
 
-  dialogue(lines: Line[], done: () => void) {
+  /** Shows lines one at a time; tap to advance. Returns a function that closes it early. */
+  dialogue(lines: Line[], done: () => void): () => void {
     if (!lines.length) {
       done();
-      return;
+      return () => {};
     }
     let i = 0;
     let shown = 0;
+    let finished = false;
     let timer: ReturnType<typeof setInterval> | null = null;
     const el = this.open(`<div class="dialogue"><div class="portrait"></div><div style="flex:1"><div class="who"></div><div class="text"></div></div><div class="more">TAP ▶</div></div>`, false);
     el.style.alignItems = 'flex-end';
+    const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
       $(el, '.portrait').innerHTML = PORTRAIT[line.who];
       const who = $(el, '.who');
       who.textContent = line.name ?? SPEAKER_NAME[line.who];
       who.style.color = SPEAKER_COLOR[line.who];
+      box.classList.toggle('glitchy', line.who === 'glitch');
       shown = 0;
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
         shown = Math.min(line.text.length, shown + 2);
         $(el, '.text').textContent = line.text.slice(0, shown);
-        if (shown % 6 === 0) audio.play('blip', line.who === 'bolt' ? 1.4 : line.who === 'halcyon' ? 0.7 : 1);
+        if (shown % 6 === 0) audio.play('blip', line.who === 'bolt' ? 1.4 : line.who === 'halcyon' || line.who === 'glitch' ? 0.7 : 1);
         if (shown >= line.text.length && timer) {
           clearInterval(timer);
           timer = null;
         }
       }, 28);
+    };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (timer) clearInterval(timer);
+      window.removeEventListener('keydown', onKey);
+      this.close();
+      done();
     };
     const advance = () => {
       const line = lines[i];
@@ -263,14 +297,8 @@ export class UI {
         return;
       }
       i += 1;
-      if (i >= lines.length) {
-        if (timer) clearInterval(timer);
-        window.removeEventListener('keydown', onKey);
-        this.close();
-        done();
-        return;
-      }
-      render();
+      if (i >= lines.length) finish();
+      else render();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE' || e.code === 'KeyJ') advance();
@@ -281,6 +309,65 @@ export class UI {
     });
     window.addEventListener('keydown', onKey);
     render();
+    return finish;
+  }
+
+  /* ---------------- cinematics ---------------- */
+
+  /** Letterbox bars and a skip button while a cutscene plays. Taps elsewhere hurry captions along. */
+  cinema(on: boolean, onSkip?: () => void, onTap?: () => void) {
+    this.cine.classList.toggle('on', on);
+    this.skipBtn.classList.toggle('hidden', !on);
+    this.onSkip = on ? (onSkip ?? null) : null;
+    this.onCineTap = on ? (onTap ?? null) : null;
+    if (!on) {
+      this.caption(null);
+      this.cine.classList.remove('glitching');
+    }
+  }
+
+  caption(text: string | null) {
+    const el = $(this.cine, '.caption');
+    if (text) el.innerHTML = text;
+    el.classList.toggle('show', !!text);
+  }
+
+  bossCard(name: string, sub: string, color: string) {
+    const el = $(this.cine, '.bosscard');
+    el.innerHTML = `<div class="name" style="color:${color}">${name}</div><div class="sub">${sub}</div>`;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+  }
+
+  /** Fades the whole screen to (or from) a colour. The fade layer sits under captions and dialogue. */
+  fade(color: string, to: number, seconds: number) {
+    this.fadeEl.style.transition = `opacity ${seconds}s linear`;
+    this.fadeEl.style.background = color;
+    this.fadeEl.style.opacity = String(to);
+  }
+
+  glitch(seconds: number) {
+    this.cine.classList.add('glitching');
+    if (this.glitchT) clearTimeout(this.glitchT);
+    this.glitchT = setTimeout(() => this.cine.classList.remove('glitching'), seconds * 1000);
+  }
+
+  /** Scrolling end credits; tap (after a moment) to finish early. */
+  credits(html: string, done: () => void) {
+    const el = this.open(`<div class="credits"><div class="roll">${html}</div></div>`);
+    const roll = $(el, '.roll');
+    let over = false;
+    const finish = () => {
+      if (over) return;
+      over = true;
+      done();
+    };
+    roll.addEventListener('animationend', finish);
+    const start = performance.now();
+    el.addEventListener('pointerdown', () => {
+      if (performance.now() - start > 1500) finish();
+    });
   }
 
   /** Simon-says light puzzle: watch BOLT's pattern, then repeat it. */
