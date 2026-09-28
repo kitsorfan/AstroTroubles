@@ -1,125 +1,95 @@
 # Hull Breach: Leviathan
 
-A sci-fi action-adventure for Android, built with Expo and React Native.
+A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app.
 
-The colony ship *Leviathan* is carrying 10,000 sleeping colonists when an alien organism called **the Bloom** overruns it. You play **Kai Reyes**, a junior engineer who wakes up early with 72 hours of reactor life left to climb six decks, reach the Bridge, and keep the ship from drifting into a star. You aren't alone: **BOLT**, a sarcastic maintenance drone that's afraid of the dark, lights your way, hacks doors, and fights beside you. It also carries corrupted memories of the day the Bloom came aboard.
+The colony ship *Leviathan* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
 
-## Running it on Android
+It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
 
-You need Node 20+ and the **Expo Go** app (SDK 57) on your phone.
+## Running it on your phone
+
+You need Node 20+ and the **Expo Go** app (SDK 57) on an Android phone.
 
 ```bash
 npm install
-npx expo start
+npm start          # builds the game page, then starts Expo
 ```
 
-Scan the QR code with Expo Go. Every native module the game uses (Skia, Reanimated, expo-audio, expo-haptics, AsyncStorage) ships inside Expo Go, so you don't need a custom build.
+Scan the QR code with Expo Go. The game runs in a WebView (`react-native-webview`, included in Expo Go), so you don't need a custom build. Hold the phone in landscape.
 
-With an Android emulator running, press `a` in the Expo terminal, or run `npm run android`.
-
-### Building an installable APK
+To build an installable APK:
 
 ```bash
 npx eas-cli@latest build -p android --profile preview
 ```
 
-The `preview` profile in `eas.json` builds a sideloadable `.apk`, and `production` builds a Play Store `.aab`. The Android package name is `com.hullbreach.leviathan` (set in `app.json`).
+EAS runs `npm run game:build` automatically after installing dependencies (`eas-build-post-install`).
 
-### Web preview (optional)
-
-The web preview is handy for quick checks. Skia needs its CanvasKit runtime copied in once:
+### Playing on a computer
 
 ```bash
-npm run web:setup
-npm run web
+npm run game:build     # writes game/dist/index.html
 ```
+
+Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
 
 ## How to play
 
-| Action | How |
+| Control | What it does |
 | --- | --- |
-| **Move** | D-pad (hold to keep walking), or tap any tile to walk there |
-| **Interact** | Walk into doors, people, terminals, lifts and med stations |
-| **Scan** | BOLT reveals hidden items nearby (costs 5 minutes) |
-| **Menu** | Gear, BOLT's modules and memory files, logs, deck map, save/load, settings. The Android back button opens it too |
+| Left side of the screen | Joystick: move |
+| Drag on the right side | Turn the camera |
+| **JUMP** | Jump. Hold for higher jumps; with the Jet Boots, press again in mid-air |
+| **BLAST** | Shoots; aims at the nearest enemy automatically |
+| **SPIN** | Spin attack. In mid-air it becomes a **ground pound**, which presses red switches and hurts more |
+| **DASH** | Zoom forward, even in mid-air (after the Engine Core) |
+| BOLT button | Appears near terminals, pylons, signs and lifts. Also triggers BOLT's shield once you have it |
 
-**The clock is the real enemy.** Every step costs a minute. Fights, hacking doors, repairs, resting, and rescuing survivors cost more. The main path takes about 30 of the 72 hours, so there's time to explore, but not enough to do everything.
+Kai finds a new ability on each deck, and it's needed to finish that deck:
 
-**Battles** are turn-based: Kai acts, then BOLT, then the enemies.
-
-- Kai can **Attack** with the wrench, plasma cutter or pulse rifle (swapping weapons is free), use a **Repair Kit** or another item, **Brace** to halve incoming damage, or **Flee** (not possible against bosses).
-- BOLT spends energy on **Zap**, **Scan**, **Shield**, **Hack**, **Flash**, **Decoy** and **Repair**, or uses **Recharge** to regain it. New abilities come from parts found around the ship.
-- **Scan** reveals weaknesses and resistances. Hitting a weakness deals +50% damage.
-- When an enemy shows **CHARGING**, a big attack is coming next turn. Shield, brace, or cancel it (a stun or a coolant canister works).
-
-**Hazards:** Hydroponics, the Habitation Ring and the Security Deck leak bad air that drains health until you seal the breach. Engineering's heat vents burn until you restore the coolant loop.
-
-**Choices:** five survivors can be saved at the cost of time (and Anti-Spore Serum for the infected ones). Saving them earns rewards and changes the epilogue.
-
-**Endings:**
-
-1. **The Long Drift**: escape in a pod from the Bridge.
-2. **Dawn over Thalassa**: destroy the Bloom Heart and correct course.
-3. **Secret ending**: restore all six of BOLT's memory files, then choose to *listen* instead of fight.
-
-### The six decks
-
-| Deck | What's there | Boss |
+| Deck | New trick | Boss |
 | --- | --- | --- |
-| 1. Cryo Deck | Tutorial. Find BOLT in a dark closet | Cryo-Warden |
-| 2. Hydroponics | Overgrown jungle, spore-choked air, the plasma cutter and hacking | Vine Behemoth |
-| 3. Engineering Core | Reactor pit, heat vents, dark tunnels, BOLT's floodlight | Slag Titan |
-| 4. Habitation Ring | Empty city, vending machines, two survivors, the holo-theater | Hive Matron |
-| 5. Security Deck | Rogue robots, the brig, the armory and pulse rifle | WARDOG Mech |
-| 6. The Bridge | Escape pods, the Captain's secrets | Bloom Heart |
+| 1. Cryo Deck | Find BOLT in the dark storeroom; hacking | Frost Warden |
+| 2. Hydroponics | Jet Boots (double jump) | Vine Queen |
+| 3. Engine Core | Dash Thrusters | Magma Golem |
+| 4. Habitat Ring | Hover Pack (hold JUMP to float) | King Bloblin |
+| 5. Security Deck | BOLT Shield (blocks lasers and shots) | WARDOG |
+| 6. The Bridge | Everything at once | The Bloom Heart |
+
+- **Hacking** is a light-pattern memory game: watch BOLT's lights, then repeat them.
+- **Bolts** are money. Spend them at VENDY's shop on extra hearts, blaster power, rapid fire, a stronger BOLT zap and a bolt magnet.
+- **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and defeated enemies stay defeated.
+- **Collectibles:** 18 memory shards (3 per deck), 12 colonists trapped in Bloom cocoons (blast them free), and a hidden heart canister on every deck. Some are tucked behind cracked walls (spin or blast them) or out over the void. The Elevator on the title screen lets you replay any deck you've reached.
+- **Two endings.** Beat the Bloom Heart to save the ship. Collect all 18 shards and BOLT learns to *speak* to it instead, which unlocks the secret ending.
+
+Progress saves at every checkpoint and when you leave the app.
 
 ## Project layout
 
 ```text
-src/app/              Expo Router entry (a single screen that hosts the game)
-src/game/
-  types.ts            Shared game types
-  constants.ts        Clock costs, stat formulas, XP table
-  data/               Content: decks (ASCII maps + legends), dialogue JSON, enemies, items, story
-  engine/             Pure game logic: battle reducer, rules/effects, dialogue runtime,
-                      exploration, map parser, pathfinding
-  store/              Zustand game store (event queue, saves, settings)
-  audio/              Sound effects and music via expo-audio, plus haptics
-src/ui/
-  render/             Skia drawing: tiles, sprites, map layers
-  components/         Map canvas, HUD, D-pad, dialogue box, pause menu, battle stage...
-  screens/            Title, intro, exploration, battle, game over, endings
-assets/audio/         Generated WAV sound effects and music loops
-scripts/              Asset generators and level-design tools
-__tests__/            Jest tests
+game/                    the 3D game (TypeScript, three.js), bundled with esbuild
+  build.mjs              bundles everything, fonts included, into one offline HTML page
+  src/core/              input, audio (synthesized music and sound effects), save data, app bridge
+  src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
+  src/entities/          Kai, BOLT, enemies, bosses, pickups and interactive props
+  src/game/              game state machine, world simulation, title scene, story text
+  src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
+  src/ui/                HUD, touch controls, menus, dialogue and hacking screens
+  tools/                 level reachability checker (npm run game:check)
+src/app/                 Expo Router screens: the WebView host (plus an iframe version for web)
+src/generated/           game page as a string (generated, git-ignored)
+__tests__/               Jest tests: deck data, reachability of every deck, physics
 ```
 
-### How it fits together
+### Levels
 
-- **Engine and UI are separate.** Everything in `src/game/engine` is pure TypeScript with no React, so it's fully unit-tested. Exploration functions take `GameData` and return new data plus a list of events (sounds, toasts, dialogues, battles). The store runs modal events (dialogues, battles, lift rides, log readers) through a queue so they never overlap.
-- **Battles** use a seeded, pure reducer (`engine/battle.ts`). The battle screen feeds its events into floating damage numbers, Skia effects and screen shake.
-- **Maps** are ASCII art in `src/game/data/decks/*.ts`. Symbols are tiles (`#` wall, `.` floor, `~` heat vent, and so on). Letters and digits are markers resolved through each deck's `legend`. `D`/`M`/`S`/`B` are doors (plain, maintenance, security, Bloom-choked), `H` is a med station, `O` a hull breach, `X` seeds a dark room, and `@` is the spawn point.
-- **Dialogue** trees are JSON (`src/game/data/dialogue/*.json`). Nodes can branch on conditions (flags, items, modules, memories, time) and apply effects (items, XP, time costs, battles, travel, endings).
-- **Rendering**: each deck's static tiles are recorded once into a Skia picture. Entities, darkness (BOLT's light radius) and the animated Kai/BOLT/camera sit in layers on top, driven by Reanimated shared values.
-- **Saving**: three manual slots plus an autosave in AsyncStorage. The game autosaves on reaching a new deck, after boss fights, and when the app goes to the background.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Kai's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, and checks that each deck's new ability really is needed to finish it. The Jest suite runs the same checks.
 
 ## Development
 
 ```bash
-npm test            # Jest: content validation, full-game progression solver, battle and balance sims, store flow
-npm run typecheck   # TypeScript
-npm run lint        # ESLint (expo config)
-npm run gen:audio   # regenerate assets/audio/*.wav (synthesized, no external assets)
-npm run gen:icons   # regenerate the app icon, adaptive icon layers, splash and favicon
+npm run typecheck     # builds the game page, then runs tsc
+npm run lint
+npm test
+npm run game:check    # per-deck reachability report (add a deck id and --map for a picture)
 ```
-
-The tests include a **progression solver** that plays through every deck with only the abilities you'd have at that point. It fails if any deck can't be completed, or if any item, survivor, log or memory file is unreachable. The **balance simulation** plays each boss fight 200 times with a typical loadout.
-
-Level-design helpers (not part of `npm test`):
-
-```bash
-DECK=hydro npx jest --rootDir . --testMatch "<rootDir>/scripts/print-map.test.ts"    # print a map with coordinates and dark regions
-npx jest --rootDir . --testMatch "<rootDir>/scripts/time-budget.test.ts"             # estimate reactor time per deck
-```
-
-All art is drawn in code with Skia, all audio is synthesized by `scripts/gen-audio.mjs`, and the fonts are Orbitron and Share Tech Mono (SIL Open Font License, via `@expo-google-fonts`).
