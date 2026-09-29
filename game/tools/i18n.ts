@@ -9,6 +9,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { GAME_NAME, SHIP } from '../src/core/brand';
 import { HINTS } from '../src/game/quests';
 import { BOSS_CARD, ENDING_CAPTIONS, FLYOVER, INTEL, PROLOGUE, TRANSITIONS } from '../src/game/story';
 import { EL } from '../src/i18n/el';
@@ -45,6 +46,8 @@ export function englishStrings(): Set<string> {
   const add = (s: string | undefined) => {
     if (s && /[A-Za-z]/.test(s) && !s.includes('${')) out.add(s);
   };
+  add(GAME_NAME);
+  add(SHIP);
   for (const id of LEVEL_ORDER) {
     const d = LEVELS[id];
     add(d.name);

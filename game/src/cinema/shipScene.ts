@@ -66,7 +66,7 @@ function planetTextures(): [THREE.Texture, THREE.Texture] {
 }
 
 /**
- * Deep space around the AURORA: the prologue, the rides between decks and both endings are
+ * Deep space around the SYRACUSIA: the prologue, the rides between decks and both endings are
  * staged here.
  */
 export class ShipScene {

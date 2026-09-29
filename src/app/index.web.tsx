@@ -4,7 +4,7 @@ import html from '@/generated/gameHtml';
 export default function Game() {
   return (
     <iframe
-      title="Hull Breach: Starbloom"
+      title="AstroTroubles!"
       srcDoc={html}
       allow="autoplay; fullscreen; gamepad"
       style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 0, background: '#03040a' }}

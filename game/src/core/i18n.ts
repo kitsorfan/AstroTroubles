@@ -1,5 +1,5 @@
 import { EL } from '../i18n/el';
-import { SHIP } from './brand';
+import { GAME_NAME, SHIP } from './brand';
 
 /**
  * Translations. The English text is the key: every string shown on screen goes through `tr()`, which
@@ -20,6 +20,7 @@ export function setLang(l: Lang) {
   current = l;
   table = l === 'el' ? EL : {};
   document.documentElement.lang = l;
+  document.title = tr(GAME_NAME);
 }
 
 export function lang(): Lang {
@@ -32,13 +33,13 @@ export function detectLang(): Lang {
   return langs.some((l) => l?.toLowerCase().startsWith('el')) ? 'el' : 'en';
 }
 
-/** Placeholders every string may use without passing them in. */
+/** Placeholders every string may use without passing them in (translated like the rest). */
 const GLOBAL: Record<string, string> = { ship: SHIP };
 
 export function tr(s: string, vars?: Record<string, string | number>): string {
   const out = table[s] ?? s;
   if (!out.includes('{')) return out;
-  return out.replace(/\{(\w+)\}/g, (m, k: string) => (vars && k in vars ? String(vars[k]) : (GLOBAL[k] ?? m)));
+  return out.replace(/\{(\w+)\}/g, (m, k: string) => (vars && k in vars ? String(vars[k]) : GLOBAL[k] ? tr(GLOBAL[k]) : m));
 }
 
 /** The combining accent (tonos) that Greek capitals leave off. */

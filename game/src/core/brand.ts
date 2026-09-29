@@ -1,13 +1,8 @@
 /**
- * The game's name and the colony ship's name, kept in one place. The title is a logo, so it is
- * shown the same way in every language.
+ * The game's name and the colony ship's name, kept in one place. Both are translated like any other
+ * text (the Greek is in the translation table), so the logo reads «Αστρομπελάδες» in Greek.
  */
-export const BRAND = {
-  kicker: 'HULL BREACH',
-  name: 'STARBLOOM',
-  /** Used for the page title and the app name. */
-  full: 'Hull Breach: Starbloom',
-};
+export const GAME_NAME = 'AstroTroubles!';
 
-/** The colony ship Kai lives on. */
-export const SHIP = 'AURORA';
+/** The colony ship Kai lives on. Story text refers to it as {ship}. */
+export const SHIP = 'Syracusia';

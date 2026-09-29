@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Hull Breach: Starbloom",
+    "name": "AstroTroubles!",
     "slug": "LeviathanGame",
     "version": "1.0.0",
     "orientation": "landscape",
@@ -8,7 +8,13 @@
     "scheme": "leviathangame",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
+    },
+    "locales": {
+      "el": "./languages/el.json"
     },
     "android": {
       "adaptiveIcon": {

@@ -74,7 +74,7 @@ function page(js) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#03040a">
-<title>Hull Breach: Starbloom</title>
+<title>AstroTroubles!</title>
 <style>
 ${FONT_CSS}
 ${css}

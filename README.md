@@ -1,8 +1,10 @@
-# Hull Breach: Starbloom
+# AstroTroubles!
+
+*In Greek: Αστρομπελάδες*
 
 A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app.
 
-The colony ship *Aurora* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
+The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
 
 It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
 
@@ -104,7 +106,7 @@ Progress saves at every checkpoint and when you leave the app.
 
 ## The story
 
-A new game opens with a prologue out in space: a glowing seed strikes the *Aurora*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
+A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
 
 - **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as the Bloom took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Kai's Aunt Rosa instead.
 - **Rescuing BOLT.** Kai finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
@@ -122,7 +124,7 @@ Tap to hurry a caption along, or press **SKIP** (or the Android back button) to 
 
 ## Languages
 
-The game is in English and Greek. It starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+The game is in English and Greek: in Greek it is called **Αστρομπελάδες** and the ship is the **Συρακουσία**, and the app shows that name on phones set to Greek (`languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
 
 ## Project layout
 

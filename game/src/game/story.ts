@@ -1,12 +1,12 @@
-import { BRAND } from '../core/brand';
-import { tr } from '../core/i18n';
+import { GAME_NAME } from '../core/brand';
+import { tr, upper } from '../core/i18n';
 import type { SaveData } from '../core/save';
 import { LEVELS, LEVEL_ORDER } from '../levels';
 import type { BadgeKind } from '../entities/badges';
 import type { BossKind, DeckId, Line } from '../world/levelTypes';
 
 /**
- * The story of HULL BREACH: STARBLOOM.
+ * The story of ASTROTROUBLES!
  *
  * A glowing space seed, the Bloom, lands on a colony ship and grows over it. It puts the crew to
  * sleep in cocoons and steers the ship toward a star, because the star looks like its long-lost
@@ -148,7 +148,7 @@ export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
   const p = (s: string) => `<p>${tr(s)}</p>`;
   const head = (s: string) => `<h3>${tr(s)}</h3>`;
   return [
-    `<h1>${BRAND.kicker}<br>${BRAND.name}</h1>`,
+    `<h1>${upper(tr(GAME_NAME))}</h1>`,
     head('STARRING'),
     p('Kai Reyes, junior engineer'),
     p('BOLT, a very brave little drone'),

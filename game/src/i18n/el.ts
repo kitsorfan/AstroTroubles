@@ -3,6 +3,8 @@
  * than word for word; `npm run game:i18n` lists any English string that is still missing here.
  */
 export const EL: Record<string, string> = {
+  "AstroTroubles!": "Αστρομπελάδες",
+  "Syracusia": "Συρακουσία",
   "Cryo Deck": "Κατάστρωμα Κρυοΰπνου",
   "Wake up, engineer!": "Ξύπνα, μηχανικέ!",
   "Find a way through the sealed door": "Βρες τρόπο να περάσεις τη σφραγισμένη πόρτα",
@@ -191,7 +193,7 @@ export const EL: Record<string, string> = {
   "Find the navigation power cell in the dark crew wing": "Βρες την μπαταρία πλοήγησης στη σκοτεινή πτέρυγα του πληρώματος",
   "Hack the navigation terminal": "Χάκαρε το τερματικό πλοήγησης",
   "Ride up the Spine and reach the Bloom Heart": "Ανέβα τη Ραχοκοκαλιά και φτάσε στην Καρδιά του Άνθους",
-  "Save the {ship}!": "Σώσε την {ship}!",
+  "Save the {ship}!": "Σώσε τη {ship}!",
   "The Bridge. Temperature rising. Please hurry, Kai.": "Η Γέφυρα. Η θερμοκρασία ανεβαίνει. Βιάσου, σε παρακαλώ, Κάι.",
   "The Heart is right at the top. It is steering the whole ship!": "Η Καρδιά είναι ακριβώς στην κορυφή. Αυτή κρατάει το τιμόνι όλου του σκάφους!",
   "Then we take the wheel back. One last deck, BOLT.": "Τότε θα της πάρουμε πίσω το τιμόνι. Ένα κατάστρωμα έμεινε, BOLT.",
@@ -296,7 +298,7 @@ export const EL: Record<string, string> = {
   "Ten thousand colonists had a new home. And a brand new hero.": "Δέκα χιλιάδες άποικοι βρήκαν νέο σπίτι. Και έναν ολοκαίνουργιο ήρωα.",
   "BOLT flashed the words: <b style=\"color:#5e9bff\">hello</b>... <b style=\"color:#ff6fcf\">safe</b>... <b style=\"color:#ffd166\">together</b>. And for the first time, the Bloom flashed back.": "Ο BOLT σχημάτισε με φως τις λέξεις: <b style=\"color:#5e9bff\">γεια</b>... <b style=\"color:#ff6fcf\">ασφάλεια</b>... <b style=\"color:#ffd166\">μαζί</b>. Και για πρώτη φορά, το Άνθος του απάντησε με φως.",
   "Its vines turned gold and burst into flowers. After a long, long time in the dark, the Bloom was not afraid anymore.": "Τα κλήματά του χρύσισαν και γέμισαν λουλούδια. Ύστερα από πολύ, πολύ καιρό στο σκοτάδι, το Άνθος δεν φοβόταν πια.",
-  "Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.": "Απαλά, έστρεψε την {ship} μακριά από το αστέρι, προς έναν ζεστό γαλάζιο κόσμο που είχε δει στα όνειρά του.",
+  "Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.": "Απαλά, έστρεψε τη {ship} μακριά από το αστέρι, προς έναν ζεστό γαλάζιο κόσμο που είχε δει στα όνειρά του.",
   "Ten thousand colonists woke up in a garden between the stars. And BOLT was never scared of the dark again, because now something always glows.": "Δέκα χιλιάδες άποικοι ξύπνησαν σε έναν κήπο ανάμεσα στα αστέρια. Κι ο BOLT δεν φοβήθηκε ποτέ ξανά το σκοτάδι, γιατί πια υπάρχει πάντα κάτι που λάμπει.",
   "See that pink cocoon? A colonist is trapped inside! BLAST it to set them free. Every colonist you save gives you bolts.": "Βλέπεις εκείνο το ροζ κουκούλι; Έχει έναν άποικο παγιδευμένο μέσα! Χτύπα το με ΒΟΛΗ για να τον ελευθερώσεις. Κάθε άποικος που σώζεις σου δίνει βίδες.",
   "A memory shard! Each one shows a piece of the Bloom’s story. Every 6 give you an extra heart, and all 18 unlock a secret ending!": "Ένα θραύσμα μνήμης! Το καθένα δείχνει ένα κομμάτι από την ιστορία του Άνθους. Κάθε 6 σου δίνουν μια καρδιά παραπάνω, και με όλα τα 18 ξεκλειδώνεις ένα μυστικό φινάλε!",

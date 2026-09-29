@@ -1,5 +1,5 @@
 import { audio } from '../core/audio';
-import { BRAND, SHIP } from '../core/brand';
+import { GAME_NAME, SHIP } from '../core/brand';
 import { LANGS, tr, upper } from '../core/i18n';
 import type { ButtonName, Input } from '../core/input';
 import type { Quality, SaveData, Settings, UpgradeId } from '../core/save';
@@ -639,7 +639,7 @@ export class UI {
 
   title(opts: { canContinue: boolean; continueText: string; hasDecks: boolean; onContinue: () => void; onNew: () => void; onDecks: () => void; onSettings: () => void }) {
     const el = this.open(`<div class="overlay title-screen" style="position:absolute">
-      <div class="title-logo"><div class="kicker">${BRAND.kicker}</div><div class="name logo">${BRAND.name}</div><div class="tag">${tr('Six decks. One brave engineer. One very nervous robot.')}</div></div>
+      <div class="title-logo"><div class="name logo">${upper(tr(GAME_NAME))}</div><div class="tag">${tr('Six decks. One brave engineer. One very nervous robot.')}</div></div>
       <div class="title-menu">
         ${opts.canContinue ? `<button class="menu-btn primary cont">▶ ${tr('Continue')} <small>${tr(opts.continueText)}</small></button>` : ''}
         <button class="menu-btn ${opts.canContinue ? '' : 'primary'} new">${opts.canContinue ? tr('New Game') : `▶ ${tr('New Game')}`}</button>
@@ -663,8 +663,7 @@ export class UI {
       <div class="boot-bg"></div>
       <div class="boot-core">
         <div class="boot-emblem">${emblemSvg(180)}</div>
-        <div class="boot-kicker">${BRAND.kicker}</div>
-        <div class="boot-logo"><span>${BRAND.name}</span></div>
+        <div class="boot-logo"><span>${upper(tr(GAME_NAME))}</span></div>
         <div class="boot-tag">${tr('Six decks. One brave engineer. One very nervous robot.')}</div>
         <div class="boot-load"><i></i></div>
         <div class="boot-tap">${tr('TAP TO START')}</div>
@@ -882,7 +881,7 @@ export class UI {
 
   ending(kind: 'saved' | 'friends', paragraphs: string[], stats: [string, string][], done: () => void) {
     const color = kind === 'friends' ? 'var(--pink)' : 'var(--good)';
-    const title = kind === 'friends' ? tr('THE GARDEN BETWEEN STARS') : tr('THE {ship} IS SAVED!', { ship: SHIP });
+    const title = kind === 'friends' ? tr('THE GARDEN BETWEEN STARS') : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kind === 'friends' ? tr('SECRET ENDING') : tr('THE END')}</div>
       <div class="big-msg" style="color:${color};margin:6px 0 12px">${title}</div>

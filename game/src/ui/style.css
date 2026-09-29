@@ -608,17 +608,9 @@ canvas#game {
   margin-top: 2vh;
 }
 
-.title-logo .kicker {
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 800;
-  letter-spacing: 0.5em;
-  color: var(--pink);
-  font-size: clamp(12px, 2.4vh, 18px);
-  text-shadow: 0 0 14px rgba(255, 111, 207, 0.7);
-}
-
 .title-logo .name {
-  font-size: clamp(38px, 11vh, 86px);
+  /* Sized by width as well as height, so the whole name always fits across the screen. */
+  font-size: clamp(30px, min(12vh, 6.4vw), 86px);
   line-height: 1;
   background: linear-gradient(180deg, #ffffff, #9fe8ff 60%, #5e9bff);
   -webkit-background-clip: text;
@@ -1446,17 +1438,9 @@ canvas#game {
   }
 }
 
-.boot-kicker {
-  margin-top: 10px;
-  font: 800 clamp(12px, 2.6vh, 18px) 'Orbitron', sans-serif;
-  letter-spacing: 0.55em;
-  color: var(--pink);
-  text-shadow: 0 0 14px rgba(255, 111, 207, 0.7);
-  animation: fadeUp 0.8s 0.5s ease both;
-}
-
 .boot-logo {
-  font: 800 clamp(40px, 12vh, 92px) 'Orbitron', sans-serif;
+  margin-top: 10px;
+  font: 800 clamp(30px, min(12vh, 6.6vw), 92px) 'Orbitron', sans-serif;
   line-height: 1.05;
   animation: fadeUp 0.9s 0.7s ease both;
   filter: drop-shadow(0 0 18px rgba(94, 224, 255, 0.5));

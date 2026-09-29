@@ -9,7 +9,7 @@ import { ColonyShip } from './colonyShip';
 import type { ShipScene } from './shipScene';
 
 /**
- * Cinematics staged outside the ship. The AURORA points along +X; the star lies straight ahead,
+ * Cinematics staged outside the ship. The SYRACUSIA points along +X; the star lies straight ahead,
  * getting bigger with every deck Kai climbs.
  */
 

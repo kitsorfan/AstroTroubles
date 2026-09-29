@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Αστρομπελάδες"
+  },
+  "android": {
+    "app_name": "Αστρομπελάδες"
+  }
+}
