@@ -100,10 +100,10 @@ export const hydro: LevelDef = {
          ###############
 `,
   legend: {
-    k: { type: 'switch', flag: 'hs1', timed: 12 },
-    l: { type: 'switch', flag: 'hs2', timed: 12 },
-    u: { type: 'switch', flag: 'hs3', timed: 12 },
-    w: { type: 'sign', text: "SECRET VAULT (up on the ledge). It opens when all THREE red switches in this garden are down at the same time. Each one pops back up after 12 seconds. GROUND POUND fast!" },
+    k: { type: 'switch', flag: 'hs1', timed: 20 },
+    l: { type: 'switch', flag: 'hs2', timed: 20 },
+    u: { type: 'switch', flag: 'hs3', timed: 20 },
+    w: { type: 'sign', text: "SECRET VAULT (up on the ledge). It opens when all THREE red switches in this garden are down at the same time. Each one pops back up after 20 seconds, so plan your route and GROUND POUND fast!" },
     Z: { type: 'door', id: 'secretvault', open: { all: [{ flag: 'hs1' }, { flag: 'hs2' }, { flag: 'hs3' }] }, latch: true },
     I: { type: 'prize', id: 'vault', reward: 'heart' },
     W: { type: 'boss', boss: 'queen', room: 'arena' },

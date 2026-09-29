@@ -89,7 +89,7 @@ Every deck has four side quests, listed with their rewards in the pause menu. BO
 | Deck | Vault puzzle | Prize |
 | --- | --- | --- |
 | Cryo Deck | Step on the colour pads in the order a sign gives | Bigger Clip |
-| Hydroponics | Ground-pound three timed switches before any pop back up | +1 max heart |
+| Hydroponics | Ground-pound three switches within 20 seconds, before any pop back up | +1 max heart |
 | Engine Core | A four-colour code on islands in the lava | Blaster Power |
 | Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
 | Security Deck | A 7-light hack switches off a laser corridor | BOLT Zapper |
