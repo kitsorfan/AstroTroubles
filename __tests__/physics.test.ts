@@ -1,4 +1,4 @@
-import { CELL } from '../game/src/core/constants';
+import { CELL, PLAYER } from '../game/src/core/constants';
 import { Grid, parseLevel } from '../game/src/world/grid';
 import type { LevelDef } from '../game/src/world/levelTypes';
 import { makeBody, moveBody, type Box } from '../game/src/world/physics';
@@ -58,6 +58,30 @@ describe('moveBody', () => {
     run(g, b, 1);
     expect(b.grounded).toBe(false);
     expect(b.y).toBeLessThan(-3);
+  });
+
+  it('never lets a double jump or an air dash carry Kai over a closed door', () => {
+    // A door plugging the gap between two walls reaches as high as the walls do.
+    const door: Box = { minX: at(1) - 1, maxX: at(5) + 1, minZ: at(2) - 0.25, maxZ: at(2) + 0.25, bottom: -1, top: 60, solid: true, dx: 0, dy: 0, dz: 0 };
+    // Jump, jump again at the top, then dash forward from the peak: the highest Kai can get.
+    const b = makeBody(at(1), 0, at(4), 0.42, 1.7);
+    b.grounded = true;
+    b.vy = PLAYER.jumpV;
+    let jumps = 1;
+    let peak = 0;
+    for (let t = 0; t < 1.6; t += 1 / 60) {
+      if (jumps === 1 && b.vy < 0) {
+        b.vy = PLAYER.doubleJumpV;
+        jumps = 2;
+      }
+      if (jumps === 2 && b.vy < 0) b.vz = -PLAYER.dashSpeed;
+      peak = Math.max(peak, b.y);
+      moveBody(b, 1 / 60, g, [door]);
+    }
+    // High enough to clear the top of the old, wall-height door (3.2 above the floor)...
+    expect(peak).toBeGreaterThan(3.2);
+    // ...but still stopped in front of it.
+    expect(b.z).toBeGreaterThan(door.maxZ);
   });
 
   it('stands on boxes such as platforms and crates', () => {

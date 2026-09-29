@@ -30,6 +30,13 @@ function makeBox(x: number, z: number, hw: number, hd: number, bottom: number, t
   return { minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd, bottom, top, solid: true, dx: 0, dy: 0, dz: 0, owner };
 }
 
+/**
+ * How high a door's (or cracked wall's) collider reaches above its floor. Walls are infinitely tall,
+ * so anything that plugs a gap in them must be too: otherwise a double jump or an air dash carries
+ * Kai straight over the top of a closed door.
+ */
+const PLUG_H = 60;
+
 /* ---------------- crates ---------------- */
 
 export class Crate extends Entity implements Target {
@@ -177,7 +184,7 @@ export class Door extends Entity {
     this.slab.add(mesh(boxG(alongX ? 0.12 : 0.54, 2.8, alongX ? d + 0.02 : 0.12), seam, 0, 1.5, 0, false));
     this.slab.position.set(x, h, z);
     this.obj.add(this.slab);
-    this.box = makeBox(x, z, w / 2, d / 2, h - 1, h + 3.2, this);
+    this.box = makeBox(x, z, w / 2, d / 2, h - 1, h + PLUG_H, this);
     world.boxes.push(this.box);
   }
 
@@ -1338,7 +1345,7 @@ export class BreakWall extends Entity implements Target {
     tex.colorSpace = THREE.SRGBColorSpace;
     this.block = mesh(boxG(CELL, 3.2, CELL), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }), x, h + 1.6, z);
     this.obj.add(this.block);
-    this.box = makeBox(x, z, CELL / 2, CELL / 2, h - 1, h + 3.2, this);
+    this.box = makeBox(x, z, CELL / 2, CELL / 2, h - 1, h + PLUG_H, this);
     world.boxes.push(this.box);
     world.addTarget(this);
   }
