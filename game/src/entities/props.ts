@@ -1035,29 +1035,207 @@ export class Cocoon extends Entity implements Target {
   }
 }
 
+type VendyMood = 'idle' | 'blink' | 'happy';
+
+/** VENDY's face on her little screen: two rounded eyes and a mouth, drawn in light. */
+function vendyFace(mood: VendyMood): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 96;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  const bg = g.createLinearGradient(0, 0, 0, 96);
+  bg.addColorStop(0, '#2a0b24');
+  bg.addColorStop(1, '#12040f');
+  g.fillStyle = bg;
+  g.fillRect(0, 0, 128, 96);
+  g.fillStyle = '#ffb0e6';
+  g.strokeStyle = '#ffb0e6';
+  g.lineCap = 'round';
+  g.lineWidth = 7;
+  g.shadowColor = '#ff5fc8';
+  g.shadowBlur = 10;
+  for (const x of [42, 86]) {
+    g.beginPath();
+    if (mood === 'blink') {
+      g.moveTo(x - 10, 38);
+      g.lineTo(x + 10, 38);
+      g.stroke();
+    } else if (mood === 'happy') {
+      g.arc(x, 42, 11, Math.PI * 1.1, Math.PI * 1.9);
+      g.stroke();
+    } else {
+      g.roundRect(x - 8, 26, 16, 24, 8);
+      g.fill();
+    }
+  }
+  g.beginPath();
+  g.arc(64, mood === 'happy' ? 58 : 62, mood === 'happy' ? 16 : 11, Math.PI * 0.15, Math.PI * 0.85);
+  g.stroke();
+  // Faint scanlines, like a real little display.
+  g.shadowBlur = 0;
+  g.fillStyle = 'rgba(0,0,0,0.22)';
+  for (let y = 0; y < 96; y += 3) g.fillRect(0, y, 128, 1);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/** The neon marquee across the top of the machine. */
+function vendySign(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 64;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  g.fillStyle = '#16060f';
+  g.fillRect(0, 0, 256, 64);
+  g.font = '800 40px Orbitron, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.shadowColor = '#ff3fb8';
+  g.shadowBlur = 14;
+  g.fillStyle = '#ffd0ee';
+  g.fillText('VENDY', 128, 34);
+  g.shadowBlur = 0;
+  g.fillStyle = '#ffd166';
+  for (const x of [18, 238]) {
+    g.beginPath();
+    g.arc(x, 32, 6, 0, Math.PI * 2);
+    g.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/**
+ * VENDY, the travelling vending machine: a glass front with shelves of glowing upgrades, a neon
+ * marquee, a control panel whose little screen shows her face (she blinks, and smiles when Kai comes
+ * close), a keypad, a pickup tray and a spinning holographic bolt on top.
+ */
 export class Vendor extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
-  private face: THREE.Group;
   private t = 0;
+  private screen: THREE.MeshBasicMaterial;
+  private faces: Record<VendyMood, THREE.CanvasTexture>;
+  private mood: VendyMood = 'idle';
+  private blinkT = 2;
+  private signMat: THREE.MeshBasicMaterial;
+  private holo: THREE.Group;
+  private scanner: THREE.Mesh;
+  private items: THREE.Object3D[] = [];
+  private scanTop = 0;
+  private scanSpan = 1;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id);
     const x = cx2x(cx);
     const z = cx2x(cz);
     this.spot = new THREE.Vector3(x, h, z);
-    const body = mat('#8a2a5a', { rough: 0.4, metal: 0.3 });
-    this.obj.add(mesh(boxG(1.4, 2.2, 1), body, x, h + 1.1, z));
-    this.face = new THREE.Group();
-    this.face.add(mesh(boxG(1.1, 0.8, 0.06), mat('#ffe0f4', { emissive: '#ffb0e0', ei: 0.8 }), 0, 0, 0, false));
-    const eye = mat('#2a0f20');
-    this.face.add(mesh(sphere(0.09, 10), eye, -0.25, 0.08, 0.05, false), mesh(sphere(0.09, 10), eye, 0.25, 0.08, 0.05, false));
-    this.face.add(mesh(torus(0.14, 0.03), eye, 0, -0.14, 0.05, false));
-    this.face.position.set(x, h + 1.6, z + 0.52);
-    this.obj.add(this.face);
-    this.obj.add(mesh(cyl(0.03, 0.03, 0.5), mat('#e6edf7'), x, h + 2.45, z), mesh(sphere(0.1, 10), mat('#ffd166', { emissive: '#ffd166', ei: 1.4 }), x, h + 2.72, z, false));
-    this.obj.add(glowSprite('#ff8ad8', 3.5, 0.3).translateX(x).translateY(h + 1.4).translateZ(z + 0.6));
-    world.boxes.push(makeBox(x, z, 0.7, 0.5, h, h + 2.2));
+    const g = new THREE.Group();
+    g.position.set(x, h, z);
+    const W = 1.5;
+    const H = 2.5;
+    const D = 1;
+    const shell = mat('#262b38', { metal: 0.6, rough: 0.35 });
+    const trim = mat('#c0368f', { metal: 0.3, rough: 0.35 });
+    const dark = mat('#0e1118', { rough: 0.6 });
+    const chrome = mat('#cfd6e2', { metal: 0.85, rough: 0.2 });
+    const neon = mat('#ff6fcf', { emissive: '#ff4fc0', ei: 1.6 });
+    const base = 0.08;
+    // The front is recessed: a shallower body, then frame bands around a lit window.
+    const R = 0.3;
+    const front = D / 2;
+    const inner = front - R;
+    const band = (w: number, h: number, x: number, y: number, m: THREE.Material = shell) => g.add(mesh(boxG(w, h, R), m, x, y, front - R / 2));
+    g.add(mesh(boxG(W, H, D - R), shell, 0, base + H / 2, -R / 2));
+    const px = 0.52;
+    const winL = -W / 2 + 0.07;
+    const winR = px - 0.2;
+    const winB = base + 0.62;
+    const winT = base + H - 0.5;
+    band(W, 0.5, 0, winT + 0.25);
+    band(W, 0.62, 0, base + 0.31);
+    band(0.07, winT - winB, winL - 0.035, (winT + winB) / 2);
+    band(W / 2 - winR, winT - winB, (winR + W / 2) / 2, (winT + winB) / 2);
+    for (const sx of [-1, 1]) {
+      g.add(mesh(boxG(0.06, H - 0.3, D - 0.2), trim, sx * (W / 2 + 0.03), base + H / 2, 0));
+      // Neon strips running up the front corners.
+      g.add(mesh(boxG(0.05, H - 0.2, 0.05), neon, sx * (W / 2 - 0.03), base + H / 2, front + 0.01, false));
+      g.add(mesh(boxG(0.22, 0.08, 0.3), dark, sx * 0.5, 0.04, 0.2), mesh(boxG(0.22, 0.08, 0.3), dark, sx * 0.5, 0.04, -0.2));
+    }
+    const cap = mesh(new THREE.CylinderGeometry(D / 2, D / 2, W, 20, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), shell, 0, base + H, 0);
+    cap.scale.y = 0.35;
+    g.add(cap);
+    // Marquee.
+    this.signMat = new THREE.MeshBasicMaterial({ map: vendySign(), toneMapped: false });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.14, 0.34), this.signMat);
+    sign.position.set(0, winT + 0.25, front + 0.012);
+    g.add(sign);
+    // The window: a softly lit back wall and three shelves of upgrades behind glass.
+    const gx = (winL + winR) / 2;
+    const gw = winR - winL;
+    const gy = (winB + winT) / 2;
+    const gh = winT - winB;
+    g.add(mesh(new THREE.PlaneGeometry(gw, gh), new THREE.MeshStandardMaterial({ color: '#3a1030', emissive: '#ff5fc8', emissiveIntensity: 0.28, roughness: 0.8 }), gx, gy, inner + 0.002, false));
+    const colors = ['#ff4d6d', '#5ee0ff', '#ffd166', '#b58cff', '#7dff9a'];
+    for (let r = 0; r < 3; r++) {
+      const sy = winB + 0.06 + r * 0.46;
+      g.add(mesh(boxG(gw - 0.02, 0.03, R - 0.04), chrome, gx, sy, inner + R / 2, false));
+      // Price strip along the shelf edge.
+      g.add(mesh(boxG(gw - 0.04, 0.035, 0.01), mat('#ffe0f4', { emissive: '#ffb0e0', ei: 1.2 }), gx, sy + 0.01, front - 0.035, false));
+      for (let i = 0; i < 4; i++) {
+        const col = colors[(r * 4 + i) % colors.length];
+        const ix = gx - gw / 2 + 0.14 + i * ((gw - 0.28) / 3);
+        const can = mesh(cyl(0.075, 0.075, 0.22, 14), mat(col, { emissive: col, ei: 0.7, rough: 0.25, metal: 0.4 }), ix, sy + 0.13, inner + R / 2, false);
+        g.add(mesh(cyl(0.078, 0.078, 0.03, 14), chrome, ix, sy + 0.25, inner + R / 2, false));
+        this.items.push(can);
+        g.add(can);
+      }
+    }
+    const glass = new THREE.MeshStandardMaterial({ color: '#dff4ff', roughness: 0.05, metalness: 0.3, transparent: true, opacity: 0.12, depthWrite: false });
+    g.add(mesh(new THREE.PlaneGeometry(gw, gh), glass, gx, gy, front - 0.01, false));
+    // A scanning light that sweeps down the shelves.
+    this.scanner = mesh(new THREE.PlaneGeometry(gw, 0.04), new THREE.MeshBasicMaterial({ color: '#ff9ae0', transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }), gx, gy, front - 0.005, false);
+    g.add(this.scanner);
+    this.scanTop = winT - 0.05;
+    this.scanSpan = gh - 0.1;
+    // Control column: face screen, keypad and coin slot.
+    g.add(mesh(boxG(0.36, 1.5, 0.02), dark, px, gy, front + 0.005, false));
+    this.faces = { idle: vendyFace('idle'), blink: vendyFace('blink'), happy: vendyFace('happy') };
+    this.screen = new THREE.MeshBasicMaterial({ map: this.faces.idle, toneMapped: false });
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.24), this.screen);
+    screen.position.set(px, gy + 0.5, front + 0.018);
+    g.add(screen);
+    const key = mat('#3a4150', { metal: 0.4, rough: 0.4 });
+    const lit = mat('#ffd166', { emissive: '#ffb020', ei: 1.2 });
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) g.add(mesh(boxG(0.075, 0.055, 0.03), r === 3 && c === 2 ? lit : key, px - 0.09 + c * 0.09, gy + 0.2 - r * 0.075, front + 0.02, false));
+    g.add(mesh(boxG(0.12, 0.03, 0.03), mat('#ffd166', { emissive: '#ffd166', ei: 0.8 }), px, gy - 0.22, front + 0.02, false));
+    g.add(mesh(boxG(0.2, 0.12, 0.03), mat('#16202e', { emissive: '#3fd0ff', ei: 0.5 }), px, gy - 0.45, front + 0.02, false));
+    // Pickup tray.
+    g.add(mesh(boxG(1.05, 0.3, 0.04), chrome, -0.1, base + 0.3, front + 0.02, false));
+    g.add(mesh(boxG(0.95, 0.2, 0.04), dark, -0.1, base + 0.3, front + 0.03, false));
+    // The hologram bolt spinning above her, so the shop is easy to spot across a room.
+    this.holo = new THREE.Group();
+    const holoMat = new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+    const hex = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 6).rotateX(Math.PI / 2), holoMat);
+    this.holo.add(hex, new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.018, 6, 6).rotateZ(Math.PI / 6), holoMat));
+    this.holo.add(glowSprite('#ffd166', 0.9, 0.18));
+    this.holo.position.set(0, base + H + 0.6, 0);
+    g.add(this.holo);
+    // Face the room: turn toward the open side of the cell.
+    const open = [
+      [0, 1, 0],
+      [1, 0, Math.PI / 2],
+      [0, -1, Math.PI],
+      [-1, 0, -Math.PI / 2],
+    ].find(([dx, dz]) => {
+      const c = world.grid.cell(cx + dx, cz + dz);
+      return c.kind !== 'wall' && c.kind !== 'void';
+    });
+    g.rotation.y = open ? open[2] : 0;
+    this.obj.add(g);
+    world.boxes.push(makeBox(x, z, 0.8, 0.8, h, h + H));
     world.addInteractable(this);
   }
 
@@ -1066,12 +1244,39 @@ export class Vendor extends Entity implements Interactable {
   }
 
   interact() {
+    this.setMood('happy');
     this.world.hooks.shop();
+  }
+
+  private setMood(m: VendyMood) {
+    if (m === this.mood) return;
+    this.mood = m;
+    this.screen.map = this.faces[m];
   }
 
   update(dt: number) {
     this.t += dt;
-    this.face.position.y = this.spot.y + 1.6 + Math.sin(this.t * 3) * 0.03;
+    const p = this.world.player.body;
+    const near = Math.hypot(p.x - this.spot.x, p.z - this.spot.z) < 4.5;
+    this.blinkT -= dt;
+    if (this.blinkT < 0) {
+      this.setMood('blink');
+      if (this.blinkT < -0.14) this.blinkT = 2.5 + Math.random() * 3;
+    } else {
+      this.setMood(near ? 'happy' : 'idle');
+    }
+    this.holo.rotation.y += dt * 1.6;
+    this.holo.position.y = 0.08 + 2.5 + 0.6 + Math.sin(this.t * 2) * 0.08;
+    // The marquee flickers now and then, like old neon.
+    const flick = Math.random() < 0.01 ? 0.45 : 1;
+    this.signMat.color.setScalar(flick);
+    const k = (this.t * 0.45) % 1;
+    this.scanner.position.y = this.scanTop - k * this.scanSpan;
+    (this.scanner.material as THREE.MeshBasicMaterial).opacity = 0.45 * Math.sin(k * Math.PI);
+    for (let i = 0; i < this.items.length; i++) {
+      const it = this.items[i];
+      it.rotation.y += dt * (0.6 + (i % 3) * 0.2);
+    }
   }
 }
 
