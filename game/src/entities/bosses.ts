@@ -750,12 +750,21 @@ class Blob extends Enemy {
   }
 }
 
+/** How close Kai must get to King Bloblin's throne: anywhere on his island starts the fight. */
+const KING_WAKE = 13;
+
 class King extends Boss {
   protected focusHeight = 1.8;
   readonly title = 'KING BLOBLIN';
   private blobs: Blob[] = [];
   private crown: THREE.Group;
   private seq = 0;
+  /** The King lounging on his island before the fight, so Kai can see where to go. */
+  private idle: THREE.Group;
+  private idleBody: THREE.Object3D;
+  /** A column of light over the island, visible from anywhere on the Ring. */
+  private beacon: THREE.Group;
+  private beaconMat: THREE.MeshBasicMaterial;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 10 + 5 * 2 + 3 * 4);
@@ -765,6 +774,31 @@ class King extends Boss {
     for (let i = 0; i < 5; i++) this.crown.add(mesh(cone(0.18, 0.5, 6), gold, Math.cos((i / 5) * Math.PI * 2) * 0.62, 0.4, Math.sin((i / 5) * Math.PI * 2) * 0.62));
     this.obj.add(this.crown);
     this.crown.visible = false;
+
+    const king = makeGooBlob(3.2);
+    this.idle = new THREE.Group();
+    this.idle.add(king.root);
+    const idleCrown = this.crown.clone();
+    idleCrown.visible = true;
+    idleCrown.position.y = 3.2 * 0.95 + 0.2;
+    this.idle.add(idleCrown);
+    this.idleBody = king.body;
+    this.idle.position.copy(this.center);
+    this.obj.add(this.idle);
+
+    this.beacon = new THREE.Group();
+    this.beaconMat = new THREE.MeshBasicMaterial({ color: '#ff7fd0', transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    const column = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 2.2, 36, 20, 1, true), this.beaconMat);
+    column.position.y = 18;
+    this.beacon.add(column);
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.5, 36, 10, 1, true), this.beaconMat);
+    core.position.y = 18;
+    this.beacon.add(core);
+    const top = glowSprite('#ff9ae0', 7, 0.55);
+    top.position.y = 14;
+    this.beacon.add(top);
+    this.beacon.position.copy(this.center);
+    this.obj.add(this.beacon);
   }
 
   /** The camera follows the big crowned blob while it's around. */
@@ -782,7 +816,9 @@ class King extends Boss {
   }
 
   protected onIntro() {
-    // The King drops in from above as his entrance begins.
+    // The lounging King leaps up out of sight and drops back in, ready to fight.
+    this.idle.visible = false;
+    this.beacon.visible = false;
     this.spawn(this.center.x, this.center.y + 6, this.center.z, 3.2);
   }
 
@@ -796,12 +832,22 @@ class King extends Boss {
     this.hp = this.maxHp;
     this.started = false;
     this.crown.visible = false;
+    this.idle.visible = true;
+    this.beacon.visible = true;
   }
 
   update(dt: number) {
     this.t += dt;
     if (!this.started) {
-      if (this.playerDist() < 10) this.begin();
+      if (this.idle.visible) {
+        // Snoozing and wobbling on the throne, under a beacon that says "over here!".
+        const s = Math.sin(this.t * 2.2);
+        this.idleBody.scale.set(1 + s * 0.05, 1 - s * 0.06, 1 + s * 0.05);
+        this.idle.rotation.y = Math.sin(this.t * 0.4) * 0.5;
+        this.beaconMat.opacity = 0.18 + Math.sin(this.t * 2.6) * 0.06;
+      }
+      const p = this.player.body;
+      if (this.playerDist() < KING_WAKE && p.grounded && Math.abs(p.y - this.center.y) < 1.5) this.begin();
       return;
     }
     if (this.defeated) return;
