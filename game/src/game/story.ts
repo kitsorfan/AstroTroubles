@@ -4,7 +4,7 @@ import type { BadgeKind } from '../entities/badges';
 import type { BossKind, DeckId, Line } from '../world/levelTypes';
 
 /**
- * The story of HULL BREACH: LEVIATHAN.
+ * The story of HULL BREACH: STARBLOOM.
  *
  * A glowing space seed, the Bloom, lands on a colony ship and grows over it. It puts the crew to
  * sleep in cocoons and steers the ship toward a star, because the star looks like its long-lost
@@ -16,7 +16,7 @@ import type { BossKind, DeckId, Line } from '../world/levelTypes';
 
 /** Narration for the opening cinematic, one caption per shot. */
 export const PROLOGUE = {
-  ship: 'The colony ship <b>LEVIATHAN</b>. Ten thousand people asleep in their pods, on the long journey to a new home.',
+  ship: 'The colony ship <b>AURORA</b>. Ten thousand people asleep in their pods, on the long journey to a new home.',
   quiet: 'The ship computer, <b>HALCYON</b>, kept watch. For months, everything was quiet...',
   comet: '...until something came flying out of the dark.',
   seed: 'It was not a comet. It was a seed: a glowing space plant called <b style="color:#ff6fcf">THE BLOOM</b>.',
@@ -100,7 +100,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; plan: string }> 
 /** Narration for the two ending cinematics. */
 export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
   saved: [
-    'With one mighty pull on the wheel, the <b>LEVIATHAN</b> swung away from the star.',
+    'With one mighty pull on the wheel, the <b>AURORA</b> swung away from the star.',
     'The vines let go of the ship. The Bloom Heart curled up into a tiny, sleeping seed.',
     'Weeks later, the pods opened one by one above a green-and-blue world: <b>Nova Terra</b>.',
     'Ten thousand colonists had a new home. And a brand new hero.',
@@ -108,7 +108,7 @@ export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
   friends: [
     'BOLT flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, the Bloom flashed back.',
     'Its vines turned gold and burst into flowers. After a long, long time in the dark, the Bloom was not afraid anymore.',
-    'Gently, it turned the LEVIATHAN away from the star, toward a warm blue world it had seen in its dreams.',
+    'Gently, it turned the AURORA away from the star, toward a warm blue world it had seen in its dreams.',
     'Ten thousand colonists woke up in a garden between the stars. And BOLT was never scared of the dark again, because now something always glows.',
   ],
 };
@@ -145,7 +145,7 @@ export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
   const rescued = colonistNames(save);
   const p = (s: string) => `<p>${s}</p>`;
   return [
-    '<h1>HULL BREACH<br>LEVIATHAN</h1>',
+    '<h1>HULL BREACH<br>STARBLOOM</h1>',
     '<h3>STARRING</h3>',
     p('Kai Reyes, junior engineer'),
     p('BOLT, a very brave little drone'),

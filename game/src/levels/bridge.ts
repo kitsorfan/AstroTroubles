@@ -157,7 +157,7 @@ export const bridge: LevelDef = {
     { until: { flag: 'nav' }, text: 'Find the navigation power cell in the dark crew wing' },
     { until: { flag: 't1' }, text: 'Hack the navigation terminal' },
     { until: { boss: true }, text: 'Ride up the Spine and reach the Bloom Heart' },
-    { until: { flag: 'never' }, text: 'Save the Leviathan!' },
+    { until: { flag: 'never' }, text: 'Save the Aurora!' },
   ],
   dialogues: {
     intro: [

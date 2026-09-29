@@ -10,6 +10,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
 import html from '@/generated/gameHtml';
 
+/** Named after the game's old title; kept so existing saves carry over. */
 const SAVE_KEY = 'leviathan3d.save.v1';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});

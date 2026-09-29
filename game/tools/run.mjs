@@ -12,7 +12,7 @@ if (!tool) {
   process.exit(1);
 }
 const out = await build({ entryPoints: [join(here, `${tool}.ts`)], bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'error' });
-const dir = mkdtempSync(join(tmpdir(), 'leviathan-'));
+const dir = mkdtempSync(join(tmpdir(), 'starbloom-'));
 const file = join(dir, `${tool}.mjs`);
 writeFileSync(file, out.outputFiles[0].text);
 process.argv = [process.argv[0], file, ...rest];

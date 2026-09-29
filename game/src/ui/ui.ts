@@ -535,7 +535,7 @@ export class UI {
 
   title(opts: { canContinue: boolean; continueText: string; hasDecks: boolean; onContinue: () => void; onNew: () => void; onDecks: () => void; onSettings: () => void }) {
     const el = this.open(`<div class="overlay title-screen" style="position:absolute">
-      <div class="title-logo"><div class="kicker">HULL BREACH</div><div class="name logo">LEVIATHAN</div><div class="tag">Six decks. One brave engineer. One very nervous robot.</div></div>
+      <div class="title-logo"><div class="kicker">HULL BREACH</div><div class="name logo">STARBLOOM</div><div class="tag">Six decks. One brave engineer. One very nervous robot.</div></div>
       <div class="title-menu">
         ${opts.canContinue ? `<button class="menu-btn primary cont">▶ Continue <small>${opts.continueText}</small></button>` : ''}
         <button class="menu-btn ${opts.canContinue ? '' : 'primary'} new">${opts.canContinue ? 'New Game' : '▶ New Game'}</button>
@@ -560,7 +560,7 @@ export class UI {
       <div class="boot-core">
         <div class="boot-emblem">${emblemSvg(180)}</div>
         <div class="boot-kicker">HULL BREACH</div>
-        <div class="boot-logo"><span>LEVIATHAN</span></div>
+        <div class="boot-logo"><span>STARBLOOM</span></div>
         <div class="boot-tag">Six decks. One brave engineer. One very nervous robot.</div>
         <div class="boot-load"><i></i></div>
         <div class="boot-tap">TAP TO START</div>
@@ -785,7 +785,7 @@ export class UI {
 
   ending(kind: 'saved' | 'friends', paragraphs: string[], stats: [string, string][], done: () => void) {
     const color = kind === 'friends' ? 'var(--pink)' : 'var(--good)';
-    const title = kind === 'friends' ? 'THE GARDEN BETWEEN STARS' : 'THE LEVIATHAN IS SAVED!';
+    const title = kind === 'friends' ? 'THE GARDEN BETWEEN STARS' : 'THE AURORA IS SAVED!';
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron">${kind === 'friends' ? 'SECRET ENDING' : 'THE END'}</div>
       <div class="big-msg" style="color:${color};margin:6px 0 12px">${title}</div>

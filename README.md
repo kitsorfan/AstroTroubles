@@ -1,8 +1,8 @@
-# Hull Breach: Leviathan
+# Hull Breach: Starbloom
 
 A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app.
 
-The colony ship *Leviathan* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
+The colony ship *Aurora* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
 
 It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
 
@@ -101,7 +101,7 @@ Progress saves at every checkpoint and when you leave the app.
 
 ## The story
 
-A new game opens with a prologue out in space: a glowing seed strikes the *Leviathan*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
+A new game opens with a prologue out in space: a glowing seed strikes the *Aurora*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
 
 - **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as the Bloom took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Kai's Aunt Rosa instead.
 - **Rescuing BOLT.** Kai finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.

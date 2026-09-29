@@ -41,6 +41,7 @@ export interface SaveData {
   playSeconds: number;
 }
 
+/** Named after the game's old title; kept so existing saves carry over. */
 const KEY = 'leviathan3d.save.v1';
 
 export function defaultSettings(): Settings {

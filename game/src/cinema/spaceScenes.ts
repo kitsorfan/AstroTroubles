@@ -5,11 +5,11 @@ import { haptic } from '../core/bridge';
 import { ENDING_CAPTIONS, PROLOGUE, TRANSITIONS } from '../game/story';
 import type { DeckId } from '../world/levelTypes';
 import { ease, type Director } from './director';
-import { Leviathan } from './leviathan';
+import { ColonyShip } from './colonyShip';
 import type { ShipScene } from './shipScene';
 
 /**
- * Cinematics staged outside the ship. The LEVIATHAN points along +X; the star lies straight ahead,
+ * Cinematics staged outside the ship. The AURORA points along +X; the star lies straight ahead,
  * getting bigger with every deck Kai climbs.
  */
 
@@ -92,7 +92,7 @@ export async function prologue(d: Director, s: ShipScene) {
   ]);
 
   // 5. Push in toward the Cryo Deck...
-  const cryo = V(Leviathan.deckX(1), 9, 0);
+  const cryo = V(ColonyShip.deckX(1), 9, 0);
   await Promise.all([d.cam(cryo.clone().add(V(-6, 6, 18)), cryo, 4.5, ease.in), d.caption(PROLOGUE.wake, 4), after(d, 3, () => d.fade('#ffffff', 1, 1.5))]);
 }
 
@@ -103,8 +103,8 @@ export async function interlude(d: Director, s: ShipScene, from: DeckId, index: 
   ship.group.rotation.y = 0;
   s.setChapter(index);
   ship.lift.visible = true;
-  const x0 = Leviathan.deckX(index);
-  const x1 = Leviathan.deckX(index + 1);
+  const x0 = ColonyShip.deckX(index);
+  const x1 = ColonyShip.deckX(index + 1);
   ship.lift.position.x = x0;
   d.cut(V(-70, 24, 70), V(20, 0, 0), 42);
   d.fade('#000000', 1, 0);

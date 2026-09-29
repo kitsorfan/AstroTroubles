@@ -4,7 +4,7 @@ import { Rng } from '../core/math';
 import { glowSprite } from '../entities/models';
 
 /**
- * The colony ship LEVIATHAN seen from outside. It points along +X: engines at the back (-X), the
+ * The colony ship AURORA seen from outside. It points along +X: engines at the back (-X), the
  * Bridge tower at the front. Bloom vines grow over the hull from the point where the seed struck.
  */
 
@@ -86,7 +86,7 @@ interface Pod {
   size: number;
 }
 
-export class Leviathan {
+export class ColonyShip {
   readonly group = new THREE.Group();
   /** The glowing lift pod that climbs along the spine between decks. */
   readonly lift: THREE.Group;

@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 
-import { Leviathan } from '../cinema/leviathan';
+import { ColonyShip } from '../cinema/colonyShip';
 import { makeBolt, makeKai, mat, mesh } from '../entities/models';
 import { buildSky } from '../world/sky';
 import { THEMES } from '../world/themes';
 
-/** The title backdrop: Kai and BOLT on a floating deck with the Leviathan cruising behind them. */
+/** The title backdrop: Kai and BOLT on a floating deck with the Aurora cruising behind them. */
 export class TitleScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.3, 900);
-  private ship = new Leviathan();
+  private ship = new ColonyShip();
   private kai = makeKai();
   private bolt = makeBolt();
   private t = 0;
@@ -48,7 +48,7 @@ export class TitleScene {
     this.bolt.root.position.set(1.1, 2, 0.6);
     this.scene.add(this.bolt.root);
 
-    // The Leviathan, already overgrown with the Bloom.
+    // The Aurora, already overgrown with the Bloom.
     this.ship.setGrowth(0.85);
     const s = this.ship.group;
     s.position.set(10, 8, -120);

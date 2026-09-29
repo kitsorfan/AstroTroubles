@@ -4,7 +4,7 @@ import { Rng } from '../core/math';
 import { glowSprite } from '../entities/models';
 import { Particles } from '../world/particles';
 import type { Rig } from './director';
-import { Leviathan } from './leviathan';
+import { ColonyShip } from './colonyShip';
 
 /** Canvas texture for a friendly ocean world with green continents and swirling clouds. */
 function planetTextures(): [THREE.Texture, THREE.Texture] {
@@ -66,13 +66,13 @@ function planetTextures(): [THREE.Texture, THREE.Texture] {
 }
 
 /**
- * Deep space around the LEVIATHAN: the prologue, the rides between decks and both endings are
+ * Deep space around the AURORA: the prologue, the rides between decks and both endings are
  * staged here.
  */
 export class ShipScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.5, 4000);
-  readonly ship = new Leviathan();
+  readonly ship = new ColonyShip();
   readonly particles = new Particles(900);
   readonly star = new THREE.Group();
   readonly planet = new THREE.Group();
