@@ -120,22 +120,27 @@ Cutscenes play in the game world with letterbox bars:
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 
+## Languages
+
+The game is in English and Greek. It starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+
 ## Project layout
 
 ```text
 game/                    the 3D game (TypeScript, three.js), bundled with esbuild
   build.mjs              bundles everything, fonts included, into one offline HTML page
-  src/core/              input, audio (synthesized music and sound effects), save data, app bridge
+  src/core/              input, audio (synthesized music and sound effects), save data, app bridge, translations
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
   src/entities/          Kai, BOLT, enemies, bosses, pickups and interactive props
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
+  src/i18n/              the Greek translation
   src/ui/                HUD, touch controls, menus, dialogue and hacking screens
-  tools/                 level reachability checker (npm run game:check)
+  tools/                 level reachability checker (npm run game:check), translation check (npm run game:i18n)
 src/app/                 Expo Router screens: the WebView host (plus an iframe version for web)
 src/generated/           game page as a string (generated, git-ignored)
-__tests__/               Jest tests: deck data, reachability of every deck, physics
+__tests__/               Jest tests: deck data, reachability of every deck, physics, translations
 ```
 
 ### Levels
@@ -149,4 +154,5 @@ npm run typecheck     # builds the game page, then runs tsc
 npm run lint
 npm test
 npm run game:check    # per-deck reachability report (add a deck id and --map for a picture)
+npm run game:i18n     # English strings still missing a Greek translation
 ```

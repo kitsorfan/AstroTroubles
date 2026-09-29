@@ -90,11 +90,11 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
  */
 export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> = {
   sporeling: { name: 'Spore Crawler', tip: 'Hunts in packs and tries to surround you. Keep moving!' },
-  snapper: { name: 'Maw Plant', tip: 'Hides in the roots and bites up close. Watch for its jaws opening.' },
+  snapper: { name: 'Maw Plant', tip: 'Hides in the roots and bites up close. Watch its jaws!' },
   buzzer: { name: 'Stinger Wasp', tip: 'Circles you and dives in while you reload.' },
-  sentry: { name: 'Warden Bot', tip: 'Its shield blocks shots from the front. It turns slowly: get behind it and hit the glowing pack on its back!' },
+  sentry: { name: 'Warden Bot', tip: 'Shield in front, weak spot behind: hit the glowing pack on its back!' },
   turret: { name: 'Spitter Pod', tip: 'Lobs acid where you are going. Change direction to dodge.' },
-  brute: { name: 'Horned Brute', tip: 'Charges in a straight line. Dodge sideways, then hit it while it’s dizzy.' },
+  brute: { name: 'Horned Brute', tip: 'Charges in straight lines. Dodge, then hit it while it’s dizzy.' },
   blob: { name: 'Bloblin', tip: 'Splits when popped. Pop the big ones, then the little ones.' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };

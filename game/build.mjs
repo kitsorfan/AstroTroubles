@@ -10,6 +10,7 @@ import { context, build } from 'esbuild';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import subsetFont from 'subset-font';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -23,12 +24,46 @@ const FONTS = [
   ['Orbitron', 800, 'orbitron/800ExtraBold/Orbitron_800ExtraBold.ttf'],
 ];
 
-function fontFaces() {
-  return FONTS.map(([family, weight, file]) => {
-    const data = readFileSync(join(root, 'node_modules/@expo-google-fonts', file)).toString('base64');
+/**
+ * Fredoka and Orbitron have no Greek letters. These faces fill in just the Greek glyphs under the same
+ * family names (the browser picks them by `unicode-range`), so the CSS never has to change: a rounded
+ * face that matches Fredoka, and a techy one for Orbitron's headings.
+ */
+const GREEK_FONTS = [
+  ['Fredoka', 500, 'm-plus-rounded-1c/500Medium/MPLUSRounded1c_500Medium.ttf'],
+  ['Fredoka', 600, 'm-plus-rounded-1c/700Bold/MPLUSRounded1c_700Bold.ttf'],
+  ['Fredoka', 700, 'm-plus-rounded-1c/800ExtraBold/MPLUSRounded1c_800ExtraBold.ttf'],
+  ['Orbitron', 700, 'play/700Bold/Play_700Bold.ttf'],
+  ['Orbitron', 800, 'play/700Bold/Play_700Bold.ttf'],
+];
+const GREEK_RANGE = 'U+0370-03FF,U+1F00-1FFF';
+const GREEK_TEXT = (() => {
+  let s = '';
+  for (const [a, b] of [
+    [0x370, 0x3ff],
+    [0x1f00, 0x1fff],
+  ]) {
+    for (let c = a; c <= b; c++) s += String.fromCodePoint(c);
+  }
+  return s;
+})();
+
+const fontFile = (file) => readFileSync(join(root, 'node_modules/@expo-google-fonts', file));
+
+async function fontFaces() {
+  const faces = FONTS.map(([family, weight, file]) => {
+    const data = fontFile(file).toString('base64');
     return `@font-face{font-family:'${family}';font-weight:${weight};font-style:normal;font-display:block;src:url(data:font/ttf;base64,${data}) format('truetype')}`;
-  }).join('\n');
+  });
+  // Declared after the Latin faces, so they win for the characters in their range.
+  for (const [family, weight, file] of GREEK_FONTS) {
+    const data = (await subsetFont(fontFile(file), GREEK_TEXT, { targetFormat: 'woff2' })).toString('base64');
+    faces.push(`@font-face{font-family:'${family}';font-weight:${weight};font-style:normal;font-display:block;unicode-range:${GREEK_RANGE};src:url(data:font/woff2;base64,${data}) format('woff2')}`);
+  }
+  return faces.join('\n');
 }
+
+const FONT_CSS = await fontFaces();
 
 function page(js) {
   const css = readFileSync(join(here, 'src/ui/style.css'), 'utf8');
@@ -41,7 +76,7 @@ function page(js) {
 <meta name="theme-color" content="#03040a">
 <title>Hull Breach: Starbloom</title>
 <style>
-${fontFaces()}
+${FONT_CSS}
 ${css}
 </style>
 </head>

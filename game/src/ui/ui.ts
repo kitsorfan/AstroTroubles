@@ -737,15 +737,15 @@ export class UI {
   }
 
   help(back: () => void) {
-    const item = (color: string, name: string, text: string) => `<div><b style="color:${color}">${tr(name)}</b>: ${tr(text)}</div>`;
+    const item = (color: string, name: string, text: string) => `<div><b style="color:${color}">${name}</b>: ${text}</div>`;
     const el = this.open(`<div class="panel help-panel"><h2>${tr('HOW TO PLAY')}</h2>
       <div class="help-grid">
-        ${item('var(--accent)', 'Move', 'drag on the left side. Drag on the right side to turn the camera.')}
-        ${item('#7dff9a', 'JUMP', 'tap for a hop, hold for a big jump. With the Jet Boots, jump again in mid-air.')}
-        ${item('#7fe6ff', 'BLAST', 'tap to shoot (it aims for you). HOLD to charge a big FIREBALL, then let go.')}
-        ${item('#ffd166', 'SPIN', 'a spin attack that also blocks enemy attacks. You get 3 in a row, then a long recharge. In mid-air it becomes a GROUND POUND for red switches.')}
-        ${item('#b58cff', 'DASH', 'ram through enemies and zoom over gaps. Each dash uses one energy cell: refill at checkpoints and with violet energy cells.')}
-        ${item('#8ab4ff', 'PULSE', 'BOLT’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.')}
+        ${item('var(--accent)', tr('Move'), tr('drag on the left side. Drag on the right side to turn the camera.'))}
+        ${item('#7dff9a', tr('JUMP'), tr('tap for a hop, hold for a big jump. With the Jet Boots, jump again in mid-air.'))}
+        ${item('#7fe6ff', tr('BLAST'), tr('tap to shoot (it aims for you). HOLD to charge a big FIREBALL, then let go.'))}
+        ${item('#ffd166', tr('SPIN'), tr('a spin attack that also blocks enemy attacks. You get 3 in a row, then a long recharge. In mid-air it becomes a GROUND POUND for red switches.'))}
+        ${item('#b58cff', tr('DASH'), tr('ram through enemies and zoom over gaps. Each dash uses one energy cell: refill at checkpoints and with violet energy cells.'))}
+        ${item('#8ab4ff', tr('PULSE'), tr('BOLT’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.'))}
       </div>
       <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);

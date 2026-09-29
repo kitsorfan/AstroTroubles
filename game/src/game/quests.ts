@@ -59,7 +59,7 @@ export function deckQuests(id: DeckId, save: SaveData): Quest[] {
   const vault = Object.values(def.legend).find((s) => s.type === 'prize');
   if (vault && vault.type === 'prize') {
     const open = (save.prizes ?? []).includes(`${id}.${vault.id}`);
-    out.push({ id: `${id}:vault`, text: tr('Crack the secret vault'), done: open, progress: tr(open ? 'opened' : 'locked'), reward: vaultReward(def) });
+    out.push({ id: `${id}:vault`, text: tr('Crack the secret vault'), done: open, progress: open ? tr('opened') : tr('locked'), reward: vaultReward(def) });
   }
   return out;
 }
