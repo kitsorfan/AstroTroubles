@@ -1,7 +1,7 @@
 export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
-export type Ability = 'doubleJump' | 'dash' | 'glide' | 'shield';
+export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse';
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute';
 export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn';
 
@@ -21,6 +21,10 @@ export type Spec = Base &
     | { type: 'bolt' }
     | { type: 'crate'; loot?: 'bolts' | 'heart' | 'big'; metal?: boolean }
     | { type: 'heart' }
+    /** A dash energy cell that grows back a few seconds after Kai takes it (placed before dash jumps). */
+    | { type: 'energy' }
+    /** An invisible spot an objective can point the waypoint at (`at` in the objective). */
+    | { type: 'marker'; id: string }
     | { type: 'canister'; id: string }
     | { type: 'shard'; id: string }
     | { type: 'upgrade'; ability: Ability; id: string }
@@ -49,7 +53,8 @@ export type Spec = Base &
     | { type: 'faller' }
     | { type: 'bounce' }
     | { type: 'vent'; period?: number; offset?: number }
-    | { type: 'laser'; axis: 'x' | 'z'; length: number; period?: number; offset?: number; always?: boolean; off?: Cond; low?: boolean }
+    /** `hardened` emitters guard puzzles, so BOLT's force pulse can't short them out. */
+    | { type: 'laser'; axis: 'x' | 'z'; length: number; period?: number; offset?: number; always?: boolean; off?: Cond; low?: boolean; hardened?: boolean }
     | { type: 'zap'; period?: number; offset?: number }
     | { type: 'conveyor'; dx: number; dz: number; speed?: number }
     | { type: 'cocoon'; id: string; name: string; line: string }
@@ -107,7 +112,8 @@ export interface LevelDef {
   legend: Record<string, Spec>;
   intro?: string;
   outro?: string;
-  objectives: { until: Cond; text: string }[];
+  /** `at` points the HUD waypoint somewhere: a marker id, 'boss' or 'exit'. */
+  objectives: { until: Cond; text: string; at?: string }[];
   /** Shards in this deck, for the pause menu and results. */
   shardIds: string[];
   colonistIds?: string[];

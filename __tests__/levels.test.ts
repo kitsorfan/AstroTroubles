@@ -1,11 +1,11 @@
 import { deckAbilities } from '../game/tools/deckAbilities';
-import { isCollectible, reach } from '../game/tools/reach';
+import { isCollectible, reach, refillGaps } from '../game/tools/reach';
 import { FLYOVER, TRANSITIONS } from '../game/src/game/story';
 import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
 import { parseLevel } from '../game/src/world/grid';
 import type { Ability } from '../game/src/world/levelTypes';
 
-const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'shield'];
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse'];
 const parsed = LEVEL_ORDER.map((id) => parseLevel(LEVELS[id]));
 
 describe('deck data', () => {
@@ -71,7 +71,7 @@ describe('deck data', () => {
 
   it('hands out each ability exactly once, in order', () => {
     const found = parsed.flatMap((l) => l.entities.filter((e) => e.spec.type === 'upgrade').map((e) => (e.spec.type === 'upgrade' ? e.spec.ability : null)));
-    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'shield']);
+    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'pulse']);
   });
 });
 
@@ -87,6 +87,10 @@ describe.each(LEVEL_ORDER)('%s layout', (id) => {
 
   it('keeps every collectible reachable (some may need later abilities)', () => {
     expect(reach(level, ALL).missing.map((e) => e.id)).toEqual([]);
+  });
+
+  it('puts a checkpoint or energy cell before every jump that needs a dash', () => {
+    expect(refillGaps(level, after).map((t) => `${t.cx},${t.cz}`)).toEqual([]);
   });
 
   it('makes the new ability necessary to finish the deck', () => {

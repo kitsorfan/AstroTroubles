@@ -29,6 +29,11 @@ export const PLAYER = {
   dashSpeed: 17,
   dashTime: 0.2,
   dashCooldown: 0.55,
+  /** Dashes run on energy: one cell per dash, refilled at checkpoints and by energy pickups. */
+  dashEnergy: 3,
+  /** Ramming an enemy with a dash hits this hard (plus Blaster Power). */
+  dashDamage: 3,
+  dashHitRadius: 1.25,
   poundSpeed: 26,
   glideFall: 2.2,
   bounceV: 19,
@@ -46,9 +51,31 @@ export const PLAYER = {
   shotRange: 22,
   spinTime: 0.4,
   spinRadius: 2.1,
+  /**
+   * Spins in a row before the long recharge. A spin also guards Kai: enemy attacks bounce off it
+   * (hazards like lasers and lava still hurt).
+   */
+  spinCharges: 3,
+  /** Seconds to recharge every spin once they are all used up (a partly used set recharges in proportion). */
+  spinReload: 7,
+  /** Seconds without spinning before a partly used set starts recharging. */
+  spinTopUp: 3.5,
   aimRange: 12,
   magnetRange: 3.2,
 };
 
 export const START_HEARTS = 5;
 export const MAX_HEARTS = 10;
+
+/** BOLT's force pulse: a shockwave that hits everything around Kai and overloads lasers, then recharges slowly. */
+export const PULSE = {
+  /** Enemies this close are hit, stunned and thrown back; enemy shots this close are wiped out. */
+  radius: 8,
+  /** Plus 2 for every BOLT Zapper upgrade. */
+  damage: 4,
+  stun: 2.4,
+  cooldown: 16,
+  /** Laser emitters and zap floors this close short out for `overloadTime` seconds. */
+  overloadRadius: 12,
+  overloadTime: 6,
+};

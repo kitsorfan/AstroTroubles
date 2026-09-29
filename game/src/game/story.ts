@@ -1,3 +1,5 @@
+import { BRAND } from '../core/brand';
+import { tr } from '../core/i18n';
 import type { SaveData } from '../core/save';
 import { LEVELS, LEVEL_ORDER } from '../levels';
 import type { BadgeKind } from '../entities/badges';
@@ -16,7 +18,7 @@ import type { BossKind, DeckId, Line } from '../world/levelTypes';
 
 /** Narration for the opening cinematic, one caption per shot. */
 export const PROLOGUE = {
-  ship: 'The colony ship <b>AURORA</b>. Ten thousand people asleep in their pods, on the long journey to a new home.',
+  ship: 'The colony ship <b>{ship}</b>. Ten thousand people asleep in their pods, on the long journey to a new home.',
   quiet: 'The ship computer, <b>HALCYON</b>, kept watch. For months, everything was quiet...',
   comet: '...until something came flying out of the dark.',
   seed: 'It was not a comet. It was a seed: a glowing space plant called <b style="color:#ff6fcf">THE BLOOM</b>.',
@@ -86,21 +88,21 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
  * toward the Bridge, keep the ship pointed at the star, and keep everyone asleep. Every creature
  * (and every robot the pollen got to) has a job in that plan.
  */
-export const INTEL: Record<BadgeKind | 'elite', { name: string; plan: string }> = {
-  sporeling: { name: 'Spore Crawler', plan: 'The Bloom’s scouts. They hunt in packs: when one spots you, it calls the others, and they try to surround you.' },
-  snapper: { name: 'Maw Plant', plan: 'Guards the Bloom’s roots. It hides underground and bites anything that walks too close. Watch for its jaws opening wide!' },
-  buzzer: { name: 'Stinger Wasp', plan: 'Carries pollen to the robots (that’s how they went haywire). It circles you and dives in when you stop to reload.' },
-  sentry: { name: 'Warden Bot', plan: 'A security robot full of pollen. If it sees you, it sounds the ALARM and every guard nearby comes running. Its shield only blocks shots from the front: get behind it and hit the glowing pack on its back.' },
-  turret: { name: 'Spitter Pod', plan: 'Rooted Bloom artillery that guards the cocoons. It aims where you are GOING, so change direction to dodge.' },
-  brute: { name: 'Horned Brute', plan: 'The Bloom’s muscle. It charges in a straight line; if it misses, it stomps in anger. Dodge sideways and hit it while it’s dizzy.' },
-  blob: { name: 'Bloblin', plan: 'Wobbly goo that splits when popped. Pop the big ones, then mop up the little ones.' },
-  elite: { name: 'Elite!', plan: 'Enemies with a gold crown are elites: bigger, tougher, and they drop more bolts. Charged fireballs work wonders.' },
+export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> = {
+  sporeling: { name: 'Spore Crawler', tip: 'Hunts in packs and tries to surround you. Keep moving!' },
+  snapper: { name: 'Maw Plant', tip: 'Hides in the roots and bites up close. Watch for its jaws opening.' },
+  buzzer: { name: 'Stinger Wasp', tip: 'Circles you and dives in while you reload.' },
+  sentry: { name: 'Warden Bot', tip: 'Its shield blocks shots from the front. It turns slowly: get behind it and hit the glowing pack on its back!' },
+  turret: { name: 'Spitter Pod', tip: 'Lobs acid where you are going. Change direction to dodge.' },
+  brute: { name: 'Horned Brute', tip: 'Charges in a straight line. Dodge sideways, then hit it while it’s dizzy.' },
+  blob: { name: 'Bloblin', tip: 'Splits when popped. Pop the big ones, then the little ones.' },
+  elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
 /** Narration for the two ending cinematics. */
 export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
   saved: [
-    'With one mighty pull on the wheel, the <b>AURORA</b> swung away from the star.',
+    'With one mighty pull on the wheel, the <b>{ship}</b> swung away from the star.',
     'The vines let go of the ship. The Bloom Heart curled up into a tiny, sleeping seed.',
     'Weeks later, the pods opened one by one above a green-and-blue world: <b>Nova Terra</b>.',
     'Ten thousand colonists had a new home. And a brand new hero.',
@@ -108,7 +110,7 @@ export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
   friends: [
     'BOLT flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, the Bloom flashed back.',
     'Its vines turned gold and burst into flowers. After a long, long time in the dark, the Bloom was not afraid anymore.',
-    'Gently, it turned the AURORA away from the star, toward a warm blue world it had seen in its dreams.',
+    'Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.',
     'Ten thousand colonists woke up in a garden between the stars. And BOLT was never scared of the dark again, because now something always glows.',
   ],
 };
@@ -121,13 +123,13 @@ export function endingText(kind: 'saved' | 'friends', save: SaveData): string[] 
   const out: string[] = [];
   out.push(
     kind === 'friends'
-      ? 'The Bloom became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever BOLT flies by.'
-      : 'BOLT kept the little Bloom seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.',
+      ? tr('The Bloom became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever BOLT flies by.')
+      : tr('BOLT kept the little Bloom seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
   );
-  if (captain) out.push('Captain Mbeki promoted Kai to Chief Engineer on the spot. BOLT got a medal. He wears it every day.');
-  if (rosa) out.push('Aunt Rosa tells everyone the story of the day her Kai saved the ship. Twice a day. Sometimes three times.');
-  out.push(n ? `You rescued ${n} of 12 colonists from their cocoons.` : 'The colonists woke up and cheered for the engineer who saved the day.');
-  if (kind === 'saved' && save.shards.length < 18) out.push('Psst... the Bloom still has secrets. Find all 18 memory shards and BOLT might learn to talk to it.');
+  if (captain) out.push(tr('Captain Mbeki promoted Kai to Chief Engineer on the spot. BOLT got a medal. He wears it every day.'));
+  if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Kai saved the ship. Twice a day. Sometimes three times.'));
+  out.push(n ? tr('You rescued {n} of 12 colonists from their cocoons.', { n }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
+  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... the Bloom still has secrets. Find all 18 memory shards and BOLT might learn to talk to it.'));
   return out;
 }
 
@@ -143,25 +145,26 @@ function colonistNames(save: SaveData): string[] {
 
 export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
   const rescued = colonistNames(save);
-  const p = (s: string) => `<p>${s}</p>`;
+  const p = (s: string) => `<p>${tr(s)}</p>`;
+  const head = (s: string) => `<h3>${tr(s)}</h3>`;
   return [
-    '<h1>HULL BREACH<br>STARBLOOM</h1>',
-    '<h3>STARRING</h3>',
+    `<h1>${BRAND.kicker}<br>${BRAND.name}</h1>`,
+    head('STARRING'),
     p('Kai Reyes, junior engineer'),
     p('BOLT, a very brave little drone'),
-    '<h3>WITH</h3>',
+    head('WITH'),
     p('HALCYON, the ship computer'),
     p('Captain Ines Mbeki'),
     p('Aunt Rosa Reyes, Security Chief'),
     p('VENDY, the travelling shop'),
     p(kind === 'friends' ? 'The Bloom, as our new friend' : 'The Bloom, as a sleepy seed'),
-    '<h3>THE GUARDIANS</h3>',
+    head('THE GUARDIANS'),
     p('Frost Warden · Vine Queen · Magma Golem'),
     p('King Bloblin · WARDOG · the Bloom Heart'),
-    '<h3>COLONISTS YOU RESCUED</h3>',
+    head('COLONISTS YOU RESCUED'),
     ...(rescued.length ? rescued.map(p) : [p('Everyone woke up safe and sound!')]),
-    '<h3>MEMORY SHARDS</h3>',
-    p(`${save.shards.length} of 18`),
-    `<p class="end">Thank you for playing!</p>`,
+    head('MEMORY SHARDS'),
+    `<p>${tr('{n} of 18', { n: save.shards.length })}</p>`,
+    `<p class="end">${tr('Thank you for playing!')}</p>`,
   ].join('');
 }

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL } from '../core/constants';
+import { tr } from '../core/i18n';
 import type { Boss } from '../entities/bosses';
 import type { BoltFind, Exit, Holo } from '../entities/props';
 import type { World } from '../game/world';
@@ -231,7 +232,7 @@ function bossLines(w: World, b: Boss): Line[] {
     lines.push(
       w.save.shards.length >= 18
         ? { who: 'bolt', text: 'Kai, I know its light-words now! Get close to the Heart and press SPEAK!' }
-        : { who: 'bolt', text: `If only we had all 18 memory shards... (we have ${w.save.shards.length}) then I could try to TALK to it.` },
+        : { who: 'bolt', text: tr('If only we had all 18 memory shards... (we have {n}) then I could try to TALK to it.', { n: w.save.shards.length }) },
     );
   }
   return lines;

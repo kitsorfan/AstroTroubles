@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
+import { tr } from '../core/i18n';
 import { damp } from '../core/math';
 import type { World } from '../game/world';
 import type { Cond, Spec } from '../world/levelTypes';
@@ -16,6 +17,16 @@ export interface FloorFx {
   stand?(p: Player, dt: number): void;
   land?(p: Player): void;
   unsafe?: boolean;
+}
+
+/** Hazards that BOLT's force pulse can short out. Returns true if it was in range. */
+export interface Overloadable {
+  overload(at: THREE.Vector3, radius: number, seconds: number): boolean;
+}
+
+/** Sparks and a stuttering flicker while an overloaded emitter is dead. */
+function overloadSparks(world: World, x: number, y: number, z: number) {
+  if (Math.random() < 0.12) world.particles.emit(x, y, z, { count: 2, color: '#bff4ff', speed: 3, up: 2, life: 0.3, size: 0.3 });
 }
 
 const cx2x = (c: number) => c * CELL + CELL / 2;
@@ -76,7 +87,7 @@ export class Crate extends Entity implements Target {
 
   hit(_dmg: number, kind: HitKind): boolean {
     if (!this.alive) return false;
-    if (this.metal && kind !== 'pound' && kind !== 'blast') {
+    if (this.metal && kind !== 'pound' && kind !== 'blast' && kind !== 'dash' && kind !== 'pulse') {
       audio.play('zap', 2);
       return true;
     }
@@ -136,9 +147,16 @@ export class Checkpoint extends Entity {
     this.t += dt;
     this.ring.rotation.z += dt * (this.active ? 2 : 0.4);
     this.beam.scale.setScalar(this.active ? 2.2 + Math.sin(this.t * 3) * 0.3 : 0.01);
-    if (this.active) return;
-    const p = this.world.player.body;
-    if ((p.x - this.spot.x) ** 2 + (p.z - this.spot.z) ** 2 < 2 && Math.abs(p.y - this.spot.y) < 1.5) this.world.activateCheckpoint(this);
+    const pl = this.world.player;
+    const p = pl.body;
+    const on = (p.x - this.spot.x) ** 2 + (p.z - this.spot.z) ** 2 < 2 && Math.abs(p.y - this.spot.y) < 1.5;
+    if (!on) return;
+    if (!this.active) this.world.activateCheckpoint(this);
+    else if (this.world.save.abilities.includes('dash') && pl.gainEnergy(99)) {
+      // Standing on a checkpoint tops the dash energy back up.
+      audio.play('charged', 1.2);
+      this.world.particles.emit(this.spot.x, this.spot.y + 1, this.spot.z, { count: 16, color: '#b58cff', speed: 3, up: 3, life: 0.6, size: 0.45 });
+    }
   }
 }
 
@@ -258,7 +276,7 @@ export class FloorSwitch extends Entity implements Target {
     haptic('medium');
     if (this.timed) {
       this.timer = this.timed;
-      this.world.hooks.toast(`Hurry! ${this.timed} seconds!`, 'bolt');
+      this.world.hooks.toast(tr('Hurry! {n} seconds!', { n: this.timed }), 'bolt');
     }
   }
 
@@ -767,13 +785,15 @@ export class Vent extends Entity implements FloorFx {
   }
 }
 
-export class Laser extends Entity {
+export class Laser extends Entity implements Overloadable {
   private beam: THREE.Mesh;
   private beamMat: THREE.MeshBasicMaterial;
   private a: THREE.Vector3;
   private b: THREE.Vector3;
   private y: number;
   private wasOn = false;
+  /** Seconds left shorted out by BOLT's force pulse. */
+  private overT = 0;
 
   constructor(
     world: World,
@@ -810,13 +830,27 @@ export class Laser extends Entity {
   }
 
   get on() {
+    if (this.overT > 0) return false;
     if (this.spec.off && this.world.cond(this.spec.off)) return false;
     if (this.spec.always) return true;
     const period = this.spec.period ?? 3;
     return (this.world.time + (this.spec.offset ?? 0)) % period < period * 0.55;
   }
 
-  update() {
+  overload(at: THREE.Vector3, radius: number, seconds: number): boolean {
+    if (this.spec.hardened || (this.spec.off && this.world.cond(this.spec.off))) return false;
+    // Distance from the pulse to the nearest point of the beam.
+    const abx = this.b.x - this.a.x;
+    const abz = this.b.z - this.a.z;
+    const k = Math.max(0, Math.min(1, ((at.x - this.a.x) * abx + (at.z - this.a.z) * abz) / (abx * abx + abz * abz || 1)));
+    const d = Math.hypot(this.a.x + abx * k - at.x, this.a.z + abz * k - at.z);
+    if (d > radius || Math.abs(at.y - this.y) > 5) return false;
+    this.overT = seconds;
+    return true;
+  }
+
+  update(dt: number) {
+    this.overT = Math.max(0, this.overT - dt);
     const on = this.on;
     if (on !== this.wasOn) {
       this.wasOn = on;
@@ -824,6 +858,14 @@ export class Laser extends Entity {
     }
     const period = this.spec.period ?? 3;
     const phase = (this.world.time + (this.spec.offset ?? 0)) % period;
+    if (this.overT > 0) {
+      // Shorted out: the posts spark, and in the last second the beam stutters back to life as a warning.
+      overloadSparks(this.world, this.a.x, this.y + 0.25, this.a.z);
+      overloadSparks(this.world, this.b.x, this.y + 0.25, this.b.z);
+      this.beam.visible = this.overT < 1 && Math.sin(this.world.time * 40) > 0;
+      this.beamMat.opacity = 0.3;
+      return;
+    }
     const warn = !on && !this.spec.always && phase > period - 0.5;
     this.beam.visible = on || warn;
     this.beamMat.opacity = on ? 0.9 : Math.sin(this.world.time * 40) > 0 ? 0.3 : 0.05;
@@ -838,17 +880,18 @@ export class Laser extends Entity {
     if (inside && p.y < this.y + 0.15 && p.y + p.h > this.y - 0.15) {
       const fromX = this.spec.axis === 'x' ? p.x : this.a.x + (p.x < this.a.x ? 1 : -1);
       const fromZ = this.spec.axis === 'z' ? p.z : this.a.z + (p.z < this.a.z ? 1 : -1);
-      this.world.player.hurt(1, fromX, fromZ);
+      this.world.player.hurt(1, fromX, fromZ, true);
     }
   }
 }
 
-export class ZapFloor extends Entity implements FloorFx {
+export class ZapFloor extends Entity implements FloorFx, Overloadable {
   unsafe = true;
   private plateMat: THREE.MeshStandardMaterial;
   private x: number;
   private z: number;
   private h: number;
+  private overT = 0;
 
   constructor(
     world: World,
@@ -869,14 +912,26 @@ export class ZapFloor extends Entity implements FloorFx {
   }
 
   get on() {
-    return (this.world.time + this.offset) % this.period < this.period * 0.45;
+    return this.overT <= 0 && (this.world.time + this.offset) % this.period < this.period * 0.45;
+  }
+
+  overload(at: THREE.Vector3, radius: number, seconds: number): boolean {
+    if (Math.hypot(this.x - at.x, this.z - at.z) > radius || Math.abs(at.y - this.h) > 5) return false;
+    this.overT = seconds;
+    return true;
   }
 
   stand(p: Player) {
-    if (this.on) p.hurt(1, this.x + (Math.random() - 0.5) * 0.1, this.z + (Math.random() - 0.5) * 0.1);
+    if (this.on) p.hurt(1, this.x + (Math.random() - 0.5) * 0.1, this.z + (Math.random() - 0.5) * 0.1, true);
   }
 
-  update() {
+  update(dt: number) {
+    this.overT = Math.max(0, this.overT - dt);
+    if (this.overT > 0) {
+      overloadSparks(this.world, this.x + (Math.random() - 0.5) * 1.6, this.h + 0.15, this.z + (Math.random() - 0.5) * 1.6);
+      this.plateMat.emissiveIntensity = this.overT < 1 && Math.sin(this.world.time * 30) > 0 ? 0.6 : 0;
+      return;
+    }
     const phase = (this.world.time + this.offset) % this.period;
     const on = this.on;
     const warn = !on && phase > this.period - 0.5;
@@ -1014,7 +1069,7 @@ export class Cocoon extends Entity implements Target {
     // Story characters (Aunt Rosa, the Captain) get a proper conversation instead of a one-liner.
     const lines = w.dialogue(`colonist:${this.id.split('.')[1]}`);
     if (lines.length) w.hooks.say(lines);
-    else w.hooks.toast(`${this.name}: "${this.line}"`, 'colonist');
+    else w.hooks.toast(tr('{name}: “{line}”', { name: tr(this.name), line: tr(this.line) }), 'colonist');
   }
 
   update(dt: number) {

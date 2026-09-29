@@ -64,7 +64,7 @@ export const bridge: LevelDef = {
     #.........o.o.o.o.......H.D.....#
     #...................J.....#.....#
     #.......s.........s.......#######
-    #.........................#
+    #............=............#
     #............r............####
     #....x...............x....G.+#
     #.........................####
@@ -136,7 +136,7 @@ export const bridge: LevelDef = {
     q: { type: 'laser', axis: 'x', length: 8, always: true },
     Y: { type: 'zap', period: 2.6 },
     g: { type: 'holo', log: 'log' },
-    l: { type: 'sign', text: 'Two of these lasers never switch off. Pop BOLT’s SHIELD and run for it, even while carrying a power cell!' },
+    l: { type: 'sign', text: 'Two of these lasers never switch off. Fire BOLT’s PULSE to short them out, then run for it, even while carrying a power cell!' },
     m: { type: 'sign', text: 'OBSERVATION GALLERY. The floor is broken! Cross the crumbling tiles quickly, or hover over the gap.' },
     w: { type: 'sign', text: 'Something shiny is floating outside the window. Only a long hover will get you there.' },
     j: { type: 'sign', text: 'Hop on the lift! It carries you up the Spine.' },
@@ -157,7 +157,7 @@ export const bridge: LevelDef = {
     { until: { flag: 'nav' }, text: 'Find the navigation power cell in the dark crew wing' },
     { until: { flag: 't1' }, text: 'Hack the navigation terminal' },
     { until: { boss: true }, text: 'Ride up the Spine and reach the Bloom Heart' },
-    { until: { flag: 'never' }, text: 'Save the Aurora!' },
+    { until: { flag: 'never' }, text: 'Save the {ship}!' },
   ],
   dialogues: {
     intro: [

@@ -47,7 +47,7 @@ export const engine: LevelDef = {
     #~~~~~~~~~~~~~~~~~~~22~#
     #~~~~~~~~~~~~~~~~~~~2*~#
     #~~~~~~~~~~~~~~~~~~~~~~#
-    #~~~~~~~.......~~~~~~~~#
+    #~~~~~~~......=~~~~~~~~#
     #~~~~~~~...d...~~~~~~~~#
     #~~~~~~~~~~~~~~~~~~~~~~#
     #~~~~~~~~~~~~~~~~~~~~~~#
@@ -139,7 +139,7 @@ export const engine: LevelDef = {
     { until: { all: [{ flag: 'pump1' }, { flag: 'pump2' }] }, text: 'Bring two power cells to the coolant pumps' },
     { until: { flag: 'ability:dash' }, text: 'Grab the DASH THRUSTERS' },
     { until: { boss: true }, text: 'Dash across the lava and cool down the Magma Golem' },
-    { until: { flag: 'never' }, text: 'Ride the lift up to the Habitat Ring' },
+    { until: { flag: 'never' }, text: 'Ride the lift up to the Habitat Ring', at: 'exit' },
   ],
   dialogues: {
     intro: [

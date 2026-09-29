@@ -7,7 +7,8 @@ import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
-import { MAX_HEARTS } from '../core/constants';
+import { MAX_HEARTS, PLAYER } from '../core/constants';
+import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
 import { LEVELS, LEVEL_ORDER } from '../levels';
@@ -48,17 +49,22 @@ const ABILITY_LINES: Record<string, Line[]> = {
   ],
   dash: [
     { who: 'bolt', text: 'DASH THRUSTERS! Press DASH to zoom forward, even in mid-air. Great for long gaps!' },
+    { who: 'bolt', text: 'A dash hits HARD too: ram straight through enemies! Each one uses an energy cell. Checkpoints and violet energy cells fill you back up.' },
     { who: 'kai', text: 'Nyoom!' },
   ],
   glide: [
     { who: 'bolt', text: 'A HOVER PACK! Hold JUMP while you fall to float gently down. Wheee!' },
     { who: 'kai', text: 'I can glide across the whole Ring with this!' },
+    { who: 'bolt', text: 'King Bloblin is on the island in the MIDDLE of the Ring. Climb the launch tower, follow the gold marker and glide over!' },
   ],
-  shield: [
-    { who: 'bolt', text: 'SHIELD MODULE installed! Press my button to make a force bubble. It blocks lasers and shots for a few seconds.' },
-    { who: 'kai', text: 'Now those laser walls are no problem.' },
+  pulse: [
+    { who: 'bolt', text: 'FORCE PULSE installed! Press PULSE and I blast out a shockwave. It knocks out every enemy around you!' },
+    { who: 'bolt', text: 'It also shorts out lasers for a few seconds. But it takes me a LONG time to recharge, so pick your moment.' },
+    { who: 'kai', text: 'Those laser walls don’t stand a chance.' },
   ],
 };
+
+const tmpV = new THREE.Vector3();
 
 export class Game {
   readonly renderer: THREE.WebGLRenderer;
@@ -142,6 +148,10 @@ export class Game {
   private applySettings(s: Settings) {
     audio.setVolumes(s.music, s.sfx);
     setHaptics(s.haptics);
+    if (s.lang !== lang()) {
+      setLang(s.lang);
+      this.ui.applyLang();
+    }
     const ratio = Math.min(window.devicePixelRatio || 1, s.quality === 'high' ? 2 : s.quality === 'medium' ? 1.5 : 1);
     this.renderer.setPixelRatio(ratio);
     this.resize();
@@ -257,8 +267,8 @@ export class Game {
     const w = this.world;
     const d = w.def;
     this.ui.pause({
-      deck: d.name.toUpperCase(),
-      shards: `${d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length} / ${d.shardIds.length} here · ${this.save.shards.length} / 18 total`,
+      deck: d.name,
+      shards: tr('{n} / {m} here · {t} / 18 total', { n: d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length, m: d.shardIds.length, t: this.save.shards.length }),
       colonists: `${this.save.colonists.length} / 12`,
       quests: deckQuests(d.id, this.save),
       onResume: () => this.resume(),
@@ -438,7 +448,60 @@ export class Game {
     if (!w) return;
     this.ui.setHearts(w.player.hearts, this.save.maxHearts);
     this.ui.setBolts(this.save.bolts);
-    this.ui.setDash(this.save.abilities.includes('dash'));
+    this.refreshAbilities(w);
+  }
+
+  private refreshAbilities(w: World) {
+    const pl = w.player;
+    this.ui.setAbilities({
+      spins: pl.spins,
+      spinMax: PLAYER.spinCharges,
+      spinReload: pl.spinReloadProgress,
+      dash: this.save.abilities.includes('dash'),
+      energy: pl.energy,
+      energyMax: PLAYER.dashEnergy,
+      pulse: this.save.abilities.includes('pulse') && w.boltActive,
+      pulseCharge: w.pulseCharge,
+      pulseLeft: w.pulseCd,
+    });
+  }
+
+  /** Draws the gold objective marker over its target, or pinned to the screen edge pointing at it. */
+  private placeWaypoint(w: World) {
+    const at = w.waypoint;
+    const p = w.player.body;
+    const dist = at ? Math.hypot(at.x - p.x, at.z - p.z) : 0;
+    if (!at || dist < 5) {
+      this.ui.setWaypoint(null);
+      return;
+    }
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const v = tmpV.set(at.x, at.y + 2.4, at.z).project(w.camera);
+    const behind = v.z > 1;
+    let x = (v.x * 0.5 + 0.5) * W;
+    let y = (0.5 - v.y * 0.5) * H;
+    if (behind) {
+      // Behind the camera the projection comes out mirrored.
+      x = W - x;
+      y = H - y;
+    }
+    const left = 44;
+    const top = 84;
+    const bottom = 70;
+    if (!behind && x > left && x < W - left && y > top && y < H - bottom) {
+      this.ui.setWaypoint({ x, y, edge: false, angle: 0, dist });
+      return;
+    }
+    // Slide the marker along the line from the screen centre until it meets the safe edge.
+    const cx = W / 2;
+    const cy = H / 2;
+    const dx = x - cx;
+    const dy = behind && Math.abs(y - cy) < 1 ? 1 : y - cy;
+    const sx = (W / 2 - left) / Math.max(1e-3, Math.abs(dx));
+    const sy = (dy > 0 ? H / 2 - bottom : H / 2 - top) / Math.max(1e-3, Math.abs(dy));
+    const s = Math.min(sx, sy);
+    this.ui.setWaypoint({ x: cx + dx * s, y: cy + dy * s, edge: true, angle: Math.atan2(dy, dx), dist });
   }
 
   private hooks(): WorldHooks {
@@ -549,11 +612,21 @@ export class Game {
       threat: (kind) => {
         const info = INTEL[kind];
         const icon = enemyIconUrl(kind === 'elite' ? 'brute' : kind, kind === 'elite');
-        this.ui.threat(icon, info.name, info.plan, kind === 'elite' ? '#ffd166' : '#ff8a9a');
-        audio.play('alarm', 1);
+        this.ui.threat(icon, info.name, info.tip, kind === 'elite' ? '#ffd166' : '#ff8a9a');
+        audio.play('blip', 0.8);
+      },
+      dashEmpty: () => {
+        this.ui.dashEmpty();
+        const now = performance.now();
+        if (now - this.dashHintAt > 20000) {
+          this.dashHintAt = now;
+          this.ui.toast('Out of dash energy! Checkpoints and violet energy cells fill it back up.', 'bolt');
+        }
       },
     };
   }
+
+  private dashHintAt = -1e9;
 
   private buy(item: ShopItem) {
     const lvl = this.save.upgrades[item.id] ?? 0;
@@ -626,10 +699,10 @@ export class Game {
           kind,
           endingText(kind, this.save),
           [
-            ['Memory shards', `${this.save.shards.length} / 18`],
-            ['Colonists rescued', `${this.save.colonists.length} / 12`],
-            ['Bolts in pocket', String(this.save.bolts)],
-            ['Play time', `${hours}h ${mins}m`],
+            [tr('Memory shards'), `${this.save.shards.length} / 18`],
+            [tr('Colonists rescued'), `${this.save.colonists.length} / 12`],
+            [tr('Bolts in pocket'), String(this.save.bolts)],
+            [tr('Play time'), tr('{h}h {m}m', { h: hours, m: mins })],
           ],
           () => this.toTitle(),
         );
@@ -675,13 +748,12 @@ export class Game {
           w.update(dt, this.input, this.save.settings.camSpeed);
           const pl = w.player;
           this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
+          this.refreshAbilities(w);
+          this.placeWaypoint(w);
           this.hudT -= dt;
           if (this.hudT <= 0) {
             this.hudT = 0.1;
-            const f = w.focus;
-            if (f) this.ui.setAction(f.label(), 'action');
-            else if (w.shieldReady) this.ui.setAction('SHIELD', 'shield');
-            else this.ui.setAction(null);
+            this.ui.setAction(w.focus?.label() ?? null);
           }
         }
       }

@@ -21,8 +21,8 @@ export const habitat: LevelDef = {
 #8844.z...............#TR....RY#.......V.#
 #..x........e.........#...Rq...#.........#
 #.....................#####.####.....C...#
-#........u.....C.669999...........h......#
-#...............w669999..................#
+#........u.....C.669A99...........h......#
+#...............w6699O9..................#
 ###X###                            ......############
 #......                            ......#......#...#
 #......                            ....x.#.a..c.#.I.#
@@ -88,7 +88,9 @@ export const habitat: LevelDef = {
     j: { type: 'sign', text: 'Welcome to the Habitat Ring! Please do not feed the goo.' },
     y: { type: 'sign', text: 'PLAYGROUND. Bounce pads, climbing towers and a very shiny thing on top of the tallest one!' },
     g: { type: 'sign', text: 'The market gate only stays open for a few seconds after you pound the switch. Ready, set... DASH!' },
-    w: { type: 'sign', text: 'The launch tower! Jump off the top and HOLD JUMP to hover all the way to the island.' },
+    w: { type: 'sign', text: 'The launch tower! Jump off the top and HOLD JUMP to hover all the way to the island in the middle.' },
+    O: { type: 'marker', id: 'tower' },
+    A: { type: 'trigger', id: 'ontower', event: 'flag:ontower', dialogue: 'tower', w: 4, d: 2, when: { flag: 'ability:glide' } },
     d: { type: 'sign', text: 'Something shiny is floating out there. Is that jump too far... or just far enough?' },
     '?': { type: 'shard', id: 's1' },
     '*': { type: 'shard', id: 's2' },
@@ -104,8 +106,9 @@ export const habitat: LevelDef = {
   },
   objectives: [
     { until: { flag: 'ability:glide' }, text: 'Find the HOVER PACK in the playground' },
-    { until: { boss: true }, text: 'Glide from the launch tower to the island' },
-    { until: { flag: 'never' }, text: 'Ride the lift up to Security' },
+    { until: { flag: 'ontower' }, text: 'Climb the launch tower', at: 'tower' },
+    { until: { boss: true }, text: 'Glide to the island in the middle and defeat King Bloblin', at: 'boss' },
+    { until: { flag: 'never' }, text: 'Ride the lift up to Security', at: 'exit' },
   ],
   dialogues: {
     intro: [
@@ -121,6 +124,10 @@ export const habitat: LevelDef = {
       { who: 'kai', text: '...Brave is being scared and going anyway. Hang on, Aunt Rosa. I’m coming.' },
       { who: 'bolt', text: 'I am VERY scared and I am still going. Does that count?' },
       { who: 'kai', text: 'That totally counts.' },
+    ],
+    tower: [
+      { who: 'bolt', text: 'Look, the pink light in the middle! That is King Bloblin’s island.' },
+      { who: 'bolt', text: 'Run off the edge toward it and HOLD JUMP to hover all the way there.' },
     ],
     boss: [
       { who: 'bolt', text: 'KING BLOBLIN! He is made of goo, and he wobbles when he is angry!' },

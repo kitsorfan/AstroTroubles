@@ -151,7 +151,7 @@ export const cryo: LevelDef = {
     { until: { clear: 'r1' }, text: 'Defeat the frozen sporelings' },
     { until: { flag: 'bridge1' }, text: 'Ground-pound the red switch' },
     { until: { boss: true }, text: 'Stop the Frost Warden' },
-    { until: { all: [{ boss: true }, { flag: 'never' }] }, text: 'Ride the lift up to Hydroponics' },
+    { until: { all: [{ boss: true }, { flag: 'never' }] }, text: 'Ride the lift up to Hydroponics', at: 'exit' },
   ],
   dialogues: {
     wake: [

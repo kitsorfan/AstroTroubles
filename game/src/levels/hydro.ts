@@ -142,7 +142,7 @@ export const hydro: LevelDef = {
     { until: { clear: 'r1' }, text: 'Clear out the vault guards' },
     { until: { flag: 'ability:doubleJump' }, text: 'Grab the JET BOOTS' },
     { until: { boss: true }, text: 'Climb the atrium and stop the Vine Queen' },
-    { until: { flag: 'never' }, text: 'Ride the lift up to the Engine Core' },
+    { until: { flag: 'never' }, text: 'Ride the lift up to the Engine Core', at: 'exit' },
   ],
   dialogues: {
     intro: [

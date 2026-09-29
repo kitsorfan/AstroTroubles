@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 import { audio } from '../core/audio';
-import { CELL } from '../core/constants';
+import { CELL, PULSE } from '../core/constants';
 import { damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { Grid } from '../world/grid';
@@ -152,12 +152,12 @@ export abstract class Enemy extends Entity implements Target {
     this.hp -= dmg;
     if (!this.aggro) this.wake();
     this.flashT = 0.12;
-    // BOLT's zap is mostly a stun: it freezes the enemy for a moment.
-    this.stagger = kind === 'zap' ? 1.3 : kind === 'shot' ? 0.12 : 0.35;
+    // BOLT's zap is mostly a stun: it freezes the enemy for a moment. His force pulse stuns for longer.
+    this.stagger = kind === 'pulse' ? PULSE.stun : kind === 'zap' ? 1.3 : kind === 'dash' ? 0.75 : kind === 'shot' ? 0.12 : 0.35;
     const dx = this.body.x - from.x;
     const dz = this.body.z - from.z;
     const d = Math.hypot(dx, dz) || 1;
-    const kb = kind === 'shot' || kind === 'zap' ? 2.5 : kind === 'blast' ? 13 : 9;
+    const kb = kind === 'shot' || kind === 'zap' ? 2.5 : kind === 'blast' || kind === 'dash' || kind === 'pulse' ? 13 : 9;
     if (!this.flying) {
       this.body.vx += (dx / d) * kb;
       this.body.vz += (dz / d) * kb;
@@ -185,6 +185,7 @@ export abstract class Enemy extends Entity implements Target {
     this.world.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 10, color: '#ffffff', speed: 4, life: 0.4, size: 0.4 });
     this.world.dropBolts(this.aim, this.bolts);
     if (Math.random() < this.heartChance) this.world.dropHeart(this.aim);
+    else if (Math.random() < 0.2) this.world.dropEnergy(this.aim);
     this.world.enemyDied(this);
     this.remove();
   }
@@ -244,6 +245,8 @@ export abstract class Enemy extends Entity implements Target {
     const r = this.radius + p.r - 0.1;
     if (dx * dx + dz * dz < r * r && p.y < this.body.y + this.radius * 2 + 0.2 && p.y + p.h > this.body.y) {
       if (this.player.pounding && p.y > this.body.y + this.radius) return false;
+      // Kai is ramming it with a dash: the dash does the hitting.
+      if (this.player.dashing) return false;
       const before = this.player.hearts;
       this.player.hurt(dmg, this.body.x, this.body.z);
       return this.player.hearts < before;

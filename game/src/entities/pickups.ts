@@ -193,6 +193,92 @@ export class HeartPickup extends Floater {
   }
 }
 
+/** Violet dash energy: the colour of the DASH button. */
+export const ENERGY_COLOR = '#b58cff';
+
+/**
+ * A cell of dash energy. Enemies sometimes drop one; the ones placed in a deck sit on a little
+ * charger and grow back a few seconds after Kai takes them, so a missed dash jump never strands him.
+ */
+export class EnergyPickup extends Floater {
+  private cell = new THREE.Group();
+  private charger: THREE.Group | null = null;
+  private regrowT = 0;
+
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    private station = false,
+  ) {
+    super(world, id, cx, cz, h, 1);
+    const glass = mat('#e4d6ff', { emissive: ENERGY_COLOR, ei: 1.1, rough: 0.15, opacity: 0.9 });
+    const cap = mat('#dfe6f0', { metal: 0.7, rough: 0.3 });
+    const c = this.cell;
+    c.add(mesh(cyl(0.2, 0.2, 0.46, 16), glass), mesh(cyl(0.23, 0.23, 0.08, 16), cap, 0, 0.27, 0), mesh(cyl(0.23, 0.23, 0.08, 16), cap, 0, -0.27, 0));
+    c.add(mesh(cyl(0.08, 0.08, 0.06, 10), cap, 0, 0.34, 0));
+    // A lightning flash across the cell.
+    const bolt = new THREE.Shape([new THREE.Vector2(0.04, 0.2), new THREE.Vector2(-0.1, -0.02), new THREE.Vector2(0.01, -0.02), new THREE.Vector2(-0.04, -0.2), new THREE.Vector2(0.1, 0.03), new THREE.Vector2(-0.01, 0.03)]);
+    const zap = mat('#ffffff', { emissive: '#ffffff', ei: 1.2 });
+    for (const s of [1, -1]) {
+      const m = mesh(new THREE.ShapeGeometry(bolt), zap, 0, 0, s * 0.205, false);
+      if (s < 0) m.rotation.y = Math.PI;
+      c.add(m);
+    }
+    c.add(glowSprite(ENERGY_COLOR, 1.7, 0.5));
+    this.obj.add(c);
+    if (station) {
+      // The charger stays put while the cell above it bobs and spins.
+      const g = new THREE.Group();
+      g.add(mesh(cyl(0.5, 0.62, 0.22, 20), mat('#3a4458', { metal: 0.5, rough: 0.4 }), 0, 0.11, 0));
+      g.add(mesh(torus(0.42, 0.04), mat(ENERGY_COLOR, { emissive: ENERGY_COLOR, ei: 1.2 }), 0, 0.23, 0, false).rotateX(Math.PI / 2));
+      g.position.set(this.obj.position.x, h, this.obj.position.z);
+      world.scene.add(g);
+      this.charger = g;
+    }
+  }
+
+  static at(world: World, pos: THREE.Vector3) {
+    const e = new EnergyPickup(world, `energy${Math.random()}`, Grid.toCell(pos.x), Grid.toCell(pos.z), pos.y - 1);
+    e.obj.position.set(pos.x, pos.y, pos.z);
+    e.baseY = Math.max(pos.y - 0.2, e.baseY);
+    return e;
+  }
+
+  update(dt: number) {
+    // Chargers only matter (and only show) once Kai owns the Dash Thrusters.
+    const usable = this.world.save.abilities.includes('dash');
+    if (this.charger) this.charger.visible = usable;
+    if (this.regrowT > 0) {
+      this.regrowT -= dt;
+      const k = Math.max(0, 1 - this.regrowT / 1.2);
+      this.cell.scale.setScalar(Math.max(0.001, k));
+      if (this.regrowT > 0) return;
+    }
+    this.obj.visible = usable;
+    if (!usable) return;
+    super.update(dt);
+  }
+
+  protected collect() {
+    const w = this.world;
+    // Leave it be when Kai is already full.
+    if (!w.player.gainEnergy(1)) return;
+    audio.play('charged', 1.2);
+    haptic('light');
+    const o = this.obj.position;
+    w.particles.emit(o.x, o.y, o.z, { count: 18, color: ENERGY_COLOR, speed: 4, life: 0.5, size: 0.5 });
+    if (!this.station) {
+      this.remove();
+      return;
+    }
+    this.regrowT = 7;
+    this.cell.scale.setScalar(0.001);
+  }
+}
+
 export class Shard extends Floater {
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 1.2);
@@ -257,7 +343,7 @@ const ABILITY_LOOK: Record<Ability, { color: string; name: string }> = {
   doubleJump: { color: '#7fe6ff', name: 'Jet Boots' },
   dash: { color: '#ffd166', name: 'Dash Thrusters' },
   glide: { color: '#c6ff7a', name: 'Hover Pack' },
-  shield: { color: '#ff8ad8', name: 'BOLT Shield' },
+  pulse: { color: '#8ab4ff', name: 'Force Pulse' },
 };
 
 export class UpgradePickup extends Floater {

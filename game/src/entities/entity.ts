@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 import type { World } from '../game/world';
 
-/** `blast` is the charged fireball's explosion. */
-export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast';
+/** `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` BOLT's force pulse. */
+export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse';
 
 export abstract class Entity {
   alive = true;

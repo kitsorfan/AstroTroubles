@@ -8,6 +8,7 @@ export const DEFAULT_LEGEND: Record<string, Spec> = {
   x: { type: 'crate' },
   X: { type: 'crate', loot: 'big', metal: true },
   h: { type: 'heart' },
+  '=': { type: 'energy' },
   b: { type: 'bounce' },
   f: { type: 'faller' },
   '%': { type: 'dark' },

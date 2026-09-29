@@ -2,7 +2,8 @@ import * as THREE from 'three';
 
 import { audio, type Sfx, type Track } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, PLAYER } from '../core/constants';
+import { CELL, PLAYER, PULSE } from '../core/constants';
+import { tr } from '../core/i18n';
 import type { Input } from '../core/input';
 import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
@@ -17,7 +18,7 @@ import { COLONIST_BOLTS, HINTS } from './quests';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { Impacts } from '../entities/moveFx';
-import { BoltField, Canister, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
+import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
 import { Player } from '../entities/player';
 import {
   BoltFind,
@@ -44,6 +45,7 @@ import {
   Vent,
   ZapFloor,
   type FloorFx,
+  type Overloadable,
 } from '../entities/props';
 import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
@@ -77,6 +79,8 @@ export interface WorldHooks {
   reward(text: string): void;
   /** The first time Kai meets a kind of enemy (or an elite), show what it is and what it's up to. */
   threat(kind: BadgeKind | 'elite'): void;
+  /** Kai tried to dash with no energy left. */
+  dashEmpty(): void;
   /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
   cutscene(script: (d: Director) => Promise<void>): Promise<void>;
 }
@@ -158,7 +162,13 @@ export class World {
   private shakeAmt = 0;
   private objT = 0;
   private lastObjective = '';
-  private shieldCd = 0;
+  /** Seconds until BOLT's force pulse is ready again. */
+  pulseCd = 0;
+  /** Lasers and zap floors, which BOLT's force pulse can overload. */
+  private overloadables: Overloadable[] = [];
+  /** Where the current objective wants Kai to go (a `marker`, the boss or the lift), if anywhere. */
+  waypoint: THREE.Vector3 | null = null;
+  private markers = new Map<string, THREE.Vector3>();
   private hintT = 1;
   private shadowTexel = 0;
   /** Kai's ground height, smoothed and ignoring jumps; the shadow map is centred on it. */
@@ -362,10 +372,16 @@ export class World {
         this.addEntity(new Vent(this, id, cx, cz, h, spec.period, spec.offset));
         break;
       case 'laser':
-        this.addEntity(new Laser(this, id, cx, cz, h, spec));
+        this.overloadables.push(this.addEntity(new Laser(this, id, cx, cz, h, spec)));
         break;
       case 'zap':
-        this.addEntity(new ZapFloor(this, id, cx, cz, h, spec.period, spec.offset));
+        this.overloadables.push(this.addEntity(new ZapFloor(this, id, cx, cz, h, spec.period, spec.offset)));
+        break;
+      case 'energy':
+        this.addEntity(new EnergyPickup(this, id, cx, cz, h, true));
+        break;
+      case 'marker':
+        this.markers.set(spec.id, new THREE.Vector3(Grid.center(cx), h, Grid.center(cz)));
         break;
       case 'conveyor':
         this.addEntity(new Conveyor(this, id, cx, cz, h, spec.dx, spec.dz, spec.speed));
@@ -526,7 +542,7 @@ export class World {
     if (kind === 'colonist' && !s.colonists.includes(id)) {
       s.colonists.push(id);
       s.bolts += COLONIST_BOLTS;
-      this.hooks.reward(`Colonist rescued! +${COLONIST_BOLTS} bolts · ${s.colonists.length} / 12 saved`);
+      this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / 12 saved', { n: COLONIST_BOLTS, saved: s.colonists.length }));
     }
     this.hooks.collect(kind, id);
     this.hooks.hud();
@@ -540,6 +556,7 @@ export class World {
 
   event(name: string) {
     if (name === 'bolt') this.joinBolt();
+    else if (name.startsWith('flag:')) this.setFlag(name.slice(5));
     else if (name.startsWith('music:')) this.hooks.music(name.slice(6) as Track);
     else if (name === 'shake') this.shake(0.6);
   }
@@ -590,9 +607,11 @@ export class World {
     return false;
   }
 
-  private hitAll(p: THREE.Vector3, r: number, dmg: number, kind: HitKind, skip?: Set<unknown>) {
-    // Explosions reach a little higher than spins and pounds.
-    const reachY = kind === 'blast' ? 3 : 2.2;
+  /** Hits every target in a cylinder around `p`. Returns how many were hit. */
+  private hitAll(p: THREE.Vector3, r: number, dmg: number, kind: HitKind, skip?: Set<unknown>): number {
+    // Explosions (and BOLT's pulse) reach a little higher than spins and pounds.
+    const reachY = kind === 'pulse' ? 4 : kind === 'blast' ? 3 : 2.2;
+    let n = 0;
     for (const t of [...this.targets]) {
       if (!t.alive || skip?.has(t)) continue;
       const dx = t.aim.x - p.x;
@@ -600,9 +619,60 @@ export class World {
       const dy = t.aim.y - p.y;
       if (dx * dx + dz * dz < (r + t.radius) ** 2 && Math.abs(dy) < reachY) {
         skip?.add(t);
-        t.hit(dmg, kind, p);
+        if (t.hit(dmg, kind, p)) n += 1;
       }
     }
+    return n;
+  }
+
+  /** Kai's dash rams whatever is in front of him. Each target is hit once per dash. */
+  dashAttack(player: Player, hitSet: Set<unknown>) {
+    const b = player.body;
+    const p = new THREE.Vector3(b.x + Math.sin(player.facing) * 0.5, b.y + 0.9, b.z + Math.cos(player.facing) * 0.5);
+    if (!this.hitAll(p, PLAYER.dashHitRadius, PLAYER.dashDamage + (this.save.upgrades.blaster ?? 0), 'dash', hitSet)) return;
+    this.impacts.slam(p.x, b.y, p.z, 2.2, '#7fe6ff');
+    this.particles.emit(p.x, p.y, p.z, { count: 18, color: '#bff4ff', speed: 8, life: 0.4, size: 0.5 });
+    this.flash(p.x, p.y, p.z, '#7fe6ff', 40, 0.2);
+    this.shake(0.35);
+    this.hitStop(0.05);
+    audio.play('pound', 1.5);
+    haptic('medium');
+  }
+
+  get pulseReady() {
+    return this.save.abilities.includes('pulse') && this.bolt.active && this.pulseCd <= 0;
+  }
+
+  /** 0..1 while the force pulse recharges (1 = ready). */
+  get pulseCharge() {
+    return this.pulseCd > 0 ? 1 - this.pulseCd / PULSE.cooldown : 1;
+  }
+
+  /**
+   * BOLT's force pulse: a shockwave that hits, stuns and throws back everything around Kai, wipes out
+   * enemy shots and overloads nearby lasers and zap floors for a few seconds. Then it recharges slowly.
+   */
+  forcePulse(): boolean {
+    if (!this.pulseReady) return false;
+    this.pulseCd = PULSE.cooldown;
+    const b = this.player.body;
+    const p = new THREE.Vector3(b.x, b.y + 0.9, b.z);
+    this.hitAll(p, PULSE.radius, PULSE.damage + 2 * (this.save.upgrades.boltZap ?? 0), 'pulse');
+    this.shots.clearNear(p, PULSE.radius + 1);
+    let shorted = 0;
+    for (const o of this.overloadables) if (o.overload(p, PULSE.overloadRadius, PULSE.overloadTime)) shorted += 1;
+    this.bolt.flare();
+    this.rings.burst(b.x, b.y, b.z, PULSE.radius * 2.2, '#9fefff', 0.6);
+    this.rings.burst(b.x, b.y + 0.05, b.z, PULSE.radius * 1.2, '#ffffff', 0.35);
+    this.impacts.slam(b.x, b.y, b.z, PULSE.radius * 0.9, '#7fe6ff');
+    this.particles.emit(b.x, b.y + 1, b.z, { count: 60, color: '#bff4ff', speed: 14, life: 0.6, size: 0.5, gravity: 0, drag: 2 });
+    this.flash(b.x, b.y + 2, b.z, '#9fefff', 90, 0.5);
+    this.shake(0.7);
+    this.hitStop(0.08);
+    audio.play('pulse');
+    haptic('heavy');
+    if (shorted) this.hooks.toast('Lasers overloaded! Go, go, go!', 'bolt');
+    return true;
   }
 
   spinAttack(player: Player, hitSet: Set<unknown>) {
@@ -651,6 +721,12 @@ export class World {
 
   dropHeart(pos: THREE.Vector3) {
     this.addEntity(HeartPickup.at(this, pos));
+  }
+
+  /** Drops a dash energy cell, but only once Kai has the Dash Thrusters and could use one. */
+  dropEnergy(pos: THREE.Vector3) {
+    if (!this.save.abilities.includes('dash') || this.player.energy >= PLAYER.dashEnergy) return;
+    this.addEntity(EnergyPickup.at(this, pos));
   }
 
   enemyDied(e: Enemy) {
@@ -765,6 +841,7 @@ export class World {
     this.activeCheckpoint = cp;
     audio.play('checkpoint');
     this.player.heal(99);
+    this.player.gainEnergy(99);
     this.hooks.toast('Checkpoint saved!', 'bolt');
     this.hooks.checkpoint();
   }
@@ -790,6 +867,7 @@ export class World {
     const z = cp ? cp.spot.z + 1.2 : Grid.center(sp.cz);
     this.player.teleport(x, y, z);
     this.player.revive();
+    this.pulseCd = 0;
     this.shots.clear();
     this.respawnEnemies();
     this.bolt.place(x - 1, y + 2, z + 1);
@@ -894,16 +972,18 @@ export class World {
       this.flashLight.intensity = this.flashPower * k * k;
     }
 
-    // BOLT's shield when nothing else needs the action button.
-    this.shieldCd -= dt;
+    // BOLT's force pulse has its own button (the action key also fires it when there's nothing to use).
+    if (this.pulseCd > 0) {
+      this.pulseCd -= dt;
+      if (this.pulseCd <= 0 && this.save.abilities.includes('pulse')) audio.play('charged', 0.8);
+    }
     this.focus = this.cutscene ? null : this.findFocus();
-    if (!this.cutscene && input.take('action')) {
-      if (this.focus) this.focus.interact();
-      else if (this.save.abilities.includes('shield') && this.shieldCd <= 0) {
-        this.player.shieldT = 3;
-        this.shieldCd = 6;
-        audio.play('shield');
+    if (!this.cutscene && !this.player.down) {
+      if (input.take('action')) {
+        if (this.focus) this.focus.interact();
+        else this.forcePulse();
       }
+      if (input.take('pulse')) this.forcePulse();
     }
 
     // Lights dim in dark rooms; BOLT's flashlight takes over.
@@ -929,6 +1009,7 @@ export class World {
         this.lastObjective = text;
         this.hooks.objective(text);
       }
+      this.waypoint = obj?.at ? this.place(obj.at) : null;
     }
 
     const drag = input.consumeCamDrag();
@@ -962,8 +1043,11 @@ export class World {
     if (!seen.includes('bolt') && this.save.bolts > 0) tell('bolt');
   }
 
-  get shieldReady() {
-    return this.save.abilities.includes('shield') && this.shieldCd <= 0;
+  /** Resolves an objective's `at`: a marker placed in the map, or 'boss' / 'exit'. */
+  private place(at: string): THREE.Vector3 | null {
+    if (at === 'boss') return this.boss && !this.boss.defeated ? this.boss.where : null;
+    if (at === 'exit') return this.exit?.spot ?? null;
+    return this.markers.get(at) ?? null;
   }
 
   private findFocus(): Interactable | null {

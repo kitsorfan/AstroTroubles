@@ -2,7 +2,7 @@ import type { LevelDef } from '../world/levelTypes';
 
 /**
  * Deck 5 — the Security Deck. Time your way past blinking lasers, hover over the electric pool,
- * search the dark cell block, hack the armory for BOLT's SHIELD MODULE, brave the laser gauntlet
+ * search the dark cell block, hack the armory for BOLT's FORCE PULSE, short out the laser gauntlet
  * and shut down WARDOG by hacking its three pylons.
  */
 export const security: LevelDef = {
@@ -66,7 +66,7 @@ export const security: LevelDef = {
     #.x....................x...N.........I.#
     #........................#.............#
     #.....S...........S......#.............#
-    #.....................P..###############
+    #.....=...............P..###############
     ############D#############
     #.........T..............#
     #...............e..H.....#
@@ -108,7 +108,7 @@ export const security: LevelDef = {
            ###########
 `,
   legend: {
-    g: { type: 'laser', axis: 'z', length: 4, always: true, off: { flag: 'svault' } },
+    g: { type: 'laser', axis: 'z', length: 4, always: true, off: { flag: 'svault' }, hardened: true },
     N: { type: 'terminal', flag: 'svault', length: 7 },
     I: { type: 'prize', id: 'vault', reward: 'boltZap' },
     W: { type: 'boss', boss: 'wardog', room: 'arena' },
@@ -124,9 +124,9 @@ export const security: LevelDef = {
     R: { type: 'enemy', enemy: 'brute', room: 'r1' },
     T: { type: 'terminal', flag: 't1', length: 5 },
     D: { type: 'door', id: 'armorydoor', open: { flag: 't1' } },
-    Y: { type: 'door', id: 'shielddoor', open: { clear: 'r1' } },
-    U: { type: 'upgrade', ability: 'shield', id: 'shield' },
-    Z: { type: 'door', id: 'gauntletdoor', open: { flag: 'ability:shield' } },
+    Y: { type: 'door', id: 'moduledoor', open: { clear: 'r1' } },
+    U: { type: 'upgrade', ability: 'pulse', id: 'pulse' },
+    Z: { type: 'door', id: 'gauntletdoor', open: { flag: 'ability:pulse' } },
     O: { type: 'door', id: 'celldoor', open: { all: [] } },
     q: { type: 'laser', axis: 'x', length: 4, always: true },
     k: { type: 'zap', period: 2.4 },
@@ -135,8 +135,8 @@ export const security: LevelDef = {
     n: { type: 'laser', axis: 'x', length: 12, period: 3, offset: 2 },
     l: { type: 'sign', text: 'Red lasers blink on and off. Wait until one switches off, then run past it!' },
     w: { type: 'sign', text: 'The water below is electric! Jump off this ledge and HOLD JUMP to hover over it.' },
-    y: { type: 'sign', text: 'These lasers never switch off. Press BOLT’s SHIELD button, then run through while the bubble is up!' },
-    j: { type: 'sign', text: 'Safe spot. Wait here until the SHIELD button glows again, then go for the second half!' },
+    y: { type: 'sign', text: 'These lasers never switch off. Press PULSE: BOLT’s force pulse shorts them out for a few seconds. Then RUN!' },
+    j: { type: 'sign', text: 'Safe spot! BOLT’s pulse takes a while to recharge. Wait here until the PULSE button lights up again, then short out the second half.' },
     '?': { type: 'shard', id: 's1' },
     '*': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
@@ -150,16 +150,16 @@ export const security: LevelDef = {
   objectives: [
     { until: { flag: 't1' }, text: 'Find the armory terminal and hack it' },
     { until: { clear: 'r1' }, text: 'Defeat the armory guards' },
-    { until: { flag: 'ability:shield' }, text: 'Grab the SHIELD MODULE' },
-    { until: { boss: true }, text: 'Brave the laser gauntlet and stop WARDOG' },
-    { until: { flag: 'never' }, text: 'Ride the lift up to the Bridge' },
+    { until: { flag: 'ability:pulse' }, text: 'Grab the FORCE PULSE module' },
+    { until: { boss: true }, text: 'Pulse your way through the laser gauntlet and stop WARDOG' },
+    { until: { flag: 'never' }, text: 'Ride the lift up to the Bridge', at: 'exit' },
   ],
   dialogues: {
     intro: [
       { who: 'glitch', text: 'INTRUDERS DETECTED. The Bloom must reach its home. Please... go... back...' },
       { who: 'kai', text: 'HALCYON, it’s us! It’s Kai and BOLT!' },
       { who: 'glitch', text: 'Kai...? H-help... The pollen is in my core. It makes me say things. WARDOG will protect the Bloom...' },
-      { who: 'bolt', text: 'We have to reach HALCYON’s core! The armory has a SHIELD MODULE for drones like me. With it, lasers can’t touch us.' },
+      { who: 'bolt', text: 'We have to reach HALCYON’s core! The armory has a FORCE PULSE module for drones like me. One blast and those lasers go dark!' },
     ],
     log: [
       { who: 'captain', text: 'Captain’s log, day five. The pollen has reached HALCYON. The ship is fighting us now.' },

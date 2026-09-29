@@ -1,6 +1,7 @@
 import type { Ability, DeckId } from '../world/levelTypes';
 import { post } from './bridge';
 import { START_HEARTS } from './constants';
+import { detectLang, type Lang } from './i18n';
 
 export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart';
 export type Quality = 'low' | 'medium' | 'high';
@@ -11,6 +12,7 @@ export interface Settings {
   quality: Quality;
   camSpeed: number;
   haptics: boolean;
+  lang: Lang;
 }
 
 export interface SaveData {
@@ -46,7 +48,7 @@ const KEY = 'leviathan3d.save.v1';
 
 export function defaultSettings(): Settings {
   const lowEnd = (navigator.hardwareConcurrency ?? 8) <= 4;
-  return { music: 0.6, sfx: 0.85, quality: lowEnd ? 'low' : 'medium', camSpeed: 1, haptics: true };
+  return { music: 0.6, sfx: 0.85, quality: lowEnd ? 'low' : 'medium', camSpeed: 1, haptics: true, lang: detectLang() };
 }
 
 export function newSave(): SaveData {
@@ -92,7 +94,11 @@ export function loadSave(): SaveData | null {
       // ignore corrupt copies
     }
   }
-  if (best) best.settings = { ...defaultSettings(), ...best.settings };
+  if (best) {
+    best.settings = { ...defaultSettings(), ...best.settings };
+    // BOLT's old shield module became the force pulse.
+    best.abilities = best.abilities.map((a) => ((a as string) === 'shield' ? 'pulse' : a));
+  }
   return best;
 }
 

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL } from '../core/constants';
+import { tr } from '../core/i18n';
 import { damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { Grid } from '../world/grid';
@@ -972,7 +973,7 @@ class Wardog extends Boss implements Target {
       this.world.shake(0.4);
       this.world.hooks.toast('Shield down! Blast WARDOG now!', 'bolt');
     } else {
-      this.world.hooks.toast(`Pylon hacked! ${this.pylons.filter((p) => !p.hacked).length} to go.`, 'bolt');
+      this.world.hooks.toast(tr('Pylon hacked! {n} to go.', { n: this.pylons.filter((p) => !p.hacked).length }), 'bolt');
     }
   }
 

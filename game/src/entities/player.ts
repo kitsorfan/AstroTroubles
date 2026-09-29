@@ -30,10 +30,19 @@ export class Player {
   private dashT = 0;
   private dashCd = 0;
   private airDashed = false;
+  private dashHit = new Set<unknown>();
+  /** Dash energy cells left: one per dash, refilled at checkpoints and by energy pickups. */
+  energy: number = PLAYER.dashEnergy;
   pounding = false;
   private poundHang = 0;
   private spinT = 0;
   private spinHit = new Set<unknown>();
+  /** Spins left before the long recharge. */
+  spins: number = PLAYER.spinCharges;
+  /** Seconds left recharging spins (0 = not recharging). */
+  private spinReloadT = 0;
+  private spinReloadMax = 1;
+  private sinceSpin = 99;
   private shootCd = 0;
   private shootPose = 0;
   /** Shots left in the clip; the clip refills after a reload. */
@@ -59,7 +68,6 @@ export class Player {
   private vz = 0;
   down = false;
   carrying: THREE.Object3D | null = null;
-  shieldT = 0;
   private fx: KaiFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
@@ -106,6 +114,34 @@ export class Player {
     return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
   }
 
+  /** True while a ground spin is whirling (and guarding Kai). */
+  get spinning() {
+    return this.spinT > 0;
+  }
+
+  get dashing() {
+    return this.dashT > 0;
+  }
+
+  /** 0..1 while the spins recharge. */
+  get spinReloadProgress() {
+    return this.spinReloadT > 0 ? 1 - this.spinReloadT / this.spinReloadMax : 0;
+  }
+
+  private startSpinReload() {
+    const missing = PLAYER.spinCharges - this.spins;
+    this.spinReloadMax = (PLAYER.spinReload * missing) / PLAYER.spinCharges;
+    this.spinReloadT = this.spinReloadMax;
+  }
+
+  /** Tops up dash energy; returns true if anything was added. */
+  gainEnergy(n: number): boolean {
+    if (this.energy >= PLAYER.dashEnergy) return false;
+    this.energy = Math.min(PLAYER.dashEnergy, this.energy + n);
+    this.world.hooks.hud();
+    return true;
+  }
+
   private startReload() {
     if (this.reloadT > 0 || this.ammo >= this.clipSize) return;
     this.reloadT = this.reloadTime;
@@ -123,11 +159,13 @@ export class Player {
     return out.set(this.body.x, this.body.y + 1.05, this.body.z);
   }
 
-  hurt(n: number, fromX?: number, fromZ?: number) {
+  /** `hazard` damage (lasers, zap floors, lava) gets through a spin; enemy and boss attacks do not. */
+  hurt(n: number, fromX?: number, fromZ?: number, hazard = false) {
     if (this.invuln > 0 || this.down || this.world.cutscene) return;
-    if (this.shieldT > 0) {
-      audio.play('shield');
-      this.world.particles.emit(this.body.x, this.body.y + 1, this.body.z, { count: 14, color: '#7fe6ff', speed: 5, life: 0.4, size: 0.4 });
+    if (this.spinT > 0 && !hazard) {
+      // The spin guards Kai: the attack glances off in a spray of sparks.
+      audio.play('zap', 2.4);
+      this.world.particles.emit(this.body.x, this.body.y + 1, this.body.z, { count: 14, color: '#bff4ff', speed: 6, life: 0.35, size: 0.4 });
       return;
     }
     this.hearts = Math.max(0, this.hearts - n);
@@ -188,6 +226,9 @@ export class Player {
     this.ammo = this.clipSize;
     this.reloadT = 0;
     this.charge = 0;
+    this.energy = PLAYER.dashEnergy;
+    this.spins = PLAYER.spinCharges;
+    this.spinReloadT = 0;
     this.invuln = 1.5;
     this.world.hooks.hud();
   }
@@ -196,10 +237,7 @@ export class Player {
     audio.play('hurt');
     this.world.particles.emit(this.body.x, this.body.y + 0.5, this.body.z, { count: 20, color: this.world.theme.hazard, speed: 6, life: 0.6, up: 4 });
     this.invuln = 0;
-    const wasShield = this.shieldT;
-    this.shieldT = 0;
-    this.hurt(1);
-    this.shieldT = wasShield;
+    this.hurt(1, undefined, undefined, true);
     if (this.down) return;
     this.teleport(this.safe.x, this.safe.y + 0.1, this.safe.z);
     this.invuln = PLAYER.invuln;
@@ -209,7 +247,6 @@ export class Player {
     const w = this.world;
     const b = this.body;
     this.invuln = Math.max(0, this.invuln - dt);
-    this.shieldT = Math.max(0, this.shieldT - dt);
     this.sinceHurt += dt;
     if (this.down || w.cutscene) {
       this.animate(dt, 0);
@@ -240,6 +277,8 @@ export class Player {
       this.vz = Math.cos(this.facing) * PLAYER.dashSpeed;
       b.vy = Math.max(b.vy, -1);
       if (Math.random() < 0.8) w.particles.emit(b.x, b.y + 0.9, b.z, { count: 2, color: '#7fe6ff', speed: 1, life: 0.35, size: 0.5, gravity: 0 });
+      // A dash is a ram: anything in the way takes a heavy hit.
+      w.dashAttack(this, this.dashHit);
     } else if (this.pounding) {
       this.vx = 0;
       this.vz = 0;
@@ -258,6 +297,18 @@ export class Player {
     this.dashCd -= dt;
     this.shootCd -= dt;
     this.shootPose = Math.max(0, this.shootPose - dt);
+    this.sinceSpin += dt;
+    if (this.spinReloadT > 0) {
+      this.spinReloadT -= dt;
+      if (this.spinReloadT <= 0) {
+        this.spinReloadT = 0;
+        this.spins = PLAYER.spinCharges;
+        audio.play('reload', 1.6);
+        w.hooks.hud();
+      }
+    } else if (this.spins < PLAYER.spinCharges && this.sinceSpin > PLAYER.spinTopUp) {
+      this.startSpinReload();
+    }
     if (b.grounded) {
       this.jumps = 0;
       this.airDashed = false;
@@ -294,24 +345,40 @@ export class Player {
       if (Math.random() < 0.15) audio.play('glide');
     }
 
-    // Dash.
+    // Dash: each one burns a cell of energy.
     if (input.take('dash') && this.has('dash') && this.dashCd <= 0 && !this.pounding && (b.grounded || !this.airDashed)) {
-      this.dashT = PLAYER.dashTime;
-      this.dashCd = PLAYER.dashCooldown;
-      if (!b.grounded) this.airDashed = true;
-      if (mag > 0.1) this.facing = Math.atan2(wx, wz);
-      audio.play('dash');
-      haptic('light');
+      if (this.energy < 1) {
+        audio.play('empty');
+        this.dashCd = 0.3;
+        w.hooks.dashEmpty();
+      } else {
+        this.energy -= 1;
+        this.dashT = PLAYER.dashTime;
+        this.dashCd = PLAYER.dashCooldown;
+        this.dashHit.clear();
+        if (!b.grounded) this.airDashed = true;
+        if (mag > 0.1) this.facing = Math.atan2(wx, wz);
+        audio.play('dash');
+        haptic('light');
+        w.hooks.hud();
+      }
     }
 
-    // Spin (ground) / ground pound (air).
+    // Spin (ground, from a set of three) / ground pound (air, always available for switches).
     if (input.take('spin') && !this.pounding) {
       if (b.grounded || this.airTime < 0.05) {
-        if (this.spinT <= 0) {
+        if (this.spinT <= 0 && this.spins > 0) {
+          this.spins -= 1;
+          this.sinceSpin = 0;
+          this.spinReloadT = 0;
+          if (this.spins === 0) this.startSpinReload();
           this.spinT = PLAYER.spinTime;
           this.fx.spin(PLAYER.spinTime);
           this.spinHit.clear();
           audio.play('spin');
+          w.hooks.hud();
+        } else if (this.spinT <= 0) {
+          audio.play('empty');
         }
       } else if (b.y > this.groundBelow() + 0.9) {
         this.pounding = true;

@@ -115,11 +115,31 @@ export class Shots {
         const dx = pl.body.x - p.x;
         const dz = pl.body.z - p.z;
         const dy = pl.body.y + 0.9 - p.y;
-        if (dx * dx + dz * dz < (pl.body.r + s.radius) ** 2 && Math.abs(dy) < 1.1) {
-          pl.hurt(s.dmg, p.x, p.z);
-          this.pop(s, '#ff8ad8');
+        // A spin bats shots away a little before they reach Kai.
+        const reach = pl.body.r + s.radius + (pl.spinning ? 0.9 : 0);
+        if (dx * dx + dz * dz < reach * reach && Math.abs(dy) < 1.4) {
+          if (pl.spinning) {
+            const back = tmp.copy(s.vel).setY(0).multiplyScalar(-1).normalize();
+            this.pop(s, '#bff4ff');
+            this.fire('player', p.clone(), back.clone(), PLAYER.shotSpeed, 1 + (w.save.upgrades.blaster ?? 0));
+            audio.play('zap', 2.4);
+          } else {
+            pl.hurt(s.dmg, p.x, p.z);
+            this.pop(s, '#ff8ad8');
+          }
         }
       }
     }
+  }
+
+  /** Wipes out enemy shots close to a point (BOLT's force pulse). Returns how many were destroyed. */
+  clearNear(at: THREE.Vector3, radius: number): number {
+    let n = 0;
+    for (const s of this.pool) {
+      if (!s.active || s.kind !== 'enemy' || s.obj.position.distanceToSquared(at) > radius * radius) continue;
+      this.pop(s, '#bff4ff');
+      n += 1;
+    }
+    return n;
   }
 }

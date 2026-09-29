@@ -5,9 +5,9 @@ import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability, DeckId } from '../src/world/levelTypes';
 import { deckAbilities } from './deckAbilities';
-import { isCollectible, reach, renderReach } from './reach';
+import { isCollectible, reach, refillGaps, renderReach } from './reach';
 
-const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'shield'];
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse'];
 
 function check(id: DeckId, showMap: boolean) {
   const level = parseLevel(LEVELS[id]);
@@ -31,6 +31,8 @@ function check(id: DeckId, showMap: boolean) {
   lines.push(`  collectibles needing later abilities: ${later.map((e) => e.id).join(', ') || 'none'}`);
   lines.push(`  NEVER reachable: ${never.map((e) => `${e.id}(${e.cx},${e.cz})`).join(', ') || 'none'}`);
   lines.push(`  orphan floor cells (with all abilities): ${rAll.orphanCells.length}`);
+  const dry = refillGaps(level, after);
+  lines.push(`  dash jumps with no refill nearby: ${dry.map((t) => `${t.cx},${t.cz}`).join(', ') || 'none'}`);
   const count = (t: string) => level.entities.filter((e) => e.spec.type === t).length;
   const bolts = level.entities.filter((e) => e.spec.type === 'bolt').length;
   lines.push(`  shards ${count('shard')} cocoons ${count('cocoon')} canisters ${count('canister')} bolts ${bolts} crates ${count('crate')} enemies ${count('enemy')} checkpoints ${count('checkpoint')}`);

@@ -31,7 +31,7 @@ EAS runs `npm run game:build` automatically after installing dependencies (`eas-
 npm run game:build     # writes game/dist/index.html
 ```
 
-Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
+Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **I** fires BOLT's force pulse, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
 
 ## How to play
 
@@ -41,9 +41,12 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | Drag on the right side | Turn the camera |
 | **JUMP** | Jump. Hold for higher jumps; with the Jet Boots, press again in mid-air |
 | **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Kai reloads. **Hold** to charge a big fireball that bursts on impact |
-| **SPIN** | Spin attack. In mid-air it becomes a **ground pound**, which presses red switches and hurts more |
-| **DASH** | Zoom forward, even in mid-air (after the Engine Core) |
-| BOLT button | Appears near terminals, pylons, signs and lifts. Also triggers BOLT's shield once you have it |
+| **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Kai gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
+| **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
+| **PULSE** | BOLT's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Kai, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
+| BOLT button | Appears near terminals, pylons, signs, the shop and lifts |
+
+A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
 Kai finds a new ability on each deck, and it's needed to finish that deck:
 
@@ -53,7 +56,7 @@ Kai finds a new ability on each deck, and it's needed to finish that deck:
 | 2. Hydroponics | Jet Boots (double jump) | Vine Queen |
 | 3. Engine Core | Dash Thrusters | Magma Golem |
 | 4. Habitat Ring | Hover Pack (hold JUMP to float) | King Bloblin |
-| 5. Security Deck | BOLT Shield (blocks lasers and shots) | WARDOG |
+| 5. Security Deck | BOLT's Force Pulse (shorts out lasers) | WARDOG |
 | 6. The Bridge | Everything at once | The Bloom Heart, then the Bloom Reborn |
 
 - **Hacking** is a light-pattern memory game: watch BOLT's lights, then repeat them.
@@ -64,7 +67,7 @@ Kai finds a new ability on each deck, and it's needed to finish that deck:
 
 ### Enemies
 
-Each enemy type has a floating icon and a health bar, and the first time you meet one, a card explains what it is and what it's up to:
+Each enemy type has a floating icon and a health bar, and the first time you meet one, a small card under your hearts names it and gives a tip:
 
 | Enemy | Its plan |
 | --- | --- |
@@ -137,7 +140,7 @@ __tests__/               Jest tests: deck data, reachability of every deck, phys
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Kai's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, and checks that each deck's new ability really is needed to finish it. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Kai's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, and that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash. The Jest suite runs the same checks.
 
 ## Development
 

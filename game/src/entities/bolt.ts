@@ -35,6 +35,14 @@ export class Bolt {
     this.pos.set(x, y, z);
   }
 
+  private flareT = 0;
+
+  /** The force pulse: BOLT's eye blazes and his glow balloons for a moment. */
+  flare() {
+    this.flareT = 0.6;
+    this.model.iris.emissiveIntensity = 8;
+  }
+
   update(dt: number) {
     const w = this.world;
     this.t += dt;
@@ -90,6 +98,8 @@ export class Bolt {
     this.light.intensity = damp(this.light.intensity, w.darkness * 60, 5, dt);
     this.light.position.copy(this.pos);
     this.lightTarget.position.set(pl.body.x + Math.sin(f) * 4, pl.body.y, pl.body.z + Math.cos(f) * 4);
-    this.model.glow.material.opacity = 0.3 + w.darkness * 0.4;
+    this.flareT = Math.max(0, this.flareT - dt);
+    this.model.glow.material.opacity = 0.3 + w.darkness * 0.4 + this.flareT * 1.2;
+    this.model.glow.scale.setScalar(1.3 + this.flareT * 6);
   }
 }

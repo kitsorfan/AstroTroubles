@@ -163,9 +163,22 @@ function lineClear(level: ParsedLevel, shut: Set<number>, a: Spot, b: Spot) {
   return true;
 }
 
-export function reach(level: ParsedLevel, abilities: Ability[]): ReachResult {
-  const spots = buildSpots(level, abilities);
-  const shut = shutDoors(level, abilities);
+/** Every spot Kai can stand on, and the jumps between them. */
+interface JumpGraph {
+  spots: Spot[];
+  /** Spot index of the spawn point. */
+  start: number;
+  /** Spots Kai can get to from spot `ai` in one move. */
+  next(ai: number): number[];
+}
+
+/**
+ * `doors` decides which ability-gated doors are open; `moves` decides how far Kai can jump. They only
+ * differ when checking what a single ability (the dash) is needed for.
+ */
+function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors): JumpGraph {
+  const spots = buildSpots(level, doors);
+  const shut = shutDoors(level, doors);
   const byCell = new Map<string, number[]>();
   spots.forEach((s, i) => {
     const k = `${s.cx},${s.cz}`;
@@ -173,27 +186,25 @@ export function reach(level: ParsedLevel, abilities: Ability[]): ReachResult {
     list.push(i);
     byCell.set(k, list);
   });
-  const riseJump = maxRise(abilities, PLAYER.jumpV);
-  const risePad = maxRise(abilities, PLAYER.bounceV);
+  const riseJump = maxRise(moves, PLAYER.jumpV);
+  const risePad = maxRise(moves, PLAYER.bounceV);
   const reachCache = new Map<string, number>();
   const envelope = (dh: number, launch: number) => {
     const k = `${dh.toFixed(2)}|${launch}`;
     let v = reachCache.get(k);
     if (v === undefined) {
-      v = jumpReach(dh, abilities, launch);
+      v = jumpReach(dh, moves, launch);
       reachCache.set(k, v);
     }
     return v;
   };
-
   const start = spots.findIndex((s) => s.cx === level.spawn.cx && s.cz === level.spawn.cz && s.kind !== 'plat');
   if (start < 0) throw new Error('spawn is not on a walkable cell');
-  const seen = new Uint8Array(spots.length);
-  const parent = new Int32Array(spots.length).fill(-1);
-  const queue = [start];
-  seen[start] = 1;
-  while (queue.length) {
-    const ai = queue.shift() as number;
+  const edges = new Map<number, number[]>();
+  const next = (ai: number) => {
+    const known = edges.get(ai);
+    if (known) return known;
+    const out: number[] = [];
     const a = spots[ai];
     const launch = a.kind === 'pad' ? PLAYER.bounceV : PLAYER.jumpV;
     const rise = a.kind === 'pad' ? risePad : a.kind === 'vent' ? 8 : riseJump;
@@ -203,7 +214,7 @@ export function reach(level: ParsedLevel, abilities: Ability[]): ReachResult {
         const list = byCell.get(`${a.cx + dx},${a.cz + dz}`);
         if (!list) continue;
         for (const bi of list) {
-          if (seen[bi]) continue;
+          if (bi === ai) continue;
           const b = spots[bi];
           const dh = b.h - a.h;
           const d = Math.hypot(dx, dz);
@@ -214,15 +225,41 @@ export function reach(level: ParsedLevel, abilities: Ability[]): ReachResult {
             const max = a.kind === 'vent' ? 2.5 : envelope(dh, launch);
             ok = d <= max && lineClear(level, shut, a, b);
           }
-          if (ok) {
-            seen[bi] = 1;
-            parent[bi] = ai;
-            queue.push(bi);
-          }
+          if (ok) out.push(bi);
         }
       }
     }
+    edges.set(ai, out);
+    return out;
+  };
+  return { spots, start, next };
+}
+
+/** Breadth-first flood from `from`, skipping anything in `skip`. Returns the new spots and their parents. */
+function flood(g: JumpGraph, from: number[], skip?: Set<number>): { seen: Set<number>; parent: Map<number, number> } {
+  const seen = new Set<number>(from.filter((i) => !skip?.has(i)));
+  const parent = new Map<number, number>();
+  const queue = [...seen];
+  for (let q = 0; q < queue.length; q++) {
+    const ai = queue[q];
+    for (const bi of g.next(ai)) {
+      if (seen.has(bi) || skip?.has(bi)) continue;
+      seen.add(bi);
+      parent.set(bi, ai);
+      queue.push(bi);
+    }
   }
+  return { seen, parent };
+}
+
+export function reach(level: ParsedLevel, abilities: Ability[]): ReachResult {
+  const g = jumpGraph(level, abilities);
+  const spots = g.spots;
+  const f = flood(g, [g.start]);
+  const seen = new Uint8Array(spots.length);
+  for (const i of f.seen) seen[i] = 1;
+  const parent = new Int32Array(spots.length).fill(-1);
+  for (const [b, a] of f.parent) parent[b] = a;
 
   const reached = new Set<string>();
   spots.forEach((s, i) => {
@@ -293,4 +330,72 @@ export function renderReach(level: ParsedLevel, r: ReachResult): string {
     rows.push(row);
   }
   return rows.join('\n');
+}
+
+/** Spots Kai must dash from: the landing can't be reached from there (or anywhere near) without a dash. */
+export function dashTakeoffs(level: ParsedLevel, abilities: Ability[]): Spot[] {
+  if (!abilities.includes('dash')) return [];
+  const full = jumpGraph(level, abilities);
+  const walk = jumpGraph(level, abilities, abilities.filter((a) => a !== 'dash'));
+  const known = flood(walk, [walk.start]).seen;
+  const takeoffs = new Set<number>();
+  let frontier = [...known];
+  // Cross one "layer" of dash jumps at a time: everything reachable after a dash, without dashing again.
+  for (;;) {
+    const landings: number[] = [];
+    for (const a of frontier) {
+      for (const b of full.next(a)) {
+        if (known.has(b)) continue;
+        takeoffs.add(a);
+        landings.push(b);
+      }
+    }
+    if (!landings.length) break;
+    const more = flood(walk, landings, known).seen;
+    for (const i of more) known.add(i);
+    frontier = [...more];
+  }
+  return [...takeoffs].map((i) => full.spots[i]);
+}
+
+/** How close (in cells) a checkpoint or energy cell must be to a dash takeoff. */
+export const REFILL_RANGE = 7;
+
+/**
+ * Dash takeoffs with no refill (checkpoint or energy cell) within REFILL_RANGE that Kai can walk to
+ * and then walk back from to the takeoff. Takeoffs next to each other count as one jump: one refill
+ * anywhere along it is enough.
+ */
+export function refillGaps(level: ParsedLevel, abilities: Ability[]): Spot[] {
+  const takeoffs = dashTakeoffs(level, abilities);
+  if (!takeoffs.length) return [];
+  const walk = jumpGraph(level, abilities, abilities.filter((a) => a !== 'dash'));
+  const at = (cx: number, cz: number) => walk.spots.findIndex((s) => s.cx === cx && s.cz === cz && s.kind !== 'plat');
+  const refills = level.entities
+    .filter((e) => e.spec.type === 'energy' || e.spec.type === 'checkpoint')
+    .map((e) => ({ cx: e.cx, cz: e.cz, from: flood(walk, [at(e.cx, e.cz)].filter((i) => i >= 0)).seen }));
+  const ok = (t: Spot) => {
+    const ti = at(t.cx, t.cz);
+    return refills.some((r) => Math.hypot(r.cx - t.cx, r.cz - t.cz) <= REFILL_RANGE && ti >= 0 && r.from.has(ti));
+  };
+  // Group neighbouring takeoffs (same ledge) so one refill covers the whole ledge.
+  const groups: Spot[][] = [];
+  for (const t of takeoffs) {
+    const g = groups.find((list) => list.some((o) => Math.abs(o.cx - t.cx) <= 1 && Math.abs(o.cz - t.cz) <= 1 && Math.abs(o.h - t.h) < 0.6));
+    if (g) g.push(t);
+    else groups.push([t]);
+  }
+  // Merge groups that became connected through later members.
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (let i = 0; i < groups.length && !changed; i++) {
+      for (let j = i + 1; j < groups.length && !changed; j++) {
+        if (groups[i].some((a) => groups[j].some((b) => Math.abs(a.cx - b.cx) <= 1 && Math.abs(a.cz - b.cz) <= 1 && Math.abs(a.h - b.h) < 0.6))) {
+          groups[i].push(...groups.splice(j, 1)[0]);
+          changed = true;
+        }
+      }
+    }
+  }
+  return groups.filter((g) => !g.some(ok)).flat();
 }

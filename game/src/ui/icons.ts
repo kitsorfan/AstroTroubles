@@ -12,7 +12,10 @@ export const ICON = {
   spin: `<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M3 4l1.8 5.6L10 7.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   dash: `<svg viewBox="0 0 24 24"><path d="M4 12h9M6 7h8M6 17h8" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M14 5l7 7-7 7z" fill="#fff"/></svg>`,
   cell: `<svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="17" rx="2.5" fill="#3dff8a" stroke="#fff" stroke-width="1.5"/><rect x="10" y="2" width="4" height="3" rx="1" fill="#fff"/></svg>`,
-  shield: `<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.6 8.4-8 9.8C7.6 20.4 4 17 4 12V6z" fill="#fff" opacity=".9"/></svg>`,
+  pulse: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4" fill="#fff"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#fff" stroke-width="1.8" opacity=".8"/><path d="M3.6 8.2a9.4 9.4 0 0 0 0 7.6M20.4 8.2a9.4 9.4 0 0 1 0 7.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6"/></svg>`,
+  energy: `<svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="17" rx="2.5" fill="#b58cff" stroke="#fff" stroke-width="1.5"/><rect x="10" y="2" width="4" height="3" rx="1" fill="#fff"/><path d="M13 7l-3.4 5.4h2.6L11 17l3.4-5.6h-2.6z" fill="#fff"/></svg>`,
+  close: `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>`,
+  globe: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M3 12h18M12 3c3 3.4 3 14.6 0 18M12 3c-3 3.4-3 14.6 0 18" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`,
   lock: `<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#9fb0d6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#9fb0d6" stroke-width="2.4"/></svg>`,
   star: `<svg viewBox="0 0 24 24"><polygon points="12,2 14.9,8.6 22,9.3 16.6,14 18.2,21 12,17.3 5.8,21 7.4,14 2,9.3 9.1,8.6" fill="#ffd166"/></svg>`,
 };

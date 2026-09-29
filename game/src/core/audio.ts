@@ -28,6 +28,7 @@ export type Sfx =
   | 'break'
   | 'glide'
   | 'shield'
+  | 'pulse'
   | 'reload'
   | 'empty'
   | 'charge'
@@ -410,6 +411,13 @@ export class AudioEngine {
       case 'shield':
         this.tone(t, 'sine', 300, 900, 0.35, 0.2, b, 0.03);
         this.tone(t, 'triangle', 450, 1350, 0.35, 0.08, b, 0.03);
+        break;
+      case 'pulse':
+        // A deep thump, a rush of air and a rising electric shimmer.
+        this.tone(t, 'sine', 120, 34, 0.6, 0.7, b);
+        this.hiss(t, 0.55, 0.4, 'lowpass', 3200, 150, b);
+        this.tone(t + 0.02, 'sawtooth', 220, 1760, 0.4, 0.07, b, 0.02);
+        this.hiss(t + 0.05, 0.35, 0.16, 'highpass', 4000, 9000, b, 0.02);
         break;
       case 'reload':
         this.tone(t, 'square', 260, 520, 0.05, 0.08, b);
