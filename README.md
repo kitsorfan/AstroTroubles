@@ -1,12 +1,29 @@
 # AstroTroubles!
 
+![AstroTroubles! title screen: Kai waving in front of the colony ship Syracusia, overgrown with pink Bloom vines](docs/store/en/feature-graphic.jpg)
+
 *In Greek: Αστρομπελάδες*
 
-A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app.
+A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app. Coming to Google Play.
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
 
 It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
+
+| | |
+| --- | --- |
+| ![Kai and BOLT fighting the Magma Golem inside a ring of fire](docs/store/en/01-boss-fight.jpg) | ![The Magma Golem's entrance, with its name card](docs/store/en/02-magma-golem.jpg) |
+| ![Exploring the overgrown Hydroponics deck](docs/store/en/03-hydroponics.jpg) | ![WARDOG, the chief security robot, behind its shield](docs/store/en/05-wardog.jpg) |
+| ![A Horned Brute and a Spore Crawler next to the lava in the Engine Core](docs/store/en/06-engine-core.jpg) | ![The prologue: the Bloom seed takes root on the ship's hull](docs/store/en/07-prologue.jpg) |
+
+## Highlights
+
+- **The whole game is one offline HTML page.** The game is TypeScript and three.js, and esbuild bundles it, fonts included, into a single 1.5 MB page. The Expo app shows that page full screen in a WebView and handles what the page can't: saving, haptics, the Android back button and screen orientation.
+- **No asset files.** Characters, bosses and levels are built from code, textures are drawn on canvases at runtime, and all music and sound effects are synthesized with the Web Audio API.
+- **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Kai's jumps, dashes and hovering on every deck. It reports anything Kai can't reach, and checks that each deck really needs its new ability. The Jest suite runs the same checks.
+- **In-engine cutscenes.** A small cutscene director moves the camera through the real level and adds letterbox bars, boss name cards and slow-motion finishes.
+- **Built for phones.** Each deck frees its GPU memory when you leave it. Shaders compile behind the title cards so play doesn't stutter. The quality preset on first launch is picked from the phone's CPU core count.
+- **Two languages.** English and Greek, with a test that fails if any visible string is missing its Greek translation.
 
 ## Running it on your phone
 
@@ -106,7 +123,7 @@ Progress saves at every checkpoint and when you leave the app.
 
 ## The story
 
-A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. From there:
+A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. What happens next (**spoilers**):
 
 - **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as the Bloom took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Kai's Aunt Rosa instead.
 - **Rescuing BOLT.** Kai finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
@@ -143,6 +160,9 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
 src/app/                 Expo Router screens: the WebView host (plus an iframe version for web)
 src/generated/           game page as a string (generated, git-ignored)
 __tests__/               Jest tests: deck data, reachability of every deck, physics, translations
+languages/               the app's name on phones set to Greek
+scripts/                 gen-icons.mjs draws the app icons (npm run gen:icons)
+docs/                    privacy policy, plus the Google Play listing text, screenshots and store graphics
 ```
 
 ### Levels
@@ -158,3 +178,15 @@ npm test
 npm run game:check    # per-deck reachability report (add a deck id and --map for a picture)
 npm run game:i18n     # English strings still missing a Greek translation
 ```
+
+## Releasing on Google Play
+
+```bash
+npx eas-cli@latest build -p android --profile production   # an .aab for Play Console
+```
+
+The Play listing text in English and Greek, the answers for Play Console's forms, the screenshots and the store graphics are in [docs/store/](docs/store/listing.md). The privacy policy the listing links to is [docs/privacy-policy.md](docs/privacy-policy.md).
+
+## License
+
+All rights reserved. The code is public so you can read it and see how the game works, but not to copy or reuse. See [LICENSE](LICENSE).
