@@ -3,7 +3,7 @@ import type { ButtonName, Input } from '../core/input';
 import type { Quality, SaveData, Settings, UpgradeId } from '../core/save';
 import type { Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
-import { ICON, PORTRAIT, SPEAKER_COLOR, SPEAKER_NAME } from './icons';
+import { ICON, SPEAKER_COLOR, SPEAKER_NAME, portrait } from './icons';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
 
@@ -79,7 +79,7 @@ export class UI {
         <div class="btn spin clickable" data-b="spin">${ICON.spin}<span>SPIN</span></div>
         <div class="btn dash clickable hidden" data-b="dash">${ICON.dash}<span>DASH</span></div>
       </div>
-      <div class="action clickable hidden">${PORTRAIT.bolt}<b></b></div>
+      <div class="action clickable hidden">${portrait('bolt')}<b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
       <div class="threat"><img alt=""/><div><div class="tag">NEW THREAT</div><b></b><p></p></div></div>
       <div class="fps"></div>
@@ -288,7 +288,7 @@ export class UI {
   }
 
   toast(text: string, who: Speaker = 'bolt') {
-    $(this.toastEl, '.portrait').innerHTML = PORTRAIT[who];
+    $(this.toastEl, '.portrait').innerHTML = portrait(who);
     $(this.toastEl, '.t').textContent = text;
     this.toastEl.classList.add('show');
     if (this.toastT) clearTimeout(this.toastT);
@@ -340,7 +340,7 @@ export class UI {
     const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
-      $(el, '.portrait').innerHTML = PORTRAIT[line.who];
+      $(el, '.portrait').innerHTML = portrait(line.who);
       const who = $(el, '.who');
       who.textContent = line.name ?? SPEAKER_NAME[line.who];
       who.style.color = SPEAKER_COLOR[line.who];
@@ -723,7 +723,7 @@ export class UI {
           <button class="buy" data-id="${it.id}" ${afford ? '' : 'disabled'}>${maxed ? 'MAX' : `${ICON.bolt}${price}`}</button></div>`;
       }).join('');
       const el = this.open(`<div class="panel" style="width:min(820px,94vw)">
-        <div class="row" style="align-items:center;margin-bottom:10px"><div class="portrait" style="width:64px;height:64px">${PORTRAIT.vendy}</div>
+        <div class="row" style="align-items:center;margin-bottom:10px"><div class="portrait" style="width:64px;height:64px">${portrait('vendy')}</div>
         <div style="flex:1"><h2 style="margin:0">VENDY'S UPGRADES</h2><div style="color:var(--dim)">"Bolts in, awesome out!"</div></div>
         <div class="counter" style="font-size:20px">${ICON.bolt}<b>${save.bolts}</b></div></div>
         <div class="grid2">${items}</div>

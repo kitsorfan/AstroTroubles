@@ -22,10 +22,16 @@ interface Person {
   skin: string;
   hair: string;
   iris: string;
+  lips: string;
+  /** Hair drawn behind the head (long hair, a bun). */
+  back?: string;
+  /** Hair drawn over the forehead. */
+  front: string;
+  /** Uniform colour for the shoulders; the collar and insignia are drawn over them. */
   suit: string;
-  style: 'short' | 'bun' | 'long' | 'none';
+  collar: string;
+  /** Anything on top of everything else (a cap, a headset, age lines). */
   extra?: string;
-  under?: string;
 }
 
 const shade = (hex: string, f: number) => {
@@ -34,120 +40,210 @@ const shade = (hex: string, f: number) => {
   return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => c(v).toString(16).padStart(2, '0')).join('')}`;
 };
 
-/** A shaded cartoon portrait: shoulders, head, hair, big friendly eyes with sparkles, brows and a smile. */
+/** The dark comms-screen backdrop every portrait sits on: a soft glow and scanlines. */
+function screen(id: string, glow: string): string {
+  return `<defs>
+      <radialGradient id="${id}bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="${glow}" stop-opacity=".35"/><stop offset=".6" stop-color="#0b1426"/><stop offset="1" stop-color="#050912"/></radialGradient>
+      <pattern id="${id}sl" width="4" height="3" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000" opacity=".1"/></pattern>
+    </defs>
+    <rect width="80" height="80" fill="url(#${id}bg)"/>`;
+}
+
+/** Scanlines over the finished picture, and the corner brackets of the comms screen. */
+const glass = (id: string, color: string) =>
+  `<rect width="80" height="80" fill="url(#${id}sl)"/><path d="M4 14V4h10M66 4h10v10M76 66v10H66M14 76H4V66" fill="none" stroke="${color}" stroke-width="1.6" opacity=".7"/>`;
+
+/**
+ * An illustrated portrait, lit from the upper left: a proper face shape and jaw, almond eyes under
+ * lids, shaped brows, a nose and lips, and a uniform with its collar and insignia.
+ */
 function person(p: Person): string {
   const id = p.id;
-  const hair = {
-    short: `<path d="M19 37c-1-15 9-24 21-24s22 9 21 24c-3-7-8-11-13-12-4 4-12 5-18 2-5 2-9 5-11 10z" fill="${p.hair}"/>`,
-    bun: `<circle cx="40" cy="12" r="8" fill="${p.hair}"/><path d="M19 37c-1-15 9-23 21-23s22 8 21 23c-4-8-11-12-21-12s-17 4-21 12z" fill="${p.hair}"/>`,
-    long: `<path d="M17 60c-4-20-2-45 23-46 25 1 27 26 23 46l-6-2c2-10 2-19-2-26-5 3-18 4-28 0-4 7-4 16-2 26z" fill="${p.hair}"/>`,
-    none: '',
-  }[p.style];
+  const skinHi = shade(p.skin, 1.12);
+  const skinLo = shade(p.skin, 0.72);
+  const brow = shade(p.hair, 0.85);
+  const lid = (cx: number) => `M${cx - 4.6} 37.2Q${cx} 33.6 ${cx + 4.6} 37Q${cx} 39.6 ${cx - 4.6} 37.2Z`;
+  const eye = (cx: number, n: number) => `
+    <path d="${lid(cx)}" fill="#f2ede6"/>
+    <clipPath id="${id}e${n}"><path d="${lid(cx)}"/></clipPath>
+    <g clip-path="url(#${id}e${n})"><circle cx="${cx + 0.2}" cy="37.2" r="2.3" fill="${p.iris}"/><circle cx="${cx + 0.2}" cy="37.2" r="1.05" fill="#0d0a0c"/><path d="M${cx - 5} 35.2Q${cx} 33.4 ${cx + 5} 35.2V36.4Q${cx} 34.8 ${cx - 5} 36.4Z" fill="${skinLo}" opacity=".55"/></g>
+    <circle cx="${cx - 0.6}" cy="36.4" r=".5" fill="#fff" opacity=".85"/>
+    <path d="M${cx - 4.9} 37.1Q${cx} 33.1 ${cx + 4.9} 36.8" fill="none" stroke="#1d1310" stroke-width="1" stroke-linecap="round"/>
+    <path d="M${cx - 3.5} 38.9Q${cx} 39.9 ${cx + 3.6} 38.6" fill="none" stroke="${skinLo}" stroke-width=".5" opacity=".7"/>`;
   return `<svg viewBox="0 0 80 80">
+    ${screen(id, shade(p.suit, 1.3))}
     <defs>
-      <radialGradient id="${id}s" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="${shade(p.skin, 1.12)}"/><stop offset="1" stop-color="${shade(p.skin, 0.82)}"/></radialGradient>
-      <linearGradient id="${id}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.suit, 1.15)}"/><stop offset="1" stop-color="${shade(p.suit, 0.75)}"/></linearGradient>
+      <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${skinHi}"/><stop offset=".55" stop-color="${p.skin}"/><stop offset="1" stop-color="${skinLo}"/></linearGradient>
+      <linearGradient id="${id}n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.skin, 0.62)}"/><stop offset=".6" stop-color="${shade(p.skin, 0.85)}"/></linearGradient>
+      <linearGradient id="${id}c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(p.suit, 1.25)}"/><stop offset="1" stop-color="${shade(p.suit, 0.62)}"/></linearGradient>
     </defs>
-    ${p.under ?? ''}
-    <path d="M10 82c1-14 12-22 30-22s29 8 30 22z" fill="url(#${id}c)"/>
-    <rect x="34" y="50" width="12" height="12" rx="4" fill="${shade(p.skin, 0.85)}"/>
-    <ellipse cx="20" cy="41" rx="4" ry="6" fill="${shade(p.skin, 0.9)}"/><ellipse cx="60" cy="41" rx="4" ry="6" fill="${shade(p.skin, 0.9)}"/>
-    <ellipse cx="40" cy="38" rx="19" ry="21" fill="url(#${id}s)"/>
-    ${hair}
-    <ellipse cx="32.5" cy="40" rx="5" ry="5.8" fill="#fff"/><ellipse cx="47.5" cy="40" rx="5" ry="5.8" fill="#fff"/>
-    <circle cx="33" cy="41" r="3.4" fill="${p.iris}"/><circle cx="47" cy="41" r="3.4" fill="${p.iris}"/>
-    <circle cx="33" cy="41.3" r="1.7" fill="#120c10"/><circle cx="47" cy="41.3" r="1.7" fill="#120c10"/>
-    <circle cx="31.8" cy="39.4" r="1.2" fill="#fff"/><circle cx="45.8" cy="39.4" r="1.2" fill="#fff"/>
-    <path d="M27 32.5q5.5-3 11 0M42 32.5q5.5-3 11 0" stroke="${shade(p.hair, 0.9)}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    <path d="M39 44q1.4 3 3 1.2" stroke="${shade(p.skin, 0.7)}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-    <path d="M33.5 49.5q6.5 5.5 13 0" stroke="#7a2a24" stroke-width="2.4" fill="#fff" stroke-linecap="round"/>
-    <circle cx="26.5" cy="47" r="3.2" fill="#ff7a8a" opacity=".35"/><circle cx="53.5" cy="47" r="3.2" fill="#ff7a8a" opacity=".35"/>
+    ${p.back ?? ''}
+    <path d="M8 81C9 68 20 62 32 60.5L48 60.5C60 62 71 68 72 81Z" fill="url(#${id}c)"/>
+    <path d="M34.2 50H45.8L46.8 61.5Q40 64 33.2 61.5Z" fill="url(#${id}n)"/>
+    ${p.collar}
+    <ellipse cx="24.8" cy="39.5" rx="2.6" ry="4.6" fill="${p.skin}"/><path d="M24.4 37.2Q23.2 39.5 24.8 42" fill="none" stroke="${skinLo}" stroke-width=".7"/>
+    <ellipse cx="55.2" cy="39.5" rx="2.6" ry="4.6" fill="${skinLo}"/>
+    <path d="M25.4 29C25.4 17.8 54.6 17.8 54.6 29C55.6 40.5 53.6 47.6 48.6 53.2C45.6 56.6 43 58 40 58C37 58 34.4 56.6 31.4 53.2C26.4 47.6 24.4 40.5 25.4 29Z" fill="url(#${id}s)"/>
+    <path d="M48.8 27C54.2 35 53.8 46.5 45.4 56C49.6 48.4 50.8 37.4 48.8 27Z" fill="#000" opacity=".13"/>
+    <path d="M28 44Q30 49.5 34 52.5" fill="none" stroke="${skinLo}" stroke-width=".6" opacity=".45"/>
+    ${eye(33, 0)}${eye(47, 1)}
+    <path d="M28.2 32.6Q32.4 30.2 37.6 31.8" fill="none" stroke="${brow}" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M42.4 31.8Q47.6 30.2 51.8 32.6" fill="none" stroke="${brow}" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M41 38.5Q41.9 42.6 42.6 45.2" fill="none" stroke="${skinLo}" stroke-width=".9" opacity=".6" stroke-linecap="round"/>
+    <path d="M37.6 45.8Q38.6 47.3 40 47.2Q41.4 47.3 42.6 45.8" fill="none" stroke="${skinLo}" stroke-width="1" stroke-linecap="round"/>
+    <ellipse cx="38.7" cy="46.3" rx=".8" ry=".45" fill="${shade(p.skin, 0.5)}" opacity=".6"/><ellipse cx="41.3" cy="46.3" rx=".8" ry=".45" fill="${shade(p.skin, 0.5)}" opacity=".6"/>
+    <path d="M35.6 51.2Q38 50 40 50.7Q42 50 44.4 51.2Q40 51.9 35.6 51.2Z" fill="${shade(p.lips, 0.85)}"/>
+    <path d="M36.2 51.4Q40 55 43.8 51.4Q40 52.3 36.2 51.4Z" fill="${p.lips}"/>
+    <path d="M35.4 51.2Q40 52.6 44.6 51.1" fill="none" stroke="${shade(p.lips, 0.5)}" stroke-width=".8" stroke-linecap="round"/>
+    <path d="M38.6 53.4Q40 54 41.4 53.4" fill="none" stroke="#fff" stroke-width=".5" opacity=".25"/>
+    ${p.front}
     ${p.extra ?? ''}
+    ${glass(id, shade(p.suit, 1.6))}
   </svg>`;
 }
 
+/** A thin highlight along the top of a lock of hair. */
+const shine = (d: string, color: string) => `<path d="${d}" fill="none" stroke="${shade(color, 1.9)}" stroke-width="1" opacity=".35" stroke-linecap="round"/>`;
+
+const KAI_HAIR = '#3b2416';
 const KAI = person({
   id: 'pk',
-  skin: '#e8b48c',
-  hair: '#4a2a18',
-  iris: '#6a4020',
-  suit: '#ff8a3d',
-  style: 'short',
-  under: `<circle cx="40" cy="37" r="30" fill="#dfe6f0"/><circle cx="40" cy="37" r="30" fill="none" stroke="#9aa6ba" stroke-width="2"/>
-    <rect x="53" y="3" width="2.4" height="10" fill="#9aa6ba"/><circle cx="54.2" cy="3.5" r="3.4" fill="#ff5e6a"/>`,
-  extra: `<path d="M16 30a26 26 0 0 1 48 0" fill="none" stroke="#ff8a3d" stroke-width="3"/>
-    <path d="M24 22q8-6 16-6" stroke="#fff" stroke-width="2.5" opacity=".55" fill="none" stroke-linecap="round"/>
-    <rect x="35" y="66" width="10" height="6" rx="2" fill="#5ee0ff"/>`,
+  skin: '#d6a07a',
+  hair: KAI_HAIR,
+  iris: '#5b3a1e',
+  lips: '#b0685a',
+  suit: '#e0782f',
+  front: `<path d="M24.4 34C21.8 20.5 30 13.2 40.4 13.4C51.4 13.6 58.6 21 55.8 33.6C55 28.6 52.8 25.8 49.6 24.4C50 26.8 48.4 27.6 46.8 27C45 24.4 39.6 23 35.6 25.2C34.6 27.4 31.6 28.4 29.6 27.4C28.4 29.4 26.6 31.2 24.4 34Z" fill="${KAI_HAIR}"/>
+    ${shine('M28 22Q34 15.5 44 16.4', KAI_HAIR)}${shine('M46 18.5Q52 21 54 26', KAI_HAIR)}`,
+  collar: `<path d="M26 61.5Q40 70 54 61.5L57 64Q40 74 23 64Z" fill="#c9d1dc"/><path d="M23 64Q40 74 57 64" fill="none" stroke="#8a96a8" stroke-width="1.2"/>
+    <rect x="44" y="68" width="10" height="5" rx="1" fill="#1b2330"/><rect x="45.2" y="69.2" width="3" height="2.6" rx=".5" fill="#5ee0ff"/>
+    <path d="M14 72L22 66" stroke="#ffd166" stroke-width="2" opacity=".8"/>`,
+  extra: `<path d="M24.2 36.5C23 30 25 24 29 21" fill="none" stroke="#2a3140" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="21.6" y="35.5" width="4.4" height="7.5" rx="2" fill="#2a3140"/><path d="M23.8 43Q25 50 33.5 51" fill="none" stroke="#2a3140" stroke-width="1.1"/><circle cx="34" cy="51" r="1.1" fill="#5ee0ff"/>`,
 });
 
+const CAP_NAVY = '#1c2a4f';
 const CAPTAIN = person({
   id: 'pc',
-  skin: '#8a5a3c',
-  hair: '#e8e8f0',
-  iris: '#3a2410',
-  suit: '#1c2a4f',
-  style: 'short',
-  extra: `<path d="M18 26q22-12 44 0v-6q-22-10-44 0z" fill="#1c2a4f"/><rect x="17" y="24" width="46" height="6" rx="3" fill="#0f1830"/>
-    <circle cx="40" cy="18" r="3.6" fill="#ffd166"/><rect x="24" y="66" width="10" height="4" rx="1" fill="#ffd166"/><rect x="46" y="66" width="10" height="4" rx="1" fill="#ffd166"/>`,
+  skin: '#6f4631',
+  hair: '#c9c9d2',
+  iris: '#2e1d10',
+  lips: '#7a4436',
+  suit: CAP_NAVY,
+  // Close-cropped grey hair showing at the temples, under the cap.
+  front: `<path d="M25.4 35C24.6 30.4 25 27.6 26.8 26.6L29 27.4C27.4 29.4 26.4 31.8 25.4 35Z" fill="#c9c9d2"/><path d="M54.6 35C55.4 30.4 55 27.6 53.2 26.6L51 27.4C52.6 29.4 53.6 31.8 54.6 35Z" fill="#b4b4be"/>`,
+  collar: `<path d="M30 60.5L40 70L50 60.5L55 62L40 76L25 62Z" fill="#0f1830"/><path d="M36.5 61L40 66L43.5 61" fill="#e6edf7"/>
+    <path d="M12 70Q16 64 24 62.6" stroke="#ffd166" stroke-width="2.4"/><path d="M68 70Q64 64 56 62.6" stroke="#ffd166" stroke-width="2.4"/>
+    <circle cx="24" cy="71" r="1.6" fill="#ffd166"/><circle cx="56" cy="71" r="1.6" fill="#ffd166"/><path d="M52 70l2-3 2 3-2 1.2z" fill="#ffd166"/>`,
+  extra: `<path d="M22.6 24.6C22 13.4 58 13.4 57.4 24.6L57.4 26.6L22.6 26.6Z" fill="${CAP_NAVY}"/>
+    <path d="M22.6 24.2H57.4V27.4H22.6Z" fill="#0f1830"/><path d="M22.6 25.2H57.4" stroke="#ffd166" stroke-width=".8"/>
+    <path d="M24.4 27.2Q40 33.6 55.6 27.2L55.6 28.6Q40 35.4 24.4 28.6Z" fill="#0a1022"/>
+    <path d="M36.6 19.2L40 16.4L43.4 19.2L42.2 22.8H37.8Z" fill="#ffd166"/><circle cx="40" cy="20" r="1.2" fill="${CAP_NAVY}"/>
+    <path d="M27.6 38.6Q28.4 39.8 29.6 40.2M52.4 38.6Q51.6 39.8 50.4 40.2" fill="none" stroke="#3e2519" stroke-width=".5" opacity=".45"/>
+    <path d="M36 47.8Q35.2 49.8 35.8 51.6M44 47.8Q44.8 49.8 44.2 51.6" fill="none" stroke="#3e2519" stroke-width=".55" opacity=".4"/>`,
 });
 
+const ROSA_HAIR = '#23150e';
 const ROSA = person({
   id: 'pr',
-  skin: '#c68a5e',
-  hair: '#2a1a12',
+  skin: '#b8784e',
+  hair: ROSA_HAIR,
   iris: '#3a2410',
-  suit: '#8a1c26',
-  style: 'bun',
-  extra: `<path d="M34 64l6 6 6-6" fill="none" stroke="#ffd166" stroke-width="2.5"/><circle cx="25" cy="70" r="3.5" fill="#ffd166"/>`,
+  lips: '#8e3f3a',
+  suit: '#7c1d27',
+  back: `<circle cx="40" cy="12.4" r="6.6" fill="${ROSA_HAIR}"/><path d="M35.6 9Q40 6.4 44.4 9" fill="none" stroke="${shade(ROSA_HAIR, 2)}" stroke-width=".8" opacity=".4"/>`,
+  front: `<path d="M24.2 35C21.8 20 31 14 40 14C49 14 58.2 20 55.8 35C54.2 27.4 50.4 22.4 42.4 21.8C36 21.6 32.4 23.4 30.4 25.6C28.2 28 26.4 31 24.2 35Z" fill="${ROSA_HAIR}"/>
+    ${shine('M29 21Q35 16.4 44 16.6', ROSA_HAIR)}<path d="M42.4 21.8Q48 22.6 51 26" fill="none" stroke="${shade(ROSA_HAIR, 2)}" stroke-width=".8" opacity=".3"/>`,
+  collar: `<path d="M27 61Q40 67 53 61L55 64Q40 71 25 64Z" fill="#4a0f16"/>
+    <path d="M18 66L27 62L29 80H16Z" fill="#2a3140"/><path d="M62 66L53 62L51 80H64Z" fill="#2a3140"/>
+    <path d="M55 67.5l3.6 1.6v3.4c0 2.2-1.6 3.6-3.6 4.2-2-.6-3.6-2-3.6-4.2v-3.4z" fill="#ffd166"/><path d="M55 70l.9 1.8 2 .2-1.5 1.3.5 2-1.9-1.1-1.9 1.1.5-2-1.5-1.3 2-.2z" fill="#7c1d27"/>`,
 });
 
-const COLONIST = person({ id: 'pn', skin: '#f0c8a0', hair: '#5a3a22', iris: '#2a6a8a', suit: '#e6edf7', style: 'long' });
+const COL_HAIR = '#5a3a22';
+const COLONIST = person({
+  id: 'pn',
+  skin: '#e8bf9a',
+  hair: COL_HAIR,
+  iris: '#2a6a8a',
+  lips: '#c07a70',
+  suit: '#c9d6e6',
+  back: `<path d="M22 64C16 44 18 15 40 14.4C62 15 64 44 58 64L52 61C54 49 54 34 51 27C46 24 34 24 29 27C26 34 26 49 28 61Z" fill="${COL_HAIR}"/>`,
+  front: `<path d="M24.6 33C23.4 21 31 14.6 40 14.6C49 14.6 56.6 21 55.4 33C53.6 26.4 48 22.4 40 22.2C35 22.4 31.6 24 29 27C27.6 28.6 26 30.6 24.6 33Z" fill="${COL_HAIR}"/>
+    ${shine('M29 21.6Q35 16.8 45 17.6', COL_HAIR)}`,
+  collar: `<path d="M29 60.5L40 67L51 60.5L54 62.5L40 71L26 62.5Z" fill="#9fb2c8"/><rect x="50" y="68" width="9" height="5" rx="1" fill="#e8eef6" stroke="#9fb2c8" stroke-width=".6"/>`,
+});
 
 export const PORTRAIT: Record<Speaker, string> = {
   kai: KAI,
   bolt: `<svg viewBox="0 0 80 80">
-    <circle cx="40" cy="44" r="26" fill="#e6edf7"/>
-    <rect x="14" y="48" width="52" height="5" fill="#9aa6ba"/>
-    <circle cx="40" cy="42" r="13" fill="#16202e"/>
-    <circle cx="40" cy="42" r="8.5" fill="#5ee0ff"/>
-    <circle cx="36.5" cy="38.5" r="2.8" fill="#fff"/>
-    <rect x="47" y="8" width="2.4" height="14" fill="#9aa6ba"/><circle cx="48.2" cy="8" r="4" fill="#ff5e6a"/>
-    <circle cx="12" cy="44" r="6" fill="#9aa6ba"/><circle cx="68" cy="44" r="6" fill="#9aa6ba"/>
+    ${screen('pb', '#5ee0ff')}
+    <defs>
+      <radialGradient id="pbS" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d4dbe6"/><stop offset="1" stop-color="#7d889c"/></radialGradient>
+      <radialGradient id="pbI" cx="42%" cy="40%" r="62%"><stop offset="0" stop-color="#f0feff"/><stop offset=".35" stop-color="#7fe9ff"/><stop offset=".8" stop-color="#1f86d6"/><stop offset="1" stop-color="#0b3c70"/></radialGradient>
+      <radialGradient id="pbP" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#9aa6ba"/><stop offset="1" stop-color="#4a5468"/></radialGradient>
+    </defs>
+    <path d="M48 22L53 8" stroke="#8a96ac" stroke-width="2" stroke-linecap="round"/><circle cx="53.4" cy="7.6" r="3.2" fill="#ff5e6a"/><circle cx="53.4" cy="7.6" r="6" fill="#ff5e6a" opacity=".2"/>
+    <circle cx="14.5" cy="47" r="6" fill="url(#pbP)"/><circle cx="65.5" cy="47" r="6" fill="url(#pbP)"/>
+    <path d="M11.5 45.4h6M11.5 48.6h6M62.5 45.4h6M62.5 48.6h6" stroke="#2a3140" stroke-width="1"/>
+    <circle cx="40" cy="44" r="24.5" fill="url(#pbS)"/>
+    <path d="M17.6 50Q40 58 62.4 50L62 54Q40 62.4 18 54Z" fill="#7b8699"/><path d="M18 54Q40 62.4 62 54" fill="none" stroke="#5a6478" stroke-width=".8"/>
+    <path d="M24 26Q40 17 56 26" fill="none" stroke="#9aa6ba" stroke-width=".7"/><path d="M40 19.6V28" stroke="#9aa6ba" stroke-width=".7"/>
+    <circle cx="40" cy="41" r="13" fill="#0c131e"/><circle cx="40" cy="41" r="11.2" fill="none" stroke="#2c3b52" stroke-width="1.4"/>
+    <circle cx="40" cy="41" r="8.6" fill="url(#pbI)"/>
+    <circle cx="40" cy="41" r="8.6" fill="none" stroke="#bff4ff" stroke-width=".6" stroke-dasharray="2 1.4" opacity=".6"/>
+    <circle cx="40" cy="41" r="3.2" fill="#062536"/><circle cx="40" cy="41" r="1.4" fill="#5ee0ff"/>
+    <ellipse cx="36.4" cy="37.2" rx="2.4" ry="1.5" fill="#fff" opacity=".85" transform="rotate(-30 36.4 37.2)"/>
+    <path d="M58 58Q63 52 64 45" fill="none" stroke="#bff4ff" stroke-width="1.2" opacity=".5" stroke-linecap="round"/>
+    ${glass('pb', '#7fe6ff')}
   </svg>`,
   halcyon: `<svg viewBox="0 0 80 80">
-    <circle cx="40" cy="40" r="28" fill="#1b0e10"/>
-    <circle cx="40" cy="40" r="22" fill="none" stroke="#ff7a3a" stroke-width="3"/>
-    <circle cx="40" cy="40" r="12" fill="#ff7a3a"/>
-    <circle cx="40" cy="40" r="4" fill="#ffe0c0"/>
+    ${screen('ph', '#ff7a3a')}
+    <defs><radialGradient id="phI" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff2e0"/><stop offset=".3" stop-color="#ffb070"/><stop offset=".75" stop-color="#ff6a2a"/><stop offset="1" stop-color="#6a1c08"/></radialGradient></defs>
+    <circle cx="40" cy="40" r="29" fill="#120708" stroke="#3a1a12" stroke-width="1.5"/>
+    <circle cx="40" cy="40" r="25" fill="none" stroke="#ff7a3a" stroke-width="2.4" stroke-dasharray="10 3" opacity=".85"/>
+    <circle cx="40" cy="40" r="20.5" fill="none" stroke="#ff7a3a" stroke-width=".8" stroke-dasharray="1 2.2" opacity=".7"/>
+    <circle cx="40" cy="40" r="15" fill="url(#phI)"/>
+    <circle cx="40" cy="40" r="15" fill="none" stroke="#ffd0a8" stroke-width=".6"/>
+    <circle cx="40" cy="40" r="5" fill="#fff6ea"/>
+    <path d="M40 8v5M40 67v5M8 40h5M67 40h5" stroke="#ff9a5a" stroke-width="1.4"/>
+    ${glass('ph', '#ff9a5a')}
   </svg>`,
   glitch: `<svg viewBox="0 0 80 80">
-    <circle cx="40" cy="40" r="28" fill="#1b0a18"/>
-    <circle cx="40" cy="40" r="22" fill="none" stroke="#ff4fd8" stroke-width="3" stroke-dasharray="9 5"/>
-    <circle cx="43" cy="38" r="12" fill="#ff4fd8"/>
-    <circle cx="37" cy="42" r="12" fill="#5ee0ff" opacity=".45"/>
-    <circle cx="40" cy="40" r="4" fill="#ffe0f4"/>
-    <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="2" fill="none"/>
+    ${screen('pg', '#ff4fd8')}
+    <circle cx="40" cy="40" r="29" fill="#14060f"/>
+    <circle cx="40" cy="40" r="25" fill="none" stroke="#ff4fd8" stroke-width="2.4" stroke-dasharray="9 5"/>
+    <circle cx="43" cy="38" r="14" fill="#ff4fd8" opacity=".85"/><circle cx="37" cy="42" r="14" fill="#5ee0ff" opacity=".4"/>
+    <circle cx="40" cy="40" r="4.6" fill="#ffe0f4"/>
+    <path d="M6 30h30v3H6zM46 50h28v2.4H46zM14 58h18v1.6H14z" fill="#ff4fd8" opacity=".55"/>
+    <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="1.6" fill="none"/>
+    ${glass('pg', '#ff4fd8')}
   </svg>`,
   colonist: COLONIST,
   captain: CAPTAIN,
   rosa: ROSA,
   vendy: `<svg viewBox="0 0 80 80">
-    <rect x="14" y="12" width="52" height="62" rx="10" fill="#8a2a5a"/>
-    <rect x="20" y="18" width="40" height="28" rx="6" fill="#ffe0f4"/>
-    <circle cx="32" cy="30" r="3.5" fill="#2a0f20"/><circle cx="48" cy="30" r="3.5" fill="#2a0f20"/>
-    <path d="M33 37c4 4 10 4 14 0" stroke="#2a0f20" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <rect x="26" y="54" width="28" height="6" rx="3" fill="#2a0f20"/>
+    ${screen('pv', '#ff5fc8')}
+    <rect x="14" y="8" width="52" height="68" rx="6" fill="#262b38"/><rect x="11.6" y="10" width="2.6" height="64" rx="1" fill="#c0368f"/><rect x="65.8" y="10" width="2.6" height="64" rx="1" fill="#c0368f"/>
+    <rect x="18" y="12" width="44" height="11" rx="2" fill="#16060f"/><text x="40" y="20.6" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="800" font-size="8.4" fill="#ffd0ee">VENDY</text>
+    <rect x="18" y="27" width="44" height="32" rx="3" fill="#1a0616" stroke="#ff6fcf" stroke-width="1"/>
+    <rect x="28" y="34" width="6" height="11" rx="3" fill="#ffb0e6"/><rect x="46" y="34" width="6" height="11" rx="3" fill="#ffb0e6"/>
+    <path d="M32 49Q40 55.6 48 49" fill="none" stroke="#ffb0e6" stroke-width="2.6" stroke-linecap="round"/>
+    <rect x="22" y="63" width="36" height="7" rx="2" fill="#0e1118" stroke="#cfd6e2" stroke-width=".8"/>
+    ${glass('pv', '#ff9ae0')}
   </svg>`,
   bloom: `<svg viewBox="0 0 80 80">
-    <circle cx="40" cy="40" r="30" fill="#2a0a2a"/>
+    ${screen('pl', '#ff6fcf')}
+    <defs><radialGradient id="plC" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#ffd6f2"/><stop offset="1" stop-color="#ff5fc8"/></radialGradient></defs>
+    <path d="M10 70Q22 58 30 56M70 72Q58 60 50 57M16 16Q26 26 32 30" fill="none" stroke="#8a2f75" stroke-width="2" stroke-linecap="round" opacity=".7"/>
     ${[0, 1, 2, 3, 4, 5, 6, 7]
       .map((i) => {
-        const a = (i / 8) * Math.PI * 2;
+        const a = (i / 8) * 360;
         const c = ['#5e9bff', '#ffd166', '#ff6fcf', '#7dff9a'][i % 4];
-        return `<ellipse cx="${40 + Math.cos(a) * 16}" cy="${40 + Math.sin(a) * 16}" rx="8" ry="8" fill="${c}"/>`;
+        return `<path d="M40 40C35 32 36 21 40 15C44 21 45 32 40 40Z" fill="${c}" opacity=".9" transform="rotate(${a} 40 40)"/><path d="M40 38C38.6 31 39 23 40 18" fill="none" stroke="#fff" stroke-width=".6" opacity=".45" transform="rotate(${a} 40 40)"/>`;
       })
       .join('')}
-    <circle cx="40" cy="40" r="10" fill="#ffe0f4"/>
+    <circle cx="40" cy="40" r="9" fill="url(#plC)"/><circle cx="40" cy="40" r="15" fill="#ff6fcf" opacity=".12"/>
+    ${glass('pl', '#ff9ae0')}
   </svg>`,
 };
 
@@ -174,3 +270,14 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   vendy: '#ff9ae0',
   bloom: '#ff6fcf',
 };
+
+let portraitCopies = 0;
+
+/**
+ * A portrait ready to insert into the page. Each copy gets its own gradient and clip ids: the same
+ * face can be on screen several times at once, and an id inside a hidden copy would break the rest.
+ */
+export function portrait(who: Speaker): string {
+  const k = `_${(portraitCopies += 1)}`;
+  return PORTRAIT[who].replace(/id="([^"]+)"/g, `id="$1${k}"`).replace(/url\(#([^)]+)\)/g, `url(#$1${k})`);
+}

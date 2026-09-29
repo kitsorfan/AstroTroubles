@@ -97,45 +97,58 @@ export interface KaiModel {
 }
 
 /**
- * A friendly face: skin, eyes with irises and a sparkle, brows, a small nose, a smile and rosy
- * cheeks. `r` is the head radius; the face looks along +Z.
+ * A face with natural proportions: almond eyes under skin-coloured lids, slim brows, a defined nose
+ * and a small, calm mouth. `r` is the head radius; the face looks along +Z.
  */
 export function makeFace(opts: { r: number; skin: string; iris?: string; brow?: string; smile?: boolean }): { group: THREE.Group; eyes: THREE.Object3D[] } {
   const { r, skin } = opts;
   const g = new THREE.Group();
   const skinM = mat(skin, { rough: 0.62 });
-  g.add(mesh(sphere(r, 28), skinM, 0, 0, 0));
-  const white = mat('#fbfbff', { rough: 0.25 });
+  const skinDark = mat(new THREE.Color(skin).multiplyScalar(0.88).getStyle(), { rough: 0.6 });
+  const head = mesh(sphere(r, 28), skinM, 0, 0, 0);
+  // A touch narrower at the jaw than a ball.
+  head.scale.set(0.94, 1.04, 1);
+  g.add(head);
+  const white = mat('#f1ede6', { rough: 0.3 });
   const iris = mat(opts.iris ?? '#5a3a22', { rough: 0.3 });
   const pupil = mat('#0c0a10', { rough: 0.2 });
-  const shine = mat('#ffffff', { emissive: '#ffffff', ei: 1 });
+  const shine = mat('#ffffff', { emissive: '#ffffff', ei: 0.6 });
   const brow = mat(opts.brow ?? '#3a2416', { rough: 0.7 });
   const eyes: THREE.Object3D[] = [];
   const surf = (x: number, y: number) => Math.sqrt(Math.max(0, r * r - x * x - y * y));
+  const lidGeo = new THREE.SphereGeometry(r * 0.15, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2);
   for (const sx of [-1, 1]) {
-    const ex = sx * r * 0.34;
-    const ey = r * 0.06;
+    const ex = sx * r * 0.33;
+    const ey = r * 0.04;
     const e = new THREE.Group();
-    e.position.set(ex, ey, surf(ex, ey) - r * 0.07);
-    const w = mesh(sphere(r * 0.2, 16), white, 0, 0, 0, false);
-    w.scale.set(1, 1.2, 0.55);
+    e.position.set(ex, ey, surf(ex, ey) - r * 0.06);
+    const w = mesh(sphere(r * 0.14, 16), white, 0, 0, 0, false);
+    w.scale.set(1.2, 0.85, 0.5);
     e.add(w);
-    const ir = mesh(sphere(r * 0.13, 14), iris, 0, -r * 0.01, r * 0.075, false);
-    ir.scale.z = 0.5;
+    const ir = mesh(sphere(r * 0.09, 14), iris, 0, -r * 0.005, r * 0.05, false);
+    ir.scale.z = 0.45;
     e.add(ir);
-    e.add(mesh(sphere(r * 0.07, 10), pupil, 0, -r * 0.01, r * 0.1, false));
-    e.add(mesh(sphere(r * 0.035, 8), shine, -sx * r * 0.04, r * 0.045, r * 0.125, false));
+    e.add(mesh(sphere(r * 0.042, 10), pupil, 0, -r * 0.005, r * 0.068, false));
+    e.add(mesh(sphere(r * 0.016, 6), shine, -sx * r * 0.025, r * 0.03, r * 0.078, false));
+    // The upper lid covers the top of the eye, so it looks out calmly instead of staring.
+    const lid = mesh(lidGeo, skinDark, 0, r * 0.052, r * 0.004, false);
+    lid.scale.set(1.25, 0.45, 0.62);
+    e.add(lid);
     g.add(e);
     eyes.push(e);
-    const b = mesh(boxG(r * 0.3, r * 0.06, r * 0.06), brow, ex, ey + r * 0.3, surf(ex, ey + r * 0.3) - r * 0.02, false);
-    b.rotation.z = sx * -0.14;
+    const b = mesh(boxG(r * 0.32, r * 0.045, r * 0.05), brow, ex, ey + r * 0.24, surf(ex, ey + r * 0.24) - r * 0.015, false);
+    b.rotation.z = sx * -0.08;
     g.add(b);
-    const cheek = mesh(sphere(r * 0.13, 10), mat('#ff8a9a', { rough: 0.8, opacity: 0.4 }), sx * r * 0.55, -r * 0.2, surf(sx * r * 0.55, -r * 0.2) - r * 0.06, false);
-    cheek.scale.z = 0.4;
-    g.add(cheek);
   }
-  g.add(mesh(sphere(r * 0.085, 10), mat(new THREE.Color(skin).multiplyScalar(0.9).getStyle(), { rough: 0.6 }), 0, -r * 0.14, surf(0, -r * 0.14) - r * 0.01, false));
-  const mouth = mesh(new THREE.TorusGeometry(r * 0.17, r * 0.035, 6, 14, Math.PI), mat('#8a2a2a', { rough: 0.5 }), 0, -r * 0.33, surf(0, -r * 0.4) - r * 0.02, false);
+  // Nose: a bridge and a tip rather than a button.
+  const bridge = mesh(boxG(r * 0.07, r * 0.26, r * 0.08), skinDark, 0, -r * 0.05, surf(0, -r * 0.05) - r * 0.02, false);
+  bridge.rotation.x = -0.25;
+  g.add(bridge);
+  const tip = mesh(sphere(r * 0.075, 10), skinDark, 0, -r * 0.18, surf(0, -r * 0.18) - r * 0.005, false);
+  tip.scale.set(1.25, 0.85, 0.9);
+  g.add(tip);
+  const mouth = mesh(new THREE.TorusGeometry(r * 0.12, r * 0.022, 6, 14, Math.PI), mat('#7a3a34', { rough: 0.5 }), 0, -r * 0.36, surf(0, -r * 0.4) - r * 0.015, false);
+  mouth.scale.y = 0.45;
   if (opts.smile !== false) mouth.rotation.z = Math.PI;
   g.add(mouth);
   return { group: g, eyes };
@@ -264,27 +277,70 @@ export function makeColonist(seed: number): THREE.Group {
   return g;
 }
 
-/** Scanlines for hologram light. */
-function scanTexture() {
-  const c = document.createElement('canvas');
-  c.width = 4;
-  c.height = 64;
-  const x = c.getContext('2d') as CanvasRenderingContext2D;
-  for (let y = 0; y < 64; y++) {
-    const v = y % 4 < 2 ? 255 : 110;
-    x.fillStyle = `rgb(${v},${v},${v})`;
-    x.fillRect(0, y, 4, 1);
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(1, 6);
-  return t;
+/**
+ * Light for hologram figures: bright at the silhouette's rim (fresnel), fainter through the middle,
+ * with fine scanlines rolling up, a brighter band sweeping up now and then, and a fade where the
+ * figure meets the projector's beam.
+ */
+export function holoMaterial(color: string, map: THREE.Texture | null = null, fill = 0.2): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: new THREE.Color(color) },
+      opacity: { value: 0 },
+      time: { value: 0 },
+      base: { value: 0 },
+      map: { value: map },
+      useMap: { value: map ? 1 : 0 },
+      fill: { value: fill },
+    },
+    vertexShader: `
+      varying vec3 vN;
+      varying vec3 vView;
+      varying float vY;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vY = wp.y;
+        vN = normalize(mat3(modelMatrix) * normal);
+        vView = normalize(cameraPosition - wp.xyz);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      uniform vec3 color;
+      uniform float opacity;
+      uniform float time;
+      uniform float base;
+      uniform sampler2D map;
+      uniform float useMap;
+      uniform float fill;
+      varying vec3 vN;
+      varying vec3 vView;
+      varying float vY;
+      varying vec2 vUv;
+      void main() {
+        float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vView))), 1.6);
+        float scan = 0.72 + 0.28 * sin(vY * 140.0 - time * 9.0);
+        float sweep = smoothstep(0.92, 1.0, fract(vY * 0.45 - time * 0.35)) * 0.8;
+        float tex = useMap > 0.5 ? texture2D(map, vUv).r : 1.0;
+        float h = vY - base;
+        float fade = smoothstep(0.0, 0.25, h);
+        float a = (fill + rim * 0.95 + sweep) * scan * tex * fade * opacity;
+        gl_FragColor = vec4(color * (0.75 + rim * 0.8 + sweep), a);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
 }
 
-/** Face drawn in light for a hologram head (the front of a sphere is at u = 0.25). */
+/**
+ * A face drawn in light for a hologram head (the front of a sphere is at u = 0.25): eyes under their
+ * lids, brows, the line of the nose, lips, and the hairline, like a slightly grainy recording.
+ */
 function holoFaceTexture(who: 'captain' | 'rosa') {
-  const W = 256;
-  const H = 128;
+  const W = 512;
+  const H = 256;
   const c = document.createElement('canvas');
   c.width = W;
   c.height = H;
@@ -292,34 +348,70 @@ function holoFaceTexture(who: 'captain' | 'rosa') {
   g.fillStyle = '#9a9a9a';
   g.fillRect(0, 0, W, H);
   const cx = W * 0.25;
-  const eye = (x: number) => {
-    g.fillStyle = '#ffffff';
+  // Hair: the top of the head and the back, darker so the face stands out.
+  g.fillStyle = who === 'captain' ? '#b4b4b4' : '#4a4a4a';
+  g.fillRect(0, 0, W, who === 'captain' ? 70 : 88);
+  if (who === 'rosa') {
+    // Hair swept back from the face, framing it on both sides.
     g.beginPath();
-    g.ellipse(x, 58, 7, 9, 0, 0, Math.PI * 2);
+    g.ellipse(cx, 92, 70, 44, 0, Math.PI, 0);
     g.fill();
-    g.fillStyle = '#202020';
+    g.fillRect(cx + 70, 0, W - cx - 140, 150);
+  }
+  g.fillStyle = '#d2d2d2';
+  g.beginPath();
+  g.ellipse(cx, 130, 58, 64, 0, 0, Math.PI * 2);
+  g.fill();
+  const line = (w: number, color: string, pts: number[]) => {
+    g.strokeStyle = color;
+    g.lineWidth = w;
+    g.lineCap = 'round';
     g.beginPath();
-    g.arc(x, 60, 4, 0, Math.PI * 2);
-    g.fill();
+    g.moveTo(pts[0], pts[1]);
+    g.quadraticCurveTo(pts[2], pts[3], pts[4], pts[5]);
+    g.stroke();
   };
-  eye(cx - 13);
-  eye(cx + 13);
-  g.strokeStyle = '#ffffff';
-  g.lineWidth = 3;
-  g.lineCap = 'round';
+  for (const s of [-1, 1]) {
+    const ex = cx + s * 24;
+    // Eye socket shadow, the white, the iris under the lid, and the lid line.
+    g.fillStyle = 'rgba(40,40,40,0.35)';
+    g.beginPath();
+    g.ellipse(ex, 118, 16, 9, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#e8e8e8';
+    g.beginPath();
+    g.moveTo(ex - 11, 120);
+    g.quadraticCurveTo(ex, 110, ex + 11, 119);
+    g.quadraticCurveTo(ex, 126, ex - 11, 120);
+    g.fill();
+    g.fillStyle = '#2a2a2a';
+    g.beginPath();
+    g.arc(ex + 1, 119.5, 4.6, 0, Math.PI * 2);
+    g.fill();
+    line(2.6, '#1e1e1e', [ex - 12, 120, ex, 108, ex + 12, 118]);
+    // Brows: straighter and heavier for the Captain.
+    line(who === 'captain' ? 5 : 4, '#262626', [ex - 13, 104, ex, who === 'captain' ? 99 : 97, ex + 13, 103]);
+  }
+  // Nose: one side in shadow, then the tip.
+  line(2.2, 'rgba(30,30,30,0.7)', [cx + 3, 120, cx + 6, 135, cx + 6, 144]);
+  line(2.4, '#2a2a2a', [cx - 8, 146, cx, 151, cx + 8, 146]);
+  // Lips.
+  g.fillStyle = '#5a5a5a';
   g.beginPath();
-  g.moveTo(cx - 20, 44);
-  g.lineTo(cx - 7, who === 'captain' ? 42 : 45);
-  g.moveTo(cx + 7, who === 'captain' ? 42 : 45);
-  g.lineTo(cx + 20, 44);
-  g.stroke();
-  g.beginPath();
-  g.arc(cx, 76, 9, 0.2 * Math.PI, 0.8 * Math.PI);
-  g.stroke();
-  g.fillStyle = '#d0d0d0';
-  g.fillRect(cx - 2, 64, 4, 8);
+  g.moveTo(cx - 16, 164);
+  g.quadraticCurveTo(cx, 158, cx + 16, 164);
+  g.quadraticCurveTo(cx, 172, cx - 16, 164);
+  g.fill();
+  line(2.2, '#1e1e1e', [cx - 17, 164, cx, 167, cx + 17, 164]);
+  // Jaw shadow along the bottom of the face.
+  line(3, 'rgba(40,40,40,0.5)', [cx - 44, 170, cx, 206, cx + 44, 170]);
+  // Grain and scanlines, like an old recording.
+  for (let i = 0; i < 1800; i++) {
+    g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)';
+    g.fillRect(Math.random() * W, Math.random() * H, 2, 2);
+  }
   for (let y = 0; y < H; y += 4) {
-    g.fillStyle = 'rgba(0,0,0,0.25)';
+    g.fillStyle = 'rgba(0,0,0,0.18)';
     g.fillRect(0, y, W, 2);
   }
   const t = new THREE.CanvasTexture(c);
@@ -327,50 +419,122 @@ function holoFaceTexture(who: 'captain' | 'rosa') {
   return t;
 }
 
+/** A lathe profile, as [radius, height] pairs from the bottom up. */
+const lathe = (pts: [number, number][], seg = 22) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+
+/** A limb segment (a tapered capsule) hanging down from its joint. */
+function limb(r0: number, r1: number, len: number) {
+  const g = new THREE.CylinderGeometry(r0, r1, len, 12, 1, false);
+  g.translate(0, -len / 2, 0);
+  return g;
+}
+
 /**
- * A full figure made of light for hologram messages: face, uniform and accessories. Returns the
- * group and its materials (so the projector can flicker them).
+ * A full figure made of light for hologram messages, with real proportions: a tapered torso and
+ * jacket, arms that bend at the elbow (one raised, as if talking), and the Captain's peaked cap and
+ * epaulettes or Aunt Rosa's hair bun and security vest. Returns the group and its materials, so the
+ * projector can drive their flicker.
  */
-export function makeHoloFigure(who: 'captain' | 'rosa', color: string): { group: THREE.Group; mats: THREE.MeshBasicMaterial[] } {
+export function makeHoloFigure(who: 'captain' | 'rosa', color: string): { group: THREE.Group; mats: THREE.ShaderMaterial[] } {
   const g = new THREE.Group();
-  const scan = scanTexture();
-  const body = new THREE.MeshBasicMaterial({ color, map: scan, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-  const faceM = new THREE.MeshBasicMaterial({ color, map: holoFaceTexture(who), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-  const m = (geo: THREE.BufferGeometry, x: number, y: number, z: number, mt = body) => {
-    const me = new THREE.Mesh(geo, mt);
+  const body = holoMaterial(color);
+  // The head glows through its middle too, so the face reads clearly.
+  const faceM = holoMaterial(color, holoFaceTexture(who), 0.75);
+  const add = (geo: THREE.BufferGeometry, x: number, y: number, z: number, m: THREE.Material = body) => {
+    const me = new THREE.Mesh(geo, m);
     me.position.set(x, y, z);
     g.add(me);
     return me;
   };
-  // Legs and boots.
+  // Legs and shoes.
   for (const sx of [-1, 1]) {
-    m(new THREE.CapsuleGeometry(0.1, 0.42, 4, 10), sx * 0.12, 0.34, 0);
-    m(new THREE.BoxGeometry(0.16, 0.08, 0.26), sx * 0.12, 0.05, 0.04);
+    add(limb(0.075, 0.055, 0.8), sx * 0.1, 0.86, 0);
+    const shoe = add(new THREE.CapsuleGeometry(0.05, 0.12, 4, 8).rotateX(Math.PI / 2), sx * 0.1, 0.05, 0.04);
+    shoe.scale.set(1.1, 0.8, 1);
   }
-  // Torso, shoulders and arms (one hand raised, as if talking).
-  const torso = m(new THREE.CapsuleGeometry(0.24, 0.42, 4, 14), 0, 0.92, 0);
-  torso.scale.z = 0.8;
-  m(new THREE.BoxGeometry(0.62, 0.12, 0.3), 0, 1.22, 0);
-  m(new THREE.CapsuleGeometry(0.07, 0.36, 4, 8), -0.34, 0.95, 0);
-  const raised = m(new THREE.CapsuleGeometry(0.07, 0.34, 4, 8), 0.36, 1.18, 0.1);
-  raised.rotation.set(-0.9, 0, -0.5);
-  m(new THREE.SphereGeometry(0.06, 8, 6), -0.34, 0.7, 0);
-  m(new THREE.SphereGeometry(0.06, 8, 6), 0.44, 1.38, 0.28);
-  m(new THREE.CylinderGeometry(0.08, 0.09, 0.12, 10), 0, 1.33, 0);
-  // Head with a drawn face (rotated so the face looks forward).
-  const head = m(new THREE.SphereGeometry(0.22, 24, 16), 0, 1.56, 0, faceM);
-  head.rotation.y = 0;
+  // Torso: hips, waist, chest and shoulders in one smooth profile, flattened front to back.
+  const torso = add(
+    lathe([
+      [0, 0],
+      [0.16, 0.02],
+      [0.18, 0.12],
+      [0.155, 0.32],
+      [0.19, 0.5],
+      [0.22, 0.62],
+      [0.2, 0.68],
+      [0.07, 0.72],
+      [0, 0.73],
+    ]),
+    0,
+    0.8,
+    0,
+  );
+  torso.scale.z = 0.66;
+  // The jacket hem flares a little over the hips.
+  const hem = add(
+    lathe([
+      [0.19, 0],
+      [0.17, 0.14],
+    ]),
+    0,
+    0.74,
+    0,
+  );
+  hem.scale.z = 0.7;
+  // Arms: the left hangs relaxed, the right is raised mid-gesture.
+  const arm = (sx: number, shoulder: number, elbow: number) => {
+    const upper = new THREE.Group();
+    upper.position.set(sx * 0.25, 1.44, 0);
+    upper.rotation.set(shoulder, 0, sx * 0.12);
+    const up = new THREE.Mesh(limb(0.055, 0.045, 0.3), body);
+    upper.add(up);
+    const lower = new THREE.Group();
+    lower.position.y = -0.3;
+    lower.rotation.x = elbow;
+    lower.add(new THREE.Mesh(limb(0.045, 0.035, 0.27), body));
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), body);
+    hand.position.y = -0.3;
+    hand.scale.set(0.8, 1.2, 0.6);
+    lower.add(hand);
+    upper.add(lower);
+    g.add(upper);
+  };
+  arm(-1, 0.05, -0.15);
+  arm(1, -0.35, -1.5);
+  add(new THREE.CylinderGeometry(0.05, 0.06, 0.12, 12), 0, 1.58, 0);
+  // Head, a little taller than wide, with the face drawn in light.
+  const head = add(new THREE.SphereGeometry(0.115, 28, 20), 0, 1.74, 0.01, faceM);
+  head.scale.set(0.92, 1.12, 0.98);
   if (who === 'captain') {
-    m(new THREE.CylinderGeometry(0.24, 0.23, 0.12, 20), 0, 1.76, 0);
-    m(new THREE.BoxGeometry(0.34, 0.03, 0.18), 0, 1.71, 0.2);
-    m(new THREE.SphereGeometry(0.04, 8, 6), 0, 1.78, 0.24);
-    for (const sx of [-1, 1]) m(new THREE.BoxGeometry(0.16, 0.04, 0.2), sx * 0.3, 1.29, 0);
+    // Peaked cap, badge, epaulettes and a line of buttons down the jacket.
+    add(new THREE.CylinderGeometry(0.128, 0.118, 0.07, 22), 0, 1.86, 0);
+    const top = add(new THREE.CylinderGeometry(0.14, 0.128, 0.03, 22), 0, 1.905, -0.01);
+    top.scale.z = 1.08;
+    const peak = add(new THREE.CylinderGeometry(0.12, 0.12, 0.012, 20, 1, false, -Math.PI / 2, Math.PI), 0, 1.83, 0.02);
+    peak.rotation.x = 0.25;
+    add(new THREE.SphereGeometry(0.018, 8, 6), 0, 1.88, 0.125);
+    for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.12, 0.018, 0.1), sx * 0.19, 1.49, 0);
+    for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(0.012, 6, 4), 0.03, 1.02 + i * 0.1, 0.13);
   } else {
-    m(new THREE.SphereGeometry(0.11, 10, 8), 0, 1.74, -0.14);
-    const hair = m(new THREE.SphereGeometry(0.23, 16, 10, 0, Math.PI * 2, 0, 1.3), 0, 1.58, -0.02);
-    hair.scale.set(1.04, 1, 1.04);
-    m(new THREE.BoxGeometry(0.4, 0.34, 0.32), 0, 0.98, 0.02);
+    // Hair drawn back into a bun, and the security vest over the uniform.
+    const hair = add(new THREE.SphereGeometry(0.122, 22, 14, 0, Math.PI * 2, 0, 1.45), 0, 1.755, -0.012);
+    hair.scale.set(0.95, 1.08, 1.02);
+    add(new THREE.SphereGeometry(0.055, 12, 10), 0, 1.86, -0.11);
+    const vest = add(
+      lathe([
+        [0.18, 0],
+        [0.2, 0.2],
+        [0.215, 0.36],
+        [0.19, 0.44],
+      ]),
+      0,
+      1.0,
+      0,
+    );
+    vest.scale.z = 0.74;
+    add(new THREE.BoxGeometry(0.06, 0.07, 0.01), 0.09, 1.3, 0.155);
   }
+  // Everything shares the same projection; the faces keep their own texture.
   return { group: g, mats: [body, faceM] };
 }
 

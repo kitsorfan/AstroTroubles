@@ -1195,7 +1195,7 @@ export class Holo extends Entity implements Interactable {
   played: boolean;
   /** The translucent figure of whoever recorded the message. */
   readonly figure = new THREE.Group();
-  private figMats: THREE.MeshBasicMaterial[];
+  private figMats: THREE.ShaderMaterial[];
   private beamMat: THREE.MeshBasicMaterial;
   private ring: THREE.Mesh;
   private shown = 0;
@@ -1225,6 +1225,7 @@ export class Holo extends Entity implements Interactable {
     // A figure made of light, with a face and uniform, like an old recording.
     const holo = makeHoloFigure(who, color);
     this.figMats = holo.mats;
+    for (const m of this.figMats) m.uniforms.base.value = h + 0.3;
     const f = this.figure;
     f.add(holo.group);
     f.position.set(x, h + 0.3, z);
@@ -1258,13 +1259,18 @@ export class Holo extends Entity implements Interactable {
       }
     }
     // The projection flickers like an old recording.
-    const flicker = this.shown > 0 ? 0.75 + Math.sin(this.t * 37) * 0.08 + (Math.random() < 0.04 ? -0.4 : 0) : 0;
+    const flicker = this.shown > 0 ? 0.85 + Math.sin(this.t * 37) * 0.06 + (Math.random() < 0.04 ? -0.45 : 0) : 0;
     this.figure.visible = this.shown > 0.01;
-    for (const m of this.figMats) m.opacity = this.shown * flicker * 0.8;
+    for (const m of this.figMats) {
+      m.uniforms.opacity.value = this.shown * flicker;
+      m.uniforms.time.value = this.t;
+    }
+    // Now and then the recording glitches sideways for a frame.
+    this.figure.position.x = this.spot.x + (Math.random() < 0.03 ? (Math.random() - 0.5) * 0.08 : 0);
     this.figure.scale.set(1, Math.max(0.01, this.shown), 1);
     const p = this.world.player.body;
     this.figure.rotation.y = Math.atan2(p.x - this.spot.x, p.z - this.spot.z);
-    this.beamMat.opacity = this.shown * 0.18 + (this.played ? 0 : 0.05 + Math.sin(this.t * 3) * 0.03);
+    this.beamMat.opacity = this.shown * 0.09 + (this.played ? 0 : 0.05 + Math.sin(this.t * 3) * 0.03);
   }
 }
 
