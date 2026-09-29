@@ -537,7 +537,9 @@ export class Platform extends Entity {
     this.mesh = new THREE.Group();
     this.mesh.add(mesh(boxG(hw * 2, 0.5, hw * 2), mat('#5a6478', { metal: 0.55, rough: 0.35 }), 0, -0.25, 0));
     const trim = new THREE.MeshStandardMaterial({ map: stripeTexture('#ffd166', '#2a2f3a'), roughness: 0.5 });
-    this.mesh.add(mesh(boxG(hw * 2 + 0.06, 0.12, hw * 2 + 0.06), trim, 0, -0.06, 0));
+    // The hazard band wraps the sides just below the deck. Its top must not share the deck's plane:
+    // two coplanar faces z-fight, and on a moving platform that shimmers as a constant flicker.
+    this.mesh.add(mesh(boxG(hw * 2 + 0.08, 0.14, hw * 2 + 0.08), trim, 0, -0.13, 0));
     this.mesh.add(mesh(cyl(0.2, 0.3, 0.3, 10), mat(world.theme.accent, { emissive: world.theme.accent, ei: 1.4 }), 0, -0.6, 0, false));
     this.mesh.add(glowSprite(world.theme.accent, 1.4, 0.5).translateY(-0.8));
     this.obj.add(this.mesh);
