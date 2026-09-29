@@ -501,11 +501,18 @@ class Buzzer extends Enemy {
 
 /* ---------------- Warden Bot: patrols, sounds the alarm, calls everyone ---------------- */
 
+/** How fast a Warden Bot can swing round (radians a second): slow enough to run circles round it. */
+const SENTRY_TURN = 1.35;
+/** Damage multiplier for hits on the power pack on its back. */
+const SENTRY_BACKSTAB = 3;
+
 class Sentry extends Enemy {
   private dir: [number, number];
   private burst = 0;
   private burstT = 0;
   private coolT = 1.5;
+  /** After a burst the gun overheats: it stops turning and vents steam, a window to get behind it. */
+  private ventT = 0;
   private raised = false;
 
   constructor(world: World, id: string, x: number, y: number, z: number) {
@@ -519,14 +526,39 @@ class Sentry extends Enemy {
     this.badgeY = 2.2;
   }
 
-  protected canBeHit(kind: HitKind, from: THREE.Vector3) {
-    if (kind !== 'shot') return true;
-    const fx = Math.sin(this.yaw);
-    const fz = Math.cos(this.yaw);
+  /** -1 straight behind it, 1 straight in front of it. */
+  private facingDot(from: THREE.Vector3) {
     const dx = from.x - this.body.x;
     const dz = from.z - this.body.z;
     const d = Math.hypot(dx, dz) || 1;
-    return (dx * fx + dz * fz) / d < 0.35;
+    return (dx * Math.sin(this.yaw) + dz * Math.cos(this.yaw)) / d;
+  }
+
+  protected canBeHit(kind: HitKind, from: THREE.Vector3) {
+    // Only its front shield stops blaster bolts; everything else (and anything from the side) gets through.
+    if (kind !== 'shot') return true;
+    return this.facingDot(from) < 0.35;
+  }
+
+  hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean {
+    const back = this.facingDot(from) < -0.25;
+    const ok = super.hit(back ? dmg * SENTRY_BACKSTAB : dmg, kind, from);
+    if (back && this.alive) {
+      // A hit on the power pack shorts it out for a moment.
+      this.stagger = Math.max(this.stagger, 0.8);
+      this.world.particles.emit(this.aim.x, this.aim.y + 0.2, this.aim.z, { count: 14, color: '#ffd166', speed: 5, life: 0.4, size: 0.4 });
+      audio.play('zap', 0.8);
+    }
+    return ok;
+  }
+
+  /** Swings toward an angle, but never faster than SENTRY_TURN. */
+  private turnTo(target: number, dt: number) {
+    let d = (target - this.yaw) % (Math.PI * 2);
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    const max = SENTRY_TURN * (this.elite ? 1.15 : 1) * dt;
+    this.yaw += Math.max(-max, Math.min(max, d));
   }
 
   protected think(dt: number) {
@@ -539,36 +571,47 @@ class Sentry extends Enemy {
     const fz = Math.cos(this.yaw);
     const inView = this.aggro && d < 11 && (dx * fx + dz * fz) / (d || 1) > 0.5;
     if (inView && !this.raised) {
-      // The first time it sees Kai, it calls every guard nearby.
+      // The first time it sees Kai, it calls the guards close by.
       this.raised = true;
       this.alarmT = 2.4;
       audio.play('alarm');
-      this.world.alertNear(b.x, b.z, 16, null, true);
+      this.world.alertNear(b.x, b.z, 12, null, true);
     }
     this.coolT -= dt;
+    this.ventT = Math.max(0, this.ventT - dt);
+    const core = this.model.mats?.core;
+    if (core) core.emissiveIntensity = this.ventT > 0 ? 4 + Math.sin(this.t * 30) * 1.5 : 2.2 + Math.sin(this.t * 4) * 0.4;
+    if (this.ventT > 0) {
+      // Overheated: frozen in place with its back wide open.
+      b.vx = damp(b.vx, 0, 10, dt);
+      b.vz = damp(b.vz, 0, 10, dt);
+      if (Math.random() < 0.35) this.world.particles.emit(b.x - fx * 0.6, b.y + 1.5, b.z - fz * 0.6, { count: 1, color: '#dfe6f0', speed: 1, up: 3, life: 0.6, size: 0.6, gravity: -1 });
+      return;
+    }
     if (this.burst > 0) {
       b.vx = damp(b.vx, 0, 10, dt);
       b.vz = damp(b.vz, 0, 10, dt);
-      this.facePlayer(dt, 4);
+      this.turnTo(Math.atan2(dx, dz), dt);
       this.burstT -= dt;
       if (this.burstT <= 0) {
-        this.burstT = 0.28 / this.rate;
+        this.burstT = 0.32 / this.rate;
         this.burst -= 1;
         const from = new THREE.Vector3(b.x + fx * 0.8, b.y + 1.2, b.z + fz * 0.8);
-        const speed = 10 * this.spd;
+        const speed = 9 * this.spd;
         this.world.shots.fire('enemy', from, this.lead(d / speed).sub(from).normalize(), speed, 1);
         this.world.soundAt('enemyShoot', this.body.x, this.body.z, 1.3, 22);
+        if (this.burst === 0) this.ventT = 1.8;
       }
       return;
     }
     if (inView && this.coolT <= 0) {
-      this.burst = 3 + Math.floor(this.tier / 2);
-      this.burstT = 0.45;
-      this.coolT = 3 / this.rate;
+      this.burst = 3;
+      this.burstT = 0.5;
+      this.coolT = 3.4 / this.rate;
       return;
     }
     if (this.aggro && d < 11) {
-      this.facePlayer(dt, 2.5 * this.spd);
+      this.turnTo(Math.atan2(dx, dz), dt);
       b.vx = damp(b.vx, 0, 8, dt);
       b.vz = damp(b.vz, 0, 8, dt);
       return;

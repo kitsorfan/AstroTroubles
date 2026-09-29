@@ -71,7 +71,7 @@ Each enemy type has a floating icon and a health bar, and the first time you mee
 | Spore Crawler | Hunts in packs. When one spots you it calls the others, and they surround you |
 | Maw Plant | Hides among the roots and bites when you walk too close |
 | Stinger Wasp | Circles you, shoots where you're going, and dives in while you reload |
-| Warden Bot | Patrols, and sounds an alarm that wakes every guard nearby. Hit it from behind its shield |
+| Warden Bot | Patrols, and sounds an alarm that wakes the guards nearby. Its front shield blocks shots, but it turns slowly and freezes to vent after each burst: hit the glowing pack on its back for triple damage |
 | Spitter Pod | Lobs acid at where you'll be when it lands |
 | Horned Brute | Charges; if it misses, it stomps in anger |
 

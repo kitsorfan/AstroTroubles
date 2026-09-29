@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { blobShadow, boxG, capsule, cone, cyl, mat, mesh, ownMat, sphere, torus } from './models';
+import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 /**
  * Bloom-infected creatures and robots: dark armour, glowing weak spots and eyes, and silhouettes that
@@ -277,8 +277,21 @@ export function makeSentry(): EnemyModel {
   );
   shield.position.set(0, 0.95, 0.78);
   body.add(shield);
+  // The weak spot: an exposed power pack on its back, glowing so Kai knows where to aim.
+  const pack = new THREE.Group();
+  pack.position.set(0, 0.86, -0.5);
+  pack.add(mesh(boxG(0.7, 0.56, 0.2), dark));
+  const coreMat = ownMat('#ffd166', { emissive: '#ffb020', ei: 2.4 });
+  const core = mesh(cyl(0.17, 0.17, 0.12, 16), coreMat, 0, 0, -0.12, false);
+  core.rotation.x = Math.PI / 2;
+  pack.add(core);
+  for (const sx of [-1, 1]) pack.add(mesh(cyl(0.05, 0.05, 0.5, 8), red, sx * 0.28, 0, -0.1));
+  const coreGlow = glowSprite('#ffb020', 1.1, 0.55);
+  coreGlow.position.set(0, 0, -0.2);
+  pack.add(coreGlow);
+  body.add(pack);
   root.add(blobShadow(1.8));
-  return { root, body, flash: [armour], parts: { shield, head }, mats: { eye: eyeMat } };
+  return { root, body, flash: [armour], parts: { shield, head, pack, coreGlow }, mats: { eye: eyeMat, core: coreMat } };
 }
 
 /* ---------------- spitter pod (turret) ---------------- */
