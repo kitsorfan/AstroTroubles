@@ -24,6 +24,9 @@ expo-env.d.ts
 credentials.json
 credentials/
 
+# Editor settings stay personal
+.vscode/
+
 # Metro
 .metro-health-check*
 
