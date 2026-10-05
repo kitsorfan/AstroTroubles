@@ -866,7 +866,7 @@ class King extends Boss {
   }
 }
 
-/* ---------------- 5. WARDOG ---------------- */
+/* ---------------- 5. CERBERUS ---------------- */
 
 class Pylon extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
@@ -912,7 +912,7 @@ class Pylon extends Entity implements Interactable {
 
 class Wardog extends Boss implements Target {
   protected focusHeight = 2.6;
-  readonly title = 'WARDOG';
+  readonly title = 'CERBERUS';
   readonly aim = new THREE.Vector3();
   radius = 1.6;
   aimable = true;
@@ -971,7 +971,7 @@ class Wardog extends Boss implements Target {
       this.downT = 9;
       audio.play('explode');
       this.world.shake(0.4);
-      this.world.hooks.toast('Shield down! Blast WARDOG now!', 'bolt');
+      this.world.hooks.toast('Shield down! Blast CERBERUS now!', 'bolt');
     } else {
       this.world.hooks.toast(tr('Pylon hacked! {n} to go.', { n: this.pylons.filter((p) => !p.hacked).length }), 'bolt');
     }
@@ -1210,7 +1210,7 @@ export class Heart extends Boss implements Target, Interactable {
     for (const petal of this.shell.children) petal.rotation.x = 0.3 + k * 1.2;
   }
 
-  /** The secret path: with every memory shard, BOLT can speak GaScu's light-language. */
+  /** The secret path: with every memory shard, LUX can speak GaScu's light-language. */
   label() {
     if (!this.started || this.defeated || this.calm) return null;
     return this.world.save.shards.length >= 18 ? 'SPEAK' : null;
@@ -1449,7 +1449,7 @@ export class Reborn extends Boss implements Target, Interactable {
     return this.t;
   }
 
-  /** The secret path still works here: with every memory shard, BOLT can talk it down. */
+  /** The secret path still works here: with every memory shard, LUX can talk it down. */
   label() {
     if (!this.started || this.defeated || this.calm) return null;
     return this.world.save.shards.length >= 18 ? 'SPEAK' : null;

@@ -10,10 +10,10 @@ import type { BossKind, DeckId, Line } from '../world/levelTypes';
  *
  * A glowing space seed, GaScu, lands on a colony ship and grows over it. It puts the crew to
  * sleep in cocoons and steers the ship toward a star, because the star looks like its long-lost
- * home. Junior engineer Jason wakes up early, rescues the Captain's scared little drone BOLT,
+ * home. Junior engineer Jason wakes up early, rescues the Captain's scared little drone LUX,
  * follows the Captain's recorded logs up six decks, saves Aunt Rosa, frees HALCYON (the ship's
  * computer) from GaScu pollen, and learns the truth: GaScu isn't a monster, it's lost. At the
- * top, Jason can stop the Heart of GaScu, or, with every memory shard, BOLT can talk to it in lights.
+ * top, Jason can stop the Heart of GaScu, or, with every memory shard, LUX can talk to it in lights.
  */
 
 /** Narration for the opening cinematic, one caption per shot. */
@@ -65,9 +65,9 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
   ],
   security: [
     { who: 'halcyon', text: 'Final lift: the Bridge. Jason, the star is VERY close now. I can feel my circuits sweating.' },
-    { who: 'jason', text: 'BOLT... if GaScu talks in lights, could you talk to it?' },
+    { who: 'jason', text: 'LUX... if GaScu talks in lights, could you talk to it?' },
     { who: 'bolt', text: 'Maybe! If I knew its words. The memory shards are full of its memories...' },
-    { who: 'halcyon', text: 'With every memory shard, BOLT might learn its language. If not, you will have to stop the Heart the hard way.' },
+    { who: 'halcyon', text: 'With every memory shard, LUX might learn its language. If not, you will have to stop the Heart the hard way.' },
   ],
   bridge: [],
 };
@@ -108,10 +108,10 @@ export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
     'Ten thousand colonists had a new home. And a brand new hero.',
   ],
   friends: [
-    'BOLT flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, GaScu flashed back.',
+    'LUX flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, GaScu flashed back.',
     'Its vines turned gold and burst into flowers. After a long, long time in the dark, GaScu was not afraid anymore.',
     'Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.',
-    'Ten thousand colonists woke up in a garden between the stars. And BOLT was never scared of the dark again, because now something always glows.',
+    'Ten thousand colonists woke up in a garden between the stars. And LUX was never scared of the dark again, because now something always glows.',
   ],
 };
 
@@ -123,13 +123,13 @@ export function endingText(kind: 'saved' | 'friends', save: SaveData): string[] 
   const out: string[] = [];
   out.push(
     kind === 'friends'
-      ? tr('GaScu became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever BOLT flies by.')
-      : tr('BOLT kept the little GaScu seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
+      ? tr('GaScu became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever LUX flies by.')
+      : tr('LUX kept the little GaScu seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
   );
-  if (captain) out.push(tr('Captain Mbeki promoted Jason to Chief Engineer on the spot. BOLT got a medal. He wears it every day.'));
+  if (captain) out.push(tr('Captain Atalanta promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
   if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Jason saved the ship. Twice a day. Sometimes three times.'));
   out.push(n ? tr('You rescued {n} of 12 colonists from their cocoons.', { n }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
-  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and BOLT might learn to talk to it.'));
+  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and LUX might learn to talk to it.'));
   return out;
 }
 
@@ -151,16 +151,16 @@ export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
     `<h1>${upper(tr(GAME_NAME))}</h1>`,
     head('STARRING'),
     p('Jason, junior engineer'),
-    p('BOLT, a very brave little drone'),
+    p('LUX, a very brave little drone'),
     head('WITH'),
     p('HALCYON, the ship computer'),
-    p('Captain Ines Mbeki'),
-    p('Aunt Rosa Reyes, Security Chief'),
-    p('VENDY, the travelling shop'),
+    p('Captain Atalanta'),
+    p('Aunt Rosa, Security Chief'),
+    p('PANDORA, the travelling shop'),
     kind === 'friends' ? p('GaScu, as our new friend') : p('GaScu, as a sleepy seed'),
     head('THE GUARDIANS'),
     p('Frost Warden · Vine Queen · Magma Golem'),
-    p('King Bloblin · WARDOG · the Heart of GaScu'),
+    p('King Bloblin · CERBERUS · the Heart of GaScu'),
     head('COLONISTS YOU RESCUED'),
     ...(rescued.length ? rescued.map(p) : [p('Everyone woke up safe and sound!')]),
     head('MEMORY SHARDS'),

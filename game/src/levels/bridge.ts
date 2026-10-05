@@ -3,7 +3,7 @@ import type { LevelDef } from '../world/levelTypes';
 /**
  * Deck 6 — the Bridge, the grand finale. Cross the broken observation gallery, fetch the navigation
  * power cell from the dark crew wing, carry it through the laser hall, hack the navigation computer,
- * ride the lift up the Spine and face the Heart of GaScu. With all 18 shards, BOLT can talk to it instead.
+ * ride the lift up the Spine and face the Heart of GaScu. With all 18 shards, LUX can talk to it instead.
  */
 export const bridge: LevelDef = {
   id: 'bridge',
@@ -136,17 +136,17 @@ export const bridge: LevelDef = {
     q: { type: 'laser', axis: 'x', length: 8, always: true },
     Y: { type: 'zap', period: 2.6 },
     g: { type: 'holo', log: 'log' },
-    l: { type: 'sign', text: 'Two of these lasers never switch off. Fire BOLT’s PULSE to short them out, then run for it, even while carrying a power cell!' },
+    l: { type: 'sign', text: 'Two of these lasers never switch off. Fire LUX’s PULSE to short them out, then run for it, even while carrying a power cell!' },
     m: { type: 'sign', text: 'OBSERVATION GALLERY. The floor is broken! Cross the crumbling tiles quickly, or hover over the gap.' },
     w: { type: 'sign', text: 'Something shiny is floating outside the window. Only a long hover will get you there.' },
     j: { type: 'sign', text: 'Hop on the lift! It carries you up the Spine.' },
     d: { type: 'sign', text: 'Next ledge is far away: jump, double jump, then DASH. Or hover if you are feeling fancy.' },
-    y: { type: 'sign', text: 'The Heart of GaScu is just ahead. Heal up, buy upgrades, and remember: BOLT believes in you!' },
+    y: { type: 'sign', text: 'The Heart of GaScu is just ahead. Heal up, buy upgrades, and remember: LUX believes in you!' },
     '*': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Captain Ines Mbeki', line: 'You made it all the way up here? Incredible. The ship is in good hands!' },
-    Q: { type: 'cocoon', id: 'c2', name: 'Navigator Jun', line: 'Thank you! The star charts are in the navigation computer. Go, go, go!' },
+    K: { type: 'cocoon', id: 'c1', name: 'Captain Atalanta', line: 'You made it all the way up here? Incredible. The ship is in good hands!' },
+    Q: { type: 'cocoon', id: 'c2', name: 'Navigator Tiphys', line: 'Thank you! The star charts are in the navigation computer. Go, go, go!' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
     c: { type: 'decor', kind: 'console' },
@@ -163,7 +163,7 @@ export const bridge: LevelDef = {
     intro: [
       { who: 'halcyon', text: 'The Bridge. Temperature rising. Please hurry, Jason.' },
       { who: 'bolt', text: 'The Heart is right at the top. It is steering the whole ship!' },
-      { who: 'jason', text: 'Then we take the wheel back. One last deck, BOLT.' },
+      { who: 'jason', text: 'Then we take the wheel back. One last deck, LUX.' },
     ],
     log: [
       { who: 'captain', text: 'Captain’s log, last entry. GaScu has taken the Bridge. I’m going up to try to talk to it.' },
@@ -171,7 +171,7 @@ export const bridge: LevelDef = {
       { who: 'captain', text: 'And if you reach the Heart... remember that it’s scared. Be brave. Be kind.' },
     ],
     'colonist:c1': [
-      { who: 'captain', text: 'Wha... BOLT? My little light! You found a friend!' },
+      { who: 'captain', text: 'Wha... LUX? My little light! You found a friend!' },
       { who: 'bolt', text: 'Captain! This is Jason. Jason is the BRAVEST!' },
       { who: 'captain', text: 'Jason, the junior engineer? Well, I think you’ve just earned a promotion. Now go. The Heart is at the top of the Spine.' },
     ],

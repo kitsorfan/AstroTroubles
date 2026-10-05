@@ -152,7 +152,7 @@ export abstract class Enemy extends Entity implements Target {
     this.hp -= dmg;
     if (!this.aggro) this.wake();
     this.flashT = 0.12;
-    // BOLT's zap is mostly a stun: it freezes the enemy for a moment. His force pulse stuns for longer.
+    // LUX's zap is mostly a stun: it freezes the enemy for a moment. His force pulse stuns for longer.
     this.stagger = kind === 'pulse' ? PULSE.stun : kind === 'zap' ? 1.3 : kind === 'dash' ? 0.75 : kind === 'shot' ? 0.12 : 0.35;
     const dx = this.body.x - from.x;
     const dz = this.body.z - from.z;

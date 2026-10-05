@@ -538,7 +538,7 @@ export function makeHoloFigure(who: 'captain' | 'rosa', color: string): { group:
   return { group: g, mats: [body, faceM] };
 }
 
-/* ---------------- BOLT ---------------- */
+/* ---------------- LUX ---------------- */
 
 export interface BoltModel {
   root: THREE.Group;

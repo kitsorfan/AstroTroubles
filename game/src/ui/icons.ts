@@ -227,7 +227,7 @@ export const PORTRAIT: Record<Speaker, string> = {
   vendy: `<svg viewBox="0 0 80 80">
     ${screen('pv', '#ff5fc8')}
     <rect x="14" y="8" width="52" height="68" rx="6" fill="#262b38"/><rect x="11.6" y="10" width="2.6" height="64" rx="1" fill="#c0368f"/><rect x="65.8" y="10" width="2.6" height="64" rx="1" fill="#c0368f"/>
-    <rect x="18" y="12" width="44" height="11" rx="2" fill="#16060f"/><text x="40" y="20.6" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="800" font-size="8.4" fill="#ffd0ee">VENDY</text>
+    <rect x="18" y="12" width="44" height="11" rx="2" fill="#16060f"/><text x="40" y="20.6" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="800" font-size="7" textLength="40" lengthAdjust="spacingAndGlyphs" fill="#ffd0ee">PANDORA</text>
     <rect x="18" y="27" width="44" height="32" rx="3" fill="#1a0616" stroke="#ff6fcf" stroke-width="1"/>
     <rect x="28" y="34" width="6" height="11" rx="3" fill="#ffb0e6"/><rect x="46" y="34" width="6" height="11" rx="3" fill="#ffb0e6"/>
     <path d="M32 49Q40 55.6 48 49" fill="none" stroke="#ffb0e6" stroke-width="2.6" stroke-linecap="round"/>
@@ -252,13 +252,13 @@ export const PORTRAIT: Record<Speaker, string> = {
 
 export const SPEAKER_NAME: Record<Speaker, string> = {
   jason: 'Jason',
-  bolt: 'BOLT',
+  bolt: 'LUX',
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
   colonist: 'Colonist',
-  captain: 'Captain Mbeki',
+  captain: 'Captain Atalanta',
   rosa: 'Aunt Rosa',
-  vendy: 'Vendy',
+  vendy: 'Pandora',
   gascu: 'GaScu',
 };
 

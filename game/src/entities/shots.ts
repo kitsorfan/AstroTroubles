@@ -132,7 +132,7 @@ export class Shots {
     }
   }
 
-  /** Wipes out enemy shots close to a point (BOLT's force pulse). Returns how many were destroyed. */
+  /** Wipes out enemy shots close to a point (LUX's force pulse). Returns how many were destroyed. */
   clearNear(at: THREE.Vector3, radius: number): number {
     let n = 0;
     for (const s of this.pool) {

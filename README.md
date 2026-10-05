@@ -6,14 +6,14 @@
 
 A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app. Open source under the MIT license, and coming to Google Play.
 
-The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
+The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **LUX**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
 It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
 
 | | |
 | --- | --- |
-| ![Jason and BOLT fighting the Magma Golem inside a ring of fire](docs/store/en/01-boss-fight.jpg) | ![The Magma Golem's entrance, with its name card](docs/store/en/02-magma-golem.jpg) |
-| ![Exploring the overgrown Hydroponics deck](docs/store/en/03-hydroponics.jpg) | ![WARDOG, the chief security robot, behind its shield](docs/store/en/05-wardog.jpg) |
+| ![Jason and LUX fighting the Magma Golem inside a ring of fire](docs/store/en/01-boss-fight.jpg) | ![The Magma Golem's entrance, with its name card](docs/store/en/02-magma-golem.jpg) |
+| ![Exploring the overgrown Hydroponics deck](docs/store/en/03-hydroponics.jpg) | ![CERBERUS, the chief security robot, behind its shield](docs/store/en/05-wardog.jpg) |
 | ![A Horned Brute and a Spore Crawler next to the lava in the Engine Core](docs/store/en/06-engine-core.jpg) | ![The prologue: the GaScu seed takes root on the ship's hull](docs/store/en/07-prologue.jpg) |
 
 ## Highlights
@@ -50,7 +50,7 @@ EAS runs `npm run game:build` automatically after installing dependencies (`eas-
 npm run game:build     # writes game/dist/index.html
 ```
 
-Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **I** fires BOLT's force pulse, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
+Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **I** fires LUX's force pulse, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
 
 ## How to play
 
@@ -62,8 +62,8 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Jason reloads. **Hold** to charge a big fireball that bursts on impact |
 | **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Jason gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
-| **PULSE** | BOLT's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
-| BOLT button | Appears near terminals, pylons, signs, the shop and lifts |
+| **PULSE** | LUX's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
+| LUX button | Appears near terminals, pylons, signs, the shop and lifts |
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
@@ -71,16 +71,16 @@ Jason finds a new ability on each deck, and it's needed to finish that deck:
 
 | Deck | New trick | Boss |
 | --- | --- | --- |
-| 1. Cryo Deck | Find BOLT in the dark storeroom; hacking | Frost Warden |
+| 1. Cryo Deck | Find LUX in the dark storeroom; hacking | Frost Warden |
 | 2. Hydroponics | Jet Boots (double jump) | Vine Queen |
 | 3. Engine Core | Dash Thrusters | Magma Golem |
 | 4. Habitat Ring | Hover Pack (hold JUMP to float) | King Bloblin |
-| 5. Security Deck | BOLT's Force Pulse (shorts out lasers) | WARDOG |
+| 5. Security Deck | LUX's Force Pulse (shorts out lasers) | CERBERUS |
 | 6. The Bridge | Everything at once | The Heart of GaScu, then GaScu Reborn |
 
-- **Hacking** is a light-pattern memory game: watch BOLT's lights, then repeat them.
-- **BOLT** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at VENDY's shop to make it hurt.
-- **Bolts** are money. Spend them at VENDY's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger BOLT zap and a bolt magnet.
+- **Hacking** is a light-pattern memory game: watch LUX's lights, then repeat them.
+- **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
+- **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open.
 
@@ -101,10 +101,10 @@ Enemies get tougher deck by deck: more health, faster attacks, sharper senses. T
 
 ### Side quests and rewards
 
-Every deck has four side quests, listed with their rewards in the pause menu. BOLT also explains each kind of collectible the first time you get close to one.
+Every deck has four side quests, listed with their rewards in the pause menu. LUX also explains each kind of collectible the first time you get close to one.
 
 - **Free the colonists** trapped in pink GaScu cocoons (blast them open): 25 bolts each, plus a bonus when the whole deck is free.
-- **Find the memory shards** (glowing pink crystals): a bolt bonus per deck and an extra heart for every 6. All 18 unlock the secret ending, where BOLT *speaks* to GaScu instead of fighting it.
+- **Find the memory shards** (glowing pink crystals): a bolt bonus per deck and an extra heart for every 6. All 18 unlock the secret ending, where LUX *speaks* to GaScu instead of fighting it.
 - **Find the hidden heart canister** for one more max heart. They're often behind cracked walls (spin or blast them).
 - **Crack the secret vault.** Each deck has one, locked behind a harder puzzle, and the chest inside holds a free upgrade:
 
@@ -114,7 +114,7 @@ Every deck has four side quests, listed with their rewards in the pause menu. BO
 | Hydroponics | Ground-pound three switches within 20 seconds, before any pop back up | +1 max heart |
 | Engine Core | A four-colour code on islands in the lava | Blaster Power |
 | Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
-| Security Deck | A 7-light hack switches off a laser corridor | BOLT Zapper |
+| Security Deck | A 7-light hack switches off a laser corridor | LUX Zapper |
 | The Bridge | Four timed switches spread across the navigation room | 300 bolts |
 
 The Elevator on the title screen lets you replay any deck you've reached.
@@ -125,9 +125,9 @@ Progress saves at every checkpoint and when you leave the app.
 
 A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, GaScu spreads over the hull, and the ship turns toward a burning star. Then Jason's cryo pod thaws. What happens next (**spoilers**):
 
-- **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as GaScu took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Jason's Aunt Rosa instead.
-- **Rescuing BOLT.** Jason finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
-- **HALCYON is infected.** By the Security Deck, GaScu pollen has scrambled the ship computer, who turns on you and sends WARDOG. Beating WARDOG lets BOLT reboot HALCYON. HALCYON then reveals that GaScu isn't angry, it's lost, and thinks the star is its home.
+- **Captain's logs.** Captain Atalanta left hologram messages on every deck as GaScu took over. They tell you what happened, and where to find her drone, LUX. On the Habitat Ring, the message is from Jason's Aunt Rosa instead.
+- **Rescuing LUX.** Jason finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
+- **HALCYON is infected.** By the Security Deck, GaScu pollen has scrambled the ship computer, who turns on you and sends CERBERUS. Beating CERBERUS lets LUX reboot HALCYON. HALCYON then reveals that GaScu isn't angry, it's lost, and thinks the star is its home.
 - **Story characters.** Freeing Aunt Rosa (Security) and the Captain (the Bridge) from their cocoons plays a scene with each of them.
 
 Cutscenes play in the game world with letterbox bars:
@@ -150,7 +150,7 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   build.mjs              bundles everything, fonts included, into one offline HTML page
   src/core/              input, audio (synthesized music and sound effects), save data, app bridge, translations
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
-  src/entities/          Jason, BOLT, enemies, bosses, pickups and interactive props
+  src/entities/          Jason, LUX, enemies, bosses, pickups and interactive props
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue

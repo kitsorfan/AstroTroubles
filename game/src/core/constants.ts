@@ -67,11 +67,11 @@ export const PLAYER = {
 export const START_HEARTS = 5;
 export const MAX_HEARTS = 10;
 
-/** BOLT's force pulse: a shockwave that hits everything around Jason and overloads lasers, then recharges slowly. */
+/** LUX's force pulse: a shockwave that hits everything around Jason and overloads lasers, then recharges slowly. */
 export const PULSE = {
   /** Enemies this close are hit, stunned and thrown back; enemy shots this close are wiped out. */
   radius: 8,
-  /** Plus 2 for every BOLT Zapper upgrade. */
+  /** Plus 2 for every LUX Zapper upgrade. */
   damage: 4,
   stun: 2.4,
   cooldown: 16,

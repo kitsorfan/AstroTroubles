@@ -29,7 +29,7 @@ export interface SaveData {
   bestiary?: string[];
   /** Vault prizes already opened. */
   prizes?: string[];
-  /** First-time hints BOLT has already given (about cocoons, shards, bolts...). */
+  /** First-time hints LUX has already given (about cocoons, shards, bolts...). */
   hints?: string[];
   /** Side quests finished (their reward has been paid). */
   quests?: string[];
@@ -98,7 +98,7 @@ export function loadSave(): SaveData | null {
   }
   if (best) {
     best.settings = { ...defaultSettings(), ...best.settings };
-    // BOLT's old shield module became the force pulse.
+    // LUX's old shield module became the force pulse.
     best.abilities = best.abilities.map((a) => ((a as string) === 'shield' ? 'pulse' : a));
   }
   return best;

@@ -162,9 +162,9 @@ export class World {
   private shakeAmt = 0;
   private objT = 0;
   private lastObjective = '';
-  /** Seconds until BOLT's force pulse is ready again. */
+  /** Seconds until LUX's force pulse is ready again. */
   pulseCd = 0;
-  /** Lasers and zap floors, which BOLT's force pulse can overload. */
+  /** Lasers and zap floors, which LUX's force pulse can overload. */
   private overloadables: Overloadable[] = [];
   /** Where the current objective wants Jason to go (a `marker`, the boss or the lift), if anywhere. */
   waypoint: THREE.Vector3 | null = null;
@@ -609,7 +609,7 @@ export class World {
 
   /** Hits every target in a cylinder around `p`. Returns how many were hit. */
   private hitAll(p: THREE.Vector3, r: number, dmg: number, kind: HitKind, skip?: Set<unknown>): number {
-    // Explosions (and BOLT's pulse) reach a little higher than spins and pounds.
+    // Explosions (and LUX's pulse) reach a little higher than spins and pounds.
     const reachY = kind === 'pulse' ? 4 : kind === 'blast' ? 3 : 2.2;
     let n = 0;
     for (const t of [...this.targets]) {
@@ -649,7 +649,7 @@ export class World {
   }
 
   /**
-   * BOLT's force pulse: a shockwave that hits, stuns and throws back everything around Jason, wipes out
+   * LUX's force pulse: a shockwave that hits, stuns and throws back everything around Jason, wipes out
    * enemy shots and overloads nearby lasers and zap floors for a few seconds. Then it recharges slowly.
    */
   forcePulse(): boolean {
@@ -937,7 +937,7 @@ export class World {
     void this.hooks.cutscene((d) => scenes.liftRide(d, this, exit)).then(() => this.hooks.complete());
   }
 
-  /** Jason finds BOLT switched off in the dark and switches him back on. */
+  /** Jason finds LUX switched off in the dark and switches him back on. */
   findBolt(find: BoltFind) {
     void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
   }
@@ -972,7 +972,7 @@ export class World {
       this.flashLight.intensity = this.flashPower * k * k;
     }
 
-    // BOLT's force pulse has its own button (the action key also fires it when there's nothing to use).
+    // LUX's force pulse has its own button (the action key also fires it when there's nothing to use).
     if (this.pulseCd > 0) {
       this.pulseCd -= dt;
       if (this.pulseCd <= 0 && this.save.abilities.includes('pulse')) audio.play('charged', 0.8);
@@ -986,7 +986,7 @@ export class World {
       if (input.take('pulse')) this.forcePulse();
     }
 
-    // Lights dim in dark rooms; BOLT's flashlight takes over.
+    // Lights dim in dark rooms; LUX's flashlight takes over.
     const cell = this.grid.cell(this.player.cellX, this.player.cellZ);
     this.darkness = damp(this.darkness, cell.dark ? 1 : 0, 3, dt);
     this.hemi.intensity = this.theme.hemi * (1 - 0.86 * this.darkness);
@@ -1019,7 +1019,7 @@ export class World {
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
   }
 
-  /** BOLT explains each kind of collectible the first time Jason gets close to one. */
+  /** LUX explains each kind of collectible the first time Jason gets close to one. */
   private checkHints() {
     const seen = (this.save.hints ??= []);
     const p = this.player.body;
@@ -1031,7 +1031,7 @@ export class World {
       return true;
     };
     if (this.bolt.active === false && !seen.includes('bolt')) {
-      // Before BOLT joins, the first hint is about bolts (Jason spots them on his own).
+      // Before LUX joins, the first hint is about bolts (Jason spots them on his own).
     }
     for (const e of this.entities) {
       if (!e.alive) continue;

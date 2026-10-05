@@ -53,7 +53,7 @@ export type Spec = Base &
     | { type: 'faller' }
     | { type: 'bounce' }
     | { type: 'vent'; period?: number; offset?: number }
-    /** `hardened` emitters guard puzzles, so BOLT's force pulse can't short them out. */
+    /** `hardened` emitters guard puzzles, so LUX's force pulse can't short them out. */
     | { type: 'laser'; axis: 'x' | 'z'; length: number; period?: number; offset?: number; always?: boolean; off?: Cond; low?: boolean; hardened?: boolean }
     | { type: 'zap'; period?: number; offset?: number }
     | { type: 'conveyor'; dx: number; dz: number; speed?: number }

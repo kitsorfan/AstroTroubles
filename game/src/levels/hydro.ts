@@ -129,8 +129,8 @@ export const hydro: LevelDef = {
     '!': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '*': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Gardener Priya', line: 'My tomatoes! Oh, and thank you too, of course!' },
-    Q: { type: 'cocoon', id: 'c2', name: 'Little Sam', line: 'Whoa, that was so cool! Can I have jet boots too?' },
+    K: { type: 'cocoon', id: 'c1', name: 'Gardener Chloe', line: 'My tomatoes! Oh, and thank you too, of course!' },
+    Q: { type: 'cocoon', id: 'c2', name: 'Little Icarus', line: 'Whoa, that was so cool! Can I have jet boots too?' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
     H: { type: 'holo', log: 'log' },
@@ -162,7 +162,7 @@ export const hydro: LevelDef = {
     ],
     bossDown: [
       { who: 'bolt', text: 'The vines are letting go! The garden can breathe again!' },
-      { who: 'jason', text: 'Look, BOLT. Even the broken vines are all pointing up.' },
+      { who: 'jason', text: 'Look, LUX. Even the broken vines are all pointing up.' },
       { who: 'halcyon', text: 'Toward the Bridge. Whatever is steering GaScu is up there. Next lift: the Engine Core.' },
     ],
     'shard:s1': [

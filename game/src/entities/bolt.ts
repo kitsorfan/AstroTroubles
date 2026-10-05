@@ -7,7 +7,7 @@ import { makeBolt, type BoltModel } from './models';
 
 const ZAP_RANGE = 6;
 
-/** BOLT follows Jason, zaps nearby enemies, and lights up dark rooms. */
+/** LUX follows Jason, zaps nearby enemies, and lights up dark rooms. */
 export class Bolt {
   readonly model: BoltModel;
   readonly pos = new THREE.Vector3();
@@ -17,7 +17,7 @@ export class Bolt {
   private light: THREE.SpotLight;
   private lightTarget = new THREE.Object3D();
   active = true;
-  /** Extra offset so cutscenes can move BOLT somewhere specific. */
+  /** Extra offset so cutscenes can move LUX somewhere specific. */
   override: THREE.Vector3 | null = null;
   private t = 0;
 
@@ -37,7 +37,7 @@ export class Bolt {
 
   private flareT = 0;
 
-  /** The force pulse: BOLT's eye blazes and his glow balloons for a moment. */
+  /** The force pulse: LUX's eye blazes and his glow balloons for a moment. */
   flare() {
     this.flareT = 0.6;
     this.model.iris.emissiveIntensity = 8;
@@ -84,7 +84,7 @@ export class Bolt {
     // Zap assist.
     this.zapCd -= dt;
     if (threat && this.zapCd <= 0 && !w.cutscene) {
-      // BOLT is a helper, not a weapon: his zap only stuns until it is upgraded at VENDY's.
+      // LUX is a helper, not a weapon: his zap only stuns until it is upgraded at PANDORA's.
       const lvl = w.save.upgrades.boltZap ?? 0;
       this.zapCd = [8, 6, 4.5][lvl] ?? 4.5;
       w.beams.zap(this.pos.clone().add(new THREE.Vector3(0, 0, 0)), threat.aim.clone());

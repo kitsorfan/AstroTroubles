@@ -145,7 +145,7 @@ export async function holoLog(d: Director, w: World, holo: Holo) {
   }
 }
 
-/* ---------------- Cryo: finding BOLT ---------------- */
+/* ---------------- Cryo: finding LUX ---------------- */
 
 export async function boltFound(d: Director, w: World, find: BoltFind) {
   const s = find.spot.clone();
@@ -167,7 +167,7 @@ export async function boltFound(d: Director, w: World, find: BoltFind) {
       d.cam(s.clone().addScaledVector(dir, 1).addScaledVector(side, 2.8).add(V(0, 1, 0)), s.clone().add(V(0, 0.45, 0)), 1.2, ease.inOut, 40),
       d.tween(0.8, (x) => (kneel = x)),
     ]);
-    // Jason fiddles with a loose wire: sparks, then BOLT's eye flickers to life.
+    // Jason fiddles with a loose wire: sparks, then LUX's eye flickers to life.
     await d.tween(
       1.6,
       (x) => {
@@ -247,7 +247,7 @@ export async function bossIntro(d: Director, w: World, b: Boss) {
   const side = V(u.z, 0, -u.x);
   const card = BOSS_CARD[b.kind];
   const reach = 4 + b.size * 2.3;
-  // BOLT tucks in beside Jason so he doesn't block the view.
+  // LUX tucks in beside Jason so he doesn't block the view.
   w.bolt.override = k.clone().addScaledVector(side, -1.3).add(V(0, 1.9, 0));
   try {
     // Over Jason's shoulder, the boss looms ahead...
@@ -302,7 +302,7 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
   ]);
   d.timeScale = 1;
   if (w.def.id === 'security') {
-    // BOLT plugs into HALCYON's core and scrubs the pollen out.
+    // LUX plugs into HALCYON's core and scrubs the pollen out.
     d.glitch(1.6);
     audio.play('zap', 0.5);
     await d.wait(1.2);
@@ -383,7 +383,7 @@ export async function rebirth(d: Director, w: World, heart: Boss) {
   await d.cam(fight.pos, fight.look, 1.1, ease.inOut, fight.fov);
 }
 
-/** The secret ending: BOLT speaks to the Heart of GaScu in lights, and it answers. */
+/** The secret ending: LUX speaks to the Heart of GaScu in lights, and it answers. */
 export async function befriend(d: Director, w: World) {
   const b = w.boss;
   if (!b) return;

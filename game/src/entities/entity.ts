@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import type { World } from '../game/world';
 
-/** `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` BOLT's force pulse. */
+/** `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse. */
 export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse';
 
 export abstract class Entity {
@@ -36,7 +36,7 @@ export interface Target {
   hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean;
 }
 
-/** Anything the BOLT/action button can use. */
+/** Anything the LUX/action button can use. */
 export interface Interactable {
   alive: boolean;
   spot: THREE.Vector3;

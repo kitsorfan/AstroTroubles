@@ -1,7 +1,7 @@
 import type { LevelDef } from '../world/levelTypes';
 
 /**
- * Deck 1 — the tutorial. Wake up, learn to jump, find BOLT in the dark storeroom, hack a door,
+ * Deck 1 — the tutorial. Wake up, learn to jump, find LUX in the dark storeroom, hack a door,
  * clear a room, ground-pound a switch, slide across the ice hall and beat the Frost Warden.
  */
 export const cryo: LevelDef = {
@@ -135,8 +135,8 @@ export const cryo: LevelDef = {
     '*': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Dr. Mira Okafor', line: 'Thank you! I was dreaming about pancakes...' },
-    Q: { type: 'cocoon', id: 'c2', name: 'Chef Tobias', line: 'Free at last! I will cook everyone a feast when we land!' },
+    K: { type: 'cocoon', id: 'c1', name: 'Dr. Hypatia', line: 'Thank you! I was dreaming about pancakes...' },
+    Q: { type: 'cocoon', id: 'c2', name: 'Chef Apicius', line: 'Free at last! I will cook everyone a feast when we land!' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
     d: { type: 'decor', kind: 'pod' },
@@ -147,7 +147,7 @@ export const cryo: LevelDef = {
   },
   objectives: [
     { until: { flag: 'bolt' }, text: 'Find a way through the sealed door' },
-    { until: { flag: 't1' }, text: 'Hack the door terminal with BOLT' },
+    { until: { flag: 't1' }, text: 'Hack the door terminal with LUX' },
     { until: { clear: 'r1' }, text: 'Defeat the frozen sporelings' },
     { until: { flag: 'bridge1' }, text: 'Ground-pound the red switch' },
     { until: { boss: true }, text: 'Stop the Frost Warden' },
@@ -166,14 +166,14 @@ export const cryo: LevelDef = {
       { who: 'jason', text: 'Okay. Okay! Deep breath. Let’s do this.' },
     ],
     log: [
-      { who: 'captain', text: 'Captain’s log. This is Captain Ines Mbeki. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
-      { who: 'captain', text: 'It’s growing through the air vents! Everyone, stay in your pods. BOLT? BOLT, where did you go?' },
+      { who: 'captain', text: 'Captain’s log. This is Captain Atalanta. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
+      { who: 'captain', text: 'It’s growing through the air vents! Everyone, stay in your pods. LUX? LUX, where did you go?' },
       { who: 'captain', text: 'If anyone finds my little repair drone: he hides in the storeroom when he’s scared. Please look after him.' },
       { who: 'halcyon', text: 'That sealed door needs a drone to hack it. The storeroom is to the west. It is very dark in there... be brave, Jason.' },
     ],
     bolt: [
-      { who: 'jason', text: 'Hey, little guy. You must be BOLT. Hold still, I’ll fix that loose wire...' },
-      { who: 'bolt', text: 'Bzzzt! BOLT... online! Oh! Oh! A HUMAN! Hello, hello, hello!' },
+      { who: 'jason', text: 'Hey, little guy. You must be LUX. Hold still, I’ll fix that loose wire...' },
+      { who: 'bolt', text: 'Bzzzt! LUX... online! Oh! Oh! A HUMAN! Hello, hello, hello!' },
       { who: 'bolt', text: 'I was hiding. The dark is scary. And the vines are scary. And the big BANG was very, VERY scary.' },
     ],
     boltJoin: [

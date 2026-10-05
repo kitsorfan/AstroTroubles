@@ -26,7 +26,7 @@ const UPGRADE_NAME: Record<UpgradeId, string> = {
   blaster: 'Blaster Power +1',
   rapid: 'Quick Reload',
   clip: 'Bigger Clip (+2 shots)',
-  boltZap: 'BOLT Zapper',
+  boltZap: 'LUX Zapper',
   magnet: 'Bolt Magnet',
   heart: '+1 max heart',
 };
@@ -82,10 +82,10 @@ export function payQuests(id: DeckId, save: SaveData): string[] {
   return out;
 }
 
-/** Every few memory shards give Jason another heart; all 18 teach BOLT GaScu's language. */
+/** Every few memory shards give Jason another heart; all 18 teach LUX GaScu's language. */
 export function shardMilestone(save: SaveData): string | null {
   const n = save.shards.length;
-  if (n === 18) return tr('ALL 18 memory shards! BOLT has learned GaScu’s light-language...');
+  if (n === 18) return tr('ALL 18 memory shards! LUX has learned GaScu’s light-language...');
   if (n % SHARDS_PER_HEART === 0) {
     save.maxHearts = Math.min(MAX_HEARTS, save.maxHearts + 1);
     return tr('{n} memory shards! +1 max heart', { n });
@@ -110,13 +110,13 @@ export function givePrize(reward: string, save: SaveData): string {
   return tr('VAULT PRIZE: free upgrade, {name}!', { name: tr(UPGRADE_NAME[id]) });
 }
 
-/** What BOLT says the first time Jason gets close to each kind of thing. */
+/** What LUX says the first time Jason gets close to each kind of thing. */
 export const HINTS: Record<string, string> = {
   cocoon: 'See that pink cocoon? A colonist is trapped inside! BLAST it to set them free. Every colonist you save gives you bolts.',
   shard: 'A memory shard! Each one shows a piece of GaScu’s story. Every 6 give you an extra heart, and all 18 unlock a secret ending!',
   canister: 'A heart canister! Grab it for one more max heart.',
   prize: 'A vault chest! Open it for a FREE upgrade. Vaults are always locked behind a puzzle...',
   rune: 'Code pads! Step on them in the right order. There must be a sign with the code somewhere.',
-  bolt: 'Bolts! They are money. Spend them at VENDY’s shop on upgrades like a bigger clip.',
-  vendor: 'That is VENDY’s shop! Trade bolts for upgrades. Tap SHOP to look.',
+  bolt: 'Bolts! They are money. Spend them at PANDORA’s shop on upgrades like a bigger clip.',
+  vendor: 'That is PANDORA’s shop! Trade bolts for upgrades. Tap SHOP to look.',
 };

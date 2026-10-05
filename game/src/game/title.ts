@@ -5,7 +5,7 @@ import { makeBolt, makeJason, mat, mesh } from '../entities/models';
 import { buildSky } from '../world/sky';
 import { THEMES } from '../world/themes';
 
-/** The title backdrop: Jason and BOLT on a floating deck with the Syracusia cruising behind them. */
+/** The title backdrop: Jason and LUX on a floating deck with the Syracusia cruising behind them. */
 export class TitleScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.3, 900);
@@ -30,7 +30,7 @@ export class TitleScene {
     sunGlow.position.set(-120, 40, -260);
     this.scene.add(sunGlow);
 
-    // Floating deck with Jason and BOLT.
+    // Floating deck with Jason and LUX.
     const deck = new THREE.Group();
     deck.add(mesh(new THREE.CylinderGeometry(3.6, 3.2, 0.8, 32), mat('#7482c2', { rough: 0.6, metal: 0.2 }), 0, -0.4, 0));
     deck.add(mesh(new THREE.TorusGeometry(3.55, 0.09, 8, 48).rotateX(Math.PI / 2), mat('#ff9ae0', { emissive: '#ff6fcf', ei: 1.4 }), 0, 0.02, 0, false));

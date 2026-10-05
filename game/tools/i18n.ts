@@ -73,7 +73,7 @@ export function englishStrings(): Set<string> {
     for (const re of [...PATTERNS, ...(FIELD_FILES[name] ?? [])]) {
       for (const m of src.matchAll(re)) add(unescape(m[2]));
     }
-    // What the BOLT button says next to things he can use: the strings returned by `label()`.
+    // What the LUX button says next to things he can use: the strings returned by `label()`.
     for (const body of src.matchAll(/\n {2}label\(\)[^{]*\{([\s\S]*?)\n {2}\}/g)) {
       for (const m of body[1].matchAll(/'([^']+)'/g)) add(m[1]);
     }

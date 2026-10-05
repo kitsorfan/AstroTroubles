@@ -31,7 +31,7 @@ export const SHOP: ShopItem[] = [
   { id: 'blaster', name: 'Blaster Power', desc: '+1 damage for blasts, spins, pounds and dashes (fireballs +2)', prices: [250, 600], icon: ICON.shoot },
   { id: 'clip', name: 'Bigger Clip', desc: '+2 shots before you need to reload', prices: [160, 380], icon: ICON.cell },
   { id: 'rapid', name: 'Quick Reload', desc: 'Shoot and reload faster', prices: [200, 450], icon: ICON.dash },
-  { id: 'boltZap', name: 'BOLT Zapper', desc: 'BOLT’s zap hurts instead of just stunning, and his force pulse hits harder', prices: [180, 420], icon: ICON.star },
+  { id: 'boltZap', name: 'LUX Zapper', desc: 'LUX’s zap hurts instead of just stunning, and his force pulse hits harder', prices: [180, 420], icon: ICON.star },
   { id: 'magnet', name: 'Bolt Magnet', desc: 'Pull in bolts from farther away', prices: [120, 300], icon: ICON.bolt },
 ];
 
@@ -253,7 +253,7 @@ export class UI {
     $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
   }
 
-  /** The BOLT button next to things he can use (terminals, pylons, the shop, lifts). */
+  /** The LUX button next to things he can use (terminals, pylons, the shop, lifts). */
   setAction(text: string | null) {
     this.actionEl.classList.toggle('hidden', !text);
     if (text) $(this.actionEl, 'b').textContent = tr(text);
@@ -261,7 +261,7 @@ export class UI {
 
   private lastAbility = '';
 
-  /** Spin charges, dash energy and BOLT's force pulse on their buttons. */
+  /** Spin charges, dash energy and LUX's force pulse on their buttons. */
   setAbilities(a: AbilityHud) {
     const key = `${a.spins}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}`;
     if (key === this.lastAbility) return;
@@ -552,10 +552,10 @@ export class UI {
     });
   }
 
-  /** Simon-says light puzzle: watch BOLT's pattern, then repeat it. */
+  /** Simon-says light puzzle: watch LUX's pattern, then repeat it. */
   hack(length: number, done: (ok: boolean) => void) {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr('BOLT HACK')}</h2>
+      <h2>${tr('LUX HACK')}</h2>
       <div class="msg">${tr('Watch the lights...')}</div>
       <div class="pads"><div class="pad"></div><div class="pad"></div><div class="pad"></div><div class="pad"></div></div>
       <div class="dots">${'<i></i>'.repeat(length)}</div>
@@ -744,7 +744,7 @@ export class UI {
         ${item('#7fe6ff', tr('BLAST'), tr('tap to shoot (it aims for you). HOLD to charge a big FIREBALL, then let go.'))}
         ${item('#ffd166', tr('SPIN'), tr('a spin attack that also blocks enemy attacks. You get 3 in a row, then a long recharge. In mid-air it becomes a GROUND POUND for red switches.'))}
         ${item('#b58cff', tr('DASH'), tr('ram through enemies and zoom over gaps. Each dash uses one energy cell: refill at checkpoints and with violet energy cells.'))}
-        ${item('#8ab4ff', tr('PULSE'), tr('BOLT’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.'))}
+        ${item('#8ab4ff', tr('PULSE'), tr('LUX’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.'))}
       </div>
       <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
@@ -821,7 +821,7 @@ export class UI {
       }).join('');
       const el = this.open(`<div class="panel shop-panel">
         <div class="panel-head"><div class="portrait">${portrait('vendy')}</div>
-        <div class="shop-title"><h2>${tr('VENDY’S UPGRADES')}</h2><div class="tagline">${tr('“Bolts in, awesome out!”')}</div></div>
+        <div class="shop-title"><h2>${tr('PANDORA’S UPGRADES')}</h2><div class="tagline">${tr('“Bolts in, awesome out!”')}</div></div>
         <div class="counter">${ICON.bolt}<b>${save.bolts}</b></div><button class="icon-btn close" aria-label="${tr('Leave shop')}">${ICON.close}</button></div>
         <div class="shop-grid">${items}</div></div>`);
       for (const b of el.querySelectorAll<HTMLElement>('.buy')) {

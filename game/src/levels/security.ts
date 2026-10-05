@@ -2,8 +2,8 @@ import type { LevelDef } from '../world/levelTypes';
 
 /**
  * Deck 5 — the Security Deck. Time your way past blinking lasers, hover over the electric pool,
- * search the dark cell block, hack the armory for BOLT's FORCE PULSE, short out the laser gauntlet
- * and shut down WARDOG by hacking its three pylons.
+ * search the dark cell block, hack the armory for LUX's FORCE PULSE, short out the laser gauntlet
+ * and shut down CERBERUS by hacking its three pylons.
  */
 export const security: LevelDef = {
   id: 'security',
@@ -135,13 +135,13 @@ export const security: LevelDef = {
     n: { type: 'laser', axis: 'x', length: 12, period: 3, offset: 2 },
     l: { type: 'sign', text: 'Red lasers blink on and off. Wait until one switches off, then run past it!' },
     w: { type: 'sign', text: 'The water below is electric! Jump off this ledge and HOLD JUMP to hover over it.' },
-    y: { type: 'sign', text: 'These lasers never switch off. Press PULSE: BOLT’s force pulse shorts them out for a few seconds. Then RUN!' },
-    j: { type: 'sign', text: 'Safe spot! BOLT’s pulse takes a while to recharge. Wait here until the PULSE button lights up again, then short out the second half.' },
+    y: { type: 'sign', text: 'These lasers never switch off. Press PULSE: LUX’s force pulse shorts them out for a few seconds. Then RUN!' },
+    j: { type: 'sign', text: 'Safe spot! LUX’s pulse takes a while to recharge. Wait here until the PULSE button lights up again, then short out the second half.' },
     '?': { type: 'shard', id: 's1' },
     '*': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Aunt Rosa Reyes', line: 'Jason?! Is that really you? Oh, I am SO proud of you!' },
-    P: { type: 'cocoon', id: 'c2', name: 'Chief Dana', line: 'Those lasers were my idea. Sorry about that! Thanks for the rescue.' },
+    K: { type: 'cocoon', id: 'c1', name: 'Aunt Rosa', line: 'Jason?! Is that really you? Oh, I am SO proud of you!' },
+    P: { type: 'cocoon', id: 'c2', name: 'Chief Valeria', line: 'Those lasers were my idea. Sorry about that! Thanks for the rescue.' },
     H: { type: 'holo', log: 'log' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },
@@ -151,19 +151,19 @@ export const security: LevelDef = {
     { until: { flag: 't1' }, text: 'Find the armory terminal and hack it' },
     { until: { clear: 'r1' }, text: 'Defeat the armory guards' },
     { until: { flag: 'ability:pulse' }, text: 'Grab the FORCE PULSE module' },
-    { until: { boss: true }, text: 'Pulse your way through the laser gauntlet and stop WARDOG' },
+    { until: { boss: true }, text: 'Pulse your way through the laser gauntlet and stop CERBERUS' },
     { until: { flag: 'never' }, text: 'Ride the lift up to the Bridge', at: 'exit' },
   ],
   dialogues: {
     intro: [
       { who: 'glitch', text: 'INTRUDERS DETECTED. GaScu must reach its home. Please... go... back...' },
-      { who: 'jason', text: 'HALCYON, it’s us! It’s Jason and BOLT!' },
-      { who: 'glitch', text: 'Jason...? H-help... The pollen is in my core. It makes me say things. WARDOG will protect GaScu...' },
+      { who: 'jason', text: 'HALCYON, it’s us! It’s Jason and LUX!' },
+      { who: 'glitch', text: 'Jason...? H-help... The pollen is in my core. It makes me say things. CERBERUS will protect GaScu...' },
       { who: 'bolt', text: 'We have to reach HALCYON’s core! The armory has a FORCE PULSE module for drones like me. One blast and those lasers go dark!' },
     ],
     log: [
       { who: 'captain', text: 'Captain’s log, day five. The pollen has reached HALCYON. The ship is fighting us now.' },
-      { who: 'captain', text: 'BOLT, if you ever find this: you were always my little light. Even when you were scared of the dark.' },
+      { who: 'captain', text: 'LUX, if you ever find this: you were always my little light. Even when you were scared of the dark.' },
       { who: 'captain', text: 'GaScu speaks in lights. I’m sure of it now. If only someone could understand it...' },
       { who: 'bolt', text: 'Speaks in... lights? I talk in lights to other robots! Blink, blink!' },
     ],
@@ -173,12 +173,12 @@ export const security: LevelDef = {
       { who: 'rosa', text: 'And you kept going anyway. That’s my Jason. Now go and save HALCYON. I’ll be right behind you!' },
     ],
     boss: [
-      { who: 'glitch', text: 'WARDOG. PROTECT. GASCU.' },
+      { who: 'glitch', text: 'CERBERUS. PROTECT. GASCU.' },
       { who: 'bolt', text: 'Its force field runs on three pylons! Walk up to each pylon and HACK it, then BLAST away! And JUMP over the red laser!' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'WARDOG is down! Now for HALCYON’s core. Hold still, HALCYON, I am going in!' },
-      { who: 'halcyon', text: 'Rebooting... Jason? BOLT? I am me again. Thank you. Thank you so much.' },
+      { who: 'bolt', text: 'CERBERUS is down! Now for HALCYON’s core. Hold still, HALCYON, I am going in!' },
+      { who: 'halcyon', text: 'Rebooting... Jason? LUX? I am me again. Thank you. Thank you so much.' },
       { who: 'halcyon', text: 'While the pollen was inside me, I could hear GaScu. It is not angry, Jason. It is TERRIFIED.' },
       { who: 'halcyon', text: 'It was lost in the dark for a very long time. Now it thinks that star is its home. It does not know the star will burn it... and us.' },
       { who: 'jason', text: 'So it’s not a monster. It’s lost.' },

@@ -19,7 +19,7 @@ export interface FloorFx {
   unsafe?: boolean;
 }
 
-/** Hazards that BOLT's force pulse can short out. Returns true if it was in range. */
+/** Hazards that LUX's force pulse can short out. Returns true if it was in range. */
 export interface Overloadable {
   overload(at: THREE.Vector3, radius: number, seconds: number): boolean;
 }
@@ -792,7 +792,7 @@ export class Laser extends Entity implements Overloadable {
   private b: THREE.Vector3;
   private y: number;
   private wasOn = false;
-  /** Seconds left shorted out by BOLT's force pulse. */
+  /** Seconds left shorted out by LUX's force pulse. */
   private overT = 0;
 
   constructor(
@@ -1092,7 +1092,7 @@ export class Cocoon extends Entity implements Target {
 
 type VendyMood = 'idle' | 'blink' | 'happy';
 
-/** VENDY's face on her little screen: two rounded eyes and a mouth, drawn in light. */
+/** PANDORA's face on her little screen: two rounded eyes and a mouth, drawn in light. */
 function vendyFace(mood: VendyMood): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 128;
@@ -1143,13 +1143,13 @@ function vendySign(): THREE.CanvasTexture {
   const g = c.getContext('2d') as CanvasRenderingContext2D;
   g.fillStyle = '#16060f';
   g.fillRect(0, 0, 256, 64);
-  g.font = '800 40px Orbitron, sans-serif';
+  g.font = '800 34px Orbitron, sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.shadowColor = '#ff3fb8';
   g.shadowBlur = 14;
   g.fillStyle = '#ffd0ee';
-  g.fillText('VENDY', 128, 34);
+  g.fillText('PANDORA', 128, 34, 196);
   g.shadowBlur = 0;
   g.fillStyle = '#ffd166';
   for (const x of [18, 238]) {
@@ -1163,7 +1163,7 @@ function vendySign(): THREE.CanvasTexture {
 }
 
 /**
- * VENDY, the travelling vending machine: a glass front with shelves of glowing upgrades, a neon
+ * PANDORA, the travelling vending machine: a glass front with shelves of glowing upgrades, a neon
  * marquee, a control panel whose little screen shows her face (she blinks, and smiles when Jason comes
  * close), a keypad, a pickup tray and a spinning holographic bolt on top.
  */
@@ -1534,12 +1534,12 @@ export class Holo extends Entity implements Interactable {
   }
 }
 
-/** BOLT, switched off and hiding in the dark, waiting for someone to fix him. */
+/** LUX, switched off and hiding in the dark, waiting for someone to fix him. */
 export class BoltFind extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
   readonly model = makeBolt();
-  /** Set while the wake-up cutscene animates BOLT; stops the idle sputtering. */
+  /** Set while the wake-up cutscene animates LUX; stops the idle sputtering. */
   waking = false;
   private t = 0;
   private busy = false;
