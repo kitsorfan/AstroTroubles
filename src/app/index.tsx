@@ -4,6 +4,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as SplashScreen from 'expo-splash-screen';
+import * as StoreReview from 'expo-store-review';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
@@ -19,6 +20,7 @@ type GameMessage =
   | { type: 'save'; data: string }
   | { type: 'haptic'; kind: 'light' | 'medium' | 'heavy' | 'success' | 'warning' }
   | { type: 'exit' }
+  | { type: 'review' }
   | { type: 'error'; message: string };
 
 function haptic(kind: Extract<GameMessage, { type: 'haptic' }>['kind']) {
@@ -85,6 +87,13 @@ export default function Game() {
         break;
       case 'exit':
         BackHandler.exitApp();
+        break;
+      case 'review':
+        // Only the in-app card: on phones without it, requestReview would open the store and leave the game.
+        // Google Play decides whether the card really shows (it has a quota) and never tells the app.
+        StoreReview.isAvailableAsync()
+          .then((ok) => (ok ? StoreReview.requestReview() : undefined))
+          .catch(() => {});
         break;
       case 'error':
         console.warn('[game]', msg.message);

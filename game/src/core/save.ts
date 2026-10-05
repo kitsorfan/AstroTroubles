@@ -33,6 +33,8 @@ export interface SaveData {
   hints?: string[];
   /** Side quests finished (their reward has been paid). */
   quests?: string[];
+  /** Deck numbers after which the app has already asked for a store review (see game/review.ts). */
+  reviewAsks?: number[];
   shards: string[];
   canisters: string[];
   colonists: string[];

@@ -18,6 +18,7 @@ import { UI, type ShopItem } from '../ui/ui';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
 import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
+import { takeReviewAsk } from './review';
 import { INTEL, creditsHtml, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
@@ -678,6 +679,18 @@ export class Game {
         else this.toTitle();
       },
     );
+    this.askForReview(d.index);
+  }
+
+  /**
+   * After decks 2, 4 and 6 (once each, see review.ts) the app asks Google Play for its review card. It only happens
+   * on a still results screen, never from a button and never after a question, as Google's guidelines require.
+   */
+  private askForReview(deckIndex: number) {
+    if (!inApp() || !takeReviewAsk(this.save, deckIndex)) return;
+    writeSave(this.save);
+    // Let the results panel land first; the card then appears on top of it.
+    setTimeout(() => post({ type: 'review' }), 1000);
   }
 
   private ending(kind: 'saved' | 'friends') {
@@ -706,6 +719,7 @@ export class Game {
           ],
           () => this.toTitle(),
         );
+        this.askForReview(LEVELS.bridge.index);
       });
     });
   }

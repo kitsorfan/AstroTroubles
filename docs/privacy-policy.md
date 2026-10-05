@@ -4,7 +4,7 @@
 
 ## English
 
-**Effective date:** 29 September 2026
+**Effective date:** 5 October 2026
 
 AstroTroubles! (in Greek, Αστρομπελάδες) is a single-player game for Android made by Kitsos Orfanopoulos.
 
@@ -37,6 +37,8 @@ The game is made for players of about 10 and up, including children. It collects
 
 Google Play handles downloading and updating the app, under [Google's own privacy policy](https://policies.google.com/privacy). The game itself receives no information from Google Play about you.
 
+The first time you finish decks 2, 4 and 6, the game may ask Google Play to show its rating card. If you leave a rating or a review, it goes to Google Play under your Google account. The game never sees it, and never even learns whether the card appeared.
+
 ### Changes to this policy
 
 If a future version changes what the game collects, this policy will be updated before that version is released, and the date at the top will change.
@@ -47,7 +49,7 @@ Questions about this policy: **[contact email]**
 
 ## Ελληνικά
 
-**Ισχύει από:** 29 Σεπτεμβρίου 2026
+**Ισχύει από:** 5 Οκτωβρίου 2026
 
 Τα Αστρομπελάδες (στα αγγλικά, AstroTroubles!) είναι ένα παιχνίδι ενός παίκτη για Android, από τον Κίτσο Ορφανόπουλο.
 
@@ -79,6 +81,8 @@ Questions about this policy: **[contact email]**
 ### Το Google Play
 
 Τη λήψη και τις ενημερώσεις της εφαρμογής τις χειρίζεται το Google Play, σύμφωνα με τη [δική του πολιτική απορρήτου](https://policies.google.com/privacy?hl=el). Το ίδιο το παιχνίδι δεν λαμβάνει καμία πληροφορία για σένα από το Google Play.
+
+Την πρώτη φορά που τελειώνεις τα καταστρώματα 2, 4 και 6, το παιχνίδι μπορεί να ζητήσει από το Google Play να εμφανίσει την κάρτα αξιολόγησης. Αν αφήσεις βαθμολογία ή κριτική, πηγαίνει στο Google Play με τον λογαριασμό σου Google. Το παιχνίδι δεν τη βλέπει ποτέ και δεν μαθαίνει καν αν εμφανίστηκε η κάρτα.
 
 ### Αλλαγές σε αυτή την πολιτική
 
