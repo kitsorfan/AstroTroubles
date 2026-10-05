@@ -10,7 +10,7 @@ import type { ShipScene } from './shipScene';
 
 /**
  * Cinematics staged outside the ship. The SYRACUSIA points along +X; the star lies straight ahead,
- * getting bigger with every deck Kai climbs.
+ * getting bigger with every deck Jason climbs.
  */
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -67,7 +67,7 @@ export async function prologue(d: Director, s: ShipScene) {
   s.shake(2.2);
   s.particles.emit(impact.x, impact.y + 1, impact.z, { count: 120, color: '#ff8ae0', speed: 16, life: 1.4, size: 2.2, gravity: 0 });
 
-  // 3. The Bloom takes root and spreads over the hull.
+  // 3. GaScu takes root and spreads over the hull.
   await Promise.all([
     d.cam(V(-44, 26, 34), V(-10, 4, 0), 2.2, ease.inOut, 45),
     d.caption(PROLOGUE.seed, 4.5),
@@ -153,7 +153,7 @@ export async function ending(d: Director, s: ShipScene, kind: 'saved' | 'friends
     ]);
     await Promise.all([d.caption(text[1], 5), d.tween(5, (k) => ship.setGrowth(0.95 * (1 - k)), ease.inOut)]);
   } else {
-    // The Bloom turns gold and flowers, then gently steers toward its new home.
+    // GaScu turns gold and flowers, then gently steers toward its new home.
     audio.play('upgrade');
     await Promise.all([
       d.caption(text[0], 6),

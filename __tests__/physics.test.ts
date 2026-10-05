@@ -60,10 +60,10 @@ describe('moveBody', () => {
     expect(b.y).toBeLessThan(-3);
   });
 
-  it('never lets a double jump or an air dash carry Kai over a closed door', () => {
+  it('never lets a double jump or an air dash carry Jason over a closed door', () => {
     // A door plugging the gap between two walls reaches as high as the walls do.
     const door: Box = { minX: at(1) - 1, maxX: at(5) + 1, minZ: at(2) - 0.25, maxZ: at(2) + 0.25, bottom: -1, top: 60, solid: true, dx: 0, dy: 0, dz: 0 };
-    // Jump, jump again at the top, then dash forward from the peak: the highest Kai can get.
+    // Jump, jump again at the top, then dash forward from the peak: the highest Jason can get.
     const b = makeBody(at(1), 0, at(4), 0.42, 1.7);
     b.grounded = true;
     b.vy = PLAYER.jumpV;

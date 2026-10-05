@@ -114,16 +114,16 @@ export const habitat: LevelDef = {
     intro: [
       { who: 'halcyon', text: 'The Habitat Ring. Two thousand cosy homes, one school, one playground and... a lot of goo.' },
       { who: 'bolt', text: 'Look in the middle! A floating island. And something BIG and wobbly on it.' },
-      { who: 'halcyon', text: 'The Bloom has hidden the lift on that island. You will need to fly... or at least hover.' },
-      { who: 'kai', text: 'The playground always had the best toys. Let’s start there!' },
+      { who: 'halcyon', text: 'GaScu has hidden the lift on that island. You will need to fly... or at least hover.' },
+      { who: 'jason', text: 'The playground always had the best toys. Let’s start there!' },
     ],
     log: [
-      { who: 'rosa', text: 'Kai, sweetie, if you wake up before me: don’t panic! It’s Aunt Rosa.' },
+      { who: 'rosa', text: 'Jason, sweetie, if you wake up before me: don’t panic! It’s Aunt Rosa.' },
       { who: 'rosa', text: 'Something is in the air vents. I’m going up to the Security Deck to protect HALCYON’s computer core.' },
       { who: 'rosa', text: 'Whatever happens, remember what I always say: brave isn’t not being scared. Brave is being scared and going anyway.' },
-      { who: 'kai', text: '...Brave is being scared and going anyway. Hang on, Aunt Rosa. I’m coming.' },
+      { who: 'jason', text: '...Brave is being scared and going anyway. Hang on, Aunt Rosa. I’m coming.' },
       { who: 'bolt', text: 'I am VERY scared and I am still going. Does that count?' },
-      { who: 'kai', text: 'That totally counts.' },
+      { who: 'jason', text: 'That totally counts.' },
     ],
     tower: [
       { who: 'bolt', text: 'Look, the pink light in the middle! That is King Bloblin’s island.' },
@@ -140,14 +140,14 @@ export const habitat: LevelDef = {
       { who: 'glitch', text: 'Just a h-h-hiccup. The air vents are full of... pollen. Nothing to w-w-worry about.' },
     ],
     'shard:s1': [
-      { who: 'bloom', text: 'The ship-people grow flowers too! Maybe we are the same.' },
+      { who: 'gascu', text: 'The ship-people grow flowers too! Maybe we are the same.' },
     ],
     'shard:s2': [
-      { who: 'bloom', text: 'I tried to say hello. I flashed my lights: hello... hello... hello...' },
+      { who: 'gascu', text: 'I tried to say hello. I flashed my lights: hello... hello... hello...' },
       { who: 'bolt', text: 'Flashing lights? That is how I talk to other robots!' },
     ],
     'shard:s3': [
-      { who: 'bloom', text: 'Nobody understood me. Nobody flashed back.' },
+      { who: 'gascu', text: 'Nobody understood me. Nobody flashed back.' },
     ],
   },
 };

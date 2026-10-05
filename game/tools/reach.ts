@@ -1,7 +1,7 @@
 /**
  * Level reachability checker.
  *
- * Models Kai's movement envelope (walk, jump, jet boots, dash, hover, bounce pads, vents and
+ * Models Jason's movement envelope (walk, jump, jet boots, dash, hover, bounce pads, vents and
  * moving platforms) on a level grid and reports which entities cannot be reached from the spawn.
  * Doors are treated as open: the checker proves the geometry works, the level's conditions
  * decide the order.
@@ -20,7 +20,7 @@ interface Spot {
 }
 
 /**
- * Horizontal distance Kai covers is scaled by MARGIN (a safety margin for kids' thumbs); EDGE is how far
+ * Horizontal distance Jason covers is scaled by MARGIN (a safety margin for kids' thumbs); EDGE is how far
  * the take-off and landing spots can sit from the cell centres (world units).
  */
 const MARGIN = 0.9;
@@ -80,7 +80,7 @@ export interface ReachResult {
   pathTo(cx: number, cz: number): string[];
 }
 
-/** Doors that need an ability Kai does not have yet stay shut; every other condition is assumed reachable. */
+/** Doors that need an ability Jason does not have yet stay shut; every other condition is assumed reachable. */
 function opens(c: Cond, abilities: Ability[]): boolean {
   if ('flag' in c) return !c.flag.startsWith('ability:') || abilities.includes(c.flag.slice(8) as Ability);
   if ('all' in c) return c.all.every((x) => opens(x, abilities));
@@ -163,17 +163,17 @@ function lineClear(level: ParsedLevel, shut: Set<number>, a: Spot, b: Spot) {
   return true;
 }
 
-/** Every spot Kai can stand on, and the jumps between them. */
+/** Every spot Jason can stand on, and the jumps between them. */
 interface JumpGraph {
   spots: Spot[];
   /** Spot index of the spawn point. */
   start: number;
-  /** Spots Kai can get to from spot `ai` in one move. */
+  /** Spots Jason can get to from spot `ai` in one move. */
   next(ai: number): number[];
 }
 
 /**
- * `doors` decides which ability-gated doors are open; `moves` decides how far Kai can jump. They only
+ * `doors` decides which ability-gated doors are open; `moves` decides how far Jason can jump. They only
  * differ when checking what a single ability (the dash) is needed for.
  */
 function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors): JumpGraph {
@@ -332,7 +332,7 @@ export function renderReach(level: ParsedLevel, r: ReachResult): string {
   return rows.join('\n');
 }
 
-/** Spots Kai must dash from: the landing can't be reached from there (or anywhere near) without a dash. */
+/** Spots Jason must dash from: the landing can't be reached from there (or anywhere near) without a dash. */
 export function dashTakeoffs(level: ParsedLevel, abilities: Ability[]): Spot[] {
   if (!abilities.includes('dash')) return [];
   const full = jumpGraph(level, abilities);
@@ -362,7 +362,7 @@ export function dashTakeoffs(level: ParsedLevel, abilities: Ability[]): Spot[] {
 export const REFILL_RANGE = 7;
 
 /**
- * Dash takeoffs with no refill (checkpoint or energy cell) within REFILL_RANGE that Kai can walk to
+ * Dash takeoffs with no refill (checkpoint or energy cell) within REFILL_RANGE that Jason can walk to
  * and then walk back from to the takeoff. Takeoffs next to each other count as one jump: one refill
  * anywhere along it is enough.
  */

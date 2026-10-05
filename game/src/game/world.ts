@@ -61,7 +61,7 @@ export type Collectible = 'shard' | 'canister' | 'colonist' | 'ability';
 
 export interface WorldHooks {
   say(lines: Line[], then?: () => void): void;
-  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'kai'): void;
+  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason'): void;
   hack(length: number, done: (ok: boolean) => void): void;
   shop(): void;
   complete(): void;
@@ -77,9 +77,9 @@ export interface WorldHooks {
   prize(reward: string): void;
   /** A gold banner for rewards (bolts, hearts, quests). */
   reward(text: string): void;
-  /** The first time Kai meets a kind of enemy (or an elite), show what it is and what it's up to. */
+  /** The first time Jason meets a kind of enemy (or an elite), show what it is and what it's up to. */
   threat(kind: BadgeKind | 'elite'): void;
-  /** Kai tried to dash with no energy left. */
+  /** Jason tried to dash with no energy left. */
   dashEmpty(): void;
   /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
   cutscene(script: (d: Director) => Promise<void>): Promise<void>;
@@ -92,7 +92,7 @@ export interface ResumeState {
   dead: string[];
 }
 
-/** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Kai. */
+/** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Jason. */
 const PITCH = 1.0;
 const PITCH_MAX = 1.5;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
@@ -125,7 +125,7 @@ export class World {
   readonly flags = new Set<string>();
   readonly taken = new Set<string>();
   readonly dead = new Set<string>();
-  /** How tough this deck's enemies are: it rises deck by deck and with Kai's weapon upgrades. */
+  /** How tough this deck's enemies are: it rises deck by deck and with Jason's weapon upgrades. */
   readonly difficulty: Difficulty;
   private levelEnemies = new Set<string>();
   private runes: Rune[] = [];
@@ -166,12 +166,12 @@ export class World {
   pulseCd = 0;
   /** Lasers and zap floors, which BOLT's force pulse can overload. */
   private overloadables: Overloadable[] = [];
-  /** Where the current objective wants Kai to go (a `marker`, the boss or the lift), if anywhere. */
+  /** Where the current objective wants Jason to go (a `marker`, the boss or the lift), if anywhere. */
   waypoint: THREE.Vector3 | null = null;
   private markers = new Map<string, THREE.Vector3>();
   private hintT = 1;
   private shadowTexel = 0;
-  /** Kai's ground height, smoothed and ignoring jumps; the shadow map is centred on it. */
+  /** Jason's ground height, smoothed and ignoring jumps; the shadow map is centred on it. */
   private groundY = 0;
   private pitch = PITCH;
   private flashLight: THREE.PointLight | null = null;
@@ -328,7 +328,7 @@ export class World {
       }
       case 'boss':
         if (!this.flags.has('boss')) {
-          // If Kai already beat the Bloom Heart once, its reborn form is waiting instead.
+          // If Jason already beat the Heart of GaScu once, its reborn form is waiting instead.
           const kind = spec.boss === 'heart' && this.flags.has('reborn') ? 'reborn' : spec.boss;
           const b = this.addEntity(makeBoss(this, id, kind, cx, cz, h));
           if (kind === 'reborn') b.introSeen = true;
@@ -625,7 +625,7 @@ export class World {
     return n;
   }
 
-  /** Kai's dash rams whatever is in front of him. Each target is hit once per dash. */
+  /** Jason's dash rams whatever is in front of him. Each target is hit once per dash. */
   dashAttack(player: Player, hitSet: Set<unknown>) {
     const b = player.body;
     const p = new THREE.Vector3(b.x + Math.sin(player.facing) * 0.5, b.y + 0.9, b.z + Math.cos(player.facing) * 0.5);
@@ -649,7 +649,7 @@ export class World {
   }
 
   /**
-   * BOLT's force pulse: a shockwave that hits, stuns and throws back everything around Kai, wipes out
+   * BOLT's force pulse: a shockwave that hits, stuns and throws back everything around Jason, wipes out
    * enemy shots and overloads nearby lasers and zap floors for a few seconds. Then it recharges slowly.
    */
   forcePulse(): boolean {
@@ -723,7 +723,7 @@ export class World {
     this.addEntity(HeartPickup.at(this, pos));
   }
 
-  /** Drops a dash energy cell, but only once Kai has the Dash Thrusters and could use one. */
+  /** Drops a dash energy cell, but only once Jason has the Dash Thrusters and could use one. */
   dropEnergy(pos: THREE.Vector3) {
     if (!this.save.abilities.includes('dash') || this.player.energy >= PLAYER.dashEnergy) return;
     this.addEntity(EnergyPickup.at(this, pos));
@@ -742,7 +742,7 @@ export class World {
     }
   }
 
-  /** A sound out in the world: it fades with distance from Kai and is silent beyond `range`. */
+  /** A sound out in the world: it fades with distance from Jason and is silent beyond `range`. */
   soundAt(name: Sfx, x: number, z: number, pitch = 1, range = 18) {
     const p = this.player.body;
     const d = Math.hypot(p.x - x, p.z - z);
@@ -750,7 +750,7 @@ export class World {
     audio.play(name, pitch, (1 - d / range) ** 1.5);
   }
 
-  /** Kai stepped on a code pad: right pad lights up, wrong pad resets the whole code. */
+  /** Jason stepped on a code pad: right pad lights up, wrong pad resets the whole code. */
   stepRune(r: Rune) {
     if (this.flags.has(r.group) || r.lit) return;
     const group = this.runes.filter((x) => x.group === r.group);
@@ -772,7 +772,7 @@ export class World {
     }
   }
 
-  /** Kai opened a vault chest. */
+  /** Jason opened a vault chest. */
   openPrize(p: Prize) {
     const s = this.save;
     (s.prizes ??= []).push(p.id);
@@ -799,7 +799,7 @@ export class World {
     }
   }
 
-  /** Brings every enemy on the deck back (after Kai is knocked out). */
+  /** Brings every enemy on the deck back (after Jason is knocked out). */
   private respawnEnemies() {
     for (const e of [...this.enemies]) if (this.levelEnemies.has(e.id) || e.id.startsWith('spawn')) e.remove();
     this.dead.clear();
@@ -878,7 +878,7 @@ export class World {
       this.hooks.music(this.def.music as Track);
     }
     if (this.player.carrying) {
-      // Keep the power cell: it follows Kai back to the checkpoint.
+      // Keep the power cell: it follows Jason back to the checkpoint.
     }
     this.camTarget.set(x, y + 1.2, z);
   }
@@ -898,7 +898,7 @@ export class World {
 
   bossDefeated(b: Boss) {
     if (this.def.id === 'bridge' && b.kind === 'heart' && !this.flags.has('reborn')) {
-      // It isn't over: the Bloom pulls every vine on the ship into the Heart and rises again.
+      // It isn't over: GaScu pulls every vine on the ship into the Heart and rises again.
       this.flags.add('reborn');
       this.hooks.bossBar(null, 0);
       this.hooks.checkpoint();
@@ -921,7 +921,7 @@ export class World {
     void this.hooks.cutscene((d) => scenes.befriend(d, this)).then(() => this.hooks.ending('friends'));
   }
 
-  /** Replaces the current boss with a new one at the same spot (the Bloom's rebirth). */
+  /** Replaces the current boss with a new one at the same spot (GaScu's rebirth). */
   spawnBoss(kind: BossKind, old: Boss): Boss {
     const cx = Math.floor(old.center.x / CELL);
     const cz = Math.floor(old.center.z / CELL);
@@ -932,12 +932,12 @@ export class World {
     return b;
   }
 
-  /** Kai steps onto the lift and rides it up out of the deck. */
+  /** Jason steps onto the lift and rides it up out of the deck. */
   rideLift(exit: Exit) {
     void this.hooks.cutscene((d) => scenes.liftRide(d, this, exit)).then(() => this.hooks.complete());
   }
 
-  /** Kai finds BOLT switched off in the dark and switches him back on. */
+  /** Jason finds BOLT switched off in the dark and switches him back on. */
   findBolt(find: BoltFind) {
     void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
   }
@@ -1019,7 +1019,7 @@ export class World {
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
   }
 
-  /** BOLT explains each kind of collectible the first time Kai gets close to one. */
+  /** BOLT explains each kind of collectible the first time Jason gets close to one. */
   private checkHints() {
     const seen = (this.save.hints ??= []);
     const p = this.player.body;
@@ -1031,7 +1031,7 @@ export class World {
       return true;
     };
     if (this.bolt.active === false && !seen.includes('bolt')) {
-      // Before BOLT joins, the first hint is about bolts (Kai spots them on his own).
+      // Before BOLT joins, the first hint is about bolts (Jason spots them on his own).
     }
     for (const e of this.entities) {
       if (!e.alive) continue;
@@ -1077,7 +1077,7 @@ export class World {
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
     const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
-    // Walls never turn see-through: when one would hide Kai, the camera tips up until it can see all
+    // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;
     for (const eye of [0.15, 1.0]) {
@@ -1090,7 +1090,7 @@ export class World {
     const ground = p.grounded ? p.y : Math.min(this.groundY, p.y);
     this.groundY = dt === 0 ? ground : damp(this.groundY, ground, 5, dt);
 
-    // Cutscenes steer the camera through a rig; afterwards it eases back to following Kai.
+    // Cutscenes steer the camera through a rig; afterwards it eases back to following Jason.
     const c = this.camera.position;
     const look = tmpL;
     let fov = this.baseFov;
@@ -1126,7 +1126,7 @@ export class World {
     else this.placeSun(p.x, this.groundY, p.z);
   }
 
-  /** Where the follow camera would be right now, at the given distance from Kai. */
+  /** Where the follow camera would be right now, at the given distance from Jason. */
   followPose(out: Rig, dist = 13): Rig {
     const cp = Math.cos(this.pitch);
     out.look.copy(this.camTarget);
@@ -1149,7 +1149,7 @@ export class World {
     this.camRig = rig;
   }
 
-  /** True if a wall or raised floor sits between a point on Kai (`eye` above his feet) and a camera at this tilt. */
+  /** True if a wall or raised floor sits between a point on Jason (`eye` above his feet) and a camera at this tilt. */
   private viewBlocked(pitch: number, dist: number, eye: number): boolean {
     const p = this.player.body;
     const cp = Math.cos(pitch);
@@ -1167,13 +1167,13 @@ export class World {
       // Past the tallest wall on any deck the ray is in the clear.
       if (y > p.y + 9) return false;
       const c = this.grid.cell(Grid.toCell(sx + (ex - sx) * t), Grid.toCell(sz + (ez - sz) * t));
-      // A little headroom above every wall so Kai is shown clearly, not just peeking over the edge.
+      // A little headroom above every wall so Jason is shown clearly, not just peeking over the edge.
       if (c.kind !== 'void' && c.kind !== 'hazard' && y < c.h + 0.35) return true;
     }
     return false;
   }
 
-  /** Centres the shadow map on Kai, snapped to whole shadow texels so shadow edges never crawl. */
+  /** Centres the shadow map on Jason, snapped to whole shadow texels so shadow edges never crawl. */
   private placeSun(x: number, y: number, z: number) {
     const t = tmpV.set(x, y, z).applyMatrix4(LIGHT_INV);
     if (this.shadowTexel > 0) {

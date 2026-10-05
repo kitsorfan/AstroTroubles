@@ -21,7 +21,7 @@ describe('difficulty', () => {
     expect(tiers[0]).toMatchObject({ tier: 0, hp: 1, speed: 1, rate: 1 });
   });
 
-  it('rises a little with weapon upgrades, so enemies keep up with Kai', () => {
+  it('rises a little with weapon upgrades, so enemies keep up with Jason', () => {
     const save = newSave();
     const base = difficultyFor(2, save).tier;
     save.upgrades.blaster = 2;

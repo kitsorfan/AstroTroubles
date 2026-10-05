@@ -25,7 +25,7 @@ export interface SaveData {
   maxHearts: number;
   abilities: Ability[];
   upgrades: Partial<Record<UpgradeId, number>>;
-  /** Enemy kinds Kai has already met (their threat card has been shown). */
+  /** Enemy kinds Jason has already met (their threat card has been shown). */
   bestiary?: string[];
   /** Vault prizes already opened. */
   prizes?: string[];

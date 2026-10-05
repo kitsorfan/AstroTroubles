@@ -82,10 +82,10 @@ export function payQuests(id: DeckId, save: SaveData): string[] {
   return out;
 }
 
-/** Every few memory shards give Kai another heart; all 18 teach BOLT the Bloom's language. */
+/** Every few memory shards give Jason another heart; all 18 teach BOLT GaScu's language. */
 export function shardMilestone(save: SaveData): string | null {
   const n = save.shards.length;
-  if (n === 18) return tr('ALL 18 memory shards! BOLT has learned the Bloom’s light-language...');
+  if (n === 18) return tr('ALL 18 memory shards! BOLT has learned GaScu’s light-language...');
   if (n % SHARDS_PER_HEART === 0) {
     save.maxHearts = Math.min(MAX_HEARTS, save.maxHearts + 1);
     return tr('{n} memory shards! +1 max heart', { n });
@@ -93,7 +93,7 @@ export function shardMilestone(save: SaveData): string | null {
   return tr('Memory shard {n} / 18 · {left} more for an extra heart', { n, left: SHARDS_PER_HEART - (n % SHARDS_PER_HEART) });
 }
 
-/** Applies a vault prize. Returns what Kai got. */
+/** Applies a vault prize. Returns what Jason got. */
 export function givePrize(reward: string, save: SaveData): string {
   if (reward === 'bolts') {
     save.bolts += 300;
@@ -110,10 +110,10 @@ export function givePrize(reward: string, save: SaveData): string {
   return tr('VAULT PRIZE: free upgrade, {name}!', { name: tr(UPGRADE_NAME[id]) });
 }
 
-/** What BOLT says the first time Kai gets close to each kind of thing. */
+/** What BOLT says the first time Jason gets close to each kind of thing. */
 export const HINTS: Record<string, string> = {
   cocoon: 'See that pink cocoon? A colonist is trapped inside! BLAST it to set them free. Every colonist you save gives you bolts.',
-  shard: 'A memory shard! Each one shows a piece of the Bloom’s story. Every 6 give you an extra heart, and all 18 unlock a secret ending!',
+  shard: 'A memory shard! Each one shows a piece of GaScu’s story. Every 6 give you an extra heart, and all 18 unlock a secret ending!',
   canister: 'A heart canister! Grab it for one more max heart.',
   prize: 'A vault chest! Open it for a FREE upgrade. Vaults are always locked behind a puzzle...',
   rune: 'Code pads! Step on them in the right order. There must be a sign with the code somewhere.',

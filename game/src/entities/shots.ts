@@ -21,7 +21,7 @@ interface Shot {
 
 const tmp = new THREE.Vector3();
 
-/** Pooled projectiles: Kai's blaster bolts, his charged fireballs, and enemy spit. */
+/** Pooled projectiles: Jason's blaster bolts, his charged fireballs, and enemy spit. */
 export class Shots {
   private pool: Shot[] = [];
 
@@ -115,7 +115,7 @@ export class Shots {
         const dx = pl.body.x - p.x;
         const dz = pl.body.z - p.z;
         const dy = pl.body.y + 0.9 - p.y;
-        // A spin bats shots away a little before they reach Kai.
+        // A spin bats shots away a little before they reach Jason.
         const reach = pl.body.r + s.radius + (pl.spinning ? 0.9 : 0);
         if (dx * dx + dz * dz < reach * reach && Math.abs(dy) < 1.4) {
           if (pl.spinning) {

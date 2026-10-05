@@ -45,22 +45,22 @@ function disposeScene(scene: THREE.Scene) {
 const ABILITY_LINES: Record<string, Line[]> = {
   doubleJump: [
     { who: 'bolt', text: 'JET BOOTS! Now you can jump again while you are in the air. Double jump!' },
-    { who: 'kai', text: 'Up, up and away!' },
+    { who: 'jason', text: 'Up, up and away!' },
   ],
   dash: [
     { who: 'bolt', text: 'DASH THRUSTERS! Press DASH to zoom forward, even in mid-air. Great for long gaps!' },
     { who: 'bolt', text: 'A dash hits HARD too: ram straight through enemies! Each one uses an energy cell. Checkpoints and violet energy cells fill you back up.' },
-    { who: 'kai', text: 'Nyoom!' },
+    { who: 'jason', text: 'Nyoom!' },
   ],
   glide: [
     { who: 'bolt', text: 'A HOVER PACK! Hold JUMP while you fall to float gently down. Wheee!' },
-    { who: 'kai', text: 'I can glide across the whole Ring with this!' },
+    { who: 'jason', text: 'I can glide across the whole Ring with this!' },
     { who: 'bolt', text: 'King Bloblin is on the island in the MIDDLE of the Ring. Climb the launch tower, follow the gold marker and glide over!' },
   ],
   pulse: [
     { who: 'bolt', text: 'FORCE PULSE installed! Press PULSE and I blast out a shockwave. It knocks out every enemy around you!' },
     { who: 'bolt', text: 'It also shorts out lasers for a few seconds. But it takes me a LONG time to recharge, so pick your moment.' },
-    { who: 'kai', text: 'Those laser walls don’t stand a chance.' },
+    { who: 'jason', text: 'Those laser walls don’t stand a chance.' },
   ],
 };
 

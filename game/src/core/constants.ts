@@ -52,7 +52,7 @@ export const PLAYER = {
   spinTime: 0.4,
   spinRadius: 2.1,
   /**
-   * Spins in a row before the long recharge. A spin also guards Kai: enemy attacks bounce off it
+   * Spins in a row before the long recharge. A spin also guards Jason: enemy attacks bounce off it
    * (hazards like lasers and lava still hurt).
    */
   spinCharges: 3,
@@ -67,7 +67,7 @@ export const PLAYER = {
 export const START_HEARTS = 5;
 export const MAX_HEARTS = 10;
 
-/** BOLT's force pulse: a shockwave that hits everything around Kai and overloads lasers, then recharges slowly. */
+/** BOLT's force pulse: a shockwave that hits everything around Jason and overloads lasers, then recharges slowly. */
 export const PULSE = {
   /** Enemies this close are hit, stunned and thrown back; enemy shots this close are wiped out. */
   radius: 8,

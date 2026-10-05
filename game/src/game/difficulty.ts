@@ -2,19 +2,19 @@ import type { SaveData } from '../core/save';
 
 /** How tough enemies are on the current deck. */
 export interface Difficulty {
-  /** 0 on the first deck, rising with each deck and with Kai's weapon upgrades. */
+  /** 0 on the first deck, rising with each deck and with Jason's weapon upgrades. */
   tier: number;
   hp: number;
   speed: number;
   /** Attack-rate multiplier: cooldowns are divided by it. */
   rate: number;
-  /** How close Kai must get before enemies notice him. */
+  /** How close Jason must get before enemies notice him. */
   aggro: number;
 }
 
 /**
  * Enemies get tougher, faster and more alert further up the ship, and a little more so for every
- * weapon upgrade Kai owns, so buying power never makes the game a walkover.
+ * weapon upgrade Jason owns, so buying power never makes the game a walkover.
  */
 export function difficultyFor(deckIndex: number, save: SaveData): Difficulty {
   const u = save.upgrades;

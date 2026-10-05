@@ -123,7 +123,7 @@ export abstract class Boss extends Entity {
     this.world.bossDefeated(this);
   }
 
-  /** Resets the fight after Kai is knocked out. */
+  /** Resets the fight after Jason is knocked out. */
   abstract reset(): void;
 }
 
@@ -751,7 +751,7 @@ class Blob extends Enemy {
   }
 }
 
-/** How close Kai must get to King Bloblin's throne: anywhere on his island starts the fight. */
+/** How close Jason must get to King Bloblin's throne: anywhere on his island starts the fight. */
 const KING_WAKE = 13;
 
 class King extends Boss {
@@ -760,7 +760,7 @@ class King extends Boss {
   private blobs: Blob[] = [];
   private crown: THREE.Group;
   private seq = 0;
-  /** The King lounging on his island before the fight, so Kai can see where to go. */
+  /** The King lounging on his island before the fight, so Jason can see where to go. */
   private idle: THREE.Group;
   private idleBody: THREE.Object3D;
   /** A column of light over the island, visible from anywhere on the Ring. */
@@ -1071,7 +1071,7 @@ class Wardog extends Boss implements Target {
   }
 }
 
-/* ---------------- 6. Bloom Heart ---------------- */
+/* ---------------- 6. Heart of GaScu ---------------- */
 
 class Pod extends Entity implements Target {
   readonly aim = new THREE.Vector3();
@@ -1128,7 +1128,7 @@ type HeartState = 'idle' | 'roots' | 'nova' | 'open';
 
 export class Heart extends Boss implements Target, Interactable {
   protected focusHeight = 3.6;
-  readonly title = 'THE BLOOM HEART';
+  readonly title = 'THE HEART OF GASCU';
   readonly aim = new THREE.Vector3();
   radius = 1.8;
   aimable = false;
@@ -1210,7 +1210,7 @@ export class Heart extends Boss implements Target, Interactable {
     for (const petal of this.shell.children) petal.rotation.x = 0.3 + k * 1.2;
   }
 
-  /** The secret path: with every memory shard, BOLT can speak the Bloom's light-language. */
+  /** The secret path: with every memory shard, BOLT can speak GaScu's light-language. */
   label() {
     if (!this.started || this.defeated || this.calm) return null;
     return this.world.save.shards.length >= 18 ? 'SPEAK' : null;
@@ -1335,17 +1335,17 @@ export class Heart extends Boss implements Target, Interactable {
   }
 }
 
-/* ---------------- 7. The Bloom Reborn (the final, final battle) ---------------- */
+/* ---------------- 7. GaScu Reborn (the final, final battle) ---------------- */
 
 type RebornState = 'idle' | 'storm' | 'sweep' | 'rain' | 'open';
 
 /**
- * After the Bloom Heart falls, every vine on the ship pulls back into it and it rises again: a
+ * After the Heart of GaScu falls, every vine on the ship pulls back into it and it rises again: a
  * floating thorn titan with one great eye. It attacks in patterns that speed up as it weakens,
  * and it is only hurt while its eye is open.
  */
 export class Reborn extends Boss implements Target, Interactable {
-  readonly title = 'THE BLOOM REBORN';
+  readonly title = 'GASCU REBORN';
   protected focusHeight = 4.4;
   readonly aim = new THREE.Vector3();
   radius = 2.2;

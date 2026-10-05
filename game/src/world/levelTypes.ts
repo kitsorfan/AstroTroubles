@@ -21,7 +21,7 @@ export type Spec = Base &
     | { type: 'bolt' }
     | { type: 'crate'; loot?: 'bolts' | 'heart' | 'big'; metal?: boolean }
     | { type: 'heart' }
-    /** A dash energy cell that grows back a few seconds after Kai takes it (placed before dash jumps). */
+    /** A dash energy cell that grows back a few seconds after Jason takes it (placed before dash jumps). */
     | { type: 'energy' }
     /** An invisible spot an objective can point the waypoint at (`at` in the objective). */
     | { type: 'marker'; id: string }
@@ -65,7 +65,7 @@ export type Spec = Base &
     | { type: 'exit' }
     | { type: 'breakwall' }
     | { type: 'boltfind' }
-    /** A hologram projector that plays a recorded message (a dialogue key) the first time Kai walks past. */
+    /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */
     | { type: 'holo'; log: string; who?: 'captain' | 'rosa' }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
@@ -93,8 +93,8 @@ export type DecorKind =
   | 'bloom'
   | 'screen';
 
-/** `glitch` is HALCYON while Bloom pollen scrambles its circuits. */
-export type Speaker = 'kai' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'bloom' | 'captain' | 'rosa';
+/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
+export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'captain' | 'rosa';
 
 export interface Line {
   who: Speaker;

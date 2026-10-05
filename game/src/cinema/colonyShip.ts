@@ -5,7 +5,7 @@ import { glowSprite } from '../entities/models';
 
 /**
  * The colony ship SYRACUSIA seen from outside. It points along +X: engines at the back (-X), the
- * Bridge tower at the front. Bloom vines grow over the hull from the point where the seed struck.
+ * Bridge tower at the front. GaScu vines grow over the hull from the point where the seed struck.
  */
 
 const LEN = 110;
@@ -90,7 +90,7 @@ export class ColonyShip {
   readonly group = new THREE.Group();
   /** The glowing lift pod that climbs along the spine between decks. */
   readonly lift: THREE.Group;
-  /** Where the Bloom seed hit, in ship space. */
+  /** Where the GaScu seed hit, in ship space. */
   readonly impact = new THREE.Vector3(-18, R + 0.2, 0);
   private vines: Vine[] = [];
   private pods: Pod[] = [];
@@ -167,7 +167,7 @@ export class ColonyShip {
       wing.rotation.x = z * 0.12;
     }
 
-    // The Bloom: glowing tendrils winding from the impact point toward the Bridge, dotted with pods.
+    // GaScu: glowing tendrils winding from the impact point toward the Bridge, dotted with pods.
     this.vineMat = new THREE.MeshStandardMaterial({ color: '#ff4fd8', emissive: '#ff2fc0', emissiveIntensity: 1.6, roughness: 0.4 });
     this.podMat = new THREE.MeshStandardMaterial({ color: '#ff8ae0', emissive: '#ff4fd8', emissiveIntensity: 1.3, roughness: 0.3 });
     const rng = new Rng(3);
@@ -210,7 +210,7 @@ export class ColonyShip {
         }
       }
     }
-    // The spot where the seed struck: a big pulsing Bloom knot.
+    // The spot where the seed struck: a big pulsing GaScu knot.
     const knot = new THREE.Mesh(new THREE.SphereGeometry(2.4, 20, 14), this.podMat);
     knot.position.copy(this.impact);
     knot.scale.set(1.3, 0.55, 1.3);
@@ -220,7 +220,7 @@ export class ColonyShip {
     this.setGrowth(0);
   }
 
-  /** How far the Bloom has spread over the hull (0 = none, 1 = everywhere). */
+  /** How far GaScu has spread over the hull (0 = none, 1 = everywhere). */
   setGrowth(g: number) {
     this.growth = g;
     for (const v of this.vines) {
@@ -241,7 +241,7 @@ export class ColonyShip {
     return this.growth;
   }
 
-  /** Turns the Bloom gold and opens its flowers (the friendship ending). */
+  /** Turns GaScu gold and opens its flowers (the friendship ending). */
   setGold(k: number) {
     const pink = new THREE.Color('#ff4fd8');
     const gold = new THREE.Color('#ffd166');

@@ -4,5 +4,5 @@
  */
 export const GAME_NAME = 'AstroTroubles!';
 
-/** The colony ship Kai lives on. Story text refers to it as {ship}. */
+/** The colony ship Jason lives on. Story text refers to it as {ship}. */
 export const SHIP = 'Syracusia';

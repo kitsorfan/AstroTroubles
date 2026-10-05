@@ -198,7 +198,7 @@ export const ENERGY_COLOR = '#b58cff';
 
 /**
  * A cell of dash energy. Enemies sometimes drop one; the ones placed in a deck sit on a little
- * charger and grow back a few seconds after Kai takes them, so a missed dash jump never strands him.
+ * charger and grow back a few seconds after Jason takes them, so a missed dash jump never strands him.
  */
 export class EnergyPickup extends Floater {
   private cell = new THREE.Group();
@@ -248,7 +248,7 @@ export class EnergyPickup extends Floater {
   }
 
   update(dt: number) {
-    // Chargers only matter (and only show) once Kai owns the Dash Thrusters.
+    // Chargers only matter (and only show) once Jason owns the Dash Thrusters.
     const usable = this.world.save.abilities.includes('dash');
     if (this.charger) this.charger.visible = usable;
     if (this.regrowT > 0) {
@@ -264,7 +264,7 @@ export class EnergyPickup extends Floater {
 
   protected collect() {
     const w = this.world;
-    // Leave it be when Kai is already full.
+    // Leave it be when Jason is already full.
     if (!w.player.gainEnergy(1)) return;
     audio.play('charged', 1.2);
     haptic('light');

@@ -79,7 +79,7 @@ describe.each(LEVEL_ORDER)('%s layout', (id) => {
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
 
-  it('lets Kai reach every door, switch, terminal, checkpoint and the boss', () => {
+  it('lets Jason reach every door, switch, terminal, checkpoint and the boss', () => {
     const r = reach(level, after);
     const stuck = r.missing.filter((e) => !isCollectible(e.spec)).map((e) => `${e.id} at ${e.cx},${e.cz}`);
     expect(stuck).toEqual([]);

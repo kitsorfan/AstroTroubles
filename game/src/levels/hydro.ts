@@ -148,10 +148,10 @@ export const hydro: LevelDef = {
     intro: [
       { who: 'bolt', text: 'Everything is so GREEN! And bitey. Some of those plants are definitely bitey.' },
       { who: 'halcyon', text: 'There are prototype JET BOOTS in the seed vault, across the sludge river. With them you can jump twice as high!' },
-      { who: 'kai', text: 'Jet boots? Say no more!' },
+      { who: 'jason', text: 'Jet boots? Say no more!' },
     ],
     log: [
-      { who: 'captain', text: 'Captain’s log, day two. The Bloom went straight for the gardens. It loves light and water.' },
+      { who: 'captain', text: 'Captain’s log, day two. GaScu went straight for the gardens. It loves light and water.' },
       { who: 'captain', text: 'It keeps wrapping sleeping people up in cocoons... gently. Like tucking them in with a blanket.' },
       { who: 'captain', text: 'I don’t think it wants to hurt us. I think it’s cold. And very, very lost.' },
       { who: 'bolt', text: 'That was the Captain’s voice! She sounds so tired...' },
@@ -162,17 +162,17 @@ export const hydro: LevelDef = {
     ],
     bossDown: [
       { who: 'bolt', text: 'The vines are letting go! The garden can breathe again!' },
-      { who: 'kai', text: 'Look, BOLT. Even the broken vines are all pointing up.' },
-      { who: 'halcyon', text: 'Toward the Bridge. Whatever is steering the Bloom is up there. Next lift: the Engine Core.' },
+      { who: 'jason', text: 'Look, BOLT. Even the broken vines are all pointing up.' },
+      { who: 'halcyon', text: 'Toward the Bridge. Whatever is steering GaScu is up there. Next lift: the Engine Core.' },
     ],
     'shard:s1': [
-      { who: 'bloom', text: 'Water and light! I grew and grew and grew. I did not know I was getting too big.' },
+      { who: 'gascu', text: 'Water and light! I grew and grew and grew. I did not know I was getting too big.' },
     ],
     'shard:s2': [
-      { who: 'bloom', text: 'Little people in beds, all fast asleep. I wrapped them up to keep them warm.' },
+      { who: 'gascu', text: 'Little people in beds, all fast asleep. I wrapped them up to keep them warm.' },
     ],
     'shard:s3': [
-      { who: 'bloom', text: 'The robots shouted at me. I got so scared that I made them sleepy too.' },
+      { who: 'gascu', text: 'The robots shouted at me. I got so scared that I made them sleepy too.' },
       { who: 'bolt', text: 'It was not trying to be mean. It was scared...' },
     ],
   },

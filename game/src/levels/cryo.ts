@@ -156,51 +156,51 @@ export const cryo: LevelDef = {
   dialogues: {
     wake: [
       { who: 'halcyon', text: 'Thawing complete! Good morning, crew member. You have been asleep for one hundred years. ...Just kidding. Six months.' },
-      { who: 'kai', text: 'Brrr... HALCYON? Why is everything covered in ice... and pink vines?' },
+      { who: 'jason', text: 'Brrr... HALCYON? Why is everything covered in ice... and pink vines?' },
     ],
     intro: [
-      { who: 'halcyon', text: 'A space plant called the Bloom has grown over the whole ship. Everyone else is frozen in their pods or wrapped up in cocoons.' },
-      { who: 'halcyon', text: 'Worse news: the Bloom has steered us toward a star. Someone has to climb up to the Bridge, six decks above us, and turn us around.' },
-      { who: 'kai', text: 'Someone? You mean... me?' },
-      { who: 'halcyon', text: 'You are the only person awake, junior engineer Kai Reyes. So yes! Congratulations!' },
-      { who: 'kai', text: 'Okay. Okay! Deep breath. Let’s do this.' },
+      { who: 'halcyon', text: 'A space vine has grown over the whole ship: the Galactic Cuscuta Echinochloa. GaScu, for short. Everyone else is frozen in their pods or wrapped up in cocoons.' },
+      { who: 'halcyon', text: 'Worse news: GaScu has steered us toward a star. Someone has to climb up to the Bridge, six decks above us, and turn us around.' },
+      { who: 'jason', text: 'Someone? You mean... me?' },
+      { who: 'halcyon', text: 'You are the only person awake, junior engineer Jason. So yes! Congratulations!' },
+      { who: 'jason', text: 'Okay. Okay! Deep breath. Let’s do this.' },
     ],
     log: [
       { who: 'captain', text: 'Captain’s log. This is Captain Ines Mbeki. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
       { who: 'captain', text: 'It’s growing through the air vents! Everyone, stay in your pods. BOLT? BOLT, where did you go?' },
       { who: 'captain', text: 'If anyone finds my little repair drone: he hides in the storeroom when he’s scared. Please look after him.' },
-      { who: 'halcyon', text: 'That sealed door needs a drone to hack it. The storeroom is to the west. It is very dark in there... be brave, Kai.' },
+      { who: 'halcyon', text: 'That sealed door needs a drone to hack it. The storeroom is to the west. It is very dark in there... be brave, Jason.' },
     ],
     bolt: [
-      { who: 'kai', text: 'Hey, little guy. You must be BOLT. Hold still, I’ll fix that loose wire...' },
+      { who: 'jason', text: 'Hey, little guy. You must be BOLT. Hold still, I’ll fix that loose wire...' },
       { who: 'bolt', text: 'Bzzzt! BOLT... online! Oh! Oh! A HUMAN! Hello, hello, hello!' },
       { who: 'bolt', text: 'I was hiding. The dark is scary. And the vines are scary. And the big BANG was very, VERY scary.' },
     ],
     boltJoin: [
-      { who: 'kai', text: 'The Captain is looking for you. She left a message. Want to come with me to the Bridge?' },
+      { who: 'jason', text: 'The Captain is looking for you. She left a message. Want to come with me to the Bridge?' },
       { who: 'bolt', text: 'The Captain! YES! I can light up dark places, zap bad guys and HACK terminals. Walk up to one and press the button!' },
       { who: 'bolt', text: 'Just... stay close, okay? I will be brave if you are brave.' },
     ],
     boss: [
-      { who: 'halcyon', text: 'Warning! The FROST WARDEN guards the lift, and the Bloom’s vines have scrambled its brain!' },
+      { who: 'halcyon', text: 'Warning! The FROST WARDEN guards the lift, and GaScu’s vines have scrambled its brain!' },
       { who: 'bolt', text: 'JUMP over its ice rings! When its chest hatch opens, BLAST the glowing core!' },
     ],
     bossDown: [
       { who: 'bolt', text: 'We did it! The Warden is just a sleepy old robot again.' },
-      { who: 'kai', text: 'Sorry, big guy. Sweet dreams.' },
+      { who: 'jason', text: 'Sorry, big guy. Sweet dreams.' },
       { who: 'halcyon', text: 'The lift is unlocked. Next stop: Hydroponics!' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A memory shard! Bloom crystals remember things. Look, it is showing a picture...' },
-      { who: 'bloom', text: '...cold... so cold and dark out here between the stars...' },
+      { who: 'bolt', text: 'A memory shard! GaScu crystals remember things. Look, it is showing a picture...' },
+      { who: 'gascu', text: '...cold... so cold and dark out here between the stars...' },
       { who: 'bolt', text: 'That felt so lonely. There are 18 shards on the ship. Let’s find them all!' },
     ],
     'shard:s2': [
-      { who: 'bloom', text: 'A giant warm ship, full of lights! Maybe... a friend?' },
+      { who: 'gascu', text: 'A giant warm ship, full of lights! Maybe... a friend?' },
     ],
     'shard:s3': [
-      { who: 'bloom', text: 'I held on tight to the ship. I only wanted to be warm.' },
-      { who: 'bolt', text: 'The Bloom was scared of the dark... just like me.' },
+      { who: 'gascu', text: 'I held on tight to the ship. I only wanted to be warm.' },
+      { who: 'bolt', text: 'GaScu was scared of the dark... just like me.' },
     ],
   },
 };

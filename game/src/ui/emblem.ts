@@ -1,5 +1,5 @@
 /**
- * The game's emblem: BOLT's eye inside a ring, wrapped in a glowing Bloom vine. Used on the boot
+ * The game's emblem: BOLT's eye inside a ring, wrapped in a glowing GaScu vine. Used on the boot
  * splash and rendered to the app's native splash image (scripts/gen-splash.mjs).
  */
 export function emblemSvg(size = 220): string {

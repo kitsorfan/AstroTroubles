@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 /**
- * Bloom-infected creatures and robots: dark armour, glowing weak spots and eyes, and silhouettes that
+ * GaScu-infected creatures and robots: dark armour, glowing weak spots and eyes, and silhouettes that
  * read as dangerous from the camera's height.
  */
 
@@ -277,7 +277,7 @@ export function makeSentry(): EnemyModel {
   );
   shield.position.set(0, 0.95, 0.78);
   body.add(shield);
-  // The weak spot: an exposed power pack on its back, glowing so Kai knows where to aim.
+  // The weak spot: an exposed power pack on its back, glowing so Jason knows where to aim.
   const pack = new THREE.Group();
   pack.position.set(0, 0.86, -0.5);
   pack.add(mesh(boxG(0.7, 0.56, 0.2), dark));
@@ -337,7 +337,7 @@ export function makeTurret(): EnemyModel {
 
 /* ---------------- horned brute ---------------- */
 
-/** A hulking armoured beast: horns, burning eyes, crushing claws and Bloom growths on its back. */
+/** A hulking armoured beast: horns, burning eyes, crushing claws and GaScu growths on its back. */
 export function makeBrute(): EnemyModel {
   const root = new THREE.Group();
   const body = new THREE.Group();

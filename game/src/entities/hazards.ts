@@ -50,7 +50,7 @@ class FlatRing {
 
 /**
  * An expanding laser ring skimming the floor. It keeps the same thin width at every size and only
- * hits Kai while his feet are on the ground, so a quick hop at any moment clears it.
+ * hits Jason while his feet are on the ground, so a quick hop at any moment clears it.
  */
 export class Shockwave extends Entity {
   private r = 0.5;

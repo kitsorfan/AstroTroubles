@@ -44,7 +44,7 @@ function makeBox(x: number, z: number, hw: number, hd: number, bottom: number, t
 /**
  * How high a door's (or cracked wall's) collider reaches above its floor. Walls are infinitely tall,
  * so anything that plugs a gap in them must be too: otherwise a double jump or an air dash carries
- * Kai straight over the top of a closed door.
+ * Jason straight over the top of a closed door.
  */
 const PLUG_H = 60;
 
@@ -1164,7 +1164,7 @@ function vendySign(): THREE.CanvasTexture {
 
 /**
  * VENDY, the travelling vending machine: a glass front with shelves of glowing upgrades, a neon
- * marquee, a control panel whose little screen shows her face (she blinks, and smiles when Kai comes
+ * marquee, a control panel whose little screen shows her face (she blinks, and smiles when Jason comes
  * close), a keypad, a pickup tray and a spinning holographic bolt on top.
  */
 export class Vendor extends Entity implements Interactable {
@@ -1403,7 +1403,7 @@ export class Trigger extends Entity {
 export class Exit extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
-  /** The disc Kai stands on; it rises during the lift-ride cutscene. */
+  /** The disc Jason stands on; it rises during the lift-ride cutscene. */
   readonly pad = new THREE.Group();
   private ring: THREE.Mesh;
   private ringMat: THREE.MeshStandardMaterial;
@@ -1448,7 +1448,7 @@ export class Exit extends Entity implements Interactable {
   }
 }
 
-/** A hologram projector that plays a recorded message the first time Kai walks by. */
+/** A hologram projector that plays a recorded message the first time Jason walks by. */
 export class Holo extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.6;

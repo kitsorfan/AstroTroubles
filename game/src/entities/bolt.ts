@@ -7,7 +7,7 @@ import { makeBolt, type BoltModel } from './models';
 
 const ZAP_RANGE = 6;
 
-/** BOLT follows Kai, zaps nearby enemies, and lights up dark rooms. */
+/** BOLT follows Jason, zaps nearby enemies, and lights up dark rooms. */
 export class Bolt {
   readonly model: BoltModel;
   readonly pos = new THREE.Vector3();
@@ -65,7 +65,7 @@ export class Bolt {
     this.pos.z = damp(this.pos.z, target.z, 5, dt);
     this.model.root.position.copy(this.pos);
 
-    // Look where Kai looks, or at the nearest threat.
+    // Look where Jason looks, or at the nearest threat.
     const threat = w.nearestEnemy(pl.body.x, pl.body.z, ZAP_RANGE);
     const lookYaw = threat ? Math.atan2(threat.aim.x - this.pos.x, threat.aim.z - this.pos.z) : f;
     this.yaw = dampAngle(this.yaw, lookYaw, 6, dt);

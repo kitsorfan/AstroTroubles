@@ -108,16 +108,16 @@ function person(p: Person): string {
 /** A thin highlight along the top of a lock of hair. */
 const shine = (d: string, color: string) => `<path d="${d}" fill="none" stroke="${shade(color, 1.9)}" stroke-width="1" opacity=".35" stroke-linecap="round"/>`;
 
-const KAI_HAIR = '#3b2416';
-const KAI = person({
+const JASON_HAIR = '#3b2416';
+const JASON = person({
   id: 'pk',
   skin: '#d6a07a',
-  hair: KAI_HAIR,
+  hair: JASON_HAIR,
   iris: '#5b3a1e',
   lips: '#b0685a',
   suit: '#e0782f',
-  front: `<path d="M24.4 34C21.8 20.5 30 13.2 40.4 13.4C51.4 13.6 58.6 21 55.8 33.6C55 28.6 52.8 25.8 49.6 24.4C50 26.8 48.4 27.6 46.8 27C45 24.4 39.6 23 35.6 25.2C34.6 27.4 31.6 28.4 29.6 27.4C28.4 29.4 26.6 31.2 24.4 34Z" fill="${KAI_HAIR}"/>
-    ${shine('M28 22Q34 15.5 44 16.4', KAI_HAIR)}${shine('M46 18.5Q52 21 54 26', KAI_HAIR)}`,
+  front: `<path d="M24.4 34C21.8 20.5 30 13.2 40.4 13.4C51.4 13.6 58.6 21 55.8 33.6C55 28.6 52.8 25.8 49.6 24.4C50 26.8 48.4 27.6 46.8 27C45 24.4 39.6 23 35.6 25.2C34.6 27.4 31.6 28.4 29.6 27.4C28.4 29.4 26.6 31.2 24.4 34Z" fill="${JASON_HAIR}"/>
+    ${shine('M28 22Q34 15.5 44 16.4', JASON_HAIR)}${shine('M46 18.5Q52 21 54 26', JASON_HAIR)}`,
   collar: `<path d="M26 61.5Q40 70 54 61.5L57 64Q40 74 23 64Z" fill="#c9d1dc"/><path d="M23 64Q40 74 57 64" fill="none" stroke="#8a96a8" stroke-width="1.2"/>
     <rect x="44" y="68" width="10" height="5" rx="1" fill="#1b2330"/><rect x="45.2" y="69.2" width="3" height="2.6" rx=".5" fill="#5ee0ff"/>
     <path d="M14 72L22 66" stroke="#ffd166" stroke-width="2" opacity=".8"/>`,
@@ -177,7 +177,7 @@ const COLONIST = person({
 });
 
 export const PORTRAIT: Record<Speaker, string> = {
-  kai: KAI,
+  jason: JASON,
   bolt: `<svg viewBox="0 0 80 80">
     ${screen('pb', '#5ee0ff')}
     <defs>
@@ -234,7 +234,7 @@ export const PORTRAIT: Record<Speaker, string> = {
     <rect x="22" y="63" width="36" height="7" rx="2" fill="#0e1118" stroke="#cfd6e2" stroke-width=".8"/>
     ${glass('pv', '#ff9ae0')}
   </svg>`,
-  bloom: `<svg viewBox="0 0 80 80">
+  gascu: `<svg viewBox="0 0 80 80">
     ${screen('pl', '#ff6fcf')}
     <defs><radialGradient id="plC" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#ffd6f2"/><stop offset="1" stop-color="#ff5fc8"/></radialGradient></defs>
     <path d="M10 70Q22 58 30 56M70 72Q58 60 50 57M16 16Q26 26 32 30" fill="none" stroke="#8a2f75" stroke-width="2" stroke-linecap="round" opacity=".7"/>
@@ -251,7 +251,7 @@ export const PORTRAIT: Record<Speaker, string> = {
 };
 
 export const SPEAKER_NAME: Record<Speaker, string> = {
-  kai: 'Kai',
+  jason: 'Jason',
   bolt: 'BOLT',
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
@@ -259,11 +259,11 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   captain: 'Captain Mbeki',
   rosa: 'Aunt Rosa',
   vendy: 'Vendy',
-  bloom: 'The Bloom',
+  gascu: 'GaScu',
 };
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
-  kai: '#ffb07a',
+  jason: '#ffb07a',
   bolt: '#7fe6ff',
   halcyon: '#ff8a6a',
   glitch: '#ff4fd8',
@@ -271,7 +271,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   captain: '#ffd166',
   rosa: '#ff8a8a',
   vendy: '#ff9ae0',
-  bloom: '#ff6fcf',
+  gascu: '#ff6fcf',
 };
 
 let portraitCopies = 0;

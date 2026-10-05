@@ -294,7 +294,7 @@ export class UI {
     }
   }
 
-  /** Shakes the DASH button when Kai tries to dash on an empty tank. */
+  /** Shakes the DASH button when Jason tries to dash on an empty tank. */
   dashEmpty() {
     this.dashBtn.classList.remove('nope');
     void this.dashBtn.offsetWidth;
@@ -359,7 +359,7 @@ export class UI {
   private threatQueue: [string, string, string, string][] = [];
   private threatBusy = false;
 
-  /** A small card about an enemy the first time Kai meets one (one card at a time, out of the way). */
+  /** A small card about an enemy the first time Jason meets one (one card at a time, out of the way). */
   threat(icon: string, name: string, tip: string, color: string) {
     this.threatQueue.push([icon, name, tip, color]);
     if (!this.threatBusy) this.nextThreat();

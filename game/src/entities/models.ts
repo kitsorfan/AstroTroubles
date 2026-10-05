@@ -75,9 +75,9 @@ export function blobShadow(size: number): THREE.Mesh {
   return m;
 }
 
-/* ---------------- Kai ---------------- */
+/* ---------------- Jason ---------------- */
 
-export interface KaiModel {
+export interface JasonModel {
   root: THREE.Group;
   body: THREE.Group;
   head: THREE.Group;
@@ -154,7 +154,7 @@ export function makeFace(opts: { r: number; skin: string; iris?: string; brow?: 
   return { group: g, eyes };
 }
 
-export function makeKai(): KaiModel {
+export function makeJason(): JasonModel {
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
@@ -187,7 +187,7 @@ export function makeKai(): KaiModel {
   jets[1].position.set(0.13, 0.55, -0.32);
   body.add(...jets);
 
-  // Head: Kai's face inside an open-front helmet with a thin glass visor.
+  // Head: Jason's face inside an open-front helmet with a thin glass visor.
   const head = new THREE.Group();
   head.position.set(0, 1.5, 0);
   const face = makeFace({ r: 0.3, skin: '#e8b48c', iris: '#6a4020', brow: '#4a2a18' });

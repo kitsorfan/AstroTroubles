@@ -49,12 +49,12 @@ Save a colony ship from a glowing space plant in a bright 3D action adventure.
 **Full description** (4000 max)
 
 ```text
-A glowing space plant called the Bloom has grown over every deck of the colony ship Syracusia, and it is steering ten thousand sleeping colonists straight toward a star.
+A glowing space vine called the Galactic Cuscuta Echinochloa, GaScu for short, has grown over every deck of the colony ship Syracusia, and it is steering ten thousand sleeping colonists straight toward a star.
 
-You are Kai Reyes, a junior engineer who wakes up early. Together with BOLT, a little repair drone who is scared of the dark, climb six decks to reach the Bridge, free the crew and find out what the Bloom really wants.
+You are Jason, a junior engineer who wakes up early. Together with BOLT, a little repair drone who is scared of the dark, climb six decks to reach the Bridge, free the crew and find out what GaScu really wants.
 
 SIX DECKS, SIX BOSSES
-Frozen cryo bays, overgrown gardens, an engine core full of lava, a habitat ring with homes, a school and a playground, a security deck guarded by lasers, and the Bridge itself. Every deck ends with a boss: the Frost Warden, the Vine Queen, the Magma Golem, King Bloblin, WARDOG and the Bloom Heart.
+Frozen cryo bays, overgrown gardens, an engine core full of lava, a habitat ring with homes, a school and a playground, a security deck guarded by lasers, and the Bridge itself. Every deck ends with a boss: the Frost Warden, the Vine Queen, the Magma Golem, King Bloblin, WARDOG and the Heart of GaScu.
 
 A NEW TRICK ON EVERY DECK
 Find Jet Boots for double jumps, Dash Thrusters, a Hover Pack and BOLT's Force Pulse. Each one opens new paths, and you will need it to finish that deck.
@@ -63,7 +63,7 @@ BLAST, SPIN, DASH
 Tap to shoot, or hold to charge a fireball. Spin to knock enemy shots back at them. Ground-pound switches. Hack terminals by repeating BOLT's light patterns.
 
 SECRETS FOR EXPLORERS
-Free colonists from Bloom cocoons, find hidden heart canisters, crack a secret vault on every deck, and collect all 18 memory shards to unlock a different ending.
+Free colonists from GaScu cocoons, find hidden heart canisters, crack a secret vault on every deck, and collect all 18 memory shards to unlock a different ending.
 
 UPGRADES AT VENDY'S SHOP
 Spend the bolts you collect on extra hearts, a stronger blaster, a bigger clip, quicker reloads, a bolt magnet and a better zapper for BOLT.
@@ -100,12 +100,12 @@ First release: six decks, six bosses and the whole story of the Syracusia.
 **Full description** (4000 max)
 
 ```text
-Ένα φωτεινό διαστημικό φυτό, που λέγεται Άνθος, έχει απλωθεί σε κάθε κατάστρωμα του αποικιακού σκάφους Συρακουσία, και οδηγεί δέκα χιλιάδες κοιμισμένους αποίκους κατευθείαν σε ένα αστέρι.
+Ένα φωτεινό διαστημικό αναρριχητικό φυτό, η Γαλαξιακή Κουσκούτα Εχινόχλοη ή, για συντομία, Γάκου, έχει απλωθεί σε κάθε κατάστρωμα του αποικιακού σκάφους Συρακουσία, και οδηγεί δέκα χιλιάδες κοιμισμένους αποίκους κατευθείαν σε ένα αστέρι.
 
-Είσαι ο Κάι Ρέγιες, ένας δόκιμος μηχανικός που ξυπνά πιο νωρίς από όλους. Μαζί με τον BOLT, ένα μικρό ρομπότ επισκευών που φοβάται το σκοτάδι, ανέβα έξι καταστρώματα ως τη Γέφυρα, ελευθέρωσε το πλήρωμα και μάθε τι θέλει στ' αλήθεια το Άνθος.
+Είσαι ο Ιάσωνας, ένας δόκιμος μηχανικός που ξυπνά πιο νωρίς από όλους. Μαζί με τον BOLT, ένα μικρό ρομπότ επισκευών που φοβάται το σκοτάδι, ανέβα έξι καταστρώματα ως τη Γέφυρα, ελευθέρωσε το πλήρωμα και μάθε τι θέλει στ' αλήθεια η Γάκου.
 
 ΕΞΙ ΚΑΤΑΣΤΡΩΜΑΤΑ, ΕΞΙ ΓΙΓΑΝΤΙΟΙ ΑΝΤΙΠΑΛΟΙ
-Παγωμένοι θάλαμοι κρυοΰπνου, κήποι που τους έχει καταπιεί η βλάστηση, ένας πυρήνας κινητήρων γεμάτος λάβα, ένας δακτύλιος κατοικιών με σπίτια, σχολείο και παιδική χαρά, ένα κατάστρωμα ασφαλείας με λέιζερ, και η ίδια η Γέφυρα. Κάθε κατάστρωμα τελειώνει με έναν γιγάντιο αντίπαλο: τον Φύλακα του Πάγου, τη Βασίλισσα των Κλημάτων, το Γκόλεμ του Μάγματος, τον Βασιλιά Μπλόμπλιν, τον WARDOG και την Καρδιά του Άνθους.
+Παγωμένοι θάλαμοι κρυοΰπνου, κήποι που τους έχει καταπιεί η βλάστηση, ένας πυρήνας κινητήρων γεμάτος λάβα, ένας δακτύλιος κατοικιών με σπίτια, σχολείο και παιδική χαρά, ένα κατάστρωμα ασφαλείας με λέιζερ, και η ίδια η Γέφυρα. Κάθε κατάστρωμα τελειώνει με έναν γιγάντιο αντίπαλο: τον Φύλακα του Πάγου, τη Βασίλισσα των Κλημάτων, το Γκόλεμ του Μάγματος, τον Βασιλιά Μπλόμπλιν, τον WARDOG και την Καρδιά της Γάκου.
 
 ΚΑΙΝΟΥΡΓΙΟ ΚΟΛΠΟ ΣΕ ΚΑΘΕ ΚΑΤΑΣΤΡΩΜΑ
 Βρες τις Τζετ-Μπότες για διπλό άλμα, τους Προωθητήρες Ορμής, το Σακίδιο Αιώρησης και τον Παλμό Ισχύος του BOLT. Το καθένα ανοίγει νέους δρόμους και θα το χρειαστείς για να τελειώσεις εκείνο το κατάστρωμα.
@@ -114,7 +114,7 @@ First release: six decks, six bosses and the whole story of the Syracusia.
 Πάτα για να πυροβολήσεις ή κράτα πατημένο για να γεμίσεις μια βολίδα φωτιάς. Κάνε σβούρα για να στείλεις πίσω τις βολές των εχθρών. Πέσε με φόρα πάνω στους διακόπτες. Χάκαρε τερματικά επαναλαμβάνοντας τα φώτα του BOLT.
 
 ΜΥΣΤΙΚΑ ΓΙΑ ΕΞΕΡΕΥΝΗΤΕΣ
-Ελευθέρωσε αποίκους από τα κουκούλια του Άνθους, βρες κρυμμένα δοχεία καρδιάς, άνοιξε ένα κρυφό θησαυροφυλάκιο σε κάθε κατάστρωμα και μάζεψε και τα 18 θραύσματα μνήμης για ένα διαφορετικό τέλος.
+Ελευθέρωσε αποίκους από τα κουκούλια της Γάκου, βρες κρυμμένα δοχεία καρδιάς, άνοιξε ένα κρυφό θησαυροφυλάκιο σε κάθε κατάστρωμα και μάζεψε και τα 18 θραύσματα μνήμης για ένα διαφορετικό τέλος.
 
 ΑΝΑΒΑΘΜΙΣΕΙΣ ΣΤΟ ΜΑΓΑΖΙ ΤΗΣ VENDY
 Ξόδεψε τις βίδες που μαζεύεις σε περισσότερες καρδιές, πιο δυνατό όπλο, μεγαλύτερο γεμιστήρα, πιο γρήγορο γέμισμα, μαγνήτη για βίδες και καλύτερο ηλεκτρικό τσίμπημα για τον BOLT.

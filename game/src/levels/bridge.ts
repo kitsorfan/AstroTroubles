@@ -3,13 +3,13 @@ import type { LevelDef } from '../world/levelTypes';
 /**
  * Deck 6 — the Bridge, the grand finale. Cross the broken observation gallery, fetch the navigation
  * power cell from the dark crew wing, carry it through the laser hall, hack the navigation computer,
- * ride the lift up the Spine and face the Bloom Heart. With all 18 shards, BOLT can talk to it instead.
+ * ride the lift up the Spine and face the Heart of GaScu. With all 18 shards, BOLT can talk to it instead.
  */
 export const bridge: LevelDef = {
   id: 'bridge',
   index: 6,
   name: 'The Bridge',
-  subtitle: 'The heart of the Bloom',
+  subtitle: 'The heart of GaScu',
   music: 'bridge',
   intro: 'intro',
   boss: 'heart',
@@ -141,7 +141,7 @@ export const bridge: LevelDef = {
     w: { type: 'sign', text: 'Something shiny is floating outside the window. Only a long hover will get you there.' },
     j: { type: 'sign', text: 'Hop on the lift! It carries you up the Spine.' },
     d: { type: 'sign', text: 'Next ledge is far away: jump, double jump, then DASH. Or hover if you are feeling fancy.' },
-    y: { type: 'sign', text: 'The Bloom Heart is just ahead. Heal up, buy upgrades, and remember: BOLT believes in you!' },
+    y: { type: 'sign', text: 'The Heart of GaScu is just ahead. Heal up, buy upgrades, and remember: BOLT believes in you!' },
     '*': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
@@ -156,64 +156,64 @@ export const bridge: LevelDef = {
   objectives: [
     { until: { flag: 'nav' }, text: 'Find the navigation power cell in the dark crew wing' },
     { until: { flag: 't1' }, text: 'Hack the navigation terminal' },
-    { until: { boss: true }, text: 'Ride up the Spine and reach the Bloom Heart' },
+    { until: { boss: true }, text: 'Ride up the Spine and reach the Heart of GaScu' },
     { until: { flag: 'never' }, text: 'Save the {ship}!' },
   ],
   dialogues: {
     intro: [
-      { who: 'halcyon', text: 'The Bridge. Temperature rising. Please hurry, Kai.' },
+      { who: 'halcyon', text: 'The Bridge. Temperature rising. Please hurry, Jason.' },
       { who: 'bolt', text: 'The Heart is right at the top. It is steering the whole ship!' },
-      { who: 'kai', text: 'Then we take the wheel back. One last deck, BOLT.' },
+      { who: 'jason', text: 'Then we take the wheel back. One last deck, BOLT.' },
     ],
     log: [
-      { who: 'captain', text: 'Captain’s log, last entry. The Bloom has taken the Bridge. I’m going up to try to talk to it.' },
+      { who: 'captain', text: 'Captain’s log, last entry. GaScu has taken the Bridge. I’m going up to try to talk to it.' },
       { who: 'captain', text: 'To whoever finds this: the navigation computer needs its power cell and a hack. Then the lift up the Spine will open.' },
       { who: 'captain', text: 'And if you reach the Heart... remember that it’s scared. Be brave. Be kind.' },
     ],
     'colonist:c1': [
       { who: 'captain', text: 'Wha... BOLT? My little light! You found a friend!' },
-      { who: 'bolt', text: 'Captain! This is Kai. Kai is the BRAVEST!' },
-      { who: 'captain', text: 'Kai Reyes, the junior engineer? Well, I think you’ve just earned a promotion. Now go. The Heart is at the top of the Spine.' },
+      { who: 'bolt', text: 'Captain! This is Jason. Jason is the BRAVEST!' },
+      { who: 'captain', text: 'Jason, the junior engineer? Well, I think you’ve just earned a promotion. Now go. The Heart is at the top of the Spine.' },
     ],
     boss: [
-      { who: 'halcyon', text: 'There it is: THE BLOOM HEART, steering us straight into the star!' },
+      { who: 'halcyon', text: 'There it is: THE HEART OF GASCU, steering us straight into the star!' },
       { who: 'bolt', text: 'Pop the four pods around it first. Then BLAST the Heart whenever its petals open up!' },
     ],
     bossDown: [
       { who: 'bolt', text: 'The Heart is shrinking... it is turning into a tiny little seed!' },
-      { who: 'halcyon', text: 'The vines are letting go of the controls! Kai, the steering wheel!' },
-      { who: 'kai', text: 'Hold on, everybody! Turning the ship... NOW!' },
+      { who: 'halcyon', text: 'The vines are letting go of the controls! Jason, the steering wheel!' },
+      { who: 'jason', text: 'Hold on, everybody! Turning the ship... NOW!' },
     ],
     fallen: [
-      { who: 'bolt', text: 'We did it... did we do it? Kai, why is the floor shaking?' },
+      { who: 'bolt', text: 'We did it... did we do it? Jason, why is the floor shaking?' },
     ],
     reborn: [
-      { who: 'halcyon', text: 'Warning! The Bloom is pulling EVERY vine on the ship back into the Heart!' },
-      { who: 'bloom', text: 'NO! Home is RIGHT THERE! I will NOT go back into the cold and the dark!' },
-      { who: 'kai', text: 'It’s so scared, it’s fighting with everything it has left.' },
+      { who: 'halcyon', text: 'Warning! GaScu is pulling EVERY vine on the ship back into the Heart!' },
+      { who: 'gascu', text: 'NO! Home is RIGHT THERE! I will NOT go back into the cold and the dark!' },
+      { who: 'jason', text: 'It’s so scared, it’s fighting with everything it has left.' },
       { who: 'bolt', text: 'It only gets hurt when its big eye opens! Charge up a FIREBALL for that! And JUMP over its thorn rings and vine beams!' },
     ],
     speak: [
-      { who: 'bolt', text: 'Kai, wait! I learned the Bloom’s light-words from the shards. Blue is hello. Pink is safe. Gold is together.' },
+      { who: 'bolt', text: 'Jason, wait! I learned GaScu’s light-words from the shards. Blue is hello. Pink is safe. Gold is together.' },
       { who: 'bolt', text: 'Help me flash them to the Heart. Copy my pattern, gently, just like a hack!' },
     ],
     friends: [
-      { who: 'bloom', text: '...hello? ...safe? ...together?' },
+      { who: 'gascu', text: '...hello? ...safe? ...together?' },
       { who: 'bolt', text: 'YES! Together! You don’t have to be scared anymore!' },
-      { who: 'bloom', text: 'Friends... I never had friends before. I only wanted to go home.' },
-      { who: 'kai', text: 'That star isn’t your home. It would burn you... and all of us.' },
-      { who: 'bloom', text: 'Then... will you help me find a new one?' },
-      { who: 'kai', text: 'We’re looking for a new home too. Let’s find one together.' },
-      { who: 'bloom', text: 'Together. Hold on tight!' },
+      { who: 'gascu', text: 'Friends... I never had friends before. I only wanted to go home.' },
+      { who: 'jason', text: 'That star isn’t your home. It would burn you... and all of us.' },
+      { who: 'gascu', text: 'Then... will you help me find a new one?' },
+      { who: 'jason', text: 'We’re looking for a new home too. Let’s find one together.' },
+      { who: 'gascu', text: 'Together. Hold on tight!' },
     ],
     'shard:s1': [
-      { who: 'bloom', text: 'I am so tired of being scared all the time.' },
+      { who: 'gascu', text: 'I am so tired of being scared all the time.' },
     ],
     'shard:s2': [
-      { who: 'bloom', text: 'The star is getting closer. It is too hot. I do not want anyone to get hurt.' },
+      { who: 'gascu', text: 'The star is getting closer. It is too hot. I do not want anyone to get hurt.' },
     ],
     'shard:s3': [
-      { who: 'bloom', text: 'Please... someone... flash back.' },
+      { who: 'gascu', text: 'Please... someone... flash back.' },
       { who: 'bolt', text: 'I will. I promise.' },
     ],
   },

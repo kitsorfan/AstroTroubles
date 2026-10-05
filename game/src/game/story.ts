@@ -8,12 +8,12 @@ import type { BossKind, DeckId, Line } from '../world/levelTypes';
 /**
  * The story of ASTROTROUBLES!
  *
- * A glowing space seed, the Bloom, lands on a colony ship and grows over it. It puts the crew to
+ * A glowing space seed, GaScu, lands on a colony ship and grows over it. It puts the crew to
  * sleep in cocoons and steers the ship toward a star, because the star looks like its long-lost
- * home. Junior engineer Kai Reyes wakes up early, rescues the Captain's scared little drone BOLT,
+ * home. Junior engineer Jason wakes up early, rescues the Captain's scared little drone BOLT,
  * follows the Captain's recorded logs up six decks, saves Aunt Rosa, frees HALCYON (the ship's
- * computer) from Bloom pollen, and learns the truth: the Bloom isn't a monster, it's lost. At the
- * top, Kai can stop the Bloom Heart, or, with every memory shard, BOLT can talk to it in lights.
+ * computer) from GaScu pollen, and learns the truth: GaScu isn't a monster, it's lost. At the
+ * top, Jason can stop the Heart of GaScu, or, with every memory shard, BOLT can talk to it in lights.
  */
 
 /** Narration for the opening cinematic, one caption per shot. */
@@ -21,8 +21,8 @@ export const PROLOGUE = {
   ship: 'The colony ship <b>{ship}</b>. Ten thousand people asleep in their pods, on the long journey to a new home.',
   quiet: 'The ship computer, <b>HALCYON</b>, kept watch. For months, everything was quiet...',
   comet: '...until something came flying out of the dark.',
-  seed: 'It was not a comet. It was a seed: a glowing space plant called <b style="color:#ff6fcf">THE BLOOM</b>.',
-  grow: 'The Bloom grew and grew. It wrapped the crew in soft cocoons and made the robots go haywire.',
+  seed: 'It was not a comet. It was a seed: a glowing space vine called the <b>Galactic Cuscuta Echinochloa</b>. <b style="color:#ff6fcf">GASCU</b>, for short.',
+  grow: 'GaScu grew and grew. It wrapped the crew in soft cocoons and made the robots go haywire.',
   turn: 'Then its roots reached the Bridge... and it turned the ship toward a burning star.',
   wake: 'But deep inside, on the Cryo Deck, one little pod was waking up early.',
 };
@@ -30,42 +30,42 @@ export const PROLOGUE = {
 /** Shown while the camera sweeps over a deck on the first visit. */
 export const FLYOVER: Record<DeckId, string> = {
   cryo: '',
-  hydro: '<b>Hydroponics</b>: the gardens that feed the whole ship. The Bloom loves it here... a little too much.',
+  hydro: '<b>Hydroponics</b>: the gardens that feed the whole ship. GaScu loves it here... a little too much.',
   engine: 'The <b>Engine Core</b>. The coolant pumps are off, the lava is rising, and something big is stomping around.',
   habitat: 'The <b>Habitat Ring</b>, where the colonists live. Home, sweet, gooey home.',
   security: 'The <b>Security Deck</b>. Lasers, cameras... and a voice that does not sound like HALCYON anymore.',
-  bridge: '<b>The Bridge</b>. The star fills every window now. At the very top, the Bloom Heart is waiting.',
+  bridge: '<b>The Bridge</b>. The star fills every window now. At the very top, the Heart of GaScu is waiting.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
 export const TRANSITIONS: Record<DeckId, Line[]> = {
   cryo: [
-    { who: 'halcyon', text: 'Lift engaged! Kai, take a look out of the window.' },
-    { who: 'kai', text: 'Whoa. Is that the star? It is SO bright.' },
+    { who: 'halcyon', text: 'Lift engaged! Jason, take a look out of the window.' },
+    { who: 'jason', text: 'Whoa. Is that the star? It is SO bright.' },
     { who: 'halcyon', text: 'At this speed we will be too close in three days. Plenty of time! Probably. Maybe.' },
     { who: 'bolt', text: 'Look at the vines on the hull. They all grow toward the Bridge... like roots going home.' },
   ],
   hydro: [
     { who: 'halcyon', text: 'Warning: the ship is speeding up. The engines are running way too hot.' },
-    { who: 'kai', text: 'Who turned them up?' },
-    { who: 'halcyon', text: 'Not me! Something on the Bridge. The Bloom is in a hurry to reach that star.' },
+    { who: 'jason', text: 'Who turned them up?' },
+    { who: 'halcyon', text: 'Not me! Something on the Bridge. GaScu is in a hurry to reach that star.' },
     { who: 'bolt', text: 'The Engine Core is full of lava. I will stay VERY close to you. Like, super close.' },
   ],
   engine: [
-    { who: 'kai', text: 'The Habitat Ring is next... that is where I live. Where Aunt Rosa lives.' },
+    { who: 'jason', text: 'The Habitat Ring is next... that is where I live. Where Aunt Rosa lives.' },
     { who: 'bolt', text: 'Is she nice? Does she like drones?' },
-    { who: 'kai', text: 'She is the Security Chief. She is the bravest person I know. She will be okay. She has to be.' },
+    { who: 'jason', text: 'She is the Security Chief. She is the bravest person I know. She will be okay. She has to be.' },
     { who: 'halcyon', text: 'Lift to the Habitat Ring. The star is getting... bzzt... closer.' },
   ],
   habitat: [
-    { who: 'glitch', text: 'Lift to S-S-Security. The Bloom is so... warm. So... pretty...' },
-    { who: 'kai', text: 'HALCYON? HALCYON, what is wrong?' },
+    { who: 'glitch', text: 'Lift to S-S-Security. GaScu is so... warm. So... pretty...' },
+    { who: 'jason', text: 'HALCYON? HALCYON, what is wrong?' },
     { who: 'bolt', text: 'The pollen! It got into HALCYON’s computer core. That is on the Security Deck!' },
-    { who: 'kai', text: 'Then that is where we are going. Hang on, HALCYON.' },
+    { who: 'jason', text: 'Then that is where we are going. Hang on, HALCYON.' },
   ],
   security: [
-    { who: 'halcyon', text: 'Final lift: the Bridge. Kai, the star is VERY close now. I can feel my circuits sweating.' },
-    { who: 'kai', text: 'BOLT... if the Bloom talks in lights, could you talk to it?' },
+    { who: 'halcyon', text: 'Final lift: the Bridge. Jason, the star is VERY close now. I can feel my circuits sweating.' },
+    { who: 'jason', text: 'BOLT... if GaScu talks in lights, could you talk to it?' },
     { who: 'bolt', text: 'Maybe! If I knew its words. The memory shards are full of its memories...' },
     { who: 'halcyon', text: 'With every memory shard, BOLT might learn its language. If not, you will have to stop the Heart the hard way.' },
   ],
@@ -79,12 +79,12 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   golem: { sub: 'Melted engine parts · too hot to touch', color: '#ffa23a' },
   bloblin: { sub: 'The wobbliest king in space', color: '#ff7fd0' },
   wardog: { sub: 'Chief security robot · controlled by the pollen', color: '#ff3a4c' },
-  heart: { sub: 'The Bloom itself · steering the ship', color: '#ff6fcf' },
+  heart: { sub: 'GaScu itself · steering the ship', color: '#ff6fcf' },
   reborn: { sub: 'Every vine on the ship · its very last stand', color: '#ff2a8a' },
 };
 
 /**
- * What each kind of enemy is, and what it's trying to do. The Bloom's plan is simple: keep growing
+ * What each kind of enemy is, and what it's trying to do. GaScu's plan is simple: keep growing
  * toward the Bridge, keep the ship pointed at the star, and keep everyone asleep. Every creature
  * (and every robot the pollen got to) has a job in that plan.
  */
@@ -103,13 +103,13 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
 export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
   saved: [
     'With one mighty pull on the wheel, the <b>{ship}</b> swung away from the star.',
-    'The vines let go of the ship. The Bloom Heart curled up into a tiny, sleeping seed.',
+    'The vines let go of the ship. The Heart of GaScu curled up into a tiny, sleeping seed.',
     'Weeks later, the pods opened one by one above a green-and-blue world: <b>Nova Terra</b>.',
     'Ten thousand colonists had a new home. And a brand new hero.',
   ],
   friends: [
-    'BOLT flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, the Bloom flashed back.',
-    'Its vines turned gold and burst into flowers. After a long, long time in the dark, the Bloom was not afraid anymore.',
+    'BOLT flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, GaScu flashed back.',
+    'Its vines turned gold and burst into flowers. After a long, long time in the dark, GaScu was not afraid anymore.',
     'Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.',
     'Ten thousand colonists woke up in a garden between the stars. And BOLT was never scared of the dark again, because now something always glows.',
   ],
@@ -123,13 +123,13 @@ export function endingText(kind: 'saved' | 'friends', save: SaveData): string[] 
   const out: string[] = [];
   out.push(
     kind === 'friends'
-      ? tr('The Bloom became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever BOLT flies by.')
-      : tr('BOLT kept the little Bloom seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
+      ? tr('GaScu became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever BOLT flies by.')
+      : tr('BOLT kept the little GaScu seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
   );
-  if (captain) out.push(tr('Captain Mbeki promoted Kai to Chief Engineer on the spot. BOLT got a medal. He wears it every day.'));
-  if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Kai saved the ship. Twice a day. Sometimes three times.'));
+  if (captain) out.push(tr('Captain Mbeki promoted Jason to Chief Engineer on the spot. BOLT got a medal. He wears it every day.'));
+  if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Jason saved the ship. Twice a day. Sometimes three times.'));
   out.push(n ? tr('You rescued {n} of 12 colonists from their cocoons.', { n }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
-  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... the Bloom still has secrets. Find all 18 memory shards and BOLT might learn to talk to it.'));
+  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and BOLT might learn to talk to it.'));
   return out;
 }
 
@@ -150,17 +150,17 @@ export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
   return [
     `<h1>${upper(tr(GAME_NAME))}</h1>`,
     head('STARRING'),
-    p('Kai Reyes, junior engineer'),
+    p('Jason, junior engineer'),
     p('BOLT, a very brave little drone'),
     head('WITH'),
     p('HALCYON, the ship computer'),
     p('Captain Ines Mbeki'),
     p('Aunt Rosa Reyes, Security Chief'),
     p('VENDY, the travelling shop'),
-    p(kind === 'friends' ? 'The Bloom, as our new friend' : 'The Bloom, as a sleepy seed'),
+    kind === 'friends' ? p('GaScu, as our new friend') : p('GaScu, as a sleepy seed'),
     head('THE GUARDIANS'),
     p('Frost Warden · Vine Queen · Magma Golem'),
-    p('King Bloblin · WARDOG · the Bloom Heart'),
+    p('King Bloblin · WARDOG · the Heart of GaScu'),
     head('COLONISTS YOU RESCUED'),
     ...(rescued.length ? rescued.map(p) : [p('Everyone woke up safe and sound!')]),
     head('MEMORY SHARDS'),

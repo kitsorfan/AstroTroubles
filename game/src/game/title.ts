@@ -1,16 +1,16 @@
 import * as THREE from 'three';
 
 import { ColonyShip } from '../cinema/colonyShip';
-import { makeBolt, makeKai, mat, mesh } from '../entities/models';
+import { makeBolt, makeJason, mat, mesh } from '../entities/models';
 import { buildSky } from '../world/sky';
 import { THEMES } from '../world/themes';
 
-/** The title backdrop: Kai and BOLT on a floating deck with the Syracusia cruising behind them. */
+/** The title backdrop: Jason and BOLT on a floating deck with the Syracusia cruising behind them. */
 export class TitleScene {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.3, 900);
   private ship = new ColonyShip();
-  private kai = makeKai();
+  private jason = makeJason();
   private bolt = makeBolt();
   private t = 0;
 
@@ -30,7 +30,7 @@ export class TitleScene {
     sunGlow.position.set(-120, 40, -260);
     this.scene.add(sunGlow);
 
-    // Floating deck with Kai and BOLT.
+    // Floating deck with Jason and BOLT.
     const deck = new THREE.Group();
     deck.add(mesh(new THREE.CylinderGeometry(3.6, 3.2, 0.8, 32), mat('#7482c2', { rough: 0.6, metal: 0.2 }), 0, -0.4, 0));
     deck.add(mesh(new THREE.TorusGeometry(3.55, 0.09, 8, 48).rotateX(Math.PI / 2), mat('#ff9ae0', { emissive: '#ff6fcf', ei: 1.4 }), 0, 0.02, 0, false));
@@ -42,13 +42,13 @@ export class TitleScene {
       deck.add(b);
     }
     this.scene.add(deck);
-    this.kai.root.position.set(-0.7, 0, 0.3);
-    this.kai.root.rotation.y = 0.35;
-    this.scene.add(this.kai.root);
+    this.jason.root.position.set(-0.7, 0, 0.3);
+    this.jason.root.rotation.y = 0.35;
+    this.scene.add(this.jason.root);
     this.bolt.root.position.set(1.1, 2, 0.6);
     this.scene.add(this.bolt.root);
 
-    // The Syracusia, already overgrown with the Bloom.
+    // The Syracusia, already overgrown with GaScu.
     this.ship.setGrowth(0.85);
     const s = this.ship.group;
     s.position.set(10, 8, -120);
@@ -69,7 +69,7 @@ export class TitleScene {
     this.ship.update(dt);
     this.ship.group.position.x = 10 + Math.sin(t * 0.05) * 6;
     this.ship.group.rotation.x = 0.12 + Math.sin(t * 0.2) * 0.02;
-    const k = this.kai;
+    const k = this.jason;
     k.armR.rotation.z = 2.4 + Math.sin(t * 7) * 0.4;
     k.armR.rotation.x = 0;
     k.armL.rotation.x = Math.sin(t * 1.5) * 0.05;

@@ -1,26 +1,26 @@
 # AstroTroubles!
 
-![AstroTroubles! title screen: Kai waving in front of the colony ship Syracusia, overgrown with pink Bloom vines](docs/store/en/feature-graphic.jpg)
+![AstroTroubles! title screen: Jason waving in front of the colony ship Syracusia, overgrown with pink GaScu vines](docs/store/en/feature-graphic.jpg)
 
 *In Greek: Αστρομπελάδες*
 
 A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app. Coming to Google Play.
 
-The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space plant called **the Bloom** grows over every deck and starts steering the ship toward a star. You play **Kai Reyes**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Kai climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what the Bloom really wants.
+The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
 It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
 
 | | |
 | --- | --- |
-| ![Kai and BOLT fighting the Magma Golem inside a ring of fire](docs/store/en/01-boss-fight.jpg) | ![The Magma Golem's entrance, with its name card](docs/store/en/02-magma-golem.jpg) |
+| ![Jason and BOLT fighting the Magma Golem inside a ring of fire](docs/store/en/01-boss-fight.jpg) | ![The Magma Golem's entrance, with its name card](docs/store/en/02-magma-golem.jpg) |
 | ![Exploring the overgrown Hydroponics deck](docs/store/en/03-hydroponics.jpg) | ![WARDOG, the chief security robot, behind its shield](docs/store/en/05-wardog.jpg) |
-| ![A Horned Brute and a Spore Crawler next to the lava in the Engine Core](docs/store/en/06-engine-core.jpg) | ![The prologue: the Bloom seed takes root on the ship's hull](docs/store/en/07-prologue.jpg) |
+| ![A Horned Brute and a Spore Crawler next to the lava in the Engine Core](docs/store/en/06-engine-core.jpg) | ![The prologue: the GaScu seed takes root on the ship's hull](docs/store/en/07-prologue.jpg) |
 
 ## Highlights
 
 - **The whole game is one offline HTML page.** The game is TypeScript and three.js, and esbuild bundles it, fonts included, into a single 1.5 MB page. The Expo app shows that page full screen in a WebView and handles what the page can't: saving, haptics, the Android back button and screen orientation.
 - **No asset files.** Characters, bosses and levels are built from code, textures are drawn on canvases at runtime, and all music and sound effects are synthesized with the Web Audio API.
-- **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Kai's jumps, dashes and hovering on every deck. It reports anything Kai can't reach, and checks that each deck really needs its new ability. The Jest suite runs the same checks.
+- **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Jason's jumps, dashes and hovering on every deck. It reports anything Jason can't reach, and checks that each deck really needs its new ability. The Jest suite runs the same checks.
 - **In-engine cutscenes.** A small cutscene director moves the camera through the real level and adds letterbox bars, boss name cards and slow-motion finishes.
 - **Built for phones.** Each deck frees its GPU memory when you leave it. Shaders compile behind the title cards so play doesn't stutter. The quality preset on first launch is picked from the phone's CPU core count.
 - **Two languages.** English and Greek, with a test that fails if any visible string is missing its Greek translation.
@@ -59,15 +59,15 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | Left side of the screen | Joystick: move |
 | Drag on the right side | Turn the camera |
 | **JUMP** | Jump. Hold for higher jumps; with the Jet Boots, press again in mid-air |
-| **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Kai reloads. **Hold** to charge a big fireball that bursts on impact |
-| **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Kai gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
+| **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Jason reloads. **Hold** to charge a big fireball that bursts on impact |
+| **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Jason gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
-| **PULSE** | BOLT's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Kai, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
+| **PULSE** | BOLT's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
 | BOLT button | Appears near terminals, pylons, signs, the shop and lifts |
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
-Kai finds a new ability on each deck, and it's needed to finish that deck:
+Jason finds a new ability on each deck, and it's needed to finish that deck:
 
 | Deck | New trick | Boss |
 | --- | --- | --- |
@@ -76,13 +76,13 @@ Kai finds a new ability on each deck, and it's needed to finish that deck:
 | 3. Engine Core | Dash Thrusters | Magma Golem |
 | 4. Habitat Ring | Hover Pack (hold JUMP to float) | King Bloblin |
 | 5. Security Deck | BOLT's Force Pulse (shorts out lasers) | WARDOG |
-| 6. The Bridge | Everything at once | The Bloom Heart, then the Bloom Reborn |
+| 6. The Bridge | Everything at once | The Heart of GaScu, then GaScu Reborn |
 
 - **Hacking** is a light-pattern memory game: watch BOLT's lights, then repeat them.
 - **BOLT** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at VENDY's shop to make it hurt.
 - **Bolts** are money. Spend them at VENDY's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger BOLT zap and a bolt magnet.
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
-- **The final battle.** Beating the Bloom Heart isn't the end: it pulls every vine on the ship into itself and rises again as the Bloom Reborn, a floating titan that is only hurt while its great eye is open.
+- **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open.
 
 ### Enemies
 
@@ -103,8 +103,8 @@ Enemies get tougher deck by deck: more health, faster attacks, sharper senses. T
 
 Every deck has four side quests, listed with their rewards in the pause menu. BOLT also explains each kind of collectible the first time you get close to one.
 
-- **Free the colonists** trapped in pink Bloom cocoons (blast them open): 25 bolts each, plus a bonus when the whole deck is free.
-- **Find the memory shards** (glowing pink crystals): a bolt bonus per deck and an extra heart for every 6. All 18 unlock the secret ending, where BOLT *speaks* to the Bloom instead of fighting it.
+- **Free the colonists** trapped in pink GaScu cocoons (blast them open): 25 bolts each, plus a bonus when the whole deck is free.
+- **Find the memory shards** (glowing pink crystals): a bolt bonus per deck and an extra heart for every 6. All 18 unlock the secret ending, where BOLT *speaks* to GaScu instead of fighting it.
 - **Find the hidden heart canister** for one more max heart. They're often behind cracked walls (spin or blast them).
 - **Crack the secret vault.** Each deck has one, locked behind a harder puzzle, and the chest inside holds a free upgrade:
 
@@ -123,11 +123,11 @@ Progress saves at every checkpoint and when you leave the app.
 
 ## The story
 
-A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, the Bloom spreads over the hull, and the ship turns toward a burning star. Then Kai's cryo pod thaws. What happens next (**spoilers**):
+A new game opens with a prologue out in space: a glowing seed strikes the *Syracusia*, GaScu spreads over the hull, and the ship turns toward a burning star. Then Jason's cryo pod thaws. What happens next (**spoilers**):
 
-- **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as the Bloom took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Kai's Aunt Rosa instead.
-- **Rescuing BOLT.** Kai finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
-- **HALCYON is infected.** By the Security Deck, Bloom pollen has scrambled the ship computer, who turns on you and sends WARDOG. Beating WARDOG lets BOLT reboot HALCYON. HALCYON then reveals that the Bloom isn't angry, it's lost, and thinks the star is its home.
+- **Captain's logs.** Captain Ines Mbeki left hologram messages on every deck as GaScu took over. They tell you what happened, and where to find her drone, BOLT. On the Habitat Ring, the message is from Jason's Aunt Rosa instead.
+- **Rescuing BOLT.** Jason finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
+- **HALCYON is infected.** By the Security Deck, GaScu pollen has scrambled the ship computer, who turns on you and sends WARDOG. Beating WARDOG lets BOLT reboot HALCYON. HALCYON then reveals that GaScu isn't angry, it's lost, and thinks the star is its home.
 - **Story characters.** Freeing Aunt Rosa (Security) and the Captain (the Bridge) from their cocoons plays a scene with each of them.
 
 Cutscenes play in the game world with letterbox bars:
@@ -141,7 +141,7 @@ Tap to hurry a caption along, or press **SKIP** (or the Android back button) to 
 
 ## Languages
 
-The game is in English and Greek: in Greek it is called **Αστρομπελάδες** and the ship is the **Συρακουσία**, and the app shows that name on phones set to Greek (`languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσωνας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
 
 ## Project layout
 
@@ -150,7 +150,7 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   build.mjs              bundles everything, fonts included, into one offline HTML page
   src/core/              input, audio (synthesized music and sound effects), save data, app bridge, translations
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
-  src/entities/          Kai, BOLT, enemies, bosses, pickups and interactive props
+  src/entities/          Jason, BOLT, enemies, bosses, pickups and interactive props
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
@@ -167,7 +167,7 @@ docs/                    privacy policy, plus the Google Play listing text, scre
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Kai's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, and that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, and that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash. The Jest suite runs the same checks.
 
 ## Development
 

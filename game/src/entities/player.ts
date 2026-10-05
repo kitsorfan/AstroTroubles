@@ -9,17 +9,17 @@ import type { World } from '../game/world';
 import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
-import { makeKai, type KaiModel } from './models';
-import { KaiFx } from './moveFx';
+import { makeJason, type JasonModel } from './models';
+import { JasonFx } from './moveFx';
 
-/** How long Kai hangs in the air (and flips) before a ground pound slams down. */
+/** How long Jason hangs in the air (and flips) before a ground pound slams down. */
 const POUND_HANG = 0.18;
 
 const tmp = new THREE.Vector3();
 
 export class Player {
   readonly body: Body;
-  readonly model: KaiModel;
+  readonly model: JasonModel;
   facing: number;
   hearts: number;
   invuln = 0;
@@ -68,11 +68,11 @@ export class Player {
   private vz = 0;
   down = false;
   carrying: THREE.Object3D | null = null;
-  private fx: KaiFx;
+  private fx: JasonFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
-  /** Lets a cutscene pose Kai's model (called after the normal animation each frame). */
-  pose: ((m: KaiModel, dt: number) => void) | null = null;
+  /** Lets a cutscene pose Jason's model (called after the normal animation each frame). */
+  pose: ((m: JasonModel, dt: number) => void) | null = null;
 
   constructor(
     private world: World,
@@ -83,14 +83,14 @@ export class Player {
   ) {
     this.body = makeBody(x, y, z, PLAYER.radius, PLAYER.height);
     this.body.grounded = true;
-    this.model = makeKai();
+    this.model = makeJason();
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.ammo = this.clipSize;
     this.renderY = y;
     this.safe.set(x, y, z);
     world.scene.add(this.model.root);
-    this.fx = new KaiFx(world.scene);
+    this.fx = new JasonFx(world.scene);
   }
 
   has(a: Ability) {
@@ -114,7 +114,7 @@ export class Player {
     return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
   }
 
-  /** True while a ground spin is whirling (and guarding Kai). */
+  /** True while a ground spin is whirling (and guarding Jason). */
   get spinning() {
     return this.spinT > 0;
   }
@@ -154,7 +154,7 @@ export class Player {
     return tmp.set(this.body.x, this.body.y, this.body.z);
   }
 
-  /** Point near the chest used by enemies to aim at Kai. */
+  /** Point near the chest used by enemies to aim at Jason. */
   chest(out = new THREE.Vector3()) {
     return out.set(this.body.x, this.body.y + 1.05, this.body.z);
   }
@@ -163,7 +163,7 @@ export class Player {
   hurt(n: number, fromX?: number, fromZ?: number, hazard = false) {
     if (this.invuln > 0 || this.down || this.world.cutscene) return;
     if (this.spinT > 0 && !hazard) {
-      // The spin guards Kai: the attack glances off in a spray of sparks.
+      // The spin guards Jason: the attack glances off in a spray of sparks.
       audio.play('zap', 2.4);
       this.world.particles.emit(this.body.x, this.body.y + 1, this.body.z, { count: 14, color: '#bff4ff', speed: 6, life: 0.35, size: 0.4 });
       return;
@@ -209,7 +209,7 @@ export class Player {
     this.dashT = 0;
   }
 
-  /** Throws Kai upward (bounce pads, steam vents); the double jump is available again afterwards. */
+  /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */
   launch(vy: number) {
     this.body.vy = vy;
     this.body.grounded = false;

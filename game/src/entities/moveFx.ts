@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Visual effects for Kai's signature moves: the spin attack's energy swoosh, the ground pound's
+ * Visual effects for Jason's signature moves: the spin attack's energy swoosh, the ground pound's
  * charge-up and falling streak, and the crater, flash and shockwave left behind on impact.
  */
 
@@ -124,8 +124,8 @@ function crater(): [THREE.Texture, THREE.Texture] {
 const additive = (map: THREE.Texture, color: string) =>
   new THREE.MeshBasicMaterial({ map, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false });
 
-/** Effects that follow Kai: the spin swoosh, the pound charge-up glow and the falling streak. */
-export class KaiFx {
+/** Effects that follow Jason: the spin swoosh, the pound charge-up glow and the falling streak. */
+export class JasonFx {
   private spinRings: THREE.Mesh[] = [];
   private spinT = 0;
   private spinMax = 1;
@@ -164,7 +164,7 @@ export class KaiFx {
   }
 
   update(dt: number, x: number, y: number, z: number, state: { pounding: boolean; hang: number; hangMax: number; airborne: boolean }) {
-    // Spin: two stacked swooshes whirling around Kai, tilting when he spins in mid-air.
+    // Spin: two stacked swooshes whirling around Jason, tilting when he spins in mid-air.
     this.spinT = Math.max(0, this.spinT - dt);
     const k = this.spinT / this.spinMax;
     this.spinRings.forEach((r, i) => {
@@ -176,7 +176,7 @@ export class KaiFx {
       (r.material as THREE.MeshBasicMaterial).opacity = Math.min(1, k * 2.2) * (i ? 0.8 : 1);
       r.scale.setScalar((i ? 0.78 : 1) * (0.85 + (1 - k) * 0.3));
     });
-    // Ground pound: a charge-up orb while Kai hangs in the air, then a streak as he slams down.
+    // Ground pound: a charge-up orb while Jason hangs in the air, then a streak as he slams down.
     const charging = state.pounding && state.hang > 0;
     this.orb.visible = charging;
     if (charging) {

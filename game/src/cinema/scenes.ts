@@ -18,7 +18,7 @@ import { ease, type Director, type Rig } from './director';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
-function kai(w: World) {
+function jason(w: World) {
   const b = w.player.body;
   return V(b.x, b.y, b.z);
 }
@@ -45,10 +45,10 @@ function after<T>(d: Director, seconds: number, fn: () => Promise<T> | T) {
   })();
 }
 
-/* ---------------- Cryo: Kai wakes up ---------------- */
+/* ---------------- Cryo: Jason wakes up ---------------- */
 
 export async function wakeUp(d: Director, w: World) {
-  const p = kai(w);
+  const p = jason(w);
   const fwd = V(Math.sin(w.player.facing), 0, Math.cos(w.player.facing));
   const side = V(fwd.z, 0, -fwd.x);
   let crouch = 1;
@@ -70,7 +70,7 @@ export async function wakeUp(d: Director, w: World) {
     await Promise.all([
       d.fade('#ffffff', 0, 2.6),
       d.tween(2.6, () => {
-        // Cold mist curling up around the pod, not over Kai.
+        // Cold mist curling up around the pod, not over Jason.
         const a = Math.random() * Math.PI * 2;
         if (Math.random() < 0.35) w.particles.emit(p.x + Math.cos(a) * 1.6, p.y + 0.1, p.z + Math.sin(a) * 1.6, { count: 1, color: '#9fb8c8', speed: 0.6, up: 1.6, life: 1.2, size: 0.8, gravity: -0.3, drag: 1 });
       }),
@@ -96,7 +96,7 @@ export async function wakeUp(d: Director, w: World) {
 export async function flyover(d: Director, w: World) {
   const lv = w.level;
   const boss = lv.entities.find((e) => e.spec.type === 'boss');
-  const k = kai(w);
+  const k = jason(w);
   const target = boss ? V(boss.cx * CELL + CELL / 2, boss.h, boss.cz * CELL + CELL / 2) : k.clone();
   const dir = toward(target, k);
   const side = V(dir.z, 0, -dir.x);
@@ -123,13 +123,13 @@ export async function flyover(d: Director, w: World) {
 
 export async function holoLog(d: Director, w: World, holo: Holo) {
   const s = holo.spot.clone();
-  const k = kai(w);
+  const k = jason(w);
   face(w, s);
   const dir = toward(k, s);
   const side = V(dir.z, 0, -dir.x);
   const mid = k.clone().lerp(s, 0.5);
   try {
-    // Over Kai's shoulder at first, then close on the hologram's face while it talks.
+    // Over Jason's shoulder at first, then close on the hologram's face while it talks.
     await d.cam(mid.clone().addScaledVector(side, 4.5).addScaledVector(dir, -1.5).add(V(0, 2.4, 0)), mid.clone().add(V(0, 1.4, 0)), 1.1, ease.inOut, 44);
     audio.play('zap', 0.6);
     audio.play('blip', 0.5);
@@ -149,7 +149,7 @@ export async function holoLog(d: Director, w: World, holo: Holo) {
 
 export async function boltFound(d: Director, w: World, find: BoltFind) {
   const s = find.spot.clone();
-  const k = kai(w);
+  const k = jason(w);
   face(w, s);
   const dir = toward(s, k);
   const side = V(dir.z, 0, -dir.x);
@@ -167,7 +167,7 @@ export async function boltFound(d: Director, w: World, find: BoltFind) {
       d.cam(s.clone().addScaledVector(dir, 1).addScaledVector(side, 2.8).add(V(0, 1, 0)), s.clone().add(V(0, 0.45, 0)), 1.2, ease.inOut, 40),
       d.tween(0.8, (x) => (kneel = x)),
     ]);
-    // Kai fiddles with a loose wire: sparks, then BOLT's eye flickers to life.
+    // Jason fiddles with a loose wire: sparks, then BOLT's eye flickers to life.
     await d.tween(
       1.6,
       (x) => {
@@ -197,8 +197,8 @@ export async function boltFound(d: Director, w: World, find: BoltFind) {
       d.tween(0.8, (x) => (kneel = 1 - x)),
       d.cam(k.clone().lerp(s, 0.5).addScaledVector(side, 5).add(V(0, 2.4, 0)), s.clone().add(V(0, 1.4, 0)), 1.2, ease.inOut, 44),
     ]);
-    // A lap of honour around Kai.
-    const c = kai(w);
+    // A lap of honour around Jason.
+    const c = jason(w);
     const r0 = V(bolt.root.position.x - c.x, 0, bolt.root.position.z - c.z);
     const a0 = Math.atan2(r0.x, r0.z);
     audio.play('dash');
@@ -231,7 +231,7 @@ function bossLines(w: World, b: Boss): Line[] {
   if (b.kind === 'heart') {
     lines.push(
       w.save.shards.length >= 18
-        ? { who: 'bolt', text: 'Kai, I know its light-words now! Get close to the Heart and press SPEAK!' }
+        ? { who: 'bolt', text: 'Jason, I know its light-words now! Get close to the Heart and press SPEAK!' }
         : { who: 'bolt', text: tr('If only we had all 18 memory shards... (we have {n}) then I could try to TALK to it.', { n: w.save.shards.length }) },
     );
   }
@@ -241,16 +241,16 @@ function bossLines(w: World, b: Boss): Line[] {
 export async function bossIntro(d: Director, w: World, b: Boss) {
   const c = b.where.clone();
   const f = b.focus.clone();
-  const k = kai(w);
+  const k = jason(w);
   face(w, c);
   const u = toward(c, k);
   const side = V(u.z, 0, -u.x);
   const card = BOSS_CARD[b.kind];
   const reach = 4 + b.size * 2.3;
-  // BOLT tucks in beside Kai so he doesn't block the view.
+  // BOLT tucks in beside Jason so he doesn't block the view.
   w.bolt.override = k.clone().addScaledVector(side, -1.3).add(V(0, 1.9, 0));
   try {
-    // Over Kai's shoulder, the boss looms ahead...
+    // Over Jason's shoulder, the boss looms ahead...
     await d.cam(k.clone().addScaledVector(u, 6.5).addScaledVector(side, 2.6).add(V(0, 4.2, 0)), f.clone().lerp(k, 0.15), 1.2, ease.inOut, 48);
     await d.wait(0.4);
     // ...then a low hero shot as it roars.
@@ -315,7 +315,7 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
   const exit = w.exit;
   if (exit) {
     const e = exit.spot.clone();
-    const dir = toward(e, kai(w));
+    const dir = toward(e, jason(w));
     await d.cam(e.clone().addScaledVector(dir, 8).add(V(0, 5, 0)), e.clone().add(V(0, 1, 0)), 1.6);
     w.rings.burst(e.x, e.y, e.z, 4, '#3dff8a', 0.8);
     w.flash(e.x, e.y + 1.5, e.z, '#3dff8a', 40, 0.8);
@@ -326,10 +326,10 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
   await d.cam(back.pos, back.look, 1.1);
 }
 
-/** The Heart falls... and the Bloom pulls every vine on the ship into it and rises again. */
+/** The Heart falls... and GaScu pulls every vine on the ship into it and rises again. */
 export async function rebirth(d: Director, w: World, heart: Boss) {
   const c = heart.where.clone();
-  const k = kai(w);
+  const k = jason(w);
   face(w, c);
   const u = toward(c, k);
   const side = V(u.z, 0, -u.x);
@@ -383,13 +383,13 @@ export async function rebirth(d: Director, w: World, heart: Boss) {
   await d.cam(fight.pos, fight.look, 1.1, ease.inOut, fight.fov);
 }
 
-/** The secret ending: BOLT speaks to the Bloom Heart in lights, and it answers. */
+/** The secret ending: BOLT speaks to the Heart of GaScu in lights, and it answers. */
 export async function befriend(d: Director, w: World) {
   const b = w.boss;
   if (!b) return;
   const c = b.where.clone();
   const f = b.focus.clone();
-  const k = kai(w);
+  const k = jason(w);
   face(w, c);
   const u = toward(c, k);
   const side = V(u.z, 0, -u.x);
@@ -433,7 +433,7 @@ export async function befriend(d: Director, w: World) {
 export async function liftRide(d: Director, w: World, exit: Exit) {
   const e = exit.spot.clone();
   const body = w.player.body;
-  const from = kai(w);
+  const from = jason(w);
   const toCam = toward(e, d.rig.pos);
   w.player.facing = Math.atan2(toCam.x, toCam.z);
   const hover = V(e.x + 0.9, e.y + 2.2, e.z);

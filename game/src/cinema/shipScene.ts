@@ -141,7 +141,7 @@ export class ShipScene {
     this.planet.visible = false;
     s.add(this.planet);
 
-    // The Bloom seed: a pink fireball with a long tail.
+    // The GaScu seed: a pink fireball with a long tail.
     const head = new THREE.Mesh(new THREE.SphereGeometry(1.8, 20, 14), new THREE.MeshBasicMaterial({ color: '#ffd6f4', toneMapped: false }));
     this.comet.add(head, glowSprite('#ff4fd8', 16, 0.95));
     const tail = new THREE.Mesh(
@@ -159,7 +159,7 @@ export class ShipScene {
     this.setChapter(0);
   }
 
-  /** How close the star is and how far the Bloom has spread. 0 = before the seed, 6 = the Bridge. */
+  /** How close the star is and how far GaScu has spread. 0 = before the seed, 6 = the Bridge. */
   setChapter(ch: number) {
     const d = 1500 - ch * 190;
     this.setStar(d);

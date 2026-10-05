@@ -109,7 +109,7 @@ export abstract class Enemy extends Entity implements Target {
     this.yaw = dampAngle(this.yaw, Math.atan2(p.x - this.body.x, p.z - this.body.z), speed, dt);
   }
 
-  /** Where Kai will be after `seconds`, if he keeps moving the same way. */
+  /** Where Jason will be after `seconds`, if he keeps moving the same way. */
   protected lead(seconds: number, out = new THREE.Vector3()) {
     const p = this.player.body;
     return out.set(p.x + p.vx * seconds, p.y + 1.05, p.z + p.vz * seconds);
@@ -127,7 +127,7 @@ export abstract class Enemy extends Entity implements Target {
     return Math.abs(c.h - here.h) < 0.6;
   }
 
-  /** Wakes this enemy: an alarm went off, or a packmate spotted Kai. */
+  /** Wakes this enemy: an alarm went off, or a packmate spotted Jason. */
   alert(alarm = false) {
     if (alarm) this.alarmT = 2.4;
     if (!this.aggro) this.wake();
@@ -139,7 +139,7 @@ export abstract class Enemy extends Entity implements Target {
     this.onWake();
   }
 
-  /** Hook for enemies that react to spotting Kai (calling the pack, sounding the alarm). */
+  /** Hook for enemies that react to spotting Jason (calling the pack, sounding the alarm). */
   protected onWake() {}
 
   hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean {
@@ -237,7 +237,7 @@ export abstract class Enemy extends Entity implements Target {
     this.badge.update(dt, show, Math.max(0, this.hp / this.maxHp), this.alarmT > 0, this.t);
   }
 
-  /** Returns true if Kai got hurt. */
+  /** Returns true if Jason got hurt. */
   protected touchPlayer(dmg = 1): boolean {
     const p = this.player.body;
     const dx = p.x - this.body.x;
@@ -245,7 +245,7 @@ export abstract class Enemy extends Entity implements Target {
     const r = this.radius + p.r - 0.1;
     if (dx * dx + dz * dz < r * r && p.y < this.body.y + this.radius * 2 + 0.2 && p.y + p.h > this.body.y) {
       if (this.player.pounding && p.y > this.body.y + this.radius) return false;
-      // Kai is ramming it with a dash: the dash does the hitting.
+      // Jason is ramming it with a dash: the dash does the hitting.
       if (this.player.dashing) return false;
       const before = this.player.hearts;
       this.player.hurt(dmg, this.body.x, this.body.z);
@@ -273,7 +273,7 @@ class Sporeling extends Enemy {
     this.slot = hash01(id) * Math.PI * 2;
   }
 
-  /** One crawler spotting Kai calls the rest of its pack. */
+  /** One crawler spotting Jason calls the rest of its pack. */
   protected onWake() {
     this.world.alertNear(this.body.x, this.body.z, 10, 'sporeling');
   }
@@ -296,7 +296,7 @@ class Sporeling extends Enemy {
           this.hops += 1;
           const close = this.distToPlayer() < 2.6;
           if (this.retreat > 0) {
-            // Just bit Kai: hop back out of reach before coming again.
+            // Just bit Jason: hop back out of reach before coming again.
             tx = b.x - (p.x - b.x);
             tz = b.z - (p.z - b.z);
             sp = 4;
@@ -306,7 +306,7 @@ class Sporeling extends Enemy {
             tz = p.z;
             sp = 5.4;
           } else {
-            // Circle to its own spot around Kai, so the pack surrounds him.
+            // Circle to its own spot around Jason, so the pack surrounds him.
             const a = this.slot + this.t * 0.35;
             tx = p.x + Math.cos(a) * 2.8;
             tz = p.z + Math.sin(a) * 2.8;
@@ -370,7 +370,7 @@ class Snapper extends Enemy {
   }
 
   protected think(dt: number) {
-    // It lies hidden among the roots until Kai walks right up to it.
+    // It lies hidden among the roots until Jason walks right up to it.
     const near = this.distToPlayer() < 5 + this.tier * 0.15;
     this.up = damp(this.up, near ? 1 : 0, near ? 9 : 4, dt);
     this.aimable = this.up > 0.5;
@@ -441,7 +441,7 @@ class Buzzer extends Enemy {
       tx = p.x + Math.cos(this.orbit) * 6;
       tz = p.z + Math.sin(this.orbit) * 6;
       this.baseY = damp(this.baseY, p.y + 2.8, 2, dt);
-      // Its plan: wait until Kai is busy reloading (or has turned away), then dive in for a sting.
+      // Its plan: wait until Jason is busy reloading (or has turned away), then dive in for a sting.
       if (this.diveCd <= 0 && (this.player.reloading || this.diveCd < -4)) {
         this.mode = 'dive';
         this.modeT = 1.1;
@@ -455,7 +455,7 @@ class Buzzer extends Enemy {
         this.shootT = 2.3 / this.rate;
         const from = new THREE.Vector3(b.x, b.y, b.z);
         const speed = 8 * this.spd;
-        // Shoots where Kai is going, not where he is.
+        // Shoots where Jason is going, not where he is.
         const dir = this.lead(from.distanceTo(v3.set(p.x, p.y, p.z)) / speed).sub(from).normalize();
         this.world.shots.fire('enemy', from, dir, speed, 1);
         this.world.soundAt('enemyShoot', this.body.x, this.body.z, 1, 22);
@@ -574,7 +574,7 @@ class Sentry extends Enemy {
     const fz = Math.cos(this.yaw);
     const inView = this.aggro && d < 11 && (dx * fx + dz * fz) / (d || 1) > 0.5;
     if (inView && !this.raised) {
-      // The first time it sees Kai, it calls the guards close by.
+      // The first time it sees Jason, it calls the guards close by.
       this.raised = true;
       this.alarmT = 2.4;
       audio.play('alarm');
@@ -655,7 +655,7 @@ class Turret extends Enemy {
         const b = this.body;
         const from = new THREE.Vector3(b.x, b.y + 1.3, b.z);
         const flight = Math.max(0.7, d / 9);
-        // Lob at where Kai will be when the glob lands.
+        // Lob at where Jason will be when the glob lands.
         const target = this.lead(flight);
         const spread = this.tier >= 2 ? [-0.35, 0, 0.35] : [0];
         for (const s of spread) {
@@ -748,7 +748,7 @@ class Brute extends Enemy {
         b.vz = damp(b.vz, 0, 10, dt);
         this.facePlayer(dt, 6);
         {
-          // Aims its charge at where Kai is heading.
+          // Aims its charge at where Jason is heading.
           const tgt = this.lead(0.35);
           const dx = tgt.x - b.x;
           const dz = tgt.z - b.z;
