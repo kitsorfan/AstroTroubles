@@ -28,7 +28,7 @@ Upload the screenshots in file order. Play shows the first three most, so they'r
 | 5 | ![Screenshot 5, English](en/05-wardog.jpg) | ![Screenshot 5, Greek](el/05-wardog.jpg) |
 | 6 | ![Screenshot 6, English](en/06-engine-core.jpg) | ![Screenshot 6, Greek](el/06-engine-core.jpg) |
 | 7 | ![Screenshot 7, English](en/07-prologue.jpg) | ![Screenshot 7, Greek](el/07-prologue.jpg) |
-| 8 | ![Screenshot 8, English](en/08-bloom-heart.jpg) | ![Screenshot 8, Greek](el/08-bloom-heart.jpg) |
+| 8 | ![Screenshot 8, English](en/08-heart-of-gascu.jpg) | ![Screenshot 8, Greek](el/08-heart-of-gascu.jpg) |
 
 The screenshots were taken from the real game running in a browser at 960 × 540, drawn at 2× (the same layout as a phone in landscape), using a test save with every ability unlocked. If the game's look or name changes, retake them.
 
