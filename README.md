@@ -4,7 +4,7 @@
 
 *In Greek: Αστρομπελάδες*
 
-A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app. Coming to Google Play.
+A 3D action-adventure platformer for Android, built with three.js inside an Expo / React Native app. Open source under the MIT license, and coming to Google Play.
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **BOLT**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
@@ -189,4 +189,4 @@ The Play listing text in English and Greek, the answers for Play Console's forms
 
 ## License
 
-All rights reserved. The code is public so you can read it and see how the game works, but not to copy or reuse. See [LICENSE](LICENSE).
+[MIT](LICENSE): you're free to read, change and reuse the code. The license covers the code; it doesn't give permission to publish another app under the AstroTroubles! name or logo. The embedded fonts (Fredoka, Orbitron, M PLUS Rounded 1c and Play) are under the SIL Open Font License 1.1.
