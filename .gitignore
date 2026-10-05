@@ -18,6 +18,12 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Store and signing credentials (eas submit's Google service account key, EAS local credentials).
+# This repo is public: keep them on EAS or outside the project.
+*service-account*.json
+credentials.json
+credentials/
+
 # Metro
 .metro-health-check*
 
