@@ -7,6 +7,7 @@ export const ICON = {
   shard: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><polygon points="8,1 15,10 8,19 1,10" fill="${got ? '#ff6fcf' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffd6f2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.3"/></svg>`,
   pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg>`,
+  clock: `<svg viewBox="0 0 24 24"><rect x="9.5" y="1.5" width="5" height="2.6" rx="1" fill="currentColor"/><circle cx="12" cy="13.5" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 13.5V9M12 13.5l3 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`,
   jump: `<svg viewBox="0 0 24 24"><path d="M12 4l7 8h-4.5v8h-5v-8H5z" fill="#fff"/></svg>`,
   shoot: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="#fff"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>`,
   spin: `<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M3 4l1.8 5.6L10 7.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,

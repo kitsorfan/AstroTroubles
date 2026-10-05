@@ -80,7 +80,7 @@ export const hydro: LevelDef = {
     #f~~~~~~~~~~~~~~~~~~~~~#
     #......................#
     #.t....t.......t....t..#
-    #.k...............u....#
+    #.k...............k....#
     #..2222........2222..66#
     #..2cc2...e....2cc2..6K#
     #..2cc2........2cc2..o6#
@@ -92,7 +92,7 @@ export const hydro: LevelDef = {
     #..2cc2....n...2cc2.w66#66666#
     #..2cc2........2cc2.b66#######
     #..2222..e.....2222..66#
-    #...o.o.o..l...o.o.o...#
+    #...o.o.o..k...o.o.o...#
     ##########...###########
          #.............#
          #.....@.......#
@@ -100,11 +100,9 @@ export const hydro: LevelDef = {
          ###############
 `,
   legend: {
-    k: { type: 'switch', flag: 'hs1', timed: 20 },
-    l: { type: 'switch', flag: 'hs2', timed: 20 },
-    u: { type: 'switch', flag: 'hs3', timed: 20 },
-    w: { type: 'sign', text: "SECRET VAULT (up on the ledge). It opens when all THREE red switches in this garden are down at the same time. Each one pops back up after 20 seconds, so plan your route and GROUND POUND fast!" },
-    Z: { type: 'door', id: 'secretvault', open: { all: [{ flag: 'hs1' }, { flag: 'hs2' }, { flag: 'hs3' }] }, latch: true },
+    k: { type: 'switch', flag: 'vault', timed: 21, together: true },
+    w: { type: 'sign', text: "SECRET VAULT (up on the ledge). GROUND POUND all THREE red switches in this garden within 21 seconds. The clock starts with the first one, so plan your route!" },
+    Z: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
     I: { type: 'prize', id: 'vault', reward: 'heart' },
     W: { type: 'boss', boss: 'queen', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },

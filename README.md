@@ -20,7 +20,7 @@ It's made for players around 10 and up: bright, forgiving, and about 2–3 hours
 
 - **The whole game is one offline HTML page.** The game is TypeScript and three.js, and esbuild bundles it, fonts included, into a single 1.5 MB page. The Expo app shows that page full screen in a WebView and handles what the page can't: saving, haptics, the Android back button and screen orientation.
 - **No asset files.** Characters, bosses and levels are built from code, textures are drawn on canvases at runtime, and all music and sound effects are synthesized with the Web Audio API.
-- **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Jason's jumps, dashes and hovering on every deck. It reports anything Jason can't reach, and checks that each deck really needs its new ability. The Jest suite runs the same checks.
+- **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Jason's jumps, dashes and hovering on every deck. It reports anything Jason can't reach, checks that each deck really needs its new ability, and times the fastest route through every countdown puzzle to prove it can be beaten with time to spare. The Jest suite runs the same checks.
 - **In-engine cutscenes.** A small cutscene director moves the camera through the real level and adds letterbox bars, boss name cards and slow-motion finishes.
 - **Built for phones.** Each deck frees its GPU memory when you leave it. Shaders compile behind the title cards so play doesn't stutter. The quality preset on first launch is picked from the phone's CPU core count.
 - **Two languages.** English and Greek, with a test that fails if any visible string is missing its Greek translation.
@@ -111,11 +111,13 @@ Every deck has four side quests, listed with their rewards in the pause menu. LU
 | Deck | Vault puzzle | Prize |
 | --- | --- | --- |
 | Cryo Deck | Step on the colour pads in the order a sign gives | Bigger Clip |
-| Hydroponics | Ground-pound three switches within 20 seconds, before any pop back up | +1 max heart |
+| Hydroponics | Ground-pound three switches within 21 seconds | +1 max heart |
 | Engine Core | A four-colour code on islands in the lava | Blaster Power |
 | Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
 | Security Deck | A 7-light hack switches off a laser corridor | LUX Zapper |
-| The Bridge | Four timed switches spread across the navigation room | 300 bolts |
+| The Bridge | Ground-pound four switches across the navigation room within 28 seconds | 300 bolts |
+
+For the switch puzzles, a clock at the top of the screen counts down from the first switch, with a dot for each one that's down. A cracked vault stays open, even when you replay the deck.
 
 The Elevator on the title screen lets you replay any deck you've reached.
 
@@ -170,7 +172,7 @@ The files left at the root are the ones each tool looks for there: `package.json
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, and that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
 
 ## Development
 

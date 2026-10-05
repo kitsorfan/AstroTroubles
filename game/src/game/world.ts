@@ -129,6 +129,9 @@ export class World {
   readonly difficulty: Difficulty;
   private levelEnemies = new Set<string>();
   private runes: Rune[] = [];
+  private switches: FloorSwitch[] = [];
+  /** Seconds left on each running switch clock, by the flag its switches set. */
+  private clocks = new Map<string, number>();
   private entities: Entity[] = [];
   private movers: Entity[] = [];
   private targets: Target[] = [];
@@ -198,6 +201,9 @@ export class World {
       for (const d of resume.dead) this.dead.add(d);
     }
     if (def.index > 1) this.flags.add('bolt');
+    // A cracked vault stays cracked: every vault puzzle sets the `vault` flag, so once the chest is
+    // open, later visits find the puzzle solved and the door open.
+    if ((save.prizes ?? []).includes(`${def.id}.vault`)) this.flags.add('vault');
     this.difficulty = difficultyFor(def.index, save);
     // Enemies always come back when a deck is re-entered; only cleared rooms stay open.
     this.dead.clear();
@@ -336,7 +342,7 @@ export class World {
         }
         break;
       case 'door':
-        this.addEntity(new Door(this, id, cx, cz, h, spec.open, spec.latch));
+        this.addEntity(new Door(this, id, cx, cz, h, spec.open));
         break;
       case 'rune': {
         const r = this.addEntity(new Rune(this, id, cx, cz, h, spec.group, spec.order, spec.color));
@@ -347,9 +353,12 @@ export class World {
       case 'prize':
         this.addEntity(new Prize(this, id, cx, cz, h, spec.reward));
         break;
-      case 'switch':
-        this.addEntity(new FloorSwitch(this, id, cx, cz, h, spec.flag, spec.timed));
+      case 'switch': {
+        const sw = this.addEntity(new FloorSwitch(this, id, cx, cz, h, spec.flag, spec.timed, spec.together));
+        this.switches.push(sw);
+        if (spec.together && this.flags.has(spec.flag)) sw.setDown(true);
         break;
+      }
       case 'terminal':
         this.addEntity(new Terminal(this, id, cx, cz, h, spec.flag, spec.length));
         break;
@@ -772,6 +781,62 @@ export class World {
     }
   }
 
+  /** Jason pounded a switch. A timed one starts its clock (see `tickClocks`); one on its own restarts it. */
+  pressSwitch(s: FloorSwitch) {
+    if (!s.together) {
+      this.setFlag(s.flag);
+      audio.play('success');
+      if (s.timed) {
+        this.clocks.set(s.flag, s.timed);
+        this.hooks.toast(tr('Hurry! {n} seconds!', { n: s.timed }), 'bolt');
+      }
+      return;
+    }
+    const group = this.switches.filter((x) => x.flag === s.flag);
+    const down = group.filter((x) => x.pressed).length;
+    if (down === group.length) {
+      this.clocks.delete(s.flag);
+      this.setFlag(s.flag);
+      audio.play('success');
+      this.hooks.toast('All the switches are down! The vault is open!', 'bolt');
+      return;
+    }
+    audio.play(`tone${Math.min(3, down - 1)}` as 'tone0');
+    if (!this.clocks.has(s.flag) && s.timed) {
+      this.clocks.set(s.flag, s.timed);
+      this.hooks.toast(tr('Hurry! {n} seconds!', { n: s.timed }), 'bolt');
+    }
+  }
+
+  /** Runs the switch clocks: a beep every second, and when one runs out its switches pop back up. */
+  private tickClocks(dt: number) {
+    for (const [flag, left] of this.clocks) {
+      const now = left - dt;
+      if (now > 0) {
+        this.clocks.set(flag, now);
+        if (Math.ceil(now) !== Math.ceil(left)) audio.play('blip', now <= 3 ? 2 : 1.5);
+        continue;
+      }
+      this.clocks.delete(flag);
+      const group = this.switches.filter((x) => x.flag === flag);
+      for (const x of group) x.setDown(false);
+      audio.play('fail');
+      if (group[0]?.together) this.hooks.toast('Time’s up! The switches popped back up. Try again!', 'bolt');
+      else this.clearFlag(flag);
+    }
+  }
+
+  /** The most urgent running switch clock, for the HUD: seconds left, and how many of its switches are down. */
+  countdown(): { left: number; down: number; total: number } | null {
+    let best: { left: number; down: number; total: number } | null = null;
+    for (const [flag, left] of this.clocks) {
+      if (best && best.left <= left) continue;
+      const group = this.switches.filter((x) => x.flag === flag);
+      best = { left, down: group.filter((x) => x.pressed).length, total: group.length };
+    }
+    return best;
+  }
+
   /** Jason opened a vault chest. */
   openPrize(p: Prize) {
     const s = this.save;
@@ -959,6 +1024,7 @@ export class World {
     this.player.update(dt, input);
     this.bolt.update(dt);
     for (const e of [...this.entities]) if (e.alive) e.update(dt);
+    this.tickClocks(dt);
     this.boltField.update(dt);
     this.shots.update(dt);
     this.beams.update(dt);

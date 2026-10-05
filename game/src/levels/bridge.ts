@@ -62,14 +62,14 @@ export const bridge: LevelDef = {
     #.p.......................#.....#
     #...T.................k...#..I..#
     #.........o.o.o.o.......H.D.....#
-    #...................J.....#.....#
+    #...................p.....#.....#
     #.......s.........s.......#######
     #............=............#
     #............r............####
     #....x...............x....G.+#
     #.........................####
     #.Q..........C............#
-    #.z.....................t.#
+    #.p.....................p.#
  ###############...############
  #....#....##.........#
  #....#...o##a........#
@@ -108,12 +108,9 @@ export const bridge: LevelDef = {
           ###############
 `,
   legend: {
-    p: { type: 'switch', flag: 'bs1', timed: 18 },
-    t: { type: 'switch', flag: 'bs2', timed: 18 },
-    z: { type: 'switch', flag: 'bs3', timed: 18 },
-    J: { type: 'switch', flag: 'bs4', timed: 18 },
-    H: { type: 'sign', text: "SECRET VAULT. All FOUR red switches in this room must be down at the same time. They pop back up after 18 seconds, so plan your route and GROUND POUND fast!" },
-    D: { type: 'door', id: 'secretvault', open: { all: [{ flag: 'bs1' }, { flag: 'bs2' }, { flag: 'bs3' }, { flag: 'bs4' }] }, latch: true },
+    p: { type: 'switch', flag: 'vault', timed: 28, together: true },
+    H: { type: 'sign', text: "SECRET VAULT. GROUND POUND all FOUR red switches in this room within 28 seconds. The clock starts with the first one, so plan your route!" },
+    D: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
     I: { type: 'prize', id: 'vault', reward: 'bolts' },
     W: { type: 'boss', boss: 'heart', room: 'heart' },
     V: { type: 'vendor' },

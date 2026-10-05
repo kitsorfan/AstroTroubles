@@ -108,8 +108,8 @@ export const security: LevelDef = {
            ###########
 `,
   legend: {
-    g: { type: 'laser', axis: 'z', length: 4, always: true, off: { flag: 'svault' }, hardened: true },
-    N: { type: 'terminal', flag: 'svault', length: 7 },
+    g: { type: 'laser', axis: 'z', length: 4, always: true, off: { flag: 'vault' }, hardened: true },
+    N: { type: 'terminal', flag: 'vault', length: 7 },
     I: { type: 'prize', id: 'vault', reward: 'boltZap' },
     W: { type: 'boss', boss: 'wardog', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },

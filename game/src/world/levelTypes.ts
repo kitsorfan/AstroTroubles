@@ -31,13 +31,17 @@ export type Spec = Base &
     | { type: 'checkpoint'; id: string }
     | { type: 'enemy'; enemy: EnemyKind; room?: string; variant?: string }
     | { type: 'boss'; boss: BossKind; room: string }
-    /** `latch` doors stay open once opened (for puzzles whose switches time out). */
-    | { type: 'door'; id: string; open: Cond; color?: string; latch?: boolean }
+    | { type: 'door'; id: string; open: Cond; color?: string }
     /** A floor pad in a code puzzle: step on every pad of the group in order to set the group's flag. */
     | { type: 'rune'; group: string; order: number; color: string }
     /** A vault chest with a reward: an upgrade level (or bolts, if that upgrade is maxed). */
     | { type: 'prize'; id: string; reward: 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart' | 'bolts' }
-    | { type: 'switch'; flag: string; timed?: number }
+    /**
+     * A red floor switch: a ground pound presses it and sets `flag`. A `timed` switch pops back up after
+     * that many seconds. `together` switches share their flag and one clock: the first press starts
+     * `timed` seconds, the flag is set once they are all down, and from then on they stay down.
+     */
+    | { type: 'switch'; flag: string; timed?: number; together?: boolean }
     | { type: 'terminal'; flag: string; length?: number; label?: string }
     | { type: 'cell' }
     | { type: 'socket'; flag: string }

@@ -358,6 +358,125 @@ export function dashTakeoffs(level: ParsedLevel, abilities: Ability[]): Spot[] {
   return [...takeoffs].map((i) => full.spots[i]);
 }
 
+/** A ground pound from the floor: a hop, the hang and the slam, rounded up for landing on the switch. */
+export const POUND_TIME = 0.8;
+
+/** True if Jason can run from `a` to `b` in a straight line: floor all the way, no step too tall. */
+function runClear(level: ParsedLevel, blocked: Set<number>, a: Spot, b: Spot) {
+  const steps = Math.ceil(Math.hypot(b.cx - a.cx, b.cz - a.cz) * 4);
+  let h = a.h;
+  for (let i = 1; i <= steps; i++) {
+    const cx = Math.round(a.cx + ((b.cx - a.cx) * i) / steps);
+    const cz = Math.round(a.cz + ((b.cz - a.cz) * i) / steps);
+    const idx = cz * level.width + cx;
+    const c = level.cells[idx];
+    if (!c || (c.kind !== 'floor' && c.kind !== 'ice' && c.kind !== 'grate') || blocked.has(idx) || Math.abs(c.h - h) > STEP_UP) return false;
+    h = c.h;
+  }
+  return true;
+}
+
+/**
+ * Seconds for one move: running at full speed, or the jump's flight if that takes longer. Dashes are
+ * left out, so every time is a little slow on purpose.
+ */
+function moveTime(level: ParsedLevel, blocked: Set<number>, a: Spot, b: Spot): number {
+  const run = (Math.hypot(b.cx - a.cx, b.cz - a.cz) * CELL) / PLAYER.speed;
+  if (runClear(level, blocked, a, b)) return run;
+  const launch = a.kind === 'pad' ? PLAYER.bounceV : a.kind === 'vent' ? PLAYER.ventV : PLAYER.jumpV;
+  const dh = b.h - a.h;
+  const apex = (launch * launch) / (2 * GRAVITY);
+  const air = dh <= apex - 0.3 ? flight(launch, dh) : launch / GRAVITY + (flight(PLAYER.doubleJumpV, dh - apex) ?? Infinity);
+  return Math.max(run, air ?? Infinity);
+}
+
+/**
+ * Fastest times (seconds) from the cell `from` to every cell, running and jumping at full speed. Moving
+ * platforms are left out: timed puzzles shouldn't make you wait for one.
+ */
+export function travelTimes(level: ParsedLevel, abilities: Ability[], from: [number, number]): (cx: number, cz: number) => number {
+  const g = jumpGraph(level, abilities);
+  const blocked = shutDoors(level, abilities);
+  for (const e of level.entities) if (SOLID_DECOR(e.spec)) blocked.add(e.cz * level.width + e.cx);
+  const time = new Float64Array(g.spots.length).fill(Infinity);
+  const done = new Uint8Array(g.spots.length);
+  const start = g.spots.findIndex((s) => s.cx === from[0] && s.cz === from[1] && s.kind !== 'plat');
+  if (start < 0) throw new Error(`no floor at ${from}`);
+  time[start] = 0;
+  // Dijkstra with a plain scan for the next spot: decks have a few thousand spots, so this stays quick.
+  const open = new Set([start]);
+  while (open.size) {
+    let ai = -1;
+    for (const i of open) if (ai < 0 || time[i] < time[ai]) ai = i;
+    open.delete(ai);
+    done[ai] = 1;
+    for (const bi of g.next(ai)) {
+      if (done[bi] || g.spots[bi].kind === 'plat') continue;
+      const t = time[ai] + moveTime(level, blocked, g.spots[ai], g.spots[bi]);
+      if (t < time[bi]) {
+        time[bi] = t;
+        open.add(bi);
+      }
+    }
+  }
+  const best = new Map<string, number>();
+  g.spots.forEach((s, i) => {
+    const k = `${s.cx},${s.cz}`;
+    best.set(k, Math.min(best.get(k) ?? Infinity, time[i]));
+  });
+  return (cx, cz) => best.get(`${cx},${cz}`) ?? Infinity;
+}
+
+export interface TimedRoute {
+  flag: string;
+  /** Seconds on the clock. */
+  clock: number;
+  /** The fastest way through at full speed, from the first press: every switch, or out through the door. */
+  best: number;
+  /** The slowest order through the switches, for players who don't plan a route (same as `best` for a door). */
+  worst: number;
+  /** Switches in the fastest order (or the switch and then its door). */
+  route: string[];
+}
+
+const orders = <T>(list: T[]): T[][] => (list.length <= 1 ? [list] : list.flatMap((x, i) => orders([...list.slice(0, i), ...list.slice(i + 1)]).map((rest) => [x, ...rest])));
+
+/**
+ * Every clock on the deck and the fastest way to beat it. Switches that go `together` must all be
+ * pounded, in the best order, before time runs out; a timed switch on its own opens a door for a few
+ * seconds, so the race is from the switch out through that door.
+ */
+export function timedRoutes(level: ParsedLevel, abilities: Ability[]): TimedRoute[] {
+  const out: TimedRoute[] = [];
+  const at = (e: PlacedEntity) => `${e.cx},${e.cz}`;
+  const timed = level.entities.filter((e) => e.spec.type === 'switch' && e.spec.timed);
+  for (const flag of new Set(timed.map((e) => (e.spec as { flag: string }).flag))) {
+    const group = timed.filter((e) => (e.spec as { flag: string }).flag === flag);
+    const spec = group[0].spec as { timed: number; together?: boolean };
+    if (spec.together) {
+      const from = group.map((e) => travelTimes(level, abilities, [e.cx, e.cz]));
+      let best = Infinity;
+      let worst = 0;
+      let route: PlacedEntity[] = [];
+      for (const o of orders(group.map((_, i) => i))) {
+        let t = 0;
+        for (let k = 1; k < o.length; k++) t += from[o[k - 1]](group[o[k]].cx, group[o[k]].cz) + POUND_TIME;
+        worst = Math.max(worst, t);
+        if (t < best) (best = t), (route = o.map((i) => group[i]));
+      }
+      out.push({ flag, clock: spec.timed, best, worst, route: route.map(at) });
+    } else {
+      const door = level.entities.find((e) => e.spec.type === 'door' && 'flag' in e.spec.open && e.spec.open.flag === flag);
+      if (!door) continue;
+      for (const s of group) {
+        const t = travelTimes(level, abilities, [s.cx, s.cz])(door.cx, door.cz);
+        out.push({ flag, clock: spec.timed, best: t, worst: t, route: [at(s), at(door)] });
+      }
+    }
+  }
+  return out;
+}
+
 /** How close (in cells) a checkpoint or energy cell must be to a dash takeoff. */
 export const REFILL_RANGE = 7;
 

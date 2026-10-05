@@ -1,5 +1,5 @@
 import { deckAbilities } from '../tools/deckAbilities';
-import { isCollectible, reach, refillGaps } from '../tools/reach';
+import { isCollectible, reach, refillGaps, timedRoutes } from '../tools/reach';
 import { FLYOVER, TRANSITIONS } from '../src/game/story';
 import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
@@ -91,6 +91,15 @@ describe.each(LEVEL_ORDER)('%s layout', (id) => {
 
   it('puts a checkpoint or energy cell before every jump that needs a dash', () => {
     expect(refillGaps(level, after).map((t) => `${t.cx},${t.cz}`)).toEqual([]);
+  });
+
+  it('leaves time to spare on every clock: half of it at full speed, a fifth even in the slowest order', () => {
+    const switches = level.entities.flatMap((e) => (e.spec.type === 'switch' && e.spec.timed ? [e.spec] : []));
+    for (const s of switches) expect(switches.filter((o) => o.flag === s.flag).every((o) => o.timed === s.timed && o.together === s.together)).toBe(true);
+    for (const t of timedRoutes(level, after)) {
+      expect(t.best).toBeLessThanOrEqual(t.clock * 0.5);
+      expect(t.worst).toBeLessThanOrEqual(t.clock * 0.8);
+    }
   });
 
   it('makes the new ability necessary to finish the deck', () => {

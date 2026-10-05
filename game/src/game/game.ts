@@ -763,6 +763,7 @@ export class Game {
           const pl = w.player;
           this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
           this.refreshAbilities(w);
+          this.ui.setCountdown(w.countdown());
           this.placeWaypoint(w);
           this.hudT -= dt;
           if (this.hudT <= 0) {

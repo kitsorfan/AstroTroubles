@@ -172,8 +172,6 @@ export class Door extends Entity {
   private wasOpen = false;
   private lampMat: THREE.MeshStandardMaterial;
 
-  private latched: boolean;
-
   constructor(
     world: World,
     id: string,
@@ -181,10 +179,8 @@ export class Door extends Entity {
     cz: number,
     h: number,
     private cond: Cond,
-    private latch = false,
   ) {
     super(world, id);
-    this.latched = latch && world.hasFlag(`latch:${id}`);
     const x = cx2x(cx);
     const z = cx2x(cz);
     const g = world.grid;
@@ -207,11 +203,7 @@ export class Door extends Entity {
   }
 
   update(dt: number) {
-    const open = this.latched || this.world.cond(this.cond);
-    if (open && this.latch && !this.latched) {
-      this.latched = true;
-      this.world.setFlag(`latch:${this.id}`);
-    }
+    const open = this.world.cond(this.cond);
     if (open !== this.wasOpen) {
       this.wasOpen = open;
       this.world.soundAt('door', this.slab.position.x, this.slab.position.z, 1, 24);
@@ -226,14 +218,15 @@ export class Door extends Entity {
 
 /* ---------------- switches, terminals, sockets ---------------- */
 
+/** A red floor switch for ground pounds. The world keeps the time for timed ones (`World.pressSwitch`). */
 export class FloorSwitch extends Entity implements Target {
   readonly aim: THREE.Vector3;
   radius = 1.3;
   aimable = false;
-  private pressed = false;
-  private timer = 0;
+  pressed = false;
   private cap: THREE.Mesh;
   private capMat: THREE.MeshStandardMaterial;
+  private arrow: THREE.Mesh;
 
   constructor(
     world: World,
@@ -241,8 +234,9 @@ export class FloorSwitch extends Entity implements Target {
     cx: number,
     cz: number,
     private h: number,
-    private flag: string,
-    private timed?: number,
+    readonly flag: string,
+    readonly timed?: number,
+    readonly together = false,
   ) {
     super(world, id);
     const x = cx2x(cx);
@@ -259,43 +253,27 @@ export class FloorSwitch extends Entity implements Target {
     world.addTarget(this);
   }
 
-  private arrow: THREE.Mesh;
-
   hit(_dmg: number, kind: HitKind): boolean {
-    if (kind !== 'pound' || (this.pressed && !this.timed)) return false;
-    this.press();
+    // A timed switch on its own can be pounded again to restart its clock; a group's clock runs once.
+    if (kind !== 'pound' || (this.pressed && (!this.timed || this.together))) return false;
+    this.setDown(true);
+    haptic('medium');
+    this.world.pressSwitch(this);
     return true;
   }
 
-  private press() {
-    this.pressed = true;
-    this.world.setFlag(this.flag);
-    this.capMat.color.set('#3dff8a');
-    this.capMat.emissive.set('#3dff8a');
-    audio.play('success');
-    haptic('medium');
-    if (this.timed) {
-      this.timer = this.timed;
-      this.world.hooks.toast(tr('Hurry! {n} seconds!', { n: this.timed }), 'bolt');
-    }
+  /** Down and green, or up and red with the arrow bobbing over it. */
+  setDown(down: boolean) {
+    this.pressed = down;
+    const color = down ? '#3dff8a' : '#ff5e6a';
+    this.capMat.color.set(color);
+    this.capMat.emissive.set(color);
   }
 
-  update(dt: number) {
+  update() {
     this.cap.position.y = this.h + (this.pressed ? 0.1 : 0.28);
     this.arrow.visible = !this.pressed;
     this.arrow.position.y = this.h + 1.6 + Math.sin(this.world.time * 4) * 0.2;
-    if (this.timed && this.pressed) {
-      const before = Math.ceil(this.timer);
-      this.timer -= dt;
-      if (Math.ceil(this.timer) !== before && this.timer > 0) audio.play('blip', 1.5);
-      if (this.timer <= 0) {
-        this.pressed = false;
-        this.world.clearFlag(this.flag);
-        this.capMat.color.set('#ff5e6a');
-        this.capMat.emissive.set('#ff5e6a');
-        audio.play('fail');
-      }
-    }
   }
 }
 

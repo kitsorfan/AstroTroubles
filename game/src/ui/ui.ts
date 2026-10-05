@@ -83,6 +83,8 @@ export class UI {
   private pulseBtn: HTMLElement;
   private wpEl: HTMLElement;
   private bossEl: HTMLElement;
+  private countdownEl: HTMLElement;
+  private countdownKey = '';
   private fpsEl: HTMLElement;
   private lastHearts = -1;
   private lastBolts = -1;
@@ -104,7 +106,7 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
@@ -148,6 +150,7 @@ export class UI {
     this.pulseBtn = $(this.hud, '.btn.pulse');
     this.wpEl = $(this.hud, '.waypoint');
     this.bossEl = $(this.hud, '.bossbar');
+    this.countdownEl = $(this.hud, '.countdown');
     this.fpsEl = $(this.hud, '.fps');
 
     for (const btn of this.hud.querySelectorAll<HTMLElement>('.btn')) {
@@ -251,6 +254,19 @@ export class UI {
     if (!name) return;
     $(this.bossEl, '.name').textContent = tr(name);
     $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
+  }
+
+  /** The clock for timed switches: whole seconds left, and a dot for each switch, lit once it's down. */
+  setCountdown(c: { left: number; down: number; total: number } | null) {
+    const secs = c ? Math.ceil(c.left) : 0;
+    const key = c ? `${secs}|${c.down}|${c.total}` : '';
+    if (key === this.countdownKey) return;
+    this.countdownKey = key;
+    this.countdownEl.classList.toggle('hidden', !c);
+    if (!c) return;
+    $(this.countdownEl, 'b').textContent = String(secs);
+    this.countdownEl.classList.toggle('urgent', secs <= 5);
+    $(this.countdownEl, '.dots').innerHTML = c.total > 1 ? Array.from({ length: c.total }, (_, i) => `<i class="${i < c.down ? 'on' : ''}"></i>`).join('') : '';
   }
 
   /** The LUX button next to things he can use (terminals, pylons, the shop, lifts). */
