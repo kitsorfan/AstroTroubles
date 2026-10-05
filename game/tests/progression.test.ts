@@ -1,8 +1,8 @@
-import { MAX_HEARTS } from '../game/src/core/constants';
-import { newSave } from '../game/src/core/save';
-import { difficultyFor } from '../game/src/game/difficulty';
-import { COLONIST_BOLTS, QUEST_BOLTS, UPGRADE_MAX, deckQuests, givePrize, payQuests, shardMilestone } from '../game/src/game/quests';
-import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
+import { MAX_HEARTS } from '../src/core/constants';
+import { newSave } from '../src/core/save';
+import { difficultyFor } from '../src/game/difficulty';
+import { COLONIST_BOLTS, QUEST_BOLTS, UPGRADE_MAX, deckQuests, givePrize, payQuests, shardMilestone } from '../src/game/quests';
+import { LEVELS, LEVEL_ORDER } from '../src/levels';
 
 // newSave() reads navigator for its quality default; give Jest a stand-in.
 beforeAll(() => {

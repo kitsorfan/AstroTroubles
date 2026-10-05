@@ -1,6 +1,6 @@
-import { newSave } from '../game/src/core/save';
-import { REVIEW_DECKS, takeReviewAsk } from '../game/src/game/review';
-import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
+import { newSave } from '../src/core/save';
+import { REVIEW_DECKS, takeReviewAsk } from '../src/game/review';
+import { LEVELS, LEVEL_ORDER } from '../src/levels';
 
 // newSave() reads navigator for its quality default; give Jest a stand-in.
 beforeAll(() => {

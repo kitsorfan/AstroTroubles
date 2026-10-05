@@ -59,7 +59,7 @@
     "lint": "expo lint",
     "test": "jest",
     "typecheck": "npm run game:build && tsc --noEmit",
-    "gen:icons": "node scripts/gen-icons.mjs",
+    "gen:icons": "node game/tools/gen-icons.mjs",
     "game:build": "node game/build.mjs",
     "game:dev": "node game/build.mjs --watch",
     "game:check": "node game/tools/run.mjs levelcheck",
@@ -70,7 +70,7 @@
   "jest": {
     "preset": "jest-expo",
     "testMatch": [
-      "<rootDir>/__tests__/**/*.test.ts?(x)"
+      "<rootDir>/game/tests/**/*.test.ts?(x)"
     ]
   }
 }

@@ -1,11 +1,11 @@
 // Rasterizes BOLT's face into the app icon, Android adaptive icon layers and favicon.
-// Run: node scripts/gen-icons.mjs
+// Run: npm run gen:icons
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'images');
+const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'assets', 'images');
 
 const CRC_TABLE = new Uint32Array(256).map((_, n) => {
   let c = n;

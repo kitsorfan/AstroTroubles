@@ -1,7 +1,7 @@
-import { CELL, PLAYER } from '../game/src/core/constants';
-import { Grid, parseLevel } from '../game/src/world/grid';
-import type { LevelDef } from '../game/src/world/levelTypes';
-import { makeBody, moveBody, type Box } from '../game/src/world/physics';
+import { CELL, PLAYER } from '../src/core/constants';
+import { Grid, parseLevel } from '../src/world/grid';
+import type { LevelDef } from '../src/world/levelTypes';
+import { makeBody, moveBody, type Box } from '../src/world/physics';
 
 function grid(map: string): Grid {
   const def: LevelDef = { id: 'cryo', index: 1, name: 'test', subtitle: '', music: 'cryo', map, legend: {}, objectives: [], shardIds: [], dialogues: {} };

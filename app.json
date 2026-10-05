@@ -14,7 +14,7 @@
       }
     },
     "locales": {
-      "el": "./languages/el.json"
+      "el": "./assets/languages/el.json"
     },
     "android": {
       "adaptiveIcon": {

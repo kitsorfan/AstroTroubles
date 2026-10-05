@@ -1,4 +1,4 @@
-import { checkGreek } from '../game/tools/i18n';
+import { checkGreek } from '../tools/i18n';
 
 describe('Greek translation', () => {
   const r = checkGreek();

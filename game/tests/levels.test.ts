@@ -1,9 +1,9 @@
-import { deckAbilities } from '../game/tools/deckAbilities';
-import { isCollectible, reach, refillGaps } from '../game/tools/reach';
-import { FLYOVER, TRANSITIONS } from '../game/src/game/story';
-import { LEVELS, LEVEL_ORDER } from '../game/src/levels';
-import { parseLevel } from '../game/src/world/grid';
-import type { Ability } from '../game/src/world/levelTypes';
+import { deckAbilities } from '../tools/deckAbilities';
+import { isCollectible, reach, refillGaps } from '../tools/reach';
+import { FLYOVER, TRANSITIONS } from '../src/game/story';
+import { LEVELS, LEVEL_ORDER } from '../src/levels';
+import { parseLevel } from '../src/world/grid';
+import type { Ability } from '../src/world/levelTypes';
 
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse'];
 const parsed = LEVEL_ORDER.map((id) => parseLevel(LEVELS[id]));

@@ -141,7 +141,7 @@ Tap to hurry a caption along, or press **SKIP** (or the Android back button) to 
 
 ## Languages
 
-The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσωνας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσωνας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`assets/languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
 
 ## Project layout
 
@@ -156,14 +156,17 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
   src/i18n/              the Greek translation
   src/ui/                HUD, touch controls, menus, dialogue and hacking screens
-  tools/                 level reachability checker (npm run game:check), translation check (npm run game:i18n)
+  tools/                 level reachability checker (npm run game:check), translation check (npm run game:i18n),
+                         app icon generator (npm run gen:icons)
+  tests/                 Jest tests: deck data, reachability of every deck, physics, translations, review prompt
 src/app/                 Expo Router screens: the WebView host (plus an iframe version for web)
 src/generated/           game page as a string (generated, git-ignored)
-__tests__/               Jest tests: deck data, reachability of every deck, physics, translations
-languages/               the app's name on phones set to Greek
-scripts/                 gen-icons.mjs draws the app icons (npm run gen:icons)
+assets/                  app icons and splash image, plus the app's name on phones set to Greek (languages/)
 docs/                    privacy policy, plus the Google Play listing text, screenshots and store graphics
+.claude/                 instructions and settings for Claude Code
 ```
+
+The files left at the root are the ones each tool looks for there: `package.json`, `app.json` (Expo), `eas.json` (EAS builds), `tsconfig.json` and `eslint.config.js`.
 
 ### Levels
 
