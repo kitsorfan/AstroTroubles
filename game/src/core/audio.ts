@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -155,6 +155,97 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.......x..x....', s: '....x.......x...', h: '..x...x...x...x.' },
     lead: 'bell',
     padLevel: 0.8,
+  },
+  /* Gaia Nova. */
+  // Open fields: a bright, bouncy major tune.
+  plains: {
+    bpm: 104,
+    chords: [
+      [50, 'maj'],
+      [55, 'maj'],
+      [57, 'maj'],
+      [47, 'min'],
+    ],
+    bass: '0...2...0...2.0.',
+    arp: '0.2.3.2.1.2.3.2.',
+    drums: { k: 'x.......x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' },
+    lead: 'tri',
+    padLevel: 0.8,
+  },
+  // Hot sand and old ruins: a dusty minor sway with a lazy beat.
+  desert: {
+    bpm: 96,
+    chords: [
+      [52, 'min'],
+      [53, 'maj'],
+      [52, 'min'],
+      [50, 'maj'],
+    ],
+    bass: '0..0..0.2..0..0.',
+    arp: '0.1.2.1.3.2.1.0.',
+    drums: { k: 'x..x....x..x....', s: '........x.......', h: '..x...x...x...x.' },
+    lead: 'bell',
+    padLevel: 0.7,
+  },
+  // A slow, glittering blizzard.
+  snow: {
+    bpm: 88,
+    chords: [
+      [45, 'min'],
+      [41, 'maj'],
+      [48, 'maj'],
+      [43, 'maj'],
+    ],
+    bass: '0.......0...2...',
+    arp: '3...2...1...2...',
+    drums: { k: 'x...............', s: '........x.......', h: '....x.......x...' },
+    lead: 'bell',
+    padLevel: 1,
+  },
+  // Climbing music: steady and heroic.
+  rockies: {
+    bpm: 118,
+    chords: [
+      [48, 'maj'],
+      [52, 'min'],
+      [53, 'maj'],
+      [55, 'maj'],
+    ],
+    bass: '0.0.0.2.0.0.2.3.',
+    arp: '0.2.3.2.0.2.3.2.',
+    drums: { k: 'x...x...x...x.x.', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' },
+    lead: 'tri',
+    padLevel: 0.6,
+  },
+  // Drums in the undergrowth.
+  jungle: {
+    bpm: 110,
+    chords: [
+      [50, 'min'],
+      [48, 'maj'],
+      [46, 'maj'],
+      [45, 'sus'],
+    ],
+    bass: '0..0.0..2..0.2..',
+    arp: '0.1.0.2.0.1.0.3.',
+    drums: { k: 'x..x..x...x..x..', s: '....x..x....x...', h: 'xxx.xxx.xxx.xxx.' },
+    lead: 'tri',
+    padLevel: 0.6,
+  },
+  // The fortress in the volcano: fast, dark and driving.
+  volcano: {
+    bpm: 132,
+    chords: [
+      [45, 'min'],
+      [46, 'maj'],
+      [45, 'min'],
+      [44, 'maj'],
+    ],
+    bass: '0.00.0.00.0.0200',
+    arp: '0.2.3.2.0.2.1.2.',
+    drums: { k: 'x.x.x.x.x.x.x.x.', s: '....x.......x.x.', h: 'x.xxx.xxx.xxx.xx' },
+    lead: 'square',
+    padLevel: 0.5,
   },
   boss: {
     bpm: 144,

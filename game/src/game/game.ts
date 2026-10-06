@@ -3,6 +3,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 
 import { Director, type Rig } from '../cinema/director';
 import { flyover, wakeUp } from '../cinema/scenes';
+import { PlanetScene } from '../cinema/planetScene';
+import * as planet from '../cinema/planetScenes';
 import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
@@ -11,15 +13,15 @@ import { MAX_HEARTS, PLAYER } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
-import { LEVELS, LEVEL_ORDER } from '../levels';
-import type { DeckId, Line } from '../world/levelTypes';
+import { LEVELS, LEVEL_ORDER, chapterIndex, chapterOf, chapterTotals, inChapter, isFinale, nextChapterStart } from '../levels';
+import type { DeckId, EndingKind, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { UI, type ShopItem } from '../ui/ui';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
 import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
 import { takeReviewAsk } from './review';
-import { INTEL, creditsHtml, endingText } from './story';
+import { INTEL, creditsHtml, endingChapter, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
 
@@ -27,6 +29,14 @@ type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' |
 
 /** How a deck opens when it is entered fresh (not resumed from a checkpoint). */
 type Opening = 'auto' | 'wake' | 'fly';
+
+/** A scene a cinematic is staged in: deep space around the ship, or the skies of Gaia Nova. */
+interface CinemaScene {
+  readonly scene: THREE.Scene;
+  readonly camera: THREE.PerspectiveCamera;
+  resize(w: number, h: number): void;
+  update(dt: number, rig: Rig): void;
+}
 
 /** Frees everything a scene uploaded to the GPU. */
 function disposeScene(scene: THREE.Scene) {
@@ -63,6 +73,11 @@ const ABILITY_LINES: Record<string, Line[]> = {
     { who: 'bolt', text: 'It also shorts out lasers for a few seconds. But it takes me a LONG time to recharge, so pick your moment.' },
     { who: 'jason', text: 'Those laser walls don’t stand a chance.' },
   ],
+  grapple: [
+    { who: 'bolt', text: 'A GRAPPLE HOOK! See the glowing rings? Look at one and press GRAPPLE to zip right over to it!' },
+    { who: 'bolt', text: 'It works over gaps, up cliffs, even across quicksand. If the ring glows bright, you can reach it.' },
+    { who: 'jason', text: 'Hold on to your antenna, LUX!' },
+  ],
 };
 
 const tmpV = new THREE.Vector3();
@@ -84,7 +99,7 @@ export class Game {
   private fpsT = 0;
   private hudT = 0;
   private director: Director | null = null;
-  private ship: ShipScene | null = null;
+  private ship: CinemaScene | null = null;
   private queue: { script: (d: Director) => Promise<void>; resolve: () => void }[] = [];
 
   constructor(
@@ -189,7 +204,12 @@ export class Game {
       canContinue: !!r,
       continueText: r ? LEVELS[r.deck].name : '',
       hasDecks: this.save.unlocked > 1 || this.save.completed.length > 0,
-      onContinue: () => r && this.startDeck(r.deck, true),
+      onContinue: () => {
+        if (!r) return;
+        // The first time chapter 2 starts, the arrival at Gaia Nova plays first.
+        if (r.deck === nextChapterStart('bridge') && !r.checkpoint && !this.save.gaiaIntro) this.startChapter2();
+        else this.startDeck(r.deck, true);
+      },
       onNew: () => {
         if (this.save.resume || this.save.completed.length) {
           this.ui.confirm('Start a brand new adventure? Your current progress will be erased.', () => this.newGame(), () => this.toTitle());
@@ -210,6 +230,23 @@ export class Game {
     void this.cinema((d, ship) => space.prologue(d, ship)).then(() => this.startDeck('cryo', false, 'wake'));
   }
 
+  /** Chapter 2: the ship arrives at Gaia Nova, GaScu is stolen, and the shuttle flies down to the Whispering Plains. */
+  private startChapter2() {
+    const first = nextChapterStart('bridge') as DeckId;
+    this.state = 'menu';
+    this.save.unlocked = Math.max(this.save.unlocked, LEVELS[first].index);
+    this.save.resume = { deck: first, checkpoint: null, flags: [], taken: [], dead: [] };
+    writeSave(this.save);
+    audio.music('title');
+    void this.cinema((d, ship) => planet.arrival(d, ship))
+      .then(() => this.planetCinema((d, p) => planet.descent(d, p)))
+      .then(() => {
+        this.save.gaiaIntro = true;
+        writeSave(this.save);
+        this.startDeck(first, false, 'fly');
+      });
+  }
+
   private deckSelect() {
     this.state = 'menu';
     this.ui.decks(
@@ -224,6 +261,8 @@ export class Game {
           shardTotal: d.shardIds.length,
           unlocked: d.index <= this.save.unlocked,
           completed: this.save.completed.includes(id),
+          chapter: chapterOf(id),
+          number: chapterIndex(id),
         };
       }),
       (id) => this.startDeck(id as DeckId, false),
@@ -267,10 +306,18 @@ export class Game {
     this.ui.showControls(false);
     const w = this.world;
     const d = w.def;
+    const ch = chapterOf(d.id);
+    const totals = chapterTotals(ch);
     this.ui.pause({
       deck: d.name,
-      shards: tr('{n} / {m} here · {t} / 18 total', { n: d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length, m: d.shardIds.length, t: this.save.shards.length }),
-      colonists: `${this.save.colonists.length} / 12`,
+      planet: ch === 2,
+      shards: tr('{n} / {m} here · {t} / {total} total', {
+        n: d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length,
+        m: d.shardIds.length,
+        t: inChapter(this.save.shards, ch),
+        total: totals.shards,
+      }),
+      colonists: `${inChapter(this.save.colonists, ch)} / ${totals.colonists}`,
       quests: deckQuests(d.id, this.save),
       onResume: () => this.resume(),
       onHelp: () => this.ui.help(() => this.pauseAgain()),
@@ -374,33 +421,42 @@ export class Game {
   }
 
   /** Plays a cinematic out in space (prologue, the rides between decks, endings). */
-  private async cinema(script: (d: Director, ship: ShipScene) => Promise<void>) {
+  private cinema(script: (d: Director, ship: ShipScene) => Promise<void>) {
+    // Deep space has nothing bright to reflect: keep the studio reflections faint.
+    return this.stage(() => new ShipScene(), script, 0.18);
+  }
+
+  /** Plays a cinematic over Gaia Nova (the descent, the shuttle hops between regions, the chapter 2 ending). */
+  private planetCinema(script: (d: Director, p: PlanetScene) => Promise<void>) {
+    return this.stage(() => new PlanetScene(), script, 0.4);
+  }
+
+  private async stage<S extends CinemaScene>(make: () => S, script: (d: Director, s: S) => Promise<void>, env: number) {
     this.disposeWorld();
     this.ui.close();
-    const ship = new ShipScene();
-    ship.scene.environment = this.envMap;
-    // Deep space has nothing bright to reflect: keep the studio reflections faint.
-    ship.scene.environmentIntensity = 0.18;
-    ship.resize(window.innerWidth, window.innerHeight);
-    const rig: Rig = { pos: ship.camera.position.clone(), look: new THREE.Vector3(), fov: 45 };
+    const s = make();
+    s.scene.environment = this.envMap;
+    s.scene.environmentIntensity = env;
+    s.resize(window.innerWidth, window.innerHeight);
+    const rig: Rig = { pos: s.camera.position.clone(), look: new THREE.Vector3(), fov: 45 };
     const d = new Director(this.ui, rig);
-    this.ship = ship;
+    this.ship = s;
     this.director = d;
     this.state = 'cinema';
     this.input.reset();
     this.ui.showHud(false);
     this.ui.showControls(false);
     this.ui.cinema(true, () => d.skip(), () => d.tap());
-    this.renderer.compile(ship.scene, ship.camera);
+    this.renderer.compile(s.scene, s.camera);
     try {
-      await script(d, ship);
+      await script(d, s);
     } catch (err) {
       console.error(err);
     }
     this.ui.cinema(false);
     if (this.director === d) this.director = null;
     this.ship = null;
-    disposeScene(ship.scene);
+    disposeScene(s.scene);
   }
 
   private startDeck(id: DeckId, resume: boolean, opening: Opening = 'auto') {
@@ -423,7 +479,8 @@ export class Game {
     const early = setTimeout(() => {
       ready = build();
     }, 80);
-    this.ui.card(def.index, def.name, def.subtitle, THEMES[id].accent, () => {
+    const kicker = chapterOf(id) === 1 ? tr('DECK {n} OF 6', { n: chapterIndex(id) }) : tr('GAIA NOVA · REGION {n} OF 6', { n: chapterIndex(id) });
+    this.ui.card(kicker, def.name, def.subtitle, THEMES[id].accent, () => {
       clearTimeout(early);
       this.world = ready ?? build();
       this.deckTime = 0;
@@ -433,7 +490,10 @@ export class Game {
       this.state = 'play';
       this.ui.showHud(true);
       this.ui.showControls(true);
-      this.ui.setShards(def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)));
+      this.ui.setShards(
+        def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)),
+        chapterOf(id) === 2,
+      );
       this.refreshHud();
       this.input.flush();
       const w = this.world;
@@ -563,12 +623,15 @@ export class Game {
         if (!w) return;
         if (kind === 'shard') {
           const d = w.def;
-          this.ui.setShards(d.shardIds.map((s) => this.save.shards.includes(`${d.id}.${s}`)));
+          this.ui.setShards(
+            d.shardIds.map((s) => this.save.shards.includes(`${d.id}.${s}`)),
+            chapterOf(d.id) === 2,
+          );
           const key = id.split('.')[1];
           const lines = d.dialogues[`shard:${key}`];
-          const milestone = shardMilestone(this.save);
+          const milestone = shardMilestone(this.save, d.id);
           if (milestone) this.ui.reward(milestone);
-          if (this.save.shards.length % 6 === 0) w.player.heal(99);
+          if (inChapter(this.save.shards, chapterOf(d.id)) % 6 === 0) w.player.heal(99);
           this.persist();
           haptic('success');
           if (lines) this.hooks().say(lines);
@@ -661,8 +724,9 @@ export class Game {
     this.ui.showHud(false);
     audio.play('success');
     if (!this.save.completed.includes(d.id)) this.save.completed.push(d.id);
-    const nextId = LEVEL_ORDER[d.index] as DeckId | undefined;
-    this.save.unlocked = Math.max(this.save.unlocked, Math.min(6, d.index + 1));
+    // A chapter's last deck ends with its finale, never with an exit; the next deck is always in the same chapter.
+    const nextId = isFinale(d.id) ? undefined : (LEVEL_ORDER[d.index] as DeckId | undefined);
+    this.save.unlocked = Math.max(this.save.unlocked, Math.min(LEVEL_ORDER.length, d.index + 1));
     const best = this.save.bestTimes[d.id];
     if (!best || this.deckTime < best) this.save.bestTimes[d.id] = Math.round(this.deckTime);
     this.save.resume = nextId ? { deck: nextId, checkpoint: null, flags: [], taken: [], dead: [] } : null;
@@ -678,11 +742,13 @@ export class Game {
         shards: `${d.shardIds.filter((x) => this.save.shards.includes(`${d.id}.${x}`)).length} / ${d.shardIds.length}`,
         colonists: colonistsHere ? `${d.colonistIds?.filter((c) => this.save.colonists.includes(`${d.id}.${c}`)).length} / ${colonistsHere}` : '',
         next: nextId ? LEVELS[nextId].name : null,
+        planet: chapterOf(d.id) === 2,
       },
       () => {
         this.ui.close();
-        if (nextId) void this.cinema((dir, ship) => space.interlude(dir, ship, d.id, d.index)).then(() => this.startDeck(nextId, false, 'fly'));
-        else this.toTitle();
+        if (!nextId) this.toTitle();
+        else if (chapterOf(d.id) === 1) void this.cinema((dir, ship) => space.interlude(dir, ship, d.id, d.index)).then(() => this.startDeck(nextId, false, 'fly'));
+        else void this.planetCinema((dir, p) => planet.hop(dir, p, d.id, nextId)).then(() => this.startDeck(nextId, false, 'fly'));
       },
     );
     this.askForReview(d.index);
@@ -699,18 +765,29 @@ export class Game {
     setTimeout(() => post({ type: 'review' }), 1000);
   }
 
-  private ending(kind: 'saved' | 'friends') {
+  private ending(kind: EndingKind) {
+    const finale = this.world?.def.id ?? (endingChapter(kind) === 1 ? 'bridge' : 'volcano');
+    const ch = endingChapter(kind);
     this.state = 'ending';
     this.input.reset();
     this.ui.showHud(false);
     if (!this.save.endings.includes(kind)) this.save.endings.push(kind);
-    if (!this.save.completed.includes('bridge')) this.save.completed.push('bridge');
-    this.save.resume = null;
+    if (!this.save.completed.includes(finale)) this.save.completed.push(finale);
+    // After the ship is saved, chapter 2 opens: Continue on the title screen goes straight to Gaia Nova.
+    const next = nextChapterStart(finale);
+    // Replaying the Bridge once chapter 2 is under way must not throw away the place reached on Gaia Nova.
+    const midChapter2 = !!next && !!this.save.gaiaIntro && !!this.save.resume;
+    if (next) {
+      this.save.unlocked = Math.max(this.save.unlocked, LEVELS[next].index);
+      if (!midChapter2) this.save.resume = { deck: next, checkpoint: null, flags: [], taken: [], dead: [] };
+    } else this.save.resume = null;
     writeSave(this.save);
     audio.music('ending');
     const hours = Math.floor(this.save.playSeconds / 3600);
     const mins = Math.floor((this.save.playSeconds % 3600) / 60);
-    void this.cinema((d, ship) => space.ending(d, ship, kind)).then(() => {
+    const totals = chapterTotals(ch);
+    const film = kind === 'saved' || kind === 'friends' ? this.cinema((d, ship) => space.ending(d, ship, kind)) : this.planetCinema((d, p) => planet.finale(d, p, kind));
+    void film.then(() => {
       this.state = 'ending';
       this.ui.credits(creditsHtml(kind, this.save), () => {
         this.ui.fade('#000000', 0, 0.6);
@@ -718,14 +795,15 @@ export class Game {
           kind,
           endingText(kind, this.save),
           [
-            [tr('Memory shards'), `${this.save.shards.length} / 18`],
-            [tr('Colonists rescued'), `${this.save.colonists.length} / 12`],
+            [ch === 1 ? tr('Memory shards') : tr('Journal pages'), `${inChapter(this.save.shards, ch)} / ${totals.shards}`],
+            [ch === 1 ? tr('Colonists rescued') : tr('Scientists freed'), `${inChapter(this.save.colonists, ch)} / ${totals.colonists}`],
             [tr('Bolts in pocket'), String(this.save.bolts)],
             [tr('Play time'), tr('{h}h {m}m', { h: hours, m: mins })],
           ],
           () => this.toTitle(),
+          next ? () => (midChapter2 && this.save.resume ? this.startDeck(this.save.resume.deck, true) : this.startChapter2()) : undefined,
         );
-        this.askForReview(LEVELS.bridge.index);
+        this.askForReview(LEVELS[finale].index);
       });
     });
   }

@@ -39,6 +39,8 @@ export interface EmitOpts {
   gravity?: number;
   spread?: number;
   drag?: number;
+  /** A base velocity added to every particle (wind streaks, sprays). */
+  vel?: [number, number, number];
 }
 
 export class Particles {
@@ -107,9 +109,10 @@ export class Particles {
       this.pos[i * 3] = x;
       this.pos[i * 3 + 1] = y;
       this.pos[i * 3 + 2] = z;
-      this.vel[i * 3] = Math.cos(a) * s * v * spread;
-      this.vel[i * 3 + 1] = u * v * spread + (o.up ?? 0);
-      this.vel[i * 3 + 2] = Math.sin(a) * s * v * spread;
+      const [bx, by, bz] = o.vel ?? [0, 0, 0];
+      this.vel[i * 3] = Math.cos(a) * s * v * spread + bx;
+      this.vel[i * 3 + 1] = u * v * spread + (o.up ?? 0) + by;
+      this.vel[i * 3 + 2] = Math.sin(a) * s * v * spread + bz;
       this.tint[i * 3] = this.tmp.r;
       this.tint[i * 3 + 1] = this.tmp.g;
       this.tint[i * 3 + 2] = this.tmp.b;
@@ -144,13 +147,31 @@ export class Particles {
   }
 }
 
-const MOOD: Record<ParticleMood, { color: string; count: number; fall: number; size: number; sway: number }> = {
+interface MoodCfg {
+  color: string;
+  count: number;
+  fall: number;
+  size: number;
+  sway: number;
+  /** Steady wind (units per second) blowing the particles sideways. */
+  wind?: [number, number];
+  /** Normal blending, so dark particles (ash) can darken the view; the rest add light. */
+  solid?: boolean;
+  alpha?: number;
+}
+
+const MOOD: Record<ParticleMood, MoodCfg> = {
   snow: { color: '#dff6ff', count: 260, fall: 1.4, size: 0.35, sway: 0.6 },
   spores: { color: '#d8ff8a', count: 160, fall: -0.25, size: 0.3, sway: 0.9 },
   embers: { color: '#ffae4a', count: 180, fall: -1.2, size: 0.28, sway: 0.5 },
   petals: { color: '#ffb8e8', count: 150, fall: 0.8, size: 0.34, sway: 1.2 },
   sparks: { color: '#ffd0d4', count: 110, fall: 0.2, size: 0.22, sway: 0.4 },
   motes: { color: '#f0c8ff', count: 200, fall: -0.4, size: 0.3, sway: 0.8 },
+  pollen: { color: '#fff0a0', count: 170, fall: -0.15, size: 0.26, sway: 1.1, wind: [0.6, 0.2] },
+  dust: { color: '#f4dcb0', count: 260, fall: 0.15, size: 0.3, sway: 0.4, wind: [5.5, 1.2], solid: true, alpha: 0.45 },
+  snowfall: { color: '#ffffff', count: 360, fall: 2.2, size: 0.34, sway: 0.7, wind: [1.6, 0.6], solid: true, alpha: 0.75 },
+  leaves: { color: '#9adf5a', count: 130, fall: 0.9, size: 0.38, sway: 1.6, wind: [0.4, 0.3], solid: true, alpha: 0.8 },
+  ash: { color: '#3a2a28', count: 240, fall: 0.6, size: 0.32, sway: 0.5, wind: [0.8, -0.4], solid: true, alpha: 0.6 },
 };
 
 /** Drifting ambient particles that wrap around the camera target. */
@@ -158,7 +179,7 @@ export class Ambience {
   readonly points: THREE.Points;
   private pos: Float32Array;
   private seed: Float32Array;
-  private readonly cfg: (typeof MOOD)[ParticleMood];
+  private readonly cfg: MoodCfg;
   private readonly R = 22;
 
   constructor(mood: ParticleMood) {
@@ -175,7 +196,7 @@ export class Ambience {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
     const size = new Float32Array(n).fill(this.cfg.size);
-    const alpha = new Float32Array(n).fill(0.32);
+    const alpha = new Float32Array(n).fill(this.cfg.alpha ?? 0.32);
     const c = new THREE.Color(this.cfg.color);
     const tint = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
@@ -192,7 +213,7 @@ export class Ambience {
       uniforms: { scale: { value: 400 }, maxPx: { value: 12 } },
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: this.cfg.solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.points = new THREE.Points(geo, mat);
     this.points.frustumCulled = false;
@@ -209,9 +230,12 @@ export class Ambience {
     const n = this.cfg.count;
     for (let i = 0; i < n; i++) {
       const s = this.seed[i];
-      let x = this.pos[i * 3] + Math.sin(time * 0.7 + s) * this.cfg.sway * dt;
+      const [wx, wz] = this.cfg.wind ?? [0, 0];
+      // Gusts: the wind rises and falls, a little differently for each particle.
+      const gust = 0.6 + 0.4 * Math.sin(time * 0.9 + s * 0.3);
+      let x = this.pos[i * 3] + (Math.sin(time * 0.7 + s) * this.cfg.sway + wx * gust) * dt;
       let y = this.pos[i * 3 + 1] - this.cfg.fall * dt;
-      let z = this.pos[i * 3 + 2] + Math.cos(time * 0.6 + s) * this.cfg.sway * dt;
+      let z = this.pos[i * 3 + 2] + (Math.cos(time * 0.6 + s) * this.cfg.sway + wz * gust) * dt;
       if (y < -3) y += 16;
       if (y > 13) y -= 16;
       if (x - cx > R) x -= R * 2;

@@ -1,6 +1,30 @@
 import type { ThemeId } from './levelTypes';
 
-export type ParticleMood = 'snow' | 'spores' | 'embers' | 'petals' | 'sparks' | 'motes';
+export type ParticleMood = 'snow' | 'spores' | 'embers' | 'petals' | 'sparks' | 'motes' | 'pollen' | 'dust' | 'snowfall' | 'leaves' | 'ash';
+
+/** How the ground of an outdoor region is painted. */
+export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt';
+
+/** The open-air look of a Gaia Nova region: natural ground and cliffs, a sun, clouds and a horizon. */
+export interface Outdoor {
+  ground: GroundStyle;
+  /** A second ground colour for patches and detail. */
+  ground2: string;
+  /** Cliff faces: the rock and its darker strata. */
+  rock: string;
+  rockDark: string;
+  /** The valley floor far below the play area (a lava lake glows). */
+  below: string;
+  belowGlow?: boolean;
+  /** Colour of the sun's disc in the sky. */
+  sunDisc: string;
+  /** Cloud colour, or null for a clear sky. */
+  clouds: string | null;
+  /** Far mountains or dunes on the horizon. */
+  hills: string;
+  /** Stars in the sky (a twilight region). */
+  stars: boolean;
+}
 
 export interface Theme {
   skyTop: string;
@@ -29,6 +53,8 @@ export interface Theme {
   space: boolean;
   /** Bloom strength for this deck's light strips and glowing hazards. */
   bloom: number;
+  /** Set for the outdoor regions of Gaia Nova; ship decks leave it out. */
+  outdoor?: Outdoor;
 }
 
 export const THEMES: Record<ThemeId, Theme> = {
@@ -181,5 +207,161 @@ export const THEMES: Record<ThemeId, Theme> = {
     mood: 'motes',
     space: true,
     bloom: 0.27,
+  },
+  plains: {
+    skyTop: '#3f86d6',
+    skyBottom: '#d6ecf6',
+    fog: '#c4dcea',
+    fogNear: 60,
+    fogFar: 200,
+    floor: '#5f9a3a',
+    floorLine: '#3f6e24',
+    floorSide: '#6b4a2e',
+    ice: '#a8d8f0',
+    wall: '#8a7f6e',
+    wallTrim: '#e8d890',
+    edge: '#c8e890',
+    hazard: '#4ab8ff',
+    hazardDeep: '#0e3a5a',
+    hemiSky: '#e2f2ff',
+    hemiGround: '#4a5a2a',
+    hemi: 1.0,
+    sun: '#fff3d8',
+    sunI: 2.1,
+    accent: '#ffd166',
+    mood: 'pollen',
+    space: false,
+    bloom: 0.12,
+    outdoor: { ground: 'grass', ground2: '#86b84e', rock: '#8d8270', rockDark: '#5e5446', below: '#3f6e2c', sunDisc: '#fff6d0', clouds: '#ffffff', hills: '#6f90b0', stars: false },
+  },
+  desert: {
+    skyTop: '#3b84cc',
+    skyBottom: '#f4ddb0',
+    fog: '#ecd6ae',
+    fogNear: 60,
+    fogFar: 205,
+    floor: '#d9b67a',
+    floorLine: '#b8935a',
+    floorSide: '#a77a48',
+    ice: '#c8e8f0',
+    wall: '#c98a54',
+    wallTrim: '#7fe6ff',
+    edge: '#f0d8a0',
+    hazard: '#ff9a3a',
+    hazardDeep: '#3a1a08',
+    hemiSky: '#fff2dc',
+    hemiGround: '#8a6a40',
+    hemi: 1.0,
+    sun: '#fff0d0',
+    sunI: 2.2,
+    accent: '#7fe6ff',
+    mood: 'dust',
+    space: false,
+    bloom: 0.14,
+    outdoor: { ground: 'sand', ground2: '#e8c890', rock: '#c4844c', rockDark: '#8a5430', below: '#c8a06a', sunDisc: '#fffbe8', clouds: null, hills: '#c8946a', stars: false },
+  },
+  snow: {
+    skyTop: '#1d2c5a',
+    skyBottom: '#a8c8e8',
+    fog: '#b4c8de',
+    fogNear: 48,
+    fogFar: 170,
+    floor: '#e8f0f8',
+    floorLine: '#b8c8d8',
+    floorSide: '#7a8aa0',
+    ice: '#8fcaec',
+    wall: '#8e9cb0',
+    wallTrim: '#7fe6ff',
+    edge: '#e8f4ff',
+    hazard: '#5ad8ff',
+    hazardDeep: '#0a2a48',
+    hemiSky: '#dfe8ff',
+    hemiGround: '#5a6a88',
+    hemi: 0.9,
+    sun: '#ffe6d0',
+    sunI: 1.7,
+    accent: '#7fe6ff',
+    mood: 'snowfall',
+    space: false,
+    bloom: 0.16,
+    outdoor: { ground: 'snow', ground2: '#cfe0f0', rock: '#7c8aa0', rockDark: '#4c5870', below: '#d8e6f4', sunDisc: '#ffd8c0', clouds: '#e8eef8', hills: '#9aaecc', stars: true },
+  },
+  rockies: {
+    skyTop: '#3874bc',
+    skyBottom: '#dae6f0',
+    fog: '#c6d4e0',
+    fogNear: 58,
+    fogFar: 200,
+    floor: '#8a8a72',
+    floorLine: '#6a6a58',
+    floorSide: '#6a5a48',
+    ice: '#b8e0f4',
+    wall: '#8a7a68',
+    wallTrim: '#ffb347',
+    edge: '#d8d0b0',
+    hazard: '#6ad0ff',
+    hazardDeep: '#123a5a',
+    hemiSky: '#e6f0ff',
+    hemiGround: '#5a5040',
+    hemi: 0.95,
+    sun: '#fff4e0',
+    sunI: 2.0,
+    accent: '#ffb347',
+    mood: 'pollen',
+    space: false,
+    bloom: 0.12,
+    outdoor: { ground: 'rock', ground2: '#8f9a6a', rock: '#8c7c6a', rockDark: '#5a4c3e', below: '#5f7a4a', sunDisc: '#fff6d8', clouds: '#ffffff', hills: '#7a8aa8', stars: false },
+  },
+  jungle: {
+    skyTop: '#2e6a5c',
+    skyBottom: '#c4e4b4',
+    fog: '#94bc9c',
+    fogNear: 40,
+    fogFar: 145,
+    floor: '#4a7a2a',
+    floorLine: '#2f5a1a',
+    floorSide: '#4a3420',
+    ice: '#a8e0d0',
+    wall: '#5a6a48',
+    wallTrim: '#ff6fcf',
+    edge: '#a8e070',
+    hazard: '#9dff3a',
+    hazardDeep: '#1a3a0a',
+    hemiSky: '#e8ffe0',
+    hemiGround: '#2a3a1a',
+    hemi: 0.9,
+    sun: '#fff6d8',
+    sunI: 1.7,
+    accent: '#ff6fcf',
+    mood: 'leaves',
+    space: false,
+    bloom: 0.18,
+    outdoor: { ground: 'jungle', ground2: '#3a6a20', rock: '#5c6650', rockDark: '#3a4232', below: '#1f4a18', sunDisc: '#fff8e0', clouds: '#e8f4e8', hills: '#3c6a48', stars: false },
+  },
+  volcano: {
+    skyTop: '#1c0a10',
+    skyBottom: '#7a2c18',
+    fog: '#3e1a12',
+    fogNear: 42,
+    fogFar: 150,
+    floor: '#3a3236',
+    floorLine: '#241c1e',
+    floorSide: '#241c1e',
+    ice: '#a0a8b8',
+    wall: '#2e2628',
+    wallTrim: '#ff3a4c',
+    edge: '#ff8a4a',
+    hazard: '#ff6a12',
+    hazardDeep: '#5a1004',
+    hemiSky: '#ffb08a',
+    hemiGround: '#2a0a08',
+    hemi: 0.7,
+    sun: '#ffb080',
+    sunI: 1.55,
+    accent: '#ff3a4c',
+    mood: 'ash',
+    space: false,
+    bloom: 0.24,
+    outdoor: { ground: 'basalt', ground2: '#4a3a38', rock: '#3a2e2e', rockDark: '#1e1616', below: '#ff5a10', belowGlow: true, sunDisc: '#ff9060', clouds: '#4a2a24', hills: '#2a1414', stars: false },
   },
 };

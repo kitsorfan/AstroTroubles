@@ -19,7 +19,7 @@ import {
   type PuzzleKind,
   type Token,
 } from '../game/puzzles';
-import type { Line, Speaker } from '../world/levelTypes';
+import type { EndingKind, Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, portrait } from './icons';
 
@@ -93,6 +93,9 @@ export interface DeckInfo {
   shardTotal: number;
   unlocked: boolean;
   completed: boolean;
+  chapter: 1 | 2;
+  /** Its number within the chapter (1-6). */
+  number: number;
 }
 
 /** Everything the ability buttons show, refreshed every frame. */
@@ -286,8 +289,9 @@ export class UI {
     $(el, 'b').textContent = String(n);
   }
 
-  setShards(got: boolean[]) {
-    $(this.hud, '.shards').innerHTML = got.map((g) => ICON.shard(g)).join('');
+  /** Shard icons for the deck (memory shards on the ship, journal pages on Gaia Nova). */
+  setShards(got: boolean[], pages = false) {
+    $(this.hud, '.shards').innerHTML = got.map((g) => (pages ? ICON.page(g) : ICON.shard(g))).join('');
   }
 
   setObjective(text: string) {
@@ -862,7 +866,7 @@ export class UI {
       <div class="title-menu">
         ${opts.canContinue ? `<button class="menu-btn primary cont">▶ ${tr('Continue')} <small>${tr(opts.continueText)}</small></button>` : ''}
         <button class="menu-btn ${opts.canContinue ? '' : 'primary'} new">${opts.canContinue ? tr('New Game') : `▶ ${tr('New Game')}`}</button>
-        ${opts.hasDecks ? `<button class="menu-btn decks">${tr('Elevator: replay decks')}</button>` : ''}
+        ${opts.hasDecks ? `<button class="menu-btn decks">${tr('Replay a level')}</button>` : ''}
         <button class="menu-btn settings">${tr('Settings')}</button>
       </div>
     </div>`, false);
@@ -920,15 +924,16 @@ export class UI {
     this.button(el, '.no', no);
   }
 
-  card(index: number, name: string, sub: string, color: string, done: () => void) {
-    this.open(`<div class="card"><div class="deck">${tr('DECK {n} OF 6', { n: index })}</div><div class="deckname" style="color:${color}">${upper(tr(name))}</div><div class="sub">${tr(sub)}</div></div>`);
+  /** The title card as a deck or region opens; `kicker` is the small line above the name (already translated). */
+  card(kicker: string, name: string, sub: string, color: string, done: () => void) {
+    this.open(`<div class="card"><div class="deck">${kicker}</div><div class="deckname" style="color:${color}">${upper(tr(name))}</div><div class="sub">${tr(sub)}</div></div>`);
     setTimeout(() => {
       this.close();
       done();
     }, 2300);
   }
 
-  pause(opts: { deck: string; shards: string; colonists: string; quests: { text: string; done: boolean; progress: string; reward: string }[]; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
+  pause(opts: { deck: string; shards: string; colonists: string; planet: boolean; quests: { text: string; done: boolean; progress: string; reward: string }[]; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
     const el = this.open(`<div class="panel pause-panel">
       <h2>${tr('PAUSED')} · ${upper(tr(opts.deck))}</h2>
       <div class="row">
@@ -940,9 +945,9 @@ export class UI {
           <button class="menu-btn danger quit">${tr('Save & quit to title')}</button>
         </div>
         <div class="col-info">
-          <div class="stat"><span>${tr('Memory shards')}</span><b>${opts.shards}</b></div>
-          <div class="stat"><span>${tr('Colonists rescued')}</span><b>${opts.colonists}</b></div>
-          <div class="quests"><div class="qh">${tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
+          <div class="stat"><span>${opts.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${opts.shards}</b></div>
+          <div class="stat"><span>${opts.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${opts.colonists}</b></div>
+          <div class="quests"><div class="qh">${opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
             .map((q) => `<div class="q ${q.done ? 'done' : ''}"><i>${q.done ? '✔' : ''}</i><div><b>${q.text}</b><small>${q.progress} · ${tr('Reward')}: ${q.reward}</small></div></div>`)
             .join('')}</div>
         </div>
@@ -1056,26 +1061,30 @@ export class UI {
     render();
   }
 
-  results(r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null }, next: () => void) {
+  results(r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean }, next: () => void) {
+    const go = r.next ? (r.planet ? `${tr('Fly the shuttle to {deck}', { deck: tr(r.next) })} ✈` : `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲`) : tr('Continue');
     const el = this.open(`<div class="panel card" style="width:min(520px,88vw)">
-      <div class="deck">${tr('DECK COMPLETE')}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
+      <div class="deck">${r.planet ? tr('REGION COMPLETE') : tr('DECK COMPLETE')}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
       <div class="stat"><span>${tr('Time')}</span><b>${r.time}</b></div>
       <div class="stat"><span>${tr('Bolts collected')}</span><b>${r.bolts}</b></div>
-      <div class="stat"><span>${tr('Memory shards')}</span><b>${r.shards}</b></div>
-      ${r.colonists ? `<div class="stat"><span>${tr('Colonists rescued')}</span><b>${r.colonists}</b></div>` : ''}
-      <button class="menu-btn primary next" style="margin-top:14px">${r.next ? `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲` : tr('Continue')}</button></div>`);
+      <div class="stat"><span>${r.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${r.shards}</b></div>
+      ${r.colonists ? `<div class="stat"><span>${r.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${r.colonists}</b></div>` : ''}
+      <button class="menu-btn primary next" style="margin-top:14px">${go}</button></div>`);
     this.button(el, '.next', next);
   }
 
   decks(list: DeckInfo[], pick: (id: string) => void, back: () => void) {
-    const el = this.open(`<div class="panel" style="width:min(760px,92vw)"><h2>${tr('ELEVATOR')}</h2>
-      <div class="grid2">${list
-        .map(
-          (d) => `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
-          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.index}</span> ${d.unlocked ? tr(d.name) : '???'}
-          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}◆ ${d.shards}/${d.shardTotal}` : ICON.lock}</small></button>`,
-        )
-        .join('')}</div>
+    const button = (d: DeckInfo) => `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
+          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${d.unlocked ? tr(d.name) : '???'}
+          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}${d.chapter === 2 ? '▤' : '◆'} ${d.shards}/${d.shardTotal}` : ICON.lock}</small></button>`;
+    const section = (ch: 1 | 2, title: string) => {
+      const decks = list.filter((d) => d.chapter === ch);
+      if (ch === 2 && !decks.some((d) => d.unlocked)) return '';
+      return `<h3 class="chapter-head">${title}</h3><div class="grid2">${decks.map(button).join('')}</div>`;
+    };
+    const el = this.open(`<div class="panel" style="width:min(760px,92vw)"><h2>${tr('REPLAY A LEVEL')}</h2>
+      ${section(1, tr('THE {ship} · ELEVATOR', { ship: upper(tr(SHIP)) }))}
+      ${section(2, tr('GAIA NOVA · SHUTTLE'))}
       <button class="menu-btn back" style="margin-top:10px">${tr('Back')}</button></div>`);
     for (const b of el.querySelectorAll<HTMLElement>('.deck')) {
       b.addEventListener('click', () => {
@@ -1098,15 +1107,27 @@ export class UI {
     this.open(html);
   }
 
-  ending(kind: 'saved' | 'friends', paragraphs: string[], stats: [string, string][], done: () => void) {
-    const color = kind === 'friends' ? 'var(--pink)' : 'var(--good)';
-    const title = kind === 'friends' ? tr('THE GARDEN BETWEEN STARS') : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
+  /** The final card of a chapter. `next` (after chapter 1) offers to fly straight on to Gaia Nova. */
+  ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void) {
+    const secret = kind === 'friends' || kind === 'redeemed';
+    const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' ? 'var(--gold)' : 'var(--good)';
+    const title =
+      kind === 'friends'
+        ? tr('THE GARDEN BETWEEN STARS')
+        : kind === 'redeemed'
+          ? tr('A GARDEN FOR EVERYONE')
+          : kind === 'freed'
+            ? tr('GAIA NOVA IS FREE!')
+            : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
+    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER 1') : tr('THE END');
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
-      <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kind === 'friends' ? tr('SECRET ENDING') : tr('THE END')}</div>
+      <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kicker}</div>
       <div class="big-msg" style="color:${color};margin:6px 0 12px">${title}</div>
       <div class="story" style="font-size:17px;max-width:none">${paragraphs.map((p) => `<p>${tr(p)}</p>`).join('')}</div>
       <div class="grid2" style="text-align:left;margin:8px 0">${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}</div>
-      <button class="menu-btn primary done">${tr('Back to title')}</button></div>`);
+      ${next ? `<button class="menu-btn primary next">▶ ${tr('Chapter 2: Gaia Nova')}</button>` : ''}
+      <button class="menu-btn ${next ? '' : 'primary'} done">${tr('Back to title')}</button></div>`);
     this.button(el, '.done', done);
+    if (next) this.button(el, '.next', next);
   }
 }

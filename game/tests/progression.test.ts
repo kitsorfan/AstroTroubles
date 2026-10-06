@@ -2,7 +2,7 @@ import { MAX_HEARTS } from '../src/core/constants';
 import { newSave } from '../src/core/save';
 import { difficultyFor } from '../src/game/difficulty';
 import { COLONIST_BOLTS, QUEST_BOLTS, UPGRADE_MAX, deckQuests, givePrize, payQuests, shardMilestone } from '../src/game/quests';
-import { LEVELS, LEVEL_ORDER } from '../src/levels';
+import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER } from '../src/levels';
 
 // newSave() reads navigator for its quality default; give Jest a stand-in.
 beforeAll(() => {
@@ -52,14 +52,24 @@ describe('side quests and rewards', () => {
     expect(COLONIST_BOLTS).toBeGreaterThan(0);
   });
 
-  it('gives an extra heart every six memory shards', () => {
+  it('gives an extra heart every six shards of a chapter', () => {
     const save = newSave();
     const start = save.maxHearts;
     for (let i = 1; i <= 18; i++) {
-      save.shards.push(`x.s${i}`);
-      shardMilestone(save);
+      const deck = CHAPTER_DECKS[1][i % 6];
+      save.shards.push(`${deck}.s${i}`);
+      shardMilestone(save, deck);
     }
     expect(save.maxHearts).toBe(Math.min(MAX_HEARTS, start + 2));
+    // Journal pages on Gaia Nova count on their own, from zero.
+    save.maxHearts = start;
+    for (let i = 1; i <= 6; i++) {
+      const deck = CHAPTER_DECKS[2][i % 6];
+      save.shards.push(`${deck}.s${i}`);
+      const msg = shardMilestone(save, deck);
+      if (i < 6) expect(msg).toContain(`${i} / 18`);
+    }
+    expect(save.maxHearts).toBe(start + 1);
   });
 
   it('turns vault prizes into free upgrades, or bolts once maxed', () => {

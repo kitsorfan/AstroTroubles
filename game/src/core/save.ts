@@ -43,6 +43,8 @@ export interface SaveData {
   endings: string[];
   settings: Settings;
   playSeconds: number;
+  /** True once the arrival at Gaia Nova (the start of chapter 2) has been shown. */
+  gaiaIntro?: boolean;
 }
 
 /** Named after the game's old title; kept so existing saves carry over. */

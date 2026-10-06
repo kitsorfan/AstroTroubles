@@ -344,6 +344,7 @@ const ABILITY_LOOK: Record<Ability, { color: string; name: string }> = {
   dash: { color: '#ffd166', name: 'Dash Thrusters' },
   glide: { color: '#c6ff7a', name: 'Hover Pack' },
   pulse: { color: '#8ab4ff', name: 'Force Pulse' },
+  grapple: { color: '#7fe6ff', name: 'Grapple Hook' },
 };
 
 export class UpgradePickup extends Floater {

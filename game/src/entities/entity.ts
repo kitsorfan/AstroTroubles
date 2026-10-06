@@ -44,4 +44,8 @@ export interface Interactable {
   /** Button label, or null when it can't be used right now. */
   label(): string | null;
   interact(): void;
+  /** How far above or below Jason it can be used from (default 3 units). */
+  reachY?: number;
+  /** Picked by where Jason is facing as well as by distance (grapple anchors). */
+  aimed?: boolean;
 }

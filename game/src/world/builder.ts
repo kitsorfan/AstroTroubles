@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import { CELL, FLOOR_BOTTOM, WALL_H } from '../core/constants';
-import { hash2 } from '../core/math';
+import { hash2, Rng } from '../core/math';
 import { Grid } from './grid';
 import type { Cell, ParsedLevel } from './levelTypes';
 import { deckSurfaces, type Surface } from './surfaces';
-import type { Theme } from './themes';
+import type { Outdoor, Theme } from './themes';
 
 export interface BuiltLevel {
   group: THREE.Group;
@@ -142,12 +142,71 @@ const DIRS: [number, number][] = [
 
 const isWalk = (c: Cell) => c.kind === 'floor' || c.kind === 'grate' || c.kind === 'ice';
 
+const shade = (hex: string, f: number) => `#${new THREE.Color(hex).multiplyScalar(f).getHexString()}`;
+
+/**
+ * The land far below an outdoor region, so the valley floor isn't bare: tree tops, dunes, snowy pines,
+ * boulders or cooling lava rocks scattered all around (one instanced mesh per shape, coloured per instance).
+ */
+function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: number, y: number): THREE.Group {
+  const group = new THREE.Group();
+  const rng = new Rng(7);
+  const kinds: { geo: THREE.BufferGeometry; colors: string[]; sy: [number, number] }[] = [];
+  const ball = new THREE.SphereGeometry(1, 10, 7);
+  const spire = new THREE.ConeGeometry(1, 2.4, 7).translate(0, 1.2, 0);
+  const stone = new THREE.DodecahedronGeometry(1, 0);
+  switch (o.ground) {
+    case 'grass':
+    case 'jungle':
+      kinds.push({ geo: ball, colors: [theme.floor, o.ground2, shade(o.ground2, 0.7), '#2f5a24'], sy: [0.8, 1.2] });
+      break;
+    case 'sand':
+      kinds.push({ geo: ball, colors: [theme.floor, o.ground2, shade(theme.floor, 0.85)], sy: [0.25, 0.4] });
+      kinds.push({ geo: stone, colors: [o.rock, o.rockDark], sy: [1, 2.4] });
+      break;
+    case 'snow':
+      kinds.push({ geo: spire, colors: ['#2f4a3a', '#3a5a44', '#e8f0f8'], sy: [1.2, 2] });
+      break;
+    case 'rock':
+      kinds.push({ geo: spire, colors: ['#3a5a34', '#4a6a3a'], sy: [1, 1.6] });
+      kinds.push({ geo: stone, colors: [o.rock, o.rockDark], sy: [0.7, 1.3] });
+      break;
+    case 'basalt':
+      kinds.push({ geo: stone, colors: [o.rock, o.rockDark, '#2a1a18'], sy: [0.5, 1] });
+      break;
+  }
+  const m4 = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const col = new THREE.Color();
+  for (const k of kinds) {
+    const n = 220;
+    const inst = new THREE.InstancedMesh(k.geo, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true }), n);
+    for (let i = 0; i < n; i++) {
+      const x = cx + (rng.next() - 0.5) * span;
+      const z = cz + (rng.next() - 0.5) * span;
+      const r = 2 + rng.next() * 5;
+      q.setFromAxisAngle(up, rng.next() * Math.PI * 2);
+      m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r, r * (k.sy[0] + rng.next() * (k.sy[1] - k.sy[0])), r));
+      inst.setMatrixAt(i, m4);
+      inst.setColorAt(i, col.set(k.colors[Math.floor(rng.next() * k.colors.length)]).multiplyScalar(0.85 + rng.next() * 0.3));
+    }
+    inst.instanceMatrix.needsUpdate = true;
+    if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    inst.computeBoundingSphere();
+    group.add(inst);
+  }
+  return group;
+}
+
 export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows: boolean): BuiltLevel {
   const group = new THREE.Group();
   const W = level.width;
   const D = level.depth;
   const surf = deckSurfaces(theme, level.def.id);
   const bottomY = theme.space ? FLOOR_BOTTOM : ABYSS_Y;
+  /** Gaia Nova: natural ground and cliffs, no light strips, ribs or pipes. */
+  const outdoor = theme.outdoor;
 
   const floorQ = [new Quads(), new Quads(), new Quads()];
   const grateQ = new Quads();
@@ -157,6 +216,8 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
   const capQ = new Quads();
   const sideQ = new Quads();
   const metalParts: THREE.BufferGeometry[] = [];
+  /** Outdoors: the rounded lip of earth or snow along every ledge. */
+  const lipParts: THREE.BufferGeometry[] = [];
   const glowParts: THREE.BufferGeometry[] = [];
 
   const plane = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -222,7 +283,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
   /** Final colour of a floor corner: shading, plus a wash of the wall lights' colour near walls. */
   const floorCorner = (c: Cell, x: number, z: number, sx: number, sz: number, tint: number): V3 => {
     const ao = cornerAO(c, x, z, sx, sz) * tint;
-    const k = spill(x, z, sx, sz) * 0.32;
+    const k = outdoor ? 0 : spill(x, z, sx, sz) * 0.32;
     return [ao + glowTint.r * k, ao + glowTint.g * k, ao + glowTint.b * k];
   };
 
@@ -295,7 +356,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
             ],
             [low, low, 1.12, 1.12],
           );
-          if (!floorBase) continue;
+          if (!floorBase || outdoor) continue;
           const yaw = Math.atan2(dx, dz);
           // A glowing trim line along the top edge of the wall.
           place(glowParts, box, trimColor, fx + dx * 0.06, y1 - 0.07, fz + dz * 0.06, CELL - 0.04, 0.11, 0.1, yaw);
@@ -408,7 +469,14 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           ],
           [low, low, 0.9, 0.9],
         );
-        if (isWalk(c)) {
+        if (isWalk(c) && outdoor) {
+          // A soft lip along the ledge instead of a glowing strip.
+          if (nb.kind === 'void' || nb.kind === 'hazard') {
+            const yaw = Math.atan2(dx, dz);
+            const lip = c.kind === 'grate' ? new THREE.Color('#5a4030') : new THREE.Color(theme.edge);
+            place(lipParts, box, lip, cx + dx * (CELL / 2 - 0.08), c.h + 0.03, cz + dz * (CELL / 2 - 0.08), CELL, 0.1, 0.18, yaw);
+          }
+        } else if (isWalk(c)) {
           const yaw = Math.atan2(dx, dz);
           const ex = cx + dx * (CELL / 2 - 0.06);
           const ez = cz + dz * (CELL / 2 - 0.06);
@@ -430,21 +498,28 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     me.castShadow = cast && shadows;
     group.add(me);
   };
-  // Fairly rough, softly bumped metal: sharp glints on detailed normal maps sparkle as the camera moves.
-  surf.floors.forEach((s, i) => add(floorQ[i], surfaceMat(s, { rough: 0.74, metal: 0.25, glow: 0.35, normal: 0.7 }), false));
-  add(grateQ, surfaceMat(surf.grate, { rough: 0.62, metal: 0.4, glow: 0.45, normal: 0.8 }), false);
+  // Ship decks: fairly rough, softly bumped metal (sharp glints on detailed normal maps sparkle as the
+  // camera moves). Gaia Nova: matte earth, sand, snow and stone.
+  const metal = outdoor ? 0 : 1;
+  surf.floors.forEach((s, i) => add(floorQ[i], surfaceMat(s, { rough: outdoor ? 0.95 : 0.74, metal: 0.25 * metal, glow: 0.35, normal: outdoor ? 0.9 : 0.7 }), false));
+  add(grateQ, surfaceMat(surf.grate, { rough: outdoor ? 0.85 : 0.62, metal: 0.4 * metal, glow: 0.45, normal: 0.8 }), false);
   add(iceQ, surfaceMat(surf.ice, { rough: 0.55, metal: 0.05, normal: 0.5 }), false);
   add(bedQ, new THREE.MeshStandardMaterial({ color: theme.hazardDeep, roughness: 1, vertexColors: true }), false);
   surf.walls.forEach((s, i) => {
-    const m = surfaceMat(s, { rough: 0.68, metal: 0.3, glow: 0.55, normal: 0.8 });
+    const m = surfaceMat(s, { rough: outdoor ? 0.92 : 0.68, metal: 0.3 * metal, glow: outdoor ? 0.9 : 0.55, normal: outdoor ? 1.1 : 0.8 });
     m.shadowSide = THREE.DoubleSide;
     add(wallQ[i], m, true);
   });
-  add(capQ, surfaceMat(surf.cap, { rough: 0.72, metal: 0.35, normal: 0.8 }), true);
-  const sideMat = surfaceMat(surf.side, { rough: 0.78, metal: 0.3, normal: 0.8 });
+  add(capQ, surfaceMat(surf.cap, { rough: outdoor ? 0.95 : 0.72, metal: 0.35 * metal, normal: 0.8 }), true);
+  const sideMat = surfaceMat(surf.side, { rough: outdoor ? 0.95 : 0.78, metal: 0.3 * metal, normal: 0.8 });
   sideMat.shadowSide = THREE.DoubleSide;
   add(sideQ, sideMat, true);
 
+  if (lipParts.length) {
+    const me = new THREE.Mesh(mergeGeometries(lipParts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+    me.receiveShadow = true;
+    group.add(me);
+  }
   if (metalParts.length) {
     const me = new THREE.Mesh(mergeGeometries(metalParts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.5 }));
     me.receiveShadow = true;
@@ -463,7 +538,20 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     liquids.computeBoundingSphere();
     group.add(liquids);
   }
-  if (!theme.space) {
+  if (outdoor) {
+    // The valley floor far below (or a lava lake), dotted with trees, dunes or rocks.
+    const span = Math.max(W, D) * CELL + 260;
+    const s = surf.abyss;
+    for (const t of [s.map, s.normalMap, s.emissiveMap]) t?.repeat.set(span / 40, span / 40);
+    const glow = !!s.emissiveMap;
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ map: s.map, normalMap: s.normalMap, emissiveMap: s.emissiveMap, emissive: glow ? '#ffffff' : '#000000', emissiveIntensity: glow ? 1.2 : 0, roughness: 0.95, metalness: 0 }),
+    );
+    floor.position.set((W * CELL) / 2, ABYSS_Y, (D * CELL) / 2);
+    group.add(floor);
+    group.add(belowProps(outdoor, theme, (W * CELL) / 2, (D * CELL) / 2, span, ABYSS_Y));
+  } else if (!theme.space) {
     // The floor of the machinery shafts far below, with its own dim lights.
     const span = Math.max(W, D) * CELL + 120;
     const s = surf.abyss;

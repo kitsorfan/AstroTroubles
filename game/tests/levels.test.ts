@@ -1,32 +1,35 @@
 import { deckAbilities } from '../tools/deckAbilities';
 import { isCollectible, reach, refillGaps, timedRoutes } from '../tools/reach';
 import { FLYOVER, TRANSITIONS } from '../src/game/story';
-import { LEVELS, LEVEL_ORDER } from '../src/levels';
+import { CHAPTERS, CHAPTER_DECKS, LEVELS, LEVEL_ORDER, isFinale } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability } from '../src/world/levelTypes';
 
-const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse'];
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
 const parsed = LEVEL_ORDER.map((id) => parseLevel(LEVELS[id]));
 
 describe('deck data', () => {
-  it('has six decks in order', () => {
-    expect(LEVEL_ORDER).toHaveLength(6);
+  it('has six decks on the ship and six regions on Gaia Nova, in order', () => {
+    expect(LEVEL_ORDER).toHaveLength(12);
+    for (const ch of CHAPTERS) expect(CHAPTER_DECKS[ch]).toHaveLength(6);
     LEVEL_ORDER.forEach((id, i) => expect(LEVELS[id].index).toBe(i + 1));
   });
 
-  it('hides 18 memory shards and 12 colonists across the ship', () => {
-    let shards = 0;
-    let colonists = 0;
-    for (const level of parsed) {
-      const ids = level.entities.filter((e) => e.spec.type === 'shard').map((e) => e.id.split('.')[1]);
-      expect(ids.sort()).toEqual([...level.def.shardIds].sort());
-      const cocoons = level.entities.filter((e) => e.spec.type === 'cocoon').map((e) => e.id.split('.')[1]);
-      expect(cocoons.sort()).toEqual([...(level.def.colonistIds ?? [])].sort());
-      shards += ids.length;
-      colonists += cocoons.length;
+  it('hides 18 shards and 12 people to rescue in each chapter', () => {
+    for (const ch of CHAPTERS) {
+      let shards = 0;
+      let colonists = 0;
+      for (const level of parsed.filter((l) => CHAPTER_DECKS[ch].includes(l.def.id))) {
+        const ids = level.entities.filter((e) => e.spec.type === 'shard').map((e) => e.id.split('.')[1]);
+        expect(ids.sort()).toEqual([...level.def.shardIds].sort());
+        const cocoons = level.entities.filter((e) => e.spec.type === 'cocoon').map((e) => e.id.split('.')[1]);
+        expect(cocoons.sort()).toEqual([...(level.def.colonistIds ?? [])].sort());
+        shards += ids.length;
+        colonists += cocoons.length;
+      }
+      expect(shards).toBe(18);
+      expect(colonists).toBe(12);
     }
-    expect(shards).toBe(18);
-    expect(colonists).toBe(12);
   });
 
   it('gives every shard a memory and every deck its story beats', () => {
@@ -43,6 +46,9 @@ describe('deck data', () => {
     expect(LEVELS.cryo.dialogues.bolt?.length).toBeGreaterThan(0);
     expect(LEVELS.bridge.dialogues.speak?.length).toBeGreaterThan(0);
     expect(LEVELS.bridge.dialogues.friends?.length).toBeGreaterThan(0);
+    // Chapter 2's secret ending: talking General Brennus down.
+    expect(LEVELS.volcano.dialogues.redeem?.length).toBeGreaterThan(0);
+    expect(LEVELS.volcano.dialogues.redeemed?.length).toBeGreaterThan(0);
   });
 
   it('tells the story: a recorded log on every deck, and a scene for each story character', () => {
@@ -56,22 +62,22 @@ describe('deck data', () => {
       }
     }
     for (const key of ['wake', 'intro', 'bolt', 'boltJoin']) expect(LEVELS.cryo.dialogues[key]?.length).toBeGreaterThan(0);
-    for (const id of LEVEL_ORDER.slice(0, 5)) expect(TRANSITIONS[id].length).toBeGreaterThan(0);
+    for (const id of LEVEL_ORDER.filter((d) => !isFinale(d))) expect(TRANSITIONS[id].length).toBeGreaterThan(0);
     for (const id of LEVEL_ORDER.slice(1)) expect(FLYOVER[id]).not.toBe('');
   });
 
-  it('has exactly one boss per deck and an exit lift on every deck but the last', () => {
+  it('has exactly one boss per deck and an exit on every deck but each chapter’s finale', () => {
     for (const level of parsed) {
       const bosses = level.entities.filter((e) => e.spec.type === 'boss');
       expect(bosses).toHaveLength(1);
       const exits = level.entities.filter((e) => e.spec.type === 'exit');
-      expect(exits).toHaveLength(level.def.id === 'bridge' ? 0 : 1);
+      expect(exits).toHaveLength(isFinale(level.def.id) ? 0 : 1);
     }
   });
 
   it('hands out each ability exactly once, in order', () => {
     const found = parsed.flatMap((l) => l.entities.filter((e) => e.spec.type === 'upgrade').map((e) => (e.spec.type === 'upgrade' ? e.spec.ability : null)));
-    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'pulse']);
+    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'pulse', 'grapple']);
   });
 });
 

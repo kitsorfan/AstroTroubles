@@ -4,6 +4,9 @@ export const ICON = {
   heart: (full: boolean) =>
     `<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.4 2.9 4.5 6.7 4.5c2.2 0 3.6 1.2 5.3 3.1 1.7-1.9 3.1-3.1 5.3-3.1 3.8 0 5.9 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="${full ? '#ff4d6d' : 'rgba(0,0,0,0.45)'}" stroke="${full ? '#ffd0da' : 'rgba(255,255,255,0.35)'}" stroke-width="1.6"/>${full ? '<ellipse cx="8" cy="9" rx="2" ry="1.3" fill="#fff" opacity=".6"/>' : ''}</svg>`,
   bolt: `<svg viewBox="0 0 24 24"><polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7" fill="#ffd166" stroke="#fff2c2" stroke-width="1.2"/><circle cx="12" cy="12" r="3.6" fill="#b87a10"/></svg>`,
+  /** A page of Brennus's journal (chapter 2's collectible). */
+  page: (got: boolean) =>
+    `<svg viewBox="0 0 16 20"><path d="M2 1.5H11L14.5 5V18.5H2Z" fill="${got ? '#ffd166' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#fff2c2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M4.5 8H12M4.5 11H12M4.5 14H10" stroke="#a8761a" stroke-width="1"/>' : ''}</svg>`,
   shard: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><polygon points="8,1 15,10 8,19 1,10" fill="${got ? '#ff6fcf' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffd6f2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.3"/></svg>`,
   pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg>`,
@@ -177,8 +180,55 @@ const COLONIST = person({
   collar: `<path d="M29 60.5L40 67L51 60.5L54 62.5L40 71L26 62.5Z" fill="#9fb2c8"/><rect x="50" y="68" width="9" height="5" rx="1" fill="#e8eef6" stroke="#9fb2c8" stroke-width=".6"/>`,
 });
 
+/** General Brennus: an old soldier with a peaked cap, a big grey moustache, a scar and a red monocle. */
+const BREN_OLIVE = '#3a4426';
+const BRENNUS = person({
+  id: 'pg',
+  skin: '#d4a284',
+  hair: '#b8b8c2',
+  iris: '#46586a',
+  lips: '#9a5a50',
+  suit: '#3e4a2a',
+  front: `<path d="M25.4 35C24.6 30.4 25 27.6 26.8 26.6L29 27.4C27.4 29.4 26.4 31.8 25.4 35Z" fill="#c8c8d2"/><path d="M54.6 35C55.4 30.4 55 27.6 53.2 26.6L51 27.4C52.6 29.4 53.6 31.8 54.6 35Z" fill="#b0b0ba"/>`,
+  collar: `<path d="M30 60.5L40 69L50 60.5L55 62L40 75L25 62Z" fill="#262e16"/>
+    <path d="M27 61.6L32.4 60.6L33.4 64.2L28 65.2Z" fill="#8a1a22"/><path d="M53 61.6L47.6 60.6L46.6 64.2L52 65.2Z" fill="#8a1a22"/>
+    <path d="M11 70Q15.6 63.6 24 62.4" stroke="#ffd166" stroke-width="2.8"/><path d="M69 70Q64.4 63.6 56 62.4" stroke="#ffd166" stroke-width="2.8"/>
+    <rect x="44" y="68" width="3" height="5" fill="#ff3a4c"/><rect x="48" y="68" width="3" height="5" fill="#3fb6ff"/><rect x="52" y="68" width="3" height="5" fill="#ffd166"/>`,
+  extra: `<path d="M21.6 24.6C21 12.6 59 12.6 58.4 24.6L58.4 26.8L21.6 26.8Z" fill="${BREN_OLIVE}"/>
+    <path d="M21.6 24H58.4V27.4H21.6Z" fill="#8a1a22"/>
+    <path d="M23.8 27.2Q40 34 56.2 27.2L56.2 28.8Q40 36 23.8 28.8Z" fill="#1a1e10"/>
+    <circle cx="40" cy="19.4" r="3.2" fill="#ffd166"/><circle cx="40" cy="19.4" r="1.4" fill="#8a1a22"/><path d="M37.6 16.4L42.4 22.4" stroke="#8a1a22" stroke-width=".8"/>
+    <path d="M30.2 29.6L35.2 43" fill="none" stroke="#9a5848" stroke-width="1.1" opacity=".75"/>
+    <path d="M32.6 48.4Q36.2 45.8 40 47.8Q43.8 45.8 47.4 48.4Q49.6 50.8 46.4 50.6Q43 49.4 40 50.4Q37 49.4 33.6 50.6Q30.4 50.8 32.6 48.4Z" fill="#cfcfd8"/>
+    <path d="M28.4 43Q29.4 47.2 32 49.4M51.6 43Q50.6 47.2 48 49.4" fill="none" stroke="#7a4e3a" stroke-width=".6" opacity=".5"/>
+    <circle cx="47" cy="37.2" r="5.6" fill="#ff3a4c" opacity=".22"/><circle cx="47" cy="37.2" r="5.6" fill="none" stroke="#d8b050" stroke-width="1.3"/>
+    <circle cx="47" cy="37.2" r="1.3" fill="#ff3a4c"/><path d="M52.4 38.6Q55 46 52 54" fill="none" stroke="#d8b050" stroke-width=".7"/>`,
+});
+
+/** Dr. Hypatia: the colony's chief scientist, with her hair up, round glasses and a lab coat. */
+const HYP_HAIR = '#1c1410';
+const HYPATIA = person({
+  id: 'ph',
+  skin: '#c8906c',
+  hair: HYP_HAIR,
+  iris: '#2a1a10',
+  lips: '#a0524e',
+  suit: '#e8edf2',
+  back: `<circle cx="40" cy="12.6" r="7" fill="${HYP_HAIR}"/><path d="M34.8 12Q40 8 45.2 12" fill="none" stroke="${shade(HYP_HAIR, 2.2)}" stroke-width=".8" opacity=".4"/><path d="M45 8L49 5" stroke="#d8b050" stroke-width="1.2" stroke-linecap="round"/>`,
+  front: `<path d="M24.2 35C21.8 20 31 14 40 14C49 14 58.2 20 55.8 35C54.6 27 50.6 22.2 41 21.8C35 22 31.6 23.6 29.8 25.8C27.6 28.2 26 31.2 24.2 35Z" fill="${HYP_HAIR}"/>
+    ${shine('M29 21Q35 16.4 44 16.6', HYP_HAIR)}`,
+  collar: `<path d="M35 60.5L40 68L45 60.5Z" fill="#3a6ab0"/>
+    <path d="M32.6 60.4L38.4 70.4L35.2 76L28.4 62.8Z" fill="#d6dee8"/><path d="M47.4 60.4L41.6 70.4L44.8 76L51.6 62.8Z" fill="#d6dee8"/>
+    <rect x="50.6" y="67.4" width="1.6" height="6.4" rx=".6" fill="#3fb6ff"/><rect x="53" y="67.8" width="1.4" height="6" rx=".6" fill="#ff6fcf"/>
+    <rect x="22" y="68.6" width="8" height="5.4" rx="1" fill="#ffffff" stroke="#9fb2c8" stroke-width=".5"/><rect x="23.2" y="69.8" width="2.6" height="3" fill="#7fb8e8"/>`,
+  extra: `<g fill="none" stroke="#2e2420" stroke-width="1.1"><circle cx="33" cy="37.4" r="5.4"/><circle cx="47" cy="37.4" r="5.4"/><path d="M38.4 36.8Q40 35.6 41.6 36.8M27.6 36.4L24.8 35.4M52.4 36.4L55.2 35.4"/></g>
+    <path d="M29.6 34.6Q31 33.4 32.6 33.6M43.6 34.6Q45 33.4 46.6 33.6" fill="none" stroke="#ffffff" stroke-width=".7" opacity=".5"/>`,
+});
+
 export const PORTRAIT: Record<Speaker, string> = {
   jason: JASON,
+  brennus: BRENNUS,
+  hypatia: HYPATIA,
   bolt: `<svg viewBox="0 0 80 80">
     ${screen('pb', '#5ee0ff')}
     <defs>
@@ -261,6 +311,8 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   rosa: 'Aunt Rosa',
   vendy: 'Pandora',
   gascu: 'GaScu',
+  brennus: 'General Brennus',
+  hypatia: 'Dr. Hypatia',
 };
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
@@ -273,6 +325,8 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   rosa: '#ff8a8a',
   vendy: '#ff9ae0',
   gascu: '#ff6fcf',
+  brennus: '#ff6a5a',
+  hypatia: '#9adfff',
 };
 
 let portraitCopies = 0;

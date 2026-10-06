@@ -52,6 +52,53 @@ const CRAWLER: Record<string, [string, string]> = {
   magma: ['#2c1308', '#ff7a1a'],
   goo: ['#2a0f22', '#ff5fa8'],
   toxic: ['#172510', '#9dff3a'],
+  /* Gaia Nova: Brennus's Thorn Legion and the creatures its pollen got to. */
+  sand: ['#4a3018', '#ffb347'],
+  snow: ['#1a2838', '#bfeaff'],
+  jungle: ['#14280f', '#ff6fcf'],
+  ash: ['#1e1414', '#ff3a1a'],
+  legion: ['#2a2a24', '#ff3a4c'],
+};
+
+/**
+ * Colour sets for the other enemies. Chapter 1 uses `default`; on Gaia Nova a level picks the one that
+ * suits its region (`legion` is Brennus's own olive-and-bronze army paint).
+ */
+const SNAPPER: Record<string, { stem: string; flesh: string; glow: string; gullet: string }> = {
+  default: { stem: '#1d2a14', flesh: '#4a0f1c', glow: '#ff2a50', gullet: '#ffd14a' },
+  sand: { stem: '#2f5a2a', flesh: '#6a3a1a', glow: '#ff9a3a', gullet: '#ff9a3a' },
+  snow: { stem: '#2a3a4a', flesh: '#3a5a8a', glow: '#7fe6ff', gullet: '#bfeaff' },
+  jungle: { stem: '#1a3a14', flesh: '#6a1a4a', glow: '#ff4fb8', gullet: '#ff6fcf' },
+  ash: { stem: '#2a2224', flesh: '#4a1a10', glow: '#ff6a12', gullet: '#ff6a12' },
+};
+const BUZZER: Record<string, { shell: string; stripe: string; eye: string }> = {
+  default: { shell: '#1e1a26', stripe: '#ffcf3a', eye: '#ff2a3a' },
+  legion: { shell: '#3a3f34', stripe: '#ff3a4c', eye: '#ff3a4c' },
+  sand: { shell: '#4a3a24', stripe: '#ffb347', eye: '#ff6a2a' },
+  snow: { shell: '#2a3448', stripe: '#7fe6ff', eye: '#bfeaff' },
+  jungle: { shell: '#1a2a14', stripe: '#9dff3a', eye: '#ff6fcf' },
+  ash: { shell: '#241a1a', stripe: '#ff6a12', eye: '#ffd166' },
+};
+const SENTRY: Record<string, { armour: string; trim: string }> = {
+  default: { armour: '#3a3f48', trim: '#8a1c26' },
+  legion: { armour: '#4a5034', trim: '#a8783a' },
+  snow: { armour: '#c8d2de', trim: '#3a6aa0' },
+  ash: { armour: '#2a2224', trim: '#c84a12' },
+};
+const TURRET: Record<string, { flesh: string; glow: string; vein: string; acid: string }> = {
+  default: { flesh: '#3a1238', glow: '#ff3fd0', vein: '#ff4fd8', acid: '#c6ff3a' },
+  sand: { flesh: '#6a4a1a', glow: '#ffb347', vein: '#ffb347', acid: '#ff6a12' },
+  snow: { flesh: '#2a4a6a', glow: '#7fe6ff', vein: '#7fe6ff', acid: '#e0f8ff' },
+  jungle: { flesh: '#1a4a1a', glow: '#9dff3a', vein: '#9dff3a', acid: '#ff6fcf' },
+  ash: { flesh: '#3a1208', glow: '#ff6a12', vein: '#ff6a12', acid: '#ffd166' },
+};
+const BRUTE: Record<string, { skin: string; plate: string; bloom: string; eye: string }> = {
+  default: { skin: '#241830', plate: '#3a2c48', bloom: '#ff4fd8', eye: '#ff2a1a' },
+  sand: { skin: '#5a3a1a', plate: '#8a5a2a', bloom: '#ffb347', eye: '#ff6a1a' },
+  yeti: { skin: '#c8d2de', plate: '#9aaabc', bloom: '#7fe6ff', eye: '#3fb6ff' },
+  rock: { skin: '#5a5048', plate: '#7a6a5a', bloom: '#ffb347', eye: '#ff3a1a' },
+  jungle: { skin: '#1a3a1a', plate: '#2a5a2a', bloom: '#ff6fcf', eye: '#ffd166' },
+  ash: { skin: '#2a1a18', plate: '#3a2a24', bloom: '#ff6a12', eye: '#ffd166' },
 };
 
 /** Six-legged spore crawler with a glowing abdomen, a cluster of eyes and snapping mandibles. */
@@ -140,15 +187,16 @@ export function makeGooBlob(scale = 1): EnemyModel {
 /* ---------------- maw plant (snapper) ---------------- */
 
 /** A carnivorous alien plant: hinged jaws ringed with fangs and a glowing gullet. */
-export function makeSnapper(): EnemyModel {
+export function makeSnapper(variant = 'default'): EnemyModel {
+  const pal = SNAPPER[variant] ?? SNAPPER.default;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const stem = ownMat('#1d2a14', { emissive: '#9dff3a', ei: 0.04, rough: 0.5 });
-  const flesh = ownMat('#4a0f1c', { emissive: '#ff2a50', ei: 0.08, rough: 0.35 });
+  const stem = ownMat(pal.stem, { emissive: '#9dff3a', ei: 0.04, rough: 0.5 });
+  const flesh = ownMat(pal.flesh, { emissive: pal.glow, ei: 0.08, rough: 0.35 });
   const thorn = mat('#0e140a', { rough: 0.6 });
   const fang = mat('#efe6d2', { rough: 0.35 });
-  const gullet = glowMat('#ffd14a', 2.2);
+  const gullet = glowMat(pal.gullet, 2.2);
   for (let i = 0; i < 7; i++) {
     const a = (i / 7) * Math.PI * 2;
     const l = spike(root, [Math.cos(a) * 0.2, 0.05, Math.sin(a) * 0.2], [Math.cos(a), 0.35, Math.sin(a)], 0.14, 1.0, stem);
@@ -189,13 +237,14 @@ export function makeSnapper(): EnemyModel {
 /* ---------------- stinger wasp (buzzer) ---------------- */
 
 /** An armoured wasp with compound eyes, a striped abdomen and a glowing stinger. */
-export function makeBuzzer(): EnemyModel {
+export function makeBuzzer(variant = 'default'): EnemyModel {
+  const pal = BUZZER[variant] ?? BUZZER.default;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const shell = ownMat('#1e1a26', { emissive: '#ffcf3a', ei: 0.04, rough: 0.3, metal: 0.35 });
-  const stripe = glowMat('#ffcf3a', 1.8);
-  const eye = glowMat('#ff2a3a', 2.4);
+  const shell = ownMat(pal.shell, { emissive: pal.stripe, ei: 0.04, rough: 0.3, metal: 0.35 });
+  const stripe = glowMat(pal.stripe, 1.8);
+  const eye = glowMat(pal.eye, 2.4);
   body.add(mesh(sphere(0.28, 16), shell, 0, 0, 0.05));
   const head = mesh(sphere(0.22, 14), shell, 0, 0.04, 0.38);
   body.add(head);
@@ -242,13 +291,14 @@ export function makeBuzzer(): EnemyModel {
 /* ---------------- warden bot (sentry) ---------------- */
 
 /** A heavy security robot on treads: armour plates, twin blasters and a scanning visor slit. */
-export function makeSentry(): EnemyModel {
+export function makeSentry(variant = 'default'): EnemyModel {
+  const pal = SENTRY[variant] ?? SENTRY.default;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const armour = ownMat('#3a3f48', { emissive: '#ff3040', ei: 0.02, rough: 0.35, metal: 0.7 });
+  const armour = ownMat(pal.armour, { emissive: '#ff3040', ei: 0.02, rough: 0.35, metal: 0.7 });
   const dark = mat('#16181d', { rough: 0.7, metal: 0.4 });
-  const red = mat('#8a1c26', { rough: 0.45, metal: 0.4 });
+  const red = mat(pal.trim, { rough: 0.45, metal: 0.4 });
   for (const sx of [-1, 1]) {
     body.add(mesh(boxG(0.34, 0.42, 1.1), dark, sx * 0.44, 0.21, 0));
     for (let i = 0; i < 4; i++) body.add(mesh(cyl(0.1, 0.1, 0.36, 10), mat('#2a2d33', { metal: 0.6 }), sx * 0.44, 0.2, -0.38 + i * 0.25).rotateZ(Math.PI / 2));
@@ -297,14 +347,15 @@ export function makeSentry(): EnemyModel {
 /* ---------------- spitter pod (turret) ---------------- */
 
 /** A rooted, pulsing acid sac with a fanged maw that lobs glowing globs. */
-export function makeTurret(): EnemyModel {
+export function makeTurret(variant = 'default'): EnemyModel {
+  const pal = TURRET[variant] ?? TURRET.default;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const flesh = ownMat('#3a1238', { emissive: '#ff3fd0', ei: 0.06, rough: 0.3 });
+  const flesh = ownMat(pal.flesh, { emissive: pal.glow, ei: 0.06, rough: 0.3 });
   const rootM = mat('#1c0c1c', { rough: 0.7 });
-  const vein = glowMat('#ff4fd8', 1.5);
-  const acid = glowMat('#c6ff3a', 2.6);
+  const vein = glowMat(pal.vein, 1.5);
+  const acid = glowMat(pal.acid, 2.6);
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
     limb(root, [0, 0.25, 0], [Math.cos(a) * 1.0, 0.03, Math.sin(a) * 1.0], 0.09 - (i % 2) * 0.03, rootM);
@@ -338,15 +389,16 @@ export function makeTurret(): EnemyModel {
 /* ---------------- horned brute ---------------- */
 
 /** A hulking armoured beast: horns, burning eyes, crushing claws and GaScu growths on its back. */
-export function makeBrute(): EnemyModel {
+export function makeBrute(variant = 'default'): EnemyModel {
+  const pal = BRUTE[variant] ?? BRUTE.default;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const skin = ownMat('#241830', { emissive: '#ff3050', ei: 0.04, rough: 0.4, metal: 0.25 });
-  const plate = mat('#3a2c48', { rough: 0.35, metal: 0.4 });
+  const skin = ownMat(pal.skin, { emissive: '#ff3050', ei: 0.04, rough: 0.4, metal: 0.25 });
+  const plate = mat(pal.plate, { rough: 0.35, metal: 0.4 });
   const horn = mat('#d8cbb4', { rough: 0.45 });
-  const bloom = glowMat('#ff4fd8', 1.8);
-  const eye = glowMat('#ff2a1a', 3);
+  const bloom = glowMat(pal.bloom, 1.8);
+  const eye = glowMat(pal.eye, 3);
   const torso = mesh(sphere(1, 24), skin, 0, 1.3, -0.1);
   torso.scale.set(1.15, 0.92, 1);
   body.add(torso);

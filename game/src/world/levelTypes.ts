@@ -1,11 +1,12 @@
 import type { PuzzleKind } from '../game/puzzles';
 
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge';
+/** Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova. */
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
-export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse';
+export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -73,7 +74,15 @@ export type Spec = Base &
     | { type: 'breakwall' }
     | { type: 'boltfind' }
     /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */
-    | { type: 'holo'; log: string; who?: 'captain' | 'rosa' }
+    | { type: 'holo'; log: string; who?: HoloSpeaker }
+    /** A glowing grapple ring: with the GRAPPLE hook, Jason can zip to it from far away (and land on the cell it sits on). */
+    | { type: 'anchor' }
+    /** A gust zone `w` x `d` cells around the letter that shoves Jason along (dx, dz) every `period` seconds. */
+    | { type: 'wind'; dx: number; dz: number; w?: number; d?: number; period?: number; offset?: number; strength?: number }
+    /** Quicksand (or deep snow, or bog): Jason wades slowly and sinks if he stands still too long. */
+    | { type: 'quicksand' }
+    /** A lane that a boulder (or log, or snowball) rolls down every `period` seconds: jump over it. */
+    | { type: 'boulder'; axis: 'x' | 'z'; length: number; period?: number; offset?: number }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -98,10 +107,39 @@ export type DecorKind =
   | 'barrier'
   | 'globe'
   | 'bloom'
-  | 'screen';
+  | 'screen'
+  /* Gaia Nova outdoors. */
+  | 'rock'
+  | 'boulder'
+  | 'cactus'
+  | 'pine'
+  | 'palm'
+  | 'bush'
+  | 'grass'
+  | 'fern'
+  | 'icespike'
+  | 'lavarock'
+  | 'bones'
+  | 'tent'
+  | 'wreck'
+  | 'thorns'
+  | 'banner'
+  | 'pillar';
+
+/**
+ * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
+ * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`).
+ */
+export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
+
+/** Low props Jason walks straight through (they never block a cell). */
+export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops'];
+
+/** Who can appear in a hologram log. */
+export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
 
 /** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'captain' | 'rosa';
+export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
 
 export interface Line {
   who: Speaker;

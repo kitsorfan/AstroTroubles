@@ -11,7 +11,7 @@ import { join } from 'node:path';
 
 import { GAME_NAME, SHIP } from '../src/core/brand';
 import { HINTS } from '../src/game/quests';
-import { BOSS_CARD, ENDING_CAPTIONS, FLYOVER, INTEL, PROLOGUE, TRANSITIONS } from '../src/game/story';
+import { BOSS_CARD, BROADCAST, ENDING_CAPTIONS, FLYOVER, INTEL, PROLOGUE, PROLOGUE2, STOLEN, TRANSITIONS } from '../src/game/story';
 import { EL } from '../src/i18n/el';
 import { LEVELS, LEVEL_ORDER } from '../src/levels';
 
@@ -60,6 +60,8 @@ export function englishStrings(): Set<string> {
     }
   }
   Object.values(PROLOGUE).forEach(add);
+  Object.values(PROLOGUE2).forEach(add);
+  for (const l of [...BROADCAST, ...STOLEN]) add(l.text);
   Object.values(FLYOVER).forEach(add);
   for (const lines of Object.values(TRANSITIONS)) for (const l of lines) add(l.text);
   for (const c of Object.values(BOSS_CARD)) add(c.sub);

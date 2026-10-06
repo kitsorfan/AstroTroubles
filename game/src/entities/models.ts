@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 import type { UpgradeId } from '../core/save';
+import type { HoloSpeaker } from '../world/levelTypes';
 import { glowTexture, shadowTexture } from '../world/textures';
 
 const matCache = new Map<string, THREE.Material>();
@@ -466,7 +467,9 @@ export function holoMaterial(color: string, map: THREE.Texture | null = null, fi
  * A face drawn in light for a hologram head (the front of a sphere is at u = 0.25): eyes under their
  * lids, brows, the line of the nose, lips, and the hairline, like a slightly grainy recording.
  */
-function holoFaceTexture(who: 'captain' | 'rosa') {
+function holoFaceTexture(who: HoloSpeaker) {
+  // Brennus wears a general's cap like the Captain's; Hypatia wears her hair up like Aunt Rosa.
+  const capped = who === 'captain' || who === 'brennus';
   const W = 512;
   const H = 256;
   const c = document.createElement('canvas');
@@ -477,9 +480,9 @@ function holoFaceTexture(who: 'captain' | 'rosa') {
   g.fillRect(0, 0, W, H);
   const cx = W * 0.25;
   // Hair: the top of the head and the back, darker so the face stands out.
-  g.fillStyle = who === 'captain' ? '#b4b4b4' : '#4a4a4a';
-  g.fillRect(0, 0, W, who === 'captain' ? 70 : 88);
-  if (who === 'rosa') {
+  g.fillStyle = capped ? '#b4b4b4' : '#4a4a4a';
+  g.fillRect(0, 0, W, capped ? 70 : 88);
+  if (!capped) {
     // Hair swept back from the face, framing it on both sides.
     g.beginPath();
     g.ellipse(cx, 92, 70, 44, 0, Math.PI, 0);
@@ -518,7 +521,7 @@ function holoFaceTexture(who: 'captain' | 'rosa') {
     g.fill();
     line(2.6, '#1e1e1e', [ex - 12, 120, ex, 108, ex + 12, 118]);
     // Brows: straighter and heavier for the Captain.
-    line(who === 'captain' ? 5 : 4, '#262626', [ex - 13, 104, ex, who === 'captain' ? 99 : 97, ex + 13, 103]);
+    line(capped ? 5 : 4, '#262626', [ex - 13, 104, ex, capped ? 99 : 97, ex + 13, 103]);
   }
   // Nose: one side in shadow, then the tip.
   line(2.2, 'rgba(30,30,30,0.7)', [cx + 3, 120, cx + 6, 135, cx + 6, 144]);
@@ -563,7 +566,7 @@ function limb(r0: number, r1: number, len: number) {
  * epaulettes or Aunt Rosa's hair bun and security vest. Returns the group and its materials, so the
  * projector can drive their flicker.
  */
-export function makeHoloFigure(who: 'captain' | 'rosa', color: string): { group: THREE.Group; mats: THREE.ShaderMaterial[] } {
+export function makeHoloFigure(who: HoloSpeaker, color: string): { group: THREE.Group; mats: THREE.ShaderMaterial[] } {
   const g = new THREE.Group();
   const body = holoMaterial(color);
   // The head glows through its middle too, so the face reads clearly.
@@ -633,7 +636,7 @@ export function makeHoloFigure(who: 'captain' | 'rosa', color: string): { group:
   // Head, a little taller than wide, with the face drawn in light.
   const head = add(new THREE.SphereGeometry(0.115, 28, 20), 0, 1.74, 0.01, faceM);
   head.scale.set(0.92, 1.12, 0.98);
-  if (who === 'captain') {
+  if (who === 'captain' || who === 'brennus') {
     // Peaked cap, badge, epaulettes and a line of buttons down the jacket.
     add(new THREE.CylinderGeometry(0.128, 0.118, 0.07, 22), 0, 1.86, 0);
     const top = add(new THREE.CylinderGeometry(0.14, 0.128, 0.03, 22), 0, 1.905, -0.01);

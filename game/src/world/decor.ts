@@ -29,6 +29,22 @@ const HEIGHT: Record<DecorKind, number> = {
   globe: 2.6,
   bloom: 1.4,
   screen: 3,
+  rock: 0.9,
+  boulder: 2.2,
+  cactus: 2.4,
+  pine: 4.2,
+  palm: 4,
+  bush: 1,
+  grass: 0.6,
+  fern: 0.9,
+  icespike: 2.6,
+  lavarock: 1.2,
+  bones: 0.8,
+  tent: 2,
+  wreck: 1.8,
+  thorns: 1.6,
+  banner: 3.6,
+  pillar: 3.4,
 };
 
 function colored(geo: THREE.BufferGeometry, color: string, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1): THREE.BufferGeometry {
@@ -51,6 +67,7 @@ const B = (w: number, h: number, d: number) => new THREE.BoxGeometry(w, h, d);
 const C = (rt: number, rb: number, h: number, s = 12) => new THREE.CylinderGeometry(rt, rb, h, s);
 const S = (r: number, s = 12) => new THREE.SphereGeometry(r, s, Math.max(6, Math.round(s * 0.7)));
 const K = (r: number, h: number, s = 8) => new THREE.ConeGeometry(r, h, s);
+const D = (r: number) => new THREE.DodecahedronGeometry(r, 0);
 
 /** Returns [solid parts, glowing parts] for a prop kind, built around the origin (floor at y = 0). */
 function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.BufferGeometry[], number] {
@@ -181,6 +198,133 @@ function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.
       s.push(colored(C(0.8, 1, 0.8, 16), '#3a4458', 0, 0.4));
       g.push(colored(S(0.9, 20), '#7fe6ff', 0, 1.9));
       r = 1;
+      break;
+    /* ---------------- Gaia Nova outdoors ---------------- */
+    case 'rock':
+      s.push(colored(D(0.6), '#8a8478', 0, 0.35, 0, 0.3, 0.5, 0, 1.2, 0.7, 1));
+      s.push(colored(D(0.35), '#6e6a60', 0.55, 0.2, 0.3, 0.8, 0, 0.2));
+      r = 0.6;
+      break;
+    case 'boulder':
+      s.push(colored(D(1.2), '#857c70', 0, 1, 0, 0.2, 0.7, 0.1, 1, 0.85, 1));
+      s.push(colored(D(0.6), '#6a6258', 0.9, 0.4, 0.5, 0.5, 0, 0.3));
+      s.push(colored(S(0.5, 8), '#5f8a3a', -0.4, 1.9, 0.2, 0, 0, 0, 1, 0.3, 1));
+      r = 1.2;
+      break;
+    case 'cactus':
+      s.push(colored(C(0.32, 0.36, 2.2, 10), '#3f8a4a', 0, 1.1));
+      s.push(colored(S(0.32, 10), '#3f8a4a', 0, 2.2));
+      s.push(colored(C(0.18, 0.2, 0.8, 8), '#46944f', 0.55, 1.3, 0, 0, 0, Math.PI / 2));
+      s.push(colored(C(0.17, 0.18, 0.7, 8), '#46944f', 0.85, 1.65));
+      s.push(colored(C(0.16, 0.18, 0.6, 8), '#46944f', -0.5, 1.0, 0, 0, 0, Math.PI / 2));
+      s.push(colored(C(0.15, 0.16, 0.6, 8), '#46944f', -0.75, 1.3));
+      g.push(colored(S(0.14, 6), '#ff6fcf', 0, 2.5));
+      r = 0.45;
+      break;
+    case 'pine':
+      s.push(colored(C(0.18, 0.26, 1.2, 8), '#5a3a22', 0, 0.6));
+      s.push(colored(K(1.3, 1.8, 9), '#2f5a3a', 0, 1.8));
+      s.push(colored(K(1.0, 1.6, 9), '#376a44', 0, 2.7));
+      s.push(colored(K(0.7, 1.4, 9), '#3f7a4c', 0, 3.5));
+      s.push(colored(K(0.95, 0.5, 9), '#f2f6ff', 0, 2.95));
+      s.push(colored(K(0.62, 0.45, 9), '#f2f6ff', 0, 3.85));
+      r = 0.4;
+      break;
+    case 'palm':
+      for (let i = 0; i < 5; i++) s.push(colored(C(0.2 - i * 0.015, 0.22 - i * 0.015, 0.75, 8), i % 2 ? '#8a6a44' : '#7a5a3a', i * 0.08, 0.38 + i * 0.72, 0, 0, 0, -0.05));
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        s.push(colored(B(1.8, 0.06, 0.45), i % 2 ? '#3f9a4a' : '#4fb05a', 0.4 + Math.cos(a) * 0.85, 3.7, Math.sin(a) * 0.85, 0, -a, -0.45));
+      }
+      g.push(colored(S(0.16, 6), '#ffd166', 0.45, 3.5, 0.15));
+      g.push(colored(S(0.16, 6), '#ffd166', 0.3, 3.5, -0.15));
+      r = 0.35;
+      break;
+    case 'bush':
+      s.push(colored(S(0.6, 9), '#3f7a2f', 0, 0.45, 0, 0, 0, 0, 1.2, 0.8, 1));
+      s.push(colored(S(0.45, 9), '#4f8a3a', 0.45, 0.4, 0.2));
+      s.push(colored(S(0.4, 9), '#356a28', -0.4, 0.38, -0.2));
+      g.push(colored(S(0.1, 6), '#ff6fcf', 0.2, 0.85, 0.35));
+      g.push(colored(S(0.1, 6), '#ffd166', -0.3, 0.75, 0.4));
+      r = 0.6;
+      break;
+    case 'grass':
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * Math.PI * 2;
+        s.push(colored(K(0.08, 0.7 + (i % 3) * 0.2, 4), i % 2 ? '#7ab84a' : '#5f9a3a', Math.cos(a) * 0.3, 0.35, Math.sin(a) * 0.3, Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3));
+      }
+      r = 0;
+      break;
+    case 'fern':
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        s.push(colored(B(1.2, 0.04, 0.3), i % 2 ? '#2f8a3a' : '#3fa04a', Math.cos(a) * 0.5, 0.45, Math.sin(a) * 0.5, 0, -a, 0.6));
+      }
+      r = 0;
+      break;
+    case 'icespike':
+      for (let i = 0; i < 4; i++) {
+        const a = i * 1.7;
+        g.push(colored(K(0.3 + (i % 2) * 0.12, 1.6 + (i % 3) * 0.6, 5), '#bfeaff', Math.cos(a) * 0.3, 0.8 + (i % 3) * 0.3, Math.sin(a) * 0.3, Math.cos(a) * 0.2, 0, Math.sin(a) * 0.2));
+      }
+      s.push(colored(D(0.45), '#dfefff', 0, 0.2, 0, 0, 0, 0, 1.4, 0.5, 1.4));
+      r = 0.6;
+      break;
+    case 'lavarock':
+      s.push(colored(D(0.7), '#2a2224', 0, 0.5, 0, 0.4, 0.2, 0, 1.1, 0.8, 1));
+      g.push(colored(B(0.08, 0.6, 0.08), '#ff6a12', 0.2, 0.6, 0.55, 0.3, 0, 0.2));
+      g.push(colored(B(0.5, 0.06, 0.08), '#ff8a2a', -0.1, 0.8, 0.6, 0, 0.3, 0));
+      r = 0.65;
+      break;
+    case 'bones':
+      s.push(colored(C(0.07, 0.07, 1.4, 6), '#efe6d0', 0, 0.15, 0, 0, 0, Math.PI / 2));
+      for (let i = 0; i < 4; i++) s.push(colored(C(0.05, 0.05, 0.9, 6), '#e6dcc4', -0.45 + i * 0.3, 0.45, 0, 0.4, 0, 0));
+      s.push(colored(S(0.3, 8), '#efe6d0', 0.85, 0.3, 0, 0, 0, 0, 1.3, 0.9, 1));
+      r = 0;
+      break;
+    case 'tent':
+      s.push(colored(K(1.3, 1.9, 4), '#e6dcc4', 0, 0.95, 0, 0, Math.PI / 4, 0));
+      s.push(colored(B(0.6, 1, 0.05), '#3a3a44', 0, 0.5, 0.92));
+      s.push(colored(C(0.04, 0.04, 2.2, 5), '#6a5a48', 0, 1.1));
+      g.push(colored(B(0.5, 0.3, 0.04), accent, 0, 1.3, 0.95));
+      r = 1.1;
+      break;
+    case 'wreck':
+      s.push(colored(B(2, 0.9, 1.2), '#5a6070', 0, 0.45, 0, 0.1, 0.3, 0.15));
+      s.push(colored(B(1.4, 0.15, 2.2), '#4a505e', 0.6, 0.9, 0.3, 0.3, 0.6, 0));
+      s.push(colored(C(0.3, 0.3, 1.2, 10), '#3a3e48', -0.9, 0.5, 0.4, 0, 0, Math.PI / 2));
+      g.push(colored(B(0.4, 0.15, 0.05), '#ff5e6a', 0.2, 0.7, 0.62));
+      r = 1;
+      break;
+    case 'thorns':
+      // Brennus's Thorn Legion barricade: iron stakes wrapped in angry pink vines.
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        s.push(colored(K(0.12, 1.6, 5), '#3a3036', Math.cos(a) * 0.4, 0.8, Math.sin(a) * 0.4, Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35));
+      }
+      s.push(colored(new THREE.TorusGeometry(0.5, 0.08, 6, 14), '#7a2a5a', 0, 0.6, 0, Math.PI / 2, 0, 0));
+      g.push(colored(S(0.1, 6), '#ff4fb8', 0.45, 1.1, 0.1));
+      g.push(colored(S(0.1, 6), '#ff4fb8', -0.35, 0.9, -0.3));
+      r = 0.6;
+      break;
+    case 'banner':
+      // Brennus's flag: a red gear crossed with a thorn, on a tall iron pole.
+      s.push(colored(C(0.08, 0.1, 3.6, 6), '#3a3036', 0, 1.8));
+      s.push(colored(B(1.2, 1.6, 0.04), '#8a1a24', 0.62, 2.7, 0));
+      s.push(colored(B(1.2, 0.12, 0.05), '#2a2026', 0.62, 3.45, 0));
+      g.push(colored(new THREE.TorusGeometry(0.28, 0.07, 6, 10), '#ff3a4c', 0.62, 2.75, 0.04));
+      g.push(colored(B(0.08, 0.7, 0.03), '#ff3a4c', 0.62, 2.75, 0.06, 0, 0, 0.6));
+      r = 0.2;
+      break;
+    case 'pillar':
+      // An ancient pillar of GaScu's long-gone gardeners, with glowing light-words.
+      s.push(colored(C(0.55, 0.65, 3, 8), '#d8b88a', 0, 1.5));
+      s.push(colored(B(1.5, 0.3, 1.5), '#c8a478', 0, 3.15));
+      s.push(colored(B(1.6, 0.3, 1.6), '#c8a478', 0, 0.15));
+      g.push(colored(B(0.25, 0.25, 0.05), '#5e9bff', 0, 2.2, 0.6));
+      g.push(colored(B(0.25, 0.25, 0.05), '#ff6fcf', 0, 1.7, 0.6));
+      g.push(colored(B(0.25, 0.25, 0.05), '#ffd166', 0, 1.2, 0.6));
+      r = 0.65;
       break;
     case 'bloom':
       s.push(colored(C(0.15, 0.3, 1.2, 8), '#3fae4a', 0, 0.6));

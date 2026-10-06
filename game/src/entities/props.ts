@@ -7,7 +7,7 @@ import { tr } from '../core/i18n';
 import { damp } from '../core/math';
 import type { PuzzleKind } from '../game/puzzles';
 import type { World } from '../game/world';
-import type { Cond, Spec } from '../world/levelTypes';
+import type { Cond, HoloSpeaker, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
@@ -1433,6 +1433,8 @@ export class Exit extends Entity implements Interactable {
 }
 
 /** A hologram projector that plays a recorded message the first time Jason walks by. */
+const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a' };
+
 export class Holo extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.6;
@@ -1452,14 +1454,14 @@ export class Holo extends Entity implements Interactable {
     cz: number,
     h: number,
     readonly log: string,
-    readonly who: 'captain' | 'rosa',
+    readonly who: HoloSpeaker,
   ) {
     super(world, id);
     const x = cx2x(cx);
     const z = cx2x(cz);
     this.spot = new THREE.Vector3(x, h, z);
     this.played = world.taken.has(id);
-    const color = who === 'rosa' ? '#ff9a9a' : '#7fe6ff';
+    const color = HOLO_COLOR[who];
     this.obj.add(mesh(cyl(0.7, 0.85, 0.3, 20), mat('#2e3446', { metal: 0.6, rough: 0.4 }), x, h + 0.15, z));
     this.ring = mesh(torus(0.55, 0.05), mat(color, { emissive: color, ei: 1.8 }), x, h + 0.32, z, false);
     this.ring.rotation.x = Math.PI / 2;

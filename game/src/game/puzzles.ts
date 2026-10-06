@@ -188,7 +188,10 @@ export function gridConflicts(cells: (number | null)[], size: number): Set<numbe
       if (cells[b] !== cells[a]) continue;
       const sameRow = Math.floor(a / size) === Math.floor(b / size);
       const sameCol = a % size === b % size;
-      if (sameRow || sameCol) (bad.add(a), bad.add(b));
+      if (sameRow || sameCol) {
+        bad.add(a);
+        bad.add(b);
+      }
     }
   }
   return bad;
