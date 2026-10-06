@@ -3,11 +3,60 @@ import { GAME_NAME, SHIP } from '../core/brand';
 import { LANGS, tr, upper } from '../core/i18n';
 import type { ButtonName, Input } from '../core/input';
 import type { Quality, SaveData, Settings, UpgradeId } from '../core/save';
+import {
+  PUZZLE_COLORS,
+  PUZZLE_SHAPES,
+  gridConflicts,
+  gridPlan,
+  gridPuzzle,
+  gridSolved,
+  lightsPlan,
+  lightsPuzzle,
+  patternPlan,
+  patternRound,
+  toggleLights,
+  tokenKey,
+  type PuzzleKind,
+  type Token,
+} from '../game/puzzles';
 import type { Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, portrait } from './icons';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
+
+/** A puzzle picture as SVG: a coloured shape, an arrow turned in quarter turns, or a little grid of dots. */
+function tokenSvg(t: Token): string {
+  const c = PUZZLE_COLORS[t.color];
+  const paint = `fill="${c}" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linejoin="round"`;
+  let body: string;
+  switch (t.shape) {
+    case 'circle':
+      body = `<circle cx="20" cy="20" r="14" ${paint}/>`;
+      break;
+    case 'square':
+      body = `<rect x="7" y="7" width="26" height="26" rx="4" ${paint}/>`;
+      break;
+    case 'triangle':
+      body = `<polygon points="20,5 35,33 5,33" ${paint}/>`;
+      break;
+    case 'star':
+      body = `<polygon points="20,3 24.9,14 36.5,15 27.6,22.7 30.3,34.5 20,28.3 9.7,34.5 12.4,22.7 3.5,15 15.1,14" ${paint}/>`;
+      break;
+    case 'arrow':
+      body = `<path transform="rotate(${(t.rot ?? 0) * 90} 20 20)" d="M20 4 L34 19 H25.5 V36 H14.5 V19 H6 Z" ${paint}/>`;
+      break;
+    case 'dots': {
+      const n = Math.min(9, t.n ?? 1);
+      body = Array.from({ length: n }, (_, i) => `<circle cx="${8 + (i % 3) * 12}" cy="${8 + Math.floor(i / 3) * 12}" r="4.6" fill="${c}"/>`).join('');
+      break;
+    }
+  }
+  return `<svg viewBox="0 0 40 40">${body}</svg>`;
+}
+
+/** Colour `k` in the colour square, with its own shape so it reads without colour too. */
+const gridToken = (k: number): Token => ({ color: k, shape: PUZZLE_SHAPES[k] });
 
 function h(html: string): HTMLElement {
   const t = document.createElement('template');
@@ -568,8 +617,162 @@ export class UI {
     });
   }
 
+  /**
+   * A terminal puzzle (LUX HACK). `memory` is the Simon-says light pattern; `pattern`, `lights` and
+   * `grid` are the logic puzzles in `game/puzzles.ts`. `length` sets how hard it is.
+   */
+  hack(length: number, done: (ok: boolean) => void, kind: PuzzleKind = 'memory') {
+    if (kind === 'pattern') return this.patternHack(length, done);
+    if (kind === 'lights') return this.lightsHack(length, done);
+    if (kind === 'grid') return this.gridHack(length, done);
+    this.memoryHack(length, done);
+  }
+
+  /** The panel the logic puzzles share: instructions (already translated), the puzzle, progress dots, and the buttons. */
+  private puzzlePanel(intro: string, body: string, dots: number, done: (ok: boolean) => void, extra = '') {
+    const el = this.open(`<div class="panel hack">
+      <h2>${tr('LUX HACK')}</h2>
+      <div class="msg small">${intro}</div>
+      ${body}
+      <div class="dots">${'<i></i>'.repeat(dots)}</div>
+      <div class="hack-actions">${extra}<button class="menu-btn danger giveup">${tr('Give up')}</button></div>
+    </div>`);
+    const msg = $(el, '.msg');
+    let finished = false;
+    const end = (ok: boolean) => {
+      if (finished) return;
+      finished = true;
+      if (ok) {
+        msg.textContent = tr('Hacked!');
+        audio.play('success');
+      }
+      setTimeout(
+        () => {
+          this.close();
+          done(ok);
+        },
+        ok ? 800 : 0,
+      );
+    };
+    this.button(el, '.giveup', () => end(false));
+    return { el, msg, end, dots: [...el.querySelectorAll<HTMLElement>('.dots i')], over: () => finished };
+  }
+
+  /** "What comes next?": find the rule in a row of pictures and pick the missing one, a few rounds in a row. */
+  private patternHack(length: number, done: (ok: boolean) => void) {
+    const plan = patternPlan(length);
+    const intro = tr('What comes next? Find the rule, then pick the missing picture.');
+    const p = this.puzzlePanel(intro, '<div class="pattern-row"></div><div class="pattern-choices"></div>', plan.length, done);
+    const row = $(p.el, '.pattern-row');
+    const choices = $(p.el, '.pattern-choices');
+    let round = 0;
+    const deal = () => {
+      if (p.over()) return;
+      const r = patternRound(plan[round]);
+      let busy = false;
+      p.msg.textContent = intro;
+      row.innerHTML = r.shown.map((t) => `<div class="tok">${tokenSvg(t)}</div>`).join('') + '<div class="tok ask">?</div>';
+      choices.innerHTML = r.choices.map((t, i) => `<div class="tok pick" data-i="${i}">${tokenSvg(t)}</div>`).join('');
+      choices.querySelectorAll<HTMLElement>('.pick').forEach((b) =>
+        b.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          if (busy || p.over()) return;
+          busy = true;
+          const t = r.choices[Number(b.dataset.i)];
+          if (tokenKey(t) !== tokenKey(r.answer)) {
+            b.classList.add('wrong');
+            audio.play('fail');
+            p.msg.textContent = tr('Not quite! Here is a new one...');
+            setTimeout(deal, 1100);
+            return;
+          }
+          b.classList.add('right');
+          const ask = $(row, '.ask');
+          ask.innerHTML = tokenSvg(t);
+          ask.classList.add('right');
+          audio.play(`tone${round % 4}` as 'tone0');
+          p.dots[round].classList.add('on');
+          round += 1;
+          if (round >= plan.length) p.end(true);
+          else setTimeout(deal, 750);
+        }),
+      );
+    };
+    deal();
+  }
+
+  /** Power grid: each tap flips a tile and its neighbours; light up the whole grid. */
+  private lightsHack(length: number, done: (ok: boolean) => void) {
+    const { size, taps } = lightsPlan(length);
+    const start = lightsPuzzle(size, taps);
+    let on = start;
+    const p = this.puzzlePanel(
+      tr('Reroute the power! Tapping a tile flips it and the tiles next to it. Light up every tile.'),
+      `<div class="lights" style="--n:${size}">${'<i></i>'.repeat(size * size)}</div><div class="hint">${tr('It can be done in {n} taps.', { n: taps })}</div>`,
+      0,
+      done,
+      `<button class="menu-btn reset">${tr('Start over')}</button>`,
+    );
+    const tiles = [...p.el.querySelectorAll<HTMLElement>('.lights i')];
+    const draw = () => tiles.forEach((t, i) => t.classList.toggle('on', on[i]));
+    tiles.forEach((t, i) =>
+      t.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if (p.over()) return;
+        on = toggleLights(on, size, i);
+        audio.play('blip', 1.2 + (i % size) * 0.15);
+        draw();
+        if (on.every(Boolean)) p.end(true);
+      }),
+    );
+    this.button(p.el, '.reset', () => {
+      if (p.over()) return;
+      on = start;
+      draw();
+    });
+    draw();
+  }
+
+  /** Colour square: fill the gaps so every row and column has each colour exactly once. */
+  private gridHack(length: number, done: (ok: boolean) => void) {
+    const { size, holes } = gridPlan(length);
+    const puzzle = gridPuzzle(size, holes);
+    const cells = [...puzzle.cells];
+    const p = this.puzzlePanel(
+      tr('Fill the gaps so every row and every column has one of each colour. Tap a gap to change its colour.'),
+      `<div class="cgrid" style="--n:${size}">${cells.map((_, i) => `<i class="${puzzle.given[i] ? 'given' : 'gap'}"></i>`).join('')}</div>`,
+      0,
+      done,
+    );
+    const els = [...p.el.querySelectorAll<HTMLElement>('.cgrid i')];
+    const draw = () => {
+      const bad = gridConflicts(cells, size);
+      els.forEach((el, i) => {
+        const v = cells[i];
+        el.innerHTML = v === null ? '' : tokenSvg(gridToken(v));
+        el.classList.toggle('bad', bad.has(i));
+      });
+    };
+    els.forEach((el, i) => {
+      if (puzzle.given[i]) return;
+      el.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if (p.over()) return;
+        const v = cells[i];
+        cells[i] = v === null ? 0 : v + 1 < size ? v + 1 : null;
+        const now = cells[i];
+        if (now === null) audio.play('blip');
+        else audio.play(`tone${now}` as 'tone0');
+        draw();
+        if (gridSolved(cells, size)) p.end(true);
+        else if (cells.every((c) => c !== null)) p.msg.textContent = tr('Almost! The red tiles share a colour with their row or column.');
+      });
+    });
+    draw();
+  }
+
   /** Simon-says light puzzle: watch LUX's pattern, then repeat it. */
-  hack(length: number, done: (ok: boolean) => void) {
+  private memoryHack(length: number, done: (ok: boolean) => void) {
     const el = this.open(`<div class="panel hack">
       <h2>${tr('LUX HACK')}</h2>
       <div class="msg">${tr('Watch the lights...')}</div>

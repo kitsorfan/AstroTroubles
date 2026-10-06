@@ -5,6 +5,7 @@ import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
 import { tr } from '../core/i18n';
 import { damp } from '../core/math';
+import type { PuzzleKind } from '../game/puzzles';
 import type { World } from '../game/world';
 import type { Cond, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
@@ -291,6 +292,7 @@ export class Terminal extends Entity implements Interactable {
     h: number,
     private flag: string,
     private length = 4,
+    private puzzle: PuzzleKind = 'memory',
   ) {
     super(world, id);
     const x = cx2x(cx);
@@ -314,9 +316,13 @@ export class Terminal extends Entity implements Interactable {
   }
 
   interact() {
-    this.world.hooks.hack(this.length, (ok) => {
-      if (ok) this.finish(false);
-    });
+    this.world.hooks.hack(
+      this.length,
+      (ok) => {
+        if (ok) this.finish(false);
+      },
+      this.puzzle,
+    );
   }
 
   private finish(silent: boolean) {

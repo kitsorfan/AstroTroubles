@@ -78,7 +78,7 @@ Jason finds a new ability on each deck, and it's needed to finish that deck:
 | 5. Security Deck | LUX's Force Pulse (shorts out lasers) | CERBERUS |
 | 6. The Bridge | Everything at once | The Heart of GaScu, then GaScu Reborn |
 
-- **Hacking** is a light-pattern memory game: watch LUX's lights, then repeat them.
+- **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
@@ -113,9 +113,9 @@ Every deck has four side quests, listed with their rewards in the pause menu. LU
 | --- | --- | --- |
 | Cryo Deck | Step on the colour pads in the order a sign gives | Bigger Clip |
 | Hydroponics | Ground-pound three switches within 21 seconds | +1 max heart |
-| Engine Core | A four-colour code on islands in the lava | Blaster Power |
-| Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
-| Security Deck | A 7-light hack switches off a laser corridor | LUX Zapper |
+| Engine Core | A four-colour code on islands in the lava, worked out from three clues | Blaster Power |
+| Habitat Ring | A colour riddle split between two signs on opposite sides of the Ring | Quick Reload |
+| Security Deck | A five-round **What comes next?** hack switches off a laser corridor | LUX Zapper |
 | The Bridge | Ground-pound four switches across the navigation room within 28 seconds | 300 bolts |
 
 For the switch puzzles, a clock at the top of the screen counts down from the first switch, with a dot for each one that's down. A cracked vault stays open, even when you replay the deck.

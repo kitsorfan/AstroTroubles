@@ -524,16 +524,20 @@ export class Game {
         });
       },
       toast: (text, who) => this.ui.toast(text, who ?? 'bolt'),
-      hack: (length, done) => {
+      hack: (length, done, kind) => {
         this.state = 'hack';
         this.input.reset();
         this.ui.showControls(false);
-        this.ui.hack(length, (ok) => {
-          this.state = 'play';
-          this.ui.showControls(true);
-          this.input.flush();
-          done(ok);
-        });
+        this.ui.hack(
+          length,
+          (ok) => {
+            this.state = 'play';
+            this.ui.showControls(true);
+            this.input.flush();
+            done(ok);
+          },
+          kind,
+        );
       },
       shop: () => {
         this.state = 'shop';
