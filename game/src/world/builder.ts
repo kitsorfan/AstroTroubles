@@ -142,6 +142,9 @@ const DIRS: [number, number][] = [
 
 const isWalk = (c: Cell) => c.kind === 'floor' || c.kind === 'grate' || c.kind === 'ice';
 
+/** Outdoors, one ground texture covers this many cells (so tiles don't show their edges). */
+const OUTDOOR_UV = 3;
+
 const shade = (hex: string, f: number) => `#${new THREE.Color(hex).multiplyScalar(f).getHexString()}`;
 
 /**
@@ -408,8 +411,12 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
         liquids.setMatrixAt(liquids.count++, m4);
       } else {
         // Floor tile: pick a plate variant and turn it a random quarter so the pattern never repeats.
-        const r = hash2(x, z, 3);
-        const target = c.kind === 'grate' ? grateQ : c.kind === 'ice' ? iceQ : floorQ[r < 0.64 ? 0 : r < 0.95 ? 1 : 2];
+        // Outdoors the ground is one continuous surface: its texture spans OUTDOOR_UV cells in world
+        // space, and the variant (and tint) is picked per patch of that size, not per tile.
+        const bx = Math.floor(x / OUTDOOR_UV);
+        const bz = Math.floor(z / OUTDOOR_UV);
+        const r = outdoor ? hash2(bx, bz, 3) : hash2(x, z, 3);
+        const target = c.kind === 'grate' ? grateQ : c.kind === 'ice' ? iceQ : floorQ[outdoor ? (r < 0.7 ? 0 : r < 0.88 ? 1 : 2) : r < 0.64 ? 0 : r < 0.95 ? 1 : 2];
         const rot = Math.floor(hash2(x, z, 4) * 4);
         const uvs: [number, number][] = [
           [0, 1],
@@ -417,7 +424,13 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           [1, 0],
           [0, 0],
         ];
-        const tint = 0.88 + hash2(x, z, 5) * 0.16;
+        const world: [number, number][] = [
+          [x / OUTDOOR_UV, -z / OUTDOOR_UV],
+          [(x + 1) / OUTDOOR_UV, -z / OUTDOOR_UV],
+          [(x + 1) / OUTDOOR_UV, -(z + 1) / OUTDOOR_UV],
+          [x / OUTDOOR_UV, -(z + 1) / OUTDOOR_UV],
+        ];
+        const tint = outdoor ? 0.95 + hash2(bx, bz, 5) * 0.08 : 0.88 + hash2(x, z, 5) * 0.16;
         target.add(
           [
             [x0, c.h, z0],
@@ -426,7 +439,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
             [x0, c.h, z1],
           ],
           [0, 1, 0],
-          [0, 1, 2, 3].map((i) => uvs[(i + rot) % 4]),
+          outdoor && c.kind !== 'grate' ? world : [0, 1, 2, 3].map((i) => uvs[(i + rot) % 4]),
           [floorCorner(c, x, z, -1, -1, tint), floorCorner(c, x, z, 1, -1, tint), floorCorner(c, x, z, 1, 1, tint), floorCorner(c, x, z, -1, 1, tint)],
         );
       }

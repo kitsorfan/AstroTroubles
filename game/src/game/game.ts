@@ -9,7 +9,7 @@ import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
-import { MAX_HEARTS, PLAYER } from '../core/constants';
+import { CELL, MAX_HEARTS, PLAYER } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
@@ -27,8 +27,8 @@ import { World, type WorldHooks } from './world';
 
 type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending' | 'cutscene' | 'cinema';
 
-/** How a deck opens when it is entered fresh (not resumed from a checkpoint). */
-type Opening = 'auto' | 'wake' | 'fly';
+/** How a deck opens when it is entered fresh (not resumed from a checkpoint); 'none' skips the opening. */
+type Opening = 'auto' | 'wake' | 'fly' | 'none';
 
 /** A scene a cinematic is staged in: deep space around the ship, or the skies of Gaia Nova. */
 interface CinemaScene {
@@ -155,10 +155,47 @@ export class Game {
       }
       renderer.compile(title.scene, title.camera);
     })();
+    // Developer shortcut, only in a desktop browser (never in the app): #deck=<id> jumps straight into a deck
+    // (&still skips its opening, &all hands over every ability), #cinema=<arrival|descent|hop|finale> plays a
+    // chapter 2 cinematic.
+    const dev = inApp() ? null : new URLSearchParams(location.hash.slice(1));
+    if (dev && (dev.get('deck') || dev.get('cinema'))) {
+      void ready.then(() => this.devJump(dev));
+      return;
+    }
     this.ui.tapToStart(ready, () => {
       audio.unlock();
       this.toTitle();
     });
+  }
+
+  private devJump(dev: URLSearchParams) {
+    if (dev.has('all')) {
+      this.save.abilities = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
+      this.save.unlocked = LEVEL_ORDER.length;
+    }
+    const deck = dev.get('deck') as DeckId | null;
+    if (deck && LEVELS[deck]) {
+      this.startDeck(deck, false, dev.has('still') ? 'none' : 'auto');
+      // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
+      const at = dev.get('at')?.split(',').map(Number);
+      if (at && at.length === 2) {
+        setTimeout(() => {
+          const w = this.world;
+          if (!w) return;
+          const c = w.grid.cell(at[0], at[1]);
+          w.player.teleport(at[0] * CELL + CELL / 2, c.h + 0.1, at[1] * CELL + CELL / 2);
+          w.snapCamera();
+        }, 3400);
+      }
+      return;
+    }
+    const film = dev.get('cinema');
+    const done = () => this.toTitle();
+    if (film === 'arrival') void this.cinema((d, s) => planet.arrival(d, s)).then(done);
+    else if (film === 'descent') void this.planetCinema((d, p) => planet.descent(d, p)).then(done);
+    else if (film === 'hop') void this.planetCinema((d, p) => planet.hop(d, p, 'plains', 'desert')).then(done);
+    else if (film === 'finale') void this.planetCinema((d, p) => planet.finale(d, p, 'freed')).then(done);
   }
 
   private applySettings(s: Settings) {
@@ -497,7 +534,7 @@ export class Game {
       this.refreshHud();
       this.input.flush();
       const w = this.world;
-      const how = r ? null : opening === 'auto' ? (id === 'cryo' ? 'wake' : 'fly') : opening;
+      const how = r || opening === 'none' ? null : opening === 'auto' ? (id === 'cryo' ? 'wake' : 'fly') : opening;
       if (how !== 'wake') this.ui.fade('#000000', 0, 0.7);
       if (how === 'wake') void this.cutscene((d) => wakeUp(d, w));
       else if (how === 'fly') void this.cutscene((d) => flyover(d, w));

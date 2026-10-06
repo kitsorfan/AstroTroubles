@@ -1249,6 +1249,14 @@ export class World {
     else this.placeSun(p.x, this.groundY, p.z);
   }
 
+  /** Puts the follow camera straight on Jason, with no easing (after a teleport). */
+  snapCamera() {
+    const p = this.player.body;
+    this.camTarget.set(p.x, p.y + 1.2, p.z);
+    this.groundY = p.y;
+    this.placeCamera(0);
+  }
+
   /** Where the follow camera would be right now, at the given distance from Jason. */
   followPose(out: Rig, dist = 13): Rig {
     const cp = Math.cos(this.pitch);

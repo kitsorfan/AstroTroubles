@@ -178,11 +178,12 @@ export class PlanetScene {
       pos.setY(i, h);
       c.setRGB(0, 0, 0);
       for (const [r, w] of weights(x, z)) c.add(tmp.set(COLOR[r]).multiplyScalar(w));
-      // Snow on the high peaks, sand along the beaches, dark rock near the crater.
-      if (h > 95) c.lerp(tmp.set('#f4f8ff'), Math.min(1, (h - 95) / 30));
-      if (h < 4) c.lerp(tmp.set('#e8d8a8'), Math.min(1, (4 - h) / 5));
+      // Snow on the high peaks, sand along the beaches, dark basalt all over the volcano.
       const [vx, vz] = REGION.volcano;
-      if (Math.hypot(x - vx, z - vz) < 60) c.lerp(tmp.set('#2a1a18'), 0.6);
+      const dv = Math.hypot(x - vx, z - vz);
+      if (h > 95 && dv > 180) c.lerp(tmp.set('#f4f8ff'), Math.min(1, (h - 95) / 30));
+      if (h < 4) c.lerp(tmp.set('#e8d8a8'), Math.min(1, (4 - h) / 5));
+      if (dv < 180) c.lerp(tmp.set(dv < 40 ? '#4a1a10' : '#2e2426'), Math.min(1, (180 - dv) / 60) * 0.9);
       c.multiplyScalar(0.9 + Math.sin(x * 0.2) * Math.cos(z * 0.17) * 0.06);
       colors.set([c.r, c.g, c.b], i * 3);
     }
@@ -298,7 +299,7 @@ export class PlanetScene {
     this.particles.update(dt);
     const [vx, vz] = REGION.volcano;
     if (Math.random() < 0.9 * this.smoke) {
-      this.particles.emit(vx + (Math.random() - 0.5) * 20, PEAK, vz + (Math.random() - 0.5) * 20, { count: 2, color: Math.random() < 0.3 ? '#ff8a3a' : '#5a4a48', speed: 4, up: 22, life: 4, size: 16, gravity: -1, drag: 0.2 });
+      this.particles.emit(vx + (Math.random() - 0.5) * 20, PEAK, vz + (Math.random() - 0.5) * 20, { count: 1, color: Math.random() < 0.25 ? '#ff6a1a' : '#2a1e1c', speed: 4, up: 22, life: 4, size: 12, gravity: -1, drag: 0.2 });
     }
     const c = this.camera;
     c.position.copy(rig.pos);

@@ -633,6 +633,7 @@ export const EL: Record<string, string> = {
   "GAIA NOVA IS FREE!": "Η ΓΑΙΑ ΝΟΒΑ ΕΙΝΑΙ ΕΛΕΥΘΕΡΗ!",
   "END OF CHAPTER 1": "ΤΕΛΟΣ ΤΟΥ ΚΕΦΑΛΑΙΟΥ 1",
   "Chapter 2: Gaia Nova": "Κεφάλαιο 2: Γαία Νόβα",
+  "TAKE OFF": "ΑΠΟΓΕΙΩΣΗ",
   // Gaia Nova: each region keeps its own Greek in ./el/<region>.ts.
   ...EL_STUB,
   ...EL_PLAINS,

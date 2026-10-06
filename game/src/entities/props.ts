@@ -7,6 +7,7 @@ import { tr } from '../core/i18n';
 import { damp } from '../core/math';
 import type { PuzzleKind } from '../game/puzzles';
 import type { World } from '../game/world';
+import { chapterOf } from '../levels';
 import type { Cond, HoloSpeaker, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
@@ -537,13 +538,30 @@ export class Platform extends Entity {
     this.needs = spec.needs;
     const hw = this.half;
     this.mesh = new THREE.Group();
-    this.mesh.add(mesh(boxG(hw * 2, 0.5, hw * 2), mat('#5a6478', { metal: 0.55, rough: 0.35 }), 0, -0.25, 0));
-    const trim = new THREE.MeshStandardMaterial({ map: stripeTexture('#ffd166', '#2a2f3a'), roughness: 0.5 });
-    // The hazard band wraps the sides just below the deck. Its top must not share the deck's plane:
-    // two coplanar faces z-fight, and on a moving platform that shimmers as a constant flicker.
-    this.mesh.add(mesh(boxG(hw * 2 + 0.08, 0.14, hw * 2 + 0.08), trim, 0, -0.13, 0));
-    this.mesh.add(mesh(cyl(0.2, 0.3, 0.3, 10), mat(world.theme.accent, { emissive: world.theme.accent, ei: 1.4 }), 0, -0.6, 0, false));
-    this.mesh.add(glowSprite(world.theme.accent, 1.4, 0.5).translateY(-0.8));
+    const outdoor = world.theme.outdoor;
+    if (outdoor) {
+      // On Gaia Nova: a raft of logs lashed together (stone slabs over lava, so they don't burn).
+      const stone = outdoor.ground === 'basalt';
+      const logs = Math.max(2, Math.round((hw * 2) / 0.62));
+      const step = (hw * 2) / logs;
+      const wood = mat(stone ? '#4a4044' : '#8a5a32', { rough: 0.85 });
+      const dark = mat(stone ? '#2a2224' : '#5a3a20', { rough: 0.9 });
+      for (let i = 0; i < logs; i++) {
+        const log = mesh(cyl(step / 2, step / 2, hw * 2, 10), i % 2 ? wood : dark, -hw + step * (i + 0.5), -step / 2, 0);
+        log.rotation.x = Math.PI / 2;
+        this.mesh.add(log);
+      }
+      for (const z of [-hw * 0.6, hw * 0.6]) this.mesh.add(mesh(boxG(hw * 2 + 0.1, 0.1, 0.16), mat('#c8a060', { rough: 0.9 }), 0, -0.02, z));
+      if (stone) this.mesh.add(glowSprite('#ff6a12', 2.4, 0.35).translateY(-0.8));
+    } else {
+      this.mesh.add(mesh(boxG(hw * 2, 0.5, hw * 2), mat('#5a6478', { metal: 0.55, rough: 0.35 }), 0, -0.25, 0));
+      const trim = new THREE.MeshStandardMaterial({ map: stripeTexture('#ffd166', '#2a2f3a'), roughness: 0.5 });
+      // The hazard band wraps the sides just below the deck. Its top must not share the deck's plane:
+      // two coplanar faces z-fight, and on a moving platform that shimmers as a constant flicker.
+      this.mesh.add(mesh(boxG(hw * 2 + 0.08, 0.14, hw * 2 + 0.08), trim, 0, -0.13, 0));
+      this.mesh.add(mesh(cyl(0.2, 0.3, 0.3, 10), mat(world.theme.accent, { emissive: world.theme.accent, ei: 1.4 }), 0, -0.6, 0, false));
+      this.mesh.add(glowSprite(world.theme.accent, 1.4, 0.5).translateY(-0.8));
+    }
     this.obj.add(this.mesh);
     this.box = makeBox(this.pos.x, this.pos.z, hw, hw, h - 0.5, h, this);
     world.boxes.push(this.box);
@@ -1405,13 +1423,37 @@ export class Exit extends Entity implements Interactable {
     this.ring.rotation.x = Math.PI / 2;
     this.pad.add(this.ring);
     this.obj.add(this.pad);
-    for (const sx of [-1, 1]) this.obj.add(mesh(boxG(0.3, 3.6, 0.3), mat('#56637e', { metal: 0.5 }), x + sx * 1.35, h + 1.8, z));
-    this.obj.add(mesh(boxG(3, 0.3, 0.3), mat('#56637e', { metal: 0.5 }), x, h + 3.6, z));
+    if (chapterOf(world.def.id) === 2) {
+      // On Gaia Nova the way out is a hover skiff from the shuttle: Jason stands in it and it flies up and away.
+      this.planet = true;
+      const hull = mat('#e6edf7', { metal: 0.3, rough: 0.4 });
+      const trim = mat('#ff8a3d', { rough: 0.5 });
+      const boat = mesh(new THREE.CylinderGeometry(1.75, 1.2, 0.7, 20), hull, 0, -0.2, 0);
+      boat.scale.set(1.15, 1, 0.85);
+      this.pad.add(boat);
+      const rail = mesh(torus(1.7, 0.08), trim, 0, 0.75, 0, false);
+      rail.rotation.x = Math.PI / 2;
+      rail.scale.set(1.15, 0.85, 1);
+      this.pad.add(rail);
+      for (const sx of [-1, 1]) {
+        this.pad.add(mesh(cyl(0.32, 0.4, 1.1, 12), mat('#56637e', { metal: 0.6 }), sx * 1.95, 0.1, 0).rotateX(Math.PI / 2));
+        const jet = glowSprite('#7fe6ff', 1.6, 0.8);
+        jet.position.set(sx * 1.95, 0.1, -0.7);
+        this.pad.add(jet);
+      }
+    } else {
+      for (const sx of [-1, 1]) this.obj.add(mesh(boxG(0.3, 3.6, 0.3), mat('#56637e', { metal: 0.5 }), x + sx * 1.35, h + 1.8, z));
+      this.obj.add(mesh(boxG(3, 0.3, 0.3), mat('#56637e', { metal: 0.5 }), x, h + 3.6, z));
+    }
     world.addInteractable(this);
   }
 
+  /** On Gaia Nova the exit is a hover skiff rather than a lift. */
+  private planet = false;
+
   label() {
-    return this.world.canExit() && !this.used ? 'RIDE LIFT' : null;
+    if (!this.world.canExit() || this.used) return null;
+    return this.planet ? 'TAKE OFF' : 'RIDE LIFT';
   }
 
   interact() {
