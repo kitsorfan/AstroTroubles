@@ -41,6 +41,10 @@ export const PLAYER = {
   invuln: 1.4,
   knockback: 9,
   shootCooldown: 0.3,
+  /** A tap that lands during the cooldown is remembered this long, so quick tapping never drops shots. */
+  shootBuffer: 0.25,
+  /** Seconds BLAST must be held before it starts charging a fireball. */
+  chargeDelay: 0.22,
   /** Shots per clip, reload time, and the charged fireball (hold BLAST). */
   clip: 6,
   reloadTime: 1.5,

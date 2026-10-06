@@ -59,7 +59,7 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | Left side of the screen | Joystick: move |
 | Drag on the right side | Turn the camera |
 | **JUMP** | Jump. Hold for higher jumps; with the Jet Boots, press again in mid-air |
-| **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Jason reloads. **Hold** to charge a big fireball that bursts on impact |
+| **BLAST** | Tap to shoot (it aims at the nearest enemy). The clip holds 6 shots, then Jason reloads. **Hold** to charge a big fireball that bursts on impact; it costs 3 shots, and if the clip is too low, holding reloads it while the charge builds |
 | **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Jason gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
 | **PULSE** | LUX's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
@@ -78,11 +78,12 @@ Jason finds a new ability on each deck, and it's needed to finish that deck:
 | 5. Security Deck | LUX's Force Pulse (shorts out lasers) | CERBERUS |
 | 6. The Bridge | Everything at once | The Heart of GaScu, then GaScu Reborn |
 
-- **Hacking** is a light-pattern memory game: watch LUX's lights, then repeat them.
+- **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
+- **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
-- **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open.
+- **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
 
 ### Enemies
 
@@ -112,9 +113,9 @@ Every deck has four side quests, listed with their rewards in the pause menu. LU
 | --- | --- | --- |
 | Cryo Deck | Step on the colour pads in the order a sign gives | Bigger Clip |
 | Hydroponics | Ground-pound three switches within 21 seconds | +1 max heart |
-| Engine Core | A four-colour code on islands in the lava | Blaster Power |
-| Habitat Ring | The code is split between two signs on opposite sides of the Ring | Quick Reload |
-| Security Deck | A 7-light hack switches off a laser corridor | LUX Zapper |
+| Engine Core | A four-colour code on islands in the lava, worked out from three clues | Blaster Power |
+| Habitat Ring | A colour riddle split between two signs on opposite sides of the Ring | Quick Reload |
+| Security Deck | A five-round **What comes next?** hack switches off a laser corridor | LUX Zapper |
 | The Bridge | Ground-pound four switches across the navigation room within 28 seconds | 300 bolts |
 
 For the switch puzzles, a clock at the top of the screen counts down from the first switch, with a dot for each one that's down. A cracked vault stays open, even when you replay the deck.
@@ -143,7 +144,7 @@ Tap to hurry a caption along, or press **SKIP** (or the Android back button) to 
 
 ## Languages
 
-The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσωνας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`assets/languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσονας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`assets/languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
 
 ## Project layout
 

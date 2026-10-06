@@ -103,7 +103,7 @@ export const engine: LevelDef = {
     i: { type: 'rune', group: 'vault', order: 2, color: '#ffd166', floor: 'floor', h: 0 },
     l: { type: 'rune', group: 'vault', order: 3, color: '#7dff9a', floor: 'floor', h: 0 },
     m: { type: 'rune', group: 'vault', order: 4, color: '#ff4f5e', floor: 'floor', h: 0 },
-    n: { type: 'sign', text: "COOLANT VAULT. Cool the lava in this order: BLUE, then GOLD, then GREEN, then RED. The pads sit on little islands, so jump carefully!" },
+    n: { type: 'sign', text: "COOLANT VAULT. Step on the four pads in the right order. Clues: BLUE goes first. RED goes last. GOLD comes right after BLUE. The pads sit on little islands, so jump carefully!" },
     D: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
     I: { type: 'prize', id: 'vault', reward: 'blaster' },
     W: { type: 'boss', boss: 'golem', room: 'arena' },

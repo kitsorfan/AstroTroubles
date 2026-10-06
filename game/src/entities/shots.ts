@@ -43,15 +43,16 @@ export class Shots {
     add('enemy', 46, (g) => g.add(new THREE.Mesh(sphere(0.26, 12), eMat), glowSprite('#ff4fb8', 1.5, 0.75)), 0.32);
     add(
       'fireball',
-      3,
+      4,
       (g) => g.add(new THREE.Mesh(sphere(0.55, 18), fMat), glowSprite('#ffb04a', 3.6, 0.9), glowSprite('#ff5a1a', 6, 0.35)),
       0.6,
     );
   }
 
-  fire(owner: ShotKind, origin: THREE.Vector3, dir: THREE.Vector3, speed: number, dmg: number, gravity = 0) {
+  /** Launches a pooled projectile. Returns false if every one of that kind is already in flight. */
+  fire(owner: ShotKind, origin: THREE.Vector3, dir: THREE.Vector3, speed: number, dmg: number, gravity = 0): boolean {
     const s = this.pool.find((p) => !p.active && p.kind === owner);
-    if (!s) return;
+    if (!s) return false;
     s.active = true;
     s.obj.visible = true;
     s.obj.position.copy(origin);
@@ -60,6 +61,7 @@ export class Shots {
     s.dmg = dmg;
     s.gravity = gravity;
     s.obj.lookAt(tmp.copy(origin).add(dir));
+    return true;
   }
 
   clear() {

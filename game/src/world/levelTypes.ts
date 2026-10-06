@@ -1,3 +1,5 @@
+import type { PuzzleKind } from '../game/puzzles';
+
 export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
@@ -42,7 +44,8 @@ export type Spec = Base &
      * `timed` seconds, the flag is set once they are all down, and from then on they stay down.
      */
     | { type: 'switch'; flag: string; timed?: number; together?: boolean }
-    | { type: 'terminal'; flag: string; length?: number; label?: string }
+    /** A LUX HACK terminal: solving its puzzle (the memory lights unless `puzzle` says otherwise) sets `flag`. */
+    | { type: 'terminal'; flag: string; length?: number; label?: string; puzzle?: PuzzleKind }
     | { type: 'cell' }
     | { type: 'socket'; flag: string }
     | {

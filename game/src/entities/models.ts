@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+import type { UpgradeId } from '../core/save';
 import { glowTexture, shadowTexture } from '../world/textures';
 
 const matCache = new Map<string, THREE.Material>();
@@ -94,6 +95,9 @@ export interface JasonModel {
   eyes: THREE.Object3D[];
   /** Glow at the blaster's muzzle while a fireball charges. */
   gunGlow: THREE.Sprite;
+  /** Parts added by shop upgrades (see `dressJason`), and the upgrade levels they were built for. */
+  gear: THREE.Object3D[];
+  gearKey: string;
 }
 
 /**
@@ -235,7 +239,131 @@ export function makeJason(): JasonModel {
   root.add(carry);
 
   root.add(blobShadow(1.3));
-  return { root, body, head, armL, armR, legL, legR, jets, visor, suit, carry, eyes: face.eyes, gunGlow };
+  return { root, body, head, armL, armR, legL, legR, jets, visor, suit, carry, eyes: face.eyes, gunGlow, gear: [], gearKey: '' };
+}
+
+/**
+ * Every shop upgrade shows on Jason's suit, so you can see what he has bought:
+ * - Heart Plating: a chest plate, then shoulder pads, then both turn gold.
+ * - Blaster Power: glowing coils and a longer barrel, then a power cell on top.
+ * - Bigger Clip: a drum magazine under the blaster, then a belt of spare cells.
+ * - Quick Reload: cooling fins on the blaster, then a forearm gauntlet.
+ * - LUX Zapper: a LUX link on his left wrist, then a second, crackling antenna.
+ * - Bolt Magnet: a horseshoe magnet on his backpack, which grows and glows gold.
+ * Gear hangs off the body, arms and head (never the root, whose last child is the shadow).
+ */
+export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>) {
+  const lv = (id: UpgradeId) => upgrades[id] ?? 0;
+  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet'] as const).map(lv).join('');
+  if (key === m.gearKey) return;
+  m.gearKey = key;
+  for (const o of m.gear) o.removeFromParent();
+  m.gear = [];
+  const put = (parent: THREE.Object3D, ...parts: THREE.Object3D[]) => {
+    parent.add(...parts);
+    m.gear.push(...parts);
+  };
+  const silver = mat('#dfe6f0', { rough: 0.28, metal: 0.6 });
+  const gold = mat('#ffcf5a', { emissive: '#ff9a1a', ei: 0.25, rough: 0.3, metal: 0.7 });
+  const dark = mat('#2a3242', { rough: 0.6 });
+  const steel = mat('#6f7a8e', { rough: 0.45, metal: 0.4 });
+  const red = mat('#ff4d6d', { emissive: '#ff4d6d', ei: 0.9 });
+  const fire = mat('#ffb04a', { emissive: '#ff8a1a', ei: 1.6 });
+  const cyan = mat('#9ff2ff', { emissive: '#5ee0ff', ei: 1.3 });
+  const zap = mat('#bcd4ff', { emissive: '#6a8cff', ei: 1.8 });
+
+  // Heart Plating.
+  const heart = lv('heart');
+  if (heart >= 1) {
+    const plate = heart >= 3 ? gold : silver;
+    put(m.body, mesh(boxG(0.42, 0.3, 0.06), plate, 0, 1.0, 0.24), mesh(boxG(0.42, 0.04, 0.07), red, 0, 0.84, 0.235, false));
+  }
+  if (heart >= 2) {
+    const pad = heart >= 3 ? gold : silver;
+    for (const arm of [m.armL, m.armR]) {
+      const p = mesh(sphere(0.15, 16), pad, 0, 0.02, 0);
+      p.scale.set(1.25, 0.7, 1.15);
+      put(arm, p);
+    }
+    // A little heart badge on the left pad.
+    const badge = new THREE.Group();
+    badge.add(mesh(sphere(0.035, 8), red, -0.025, 0.02, 0, false), mesh(sphere(0.035, 8), red, 0.025, 0.02, 0, false));
+    const tip = mesh(boxG(0.05, 0.05, 0.03), red, 0, -0.01, 0, false);
+    tip.rotation.z = Math.PI / 4;
+    badge.add(tip);
+    badge.position.set(-0.19, 0.02, 0);
+    badge.rotation.y = -Math.PI / 2;
+    put(m.armL, badge);
+  }
+
+  // Blaster Power: on the gun, which points along +Z in the right arm.
+  const blaster = lv('blaster');
+  if (blaster >= 1) {
+    const barrel = mesh(cyl(0.045, 0.055, 0.2, 12), steel, 0, -0.48, 0.52);
+    barrel.rotation.x = Math.PI / 2;
+    put(m.armR, barrel);
+    for (const z of [0.02, 0.22]) put(m.armR, mesh(torus(0.115, 0.022), blaster >= 2 ? gold : fire, 0, -0.48, z, false));
+  }
+  if (blaster >= 2) {
+    const cell = mesh(cyl(0.045, 0.045, 0.3, 12), fire, 0, -0.35, 0.12, false);
+    cell.rotation.x = Math.PI / 2;
+    put(m.armR, cell, mesh(boxG(0.06, 0.05, 0.34), gold, 0, -0.38, 0.12));
+  }
+
+  // Bigger Clip.
+  const clip = lv('clip');
+  if (clip >= 1) {
+    const drum = mesh(cyl(0.1, 0.1, 0.12, 16), dark, 0, -0.63, 0.12);
+    drum.rotation.z = Math.PI / 2;
+    const band = mesh(cyl(0.104, 0.104, 0.04, 16), cyan, 0, -0.63, 0.12, false);
+    band.rotation.z = Math.PI / 2;
+    put(m.armR, drum, band);
+  }
+  if (clip >= 2) {
+    for (let i = 0; i < 6; i++) {
+      const a = -0.9 + (i / 5) * 1.8;
+      put(m.body, mesh(cyl(0.035, 0.035, 0.12, 8), cyan, Math.sin(a) * 0.36, 0.78, Math.cos(a) * 0.36, false));
+    }
+  }
+
+  // Quick Reload.
+  const rapid = lv('rapid');
+  if (rapid >= 1) {
+    for (const x of [-0.095, 0.095]) {
+      for (const z of [0.0, 0.1, 0.2]) put(m.armR, mesh(boxG(0.03, 0.14, 0.05), rapid >= 2 ? cyan : steel, x, -0.48, z, false));
+    }
+  }
+  if (rapid >= 2) {
+    put(m.armR, mesh(cyl(0.125, 0.115, 0.18, 14), silver, 0, -0.3, 0), mesh(cyl(0.128, 0.128, 0.03, 14), cyan, 0, -0.3, 0, false));
+  }
+
+  // LUX Zapper.
+  const lux = lv('boltZap');
+  if (lux >= 1) {
+    const ring = mesh(torus(0.11, 0.028), zap, 0, -0.36, 0, false);
+    ring.rotation.x = Math.PI / 2;
+    put(m.armL, ring);
+  }
+  if (lux >= 2) {
+    const tipGlow = glowSprite('#7aa0ff', 0.35, 0.9);
+    tipGlow.position.set(-0.24, 0.58, -0.08);
+    put(m.head, mesh(cyl(0.02, 0.02, 0.28), steel, -0.24, 0.42, -0.08), mesh(sphere(0.055, 10), zap, -0.24, 0.58, -0.08, false), tipGlow);
+  }
+
+  // Bolt Magnet: a horseshoe on the back of the pack, ends pointing down.
+  const magnet = lv('magnet');
+  if (magnet >= 1) {
+    const g = new THREE.Group();
+    g.add(mesh(new THREE.TorusGeometry(0.13, 0.045, 8, 16, Math.PI), red));
+    const tips = magnet >= 2 ? gold : silver;
+    g.add(mesh(boxG(0.09, 0.08, 0.09), tips, -0.13, -0.03, 0), mesh(boxG(0.09, 0.08, 0.09), tips, 0.13, -0.03, 0));
+    if (magnet >= 2) {
+      g.scale.setScalar(1.35);
+      g.add(glowSprite('#ffd166', 0.7, 0.55));
+    }
+    g.position.set(0, 1.08, -0.47);
+    put(m.body, g);
+  }
 }
 
 const SKINS = ['#f2c9a0', '#e0ac7e', '#c68a5e', '#9a6a44', '#f5d8bc', '#7a4e32'];

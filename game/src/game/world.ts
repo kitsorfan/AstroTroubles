@@ -14,6 +14,7 @@ import { makeBoss, type Boss } from '../entities/bosses';
 import type { BadgeKind } from '../entities/badges';
 import { makeEnemy, type Enemy } from '../entities/enemies';
 import { difficultyFor, type Difficulty } from './difficulty';
+import type { PuzzleKind } from './puzzles';
 import { COLONIST_BOLTS, HINTS } from './quests';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
@@ -62,7 +63,7 @@ export type Collectible = 'shard' | 'canister' | 'colonist' | 'ability';
 export interface WorldHooks {
   say(lines: Line[], then?: () => void): void;
   toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason'): void;
-  hack(length: number, done: (ok: boolean) => void): void;
+  hack(length: number, done: (ok: boolean) => void, kind?: PuzzleKind): void;
   shop(): void;
   complete(): void;
   checkpoint(): void;
@@ -360,7 +361,7 @@ export class World {
         break;
       }
       case 'terminal':
-        this.addEntity(new Terminal(this, id, cx, cz, h, spec.flag, spec.length));
+        this.addEntity(new Terminal(this, id, cx, cz, h, spec.flag, spec.length, spec.puzzle));
         break;
       case 'cell':
         if (!this.taken.has(id)) this.addEntity(new PowerCell(this, id, cx, cz, h));

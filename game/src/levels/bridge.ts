@@ -120,7 +120,7 @@ export const bridge: LevelDef = {
     s: { type: 'enemy', enemy: 'sentry' },
     r: { type: 'enemy', enemy: 'brute' },
     u: { type: 'enemy', enemy: 'turret' },
-    T: { type: 'terminal', flag: 't1', length: 6 },
+    T: { type: 'terminal', flag: 't1', length: 6, puzzle: 'grid' },
     Z: { type: 'cell' },
     k: { type: 'socket', flag: 'nav' },
     N: { type: 'door', id: 'spinedoor', open: { all: [{ flag: 't1' }, { flag: 'nav' }] } },

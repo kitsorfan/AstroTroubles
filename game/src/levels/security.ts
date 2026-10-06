@@ -109,7 +109,7 @@ export const security: LevelDef = {
 `,
   legend: {
     g: { type: 'laser', axis: 'z', length: 4, always: true, off: { flag: 'vault' }, hardened: true },
-    N: { type: 'terminal', flag: 'vault', length: 7 },
+    N: { type: 'terminal', flag: 'vault', length: 7, puzzle: 'pattern' },
     I: { type: 'prize', id: 'vault', reward: 'boltZap' },
     W: { type: 'boss', boss: 'wardog', room: 'arena' },
     B: { type: 'door', id: 'bossdoor', open: { boss: true } },
@@ -122,7 +122,7 @@ export const security: LevelDef = {
     u: { type: 'enemy', enemy: 'turret' },
     S: { type: 'enemy', enemy: 'sentry', room: 'r1' },
     R: { type: 'enemy', enemy: 'brute', room: 'r1' },
-    T: { type: 'terminal', flag: 't1', length: 5 },
+    T: { type: 'terminal', flag: 't1', length: 5, puzzle: 'grid' },
     D: { type: 'door', id: 'armorydoor', open: { flag: 't1' } },
     Y: { type: 'door', id: 'moduledoor', open: { clear: 'r1' } },
     U: { type: 'upgrade', ability: 'pulse', id: 'pulse' },

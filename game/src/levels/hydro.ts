@@ -115,7 +115,7 @@ export const hydro: LevelDef = {
     R: { type: 'enemy', enemy: 'snapper', room: 'r1' },
     S: { type: 'enemy', enemy: 'sporeling', variant: 'toxic', room: 'r1' },
     D: { type: 'door', id: 'vaultdoor', open: { flag: 't1' } },
-    T: { type: 'terminal', flag: 't1', length: 4 },
+    T: { type: 'terminal', flag: 't1', length: 4, puzzle: 'pattern' },
     Y: { type: 'door', id: 'innerdoor', open: { clear: 'r1' } },
     U: { type: 'upgrade', ability: 'doubleJump', id: 'boots' },
     E: { type: 'door', id: 'atriumdoor', open: { flag: 'ability:doubleJump' } },
