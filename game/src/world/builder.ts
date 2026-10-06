@@ -416,7 +416,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
         const bx = Math.floor(x / OUTDOOR_UV);
         const bz = Math.floor(z / OUTDOOR_UV);
         const r = outdoor ? hash2(bx, bz, 3) : hash2(x, z, 3);
-        const target = c.kind === 'grate' ? grateQ : c.kind === 'ice' ? iceQ : floorQ[outdoor ? (r < 0.7 ? 0 : r < 0.88 ? 1 : 2) : r < 0.64 ? 0 : r < 0.95 ? 1 : 2];
+        const target = c.kind === 'grate' ? grateQ : c.kind === 'ice' ? iceQ : floorQ[outdoor ? (r < 0.84 ? 0 : r < 0.93 ? 1 : 2) : r < 0.64 ? 0 : r < 0.95 ? 1 : 2];
         const rot = Math.floor(hash2(x, z, 4) * 4);
         const uvs: [number, number][] = [
           [0, 1],
@@ -430,7 +430,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
           [(x + 1) / OUTDOOR_UV, -(z + 1) / OUTDOOR_UV],
           [x / OUTDOOR_UV, -(z + 1) / OUTDOOR_UV],
         ];
-        const tint = outdoor ? 0.95 + hash2(bx, bz, 5) * 0.08 : 0.88 + hash2(x, z, 5) * 0.16;
+        const tint = outdoor ? 1 : 0.88 + hash2(x, z, 5) * 0.16;
         target.add(
           [
             [x0, c.h, z0],

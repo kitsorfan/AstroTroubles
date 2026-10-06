@@ -16,28 +16,23 @@ function blobs(s: Sheet, rng: Rng, n: number, colors: string[], rMin: number, rM
     const y = rng.next() * s.hgt;
     const r = rMin + rng.next() * (rMax - rMin);
     const col = colors[Math.floor(rng.next() * colors.length)];
-    // Draw wrapped copies so the texture tiles without seams.
-    for (const [ox, oy] of [
-      [0, 0],
-      [s.w, 0],
-      [-s.w, 0],
-      [0, s.hgt],
-      [0, -s.hgt],
-    ]) {
+    // One strength per blob, shared by its wrapped copies, so the halves match across the texture edge.
+    const a = alpha * (0.5 + rng.next() * 0.5);
+    const ah = Math.abs(height) * (0.5 + rng.next() * 0.5);
+    for (const [ox, oy] of wraps(s, x - r, y - r, x + r, y + r)) {
       const cx = x + ox;
       const cy = y + oy;
-      if (cx + r < 0 || cx - r > s.w || cy + r < 0 || cy - r > s.hgt) continue;
       const g = s.c.createRadialGradient(cx, cy, 0, cx, cy, r);
       g.addColorStop(0, col);
       g.addColorStop(1, 'rgba(0,0,0,0)');
-      s.c.globalAlpha = alpha * (0.5 + rng.next() * 0.5);
+      s.c.globalAlpha = a;
       s.c.fillStyle = g;
       s.c.fillRect(cx - r, cy - r, r * 2, r * 2);
       if (height) {
         const gh = s.h.createRadialGradient(cx, cy, 0, cx, cy, r);
         gh.addColorStop(0, height > 0 ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)');
         gh.addColorStop(1, 'rgba(0,0,0,0)');
-        s.h.globalAlpha = Math.abs(height) * (0.5 + rng.next() * 0.5);
+        s.h.globalAlpha = ah;
         s.h.fillStyle = gh;
         s.h.fillRect(cx - r, cy - r, r * 2, r * 2);
       }
@@ -161,7 +156,9 @@ function crack(s: Sheet, rng: Rng, x: number, y: number, steps: number, step: nu
 function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 512): Surface {
   const S = size;
   const k = S / 512;
+  // Every variant shares the same base (so neighbouring patches match); only its extras differ.
   const rng = new Rng(seed);
+  const d = new Rng(seed * 31 + variant * 977 + 5);
   const base = theme.floor;
   const s = new Sheet(S, S, base, 0.5);
   const light = shade(base, 1.18);
@@ -169,13 +166,13 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
   switch (o.ground) {
     case 'grass': {
       blobs(s, rng, 70, [light, dark, o.ground2], 30 * k, 110 * k, 0.45, 0.15);
-      if (variant === 1) blobs(s, rng, 6, [theme.floorSide, shade(theme.floorSide, 1.2)], 40 * k, 90 * k, 0.55, -0.2);
+      if (variant === 1) blobs(s, d, 6, [theme.floorSide, shade(theme.floorSide, 1.2)], 40 * k, 90 * k, 0.55, -0.2);
       strokes(s, rng, 2600 * k * k, [shade(base, 1.35), shade(base, 0.62), shade(o.ground2, 1.2), shade(o.ground2, 0.8)], 9 * k, 1.6, -Math.PI / 2, 1.1, 0.22);
       if (variant === 2) {
         for (let i = 0; i < 70; i++) {
-          const c = ['#ffffff', '#ffe066', '#ff8ad0', '#9ad0ff'][Math.floor(rng.next() * 4)];
-          const x = rng.next() * S;
-          const y = rng.next() * S;
+          const c = ['#ffffff', '#ffe066', '#ff8ad0', '#9ad0ff'][Math.floor(d.next() * 4)];
+          const x = d.next() * S;
+          const y = d.next() * S;
           for (let p = 0; p < 5; p++) {
             const a = (p / 5) * Math.PI * 2;
             s.c.fillStyle = c;
@@ -221,29 +218,29 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
         }
       }
       speckle(s, rng, 5000 * k * k, 0.25, 0.18, 1.3);
-      if (variant === 2) for (let i = 0; i < 18; i++) pebble(s, rng.next() * S, rng.next() * S, (3 + rng.next() * 6) * k, (2 + rng.next() * 4) * k, shade(o.rock, 1.1), rng.next() * 3);
-      if (variant === 1) blobs(s, rng, 10, [shade(o.rock, 0.9)], 20 * k, 50 * k, 0.35, 0.1);
+      if (variant === 2) for (let i = 0; i < 18; i++) pebble(s, d.next() * S, d.next() * S, (3 + d.next() * 6) * k, (2 + d.next() * 4) * k, shade(o.rock, 1.1), d.next() * 3);
+      if (variant === 1) blobs(s, d, 10, [shade(o.rock, 0.9)], 20 * k, 50 * k, 0.35, 0.1);
       break;
     }
     case 'snow': {
-      blobs(s, rng, 60, ['#ffffff', shade(base, 0.86), '#cfe0ff'], 40 * k, 130 * k, 0.5, 0.2);
+      blobs(s, rng, 60, ['#ffffff', '#eef4ff', '#dde8f8'], 40 * k, 130 * k, 0.35, 0.2);
       // Soft drifts: gentle blue shading on the lee side of each bump.
-      blobs(s, rng, 30, ['#a8c0e8'], 20 * k, 60 * k, 0.25, -0.1);
+      blobs(s, rng, 24, ['#b8cdee'], 20 * k, 60 * k, 0.12, -0.1);
       for (let i = 0; i < 260 * k * k; i++) {
         s.c.fillStyle = `rgba(255,255,255,${0.5 + rng.next() * 0.5})`;
         s.c.fillRect(rng.next() * S, rng.next() * S, 1.6, 1.6);
       }
       if (variant === 1) {
         // Footprints of something big wandering by.
-        let x = rng.next() * S;
+        let x = d.next() * S;
         let y = 0;
         while (y < S) {
           pebble(s, x, y, 7 * k, 11 * k, shade(base, 0.82), 0);
-          x += (rng.next() - 0.5) * 30 * k;
+          x += (d.next() - 0.5) * 30 * k;
           y += 44 * k;
         }
       }
-      if (variant === 2) for (let i = 0; i < 8; i++) pebble(s, rng.next() * S, rng.next() * S, (5 + rng.next() * 8) * k, (3 + rng.next() * 5) * k, o.rock, rng.next() * 3);
+      if (variant === 2) for (let i = 0; i < 8; i++) pebble(s, d.next() * S, d.next() * S, (5 + d.next() * 8) * k, (3 + d.next() * 5) * k, o.rock, d.next() * 3);
       break;
     }
     case 'rock': {
@@ -256,8 +253,8 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
       }
       for (let i = 0; i < 8; i++) crack(s, rng, rng.next() * S, rng.next() * S, 6, 20 * k, 'rgba(0,0,0,0.45)');
       if (variant !== 0) {
-        blobs(s, rng, variant === 2 ? 26 : 12, [o.ground2, shade(o.ground2, 0.8)], 14 * k, 50 * k, 0.6, 0.1);
-        strokes(s, rng, (variant === 2 ? 900 : 400) * k * k, [shade(o.ground2, 1.3), shade(o.ground2, 0.7)], 7 * k, 1.4, -Math.PI / 2, 1.2, 0.15);
+        blobs(s, d, variant === 2 ? 26 : 12, [o.ground2, shade(o.ground2, 0.8)], 14 * k, 50 * k, 0.6, 0.1);
+        strokes(s, d, (variant === 2 ? 900 : 400) * k * k, [shade(o.ground2, 1.3), shade(o.ground2, 0.7)], 7 * k, 1.4, -Math.PI / 2, 1.2, 0.15);
       }
       speckle(s, rng, 2500 * k * k, 0.2, 0.25);
       break;
@@ -274,11 +271,10 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
         s.c.ellipse(x, y, (pink ? 3 : 6) * k, (pink ? 2 : 2.6) * k, rng.next() * Math.PI, 0, Math.PI * 2);
         s.c.fill();
       }
-      if (variant !== 2) {
-        // Roots snaking across the floor.
-        for (let i = 0; i < (variant === 1 ? 7 : 3); i++) crack(s, rng, rng.next() * S, rng.next() * S, 8, 28 * k, shade(theme.floorSide, 0.8), undefined, (4 + rng.next() * 5) * k);
-      }
-      if (variant === 2) for (let i = 0; i < 40; i++) pebble(s, rng.next() * S, rng.next() * S, 3 * k, 2 * k, '#ff6fcf', 0);
+      // Roots snaking across the floor (a tangle of extra ones on some patches).
+      for (let i = 0; i < 3; i++) crack(s, rng, rng.next() * S, rng.next() * S, 8, 28 * k, shade(theme.floorSide, 0.8), undefined, (4 + rng.next() * 5) * k);
+      if (variant === 1) for (let i = 0; i < 4; i++) crack(s, d, d.next() * S, d.next() * S, 8, 28 * k, shade(theme.floorSide, 0.8), undefined, (4 + d.next() * 5) * k);
+      if (variant === 2) for (let i = 0; i < 40; i++) pebble(s, d.next() * S, d.next() * S, 3 * k, 2 * k, '#ff6fcf', 0);
       speckle(s, rng, 2000 * k * k, 0.12, 0.25);
       break;
     }
@@ -313,7 +309,7 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
           s.h.fill();
         }
       }
-      if (variant !== 0) for (let i = 0; i < (variant === 2 ? 6 : 3); i++) crack(s, rng, rng.next() * S, rng.next() * S, 7, 24 * k, '#ffb04a', '#ff6a12');
+      if (variant !== 0) for (let i = 0; i < (variant === 2 ? 6 : 3); i++) crack(s, d, d.next() * S, d.next() * S, 7, 24 * k, '#ffb04a', '#ff6a12');
       speckle(s, rng, 2500 * k * k, 0.12, 0.3);
       break;
     }
@@ -485,7 +481,7 @@ function below(theme: Theme, o: Outdoor, seed: number): Surface {
 /** Paints every surface for an outdoor region. Not cached: the textures are freed with the region. */
 export function outdoorSurfaces(theme: Theme, o: Outdoor): DeckSurfaces {
   return {
-    floors: [0, 1, 2].map((v) => ground(theme, o, v, 111 + v)),
+    floors: [0, 1, 2].map((v) => ground(theme, o, v, 111)),
     grate: planks(theme, o, 121),
     ice: ice(theme, 131),
     walls: [0, 1, 2, 3].map((v) => cliff(theme, o, v, 141 + v)),
