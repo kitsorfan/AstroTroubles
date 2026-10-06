@@ -56,79 +56,104 @@ function speckle(s: Sheet, rng: Rng, n: number, light: number, dark: number, siz
   }
 }
 
+/**
+ * Copies of a shape shifted by whole texture widths, for every copy that would show: drawing all of
+ * them makes the texture tile without seams. `minX`..`maxY` is the shape's bounding box.
+ */
+function wraps(s: Sheet, minX: number, minY: number, maxX: number, maxY: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (const ox of [-s.w, 0, s.w]) {
+    for (const oy of [-s.hgt, 0, s.hgt]) {
+      if (maxX + ox < 0 || minX + ox > s.w || maxY + oy < 0 || minY + oy > s.hgt) continue;
+      out.push([ox, oy]);
+    }
+  }
+  return out;
+}
+
+/** Strokes a polyline on the given layers at every wrapped position. */
+function polyline(s: Sheet, pts: [number, number][], layers: CanvasRenderingContext2D[]) {
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const pad = 8;
+  for (const [ox, oy] of wraps(s, Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) + pad, Math.max(...ys) + pad)) {
+    for (const ctx of layers) {
+      ctx.beginPath();
+      pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x + ox, y + oy) : ctx.lineTo(x + ox, y + oy)));
+      ctx.stroke();
+    }
+  }
+}
+
 /** Short strokes: grass blades, pine needles, scratches. */
 function strokes(s: Sheet, rng: Rng, n: number, colors: string[], len: number, width: number, angle: number, spread: number, height = 0) {
   s.c.lineCap = 'round';
   s.h.lineCap = 'round';
+  s.c.lineWidth = width;
+  s.h.lineWidth = width;
+  if (height) s.h.strokeStyle = grey(0.5 + height);
   for (let i = 0; i < n; i++) {
     const x = rng.next() * s.w;
     const y = rng.next() * s.hgt;
     const a = angle + (rng.next() - 0.5) * spread;
     const l = len * (0.5 + rng.next());
     s.c.strokeStyle = colors[Math.floor(rng.next() * colors.length)];
-    s.c.lineWidth = width;
-    s.c.beginPath();
-    s.c.moveTo(x, y);
-    s.c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
-    s.c.stroke();
-    if (height) {
-      s.h.strokeStyle = grey(0.5 + height);
-      s.h.lineWidth = width;
-      s.h.beginPath();
-      s.h.moveTo(x, y);
-      s.h.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
-      s.h.stroke();
-    }
+    polyline(
+      s,
+      [
+        [x, y],
+        [x + Math.cos(a) * l, y + Math.sin(a) * l],
+      ],
+      height ? [s.c, s.h] : [s.c],
+    );
   }
 }
 
 /** A rounded pebble or stone, lit from the top left. */
 function pebble(s: Sheet, x: number, y: number, rx: number, ry: number, color: string, rot = 0) {
-  const g = s.c.createRadialGradient(x - rx * 0.3, y - ry * 0.3, 0, x, y, Math.max(rx, ry));
-  g.addColorStop(0, shade(color, 1.35));
-  g.addColorStop(1, shade(color, 0.7));
-  s.c.fillStyle = g;
-  s.c.beginPath();
-  s.c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
-  s.c.fill();
-  const gh = s.h.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
-  gh.addColorStop(0, grey(0.95));
-  gh.addColorStop(1, grey(0.5));
-  s.h.fillStyle = gh;
-  s.h.beginPath();
-  s.h.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
-  s.h.fill();
+  const r = Math.max(rx, ry);
+  for (const [ox, oy] of wraps(s, x - r, y - r, x + r, y + r)) {
+    const px = x + ox;
+    const py = y + oy;
+    const g = s.c.createRadialGradient(px - rx * 0.3, py - ry * 0.3, 0, px, py, r);
+    g.addColorStop(0, shade(color, 1.35));
+    g.addColorStop(1, shade(color, 0.7));
+    s.c.fillStyle = g;
+    s.c.beginPath();
+    s.c.ellipse(px, py, rx, ry, rot, 0, Math.PI * 2);
+    s.c.fill();
+    const gh = s.h.createRadialGradient(px, py, 0, px, py, r);
+    gh.addColorStop(0, grey(0.95));
+    gh.addColorStop(1, grey(0.5));
+    s.h.fillStyle = gh;
+    s.h.beginPath();
+    s.h.ellipse(px, py, rx, ry, rot, 0, Math.PI * 2);
+    s.h.fill();
+  }
 }
 
 /** A wandering crack (in rock, ice or crust); `glow` makes it a seam of lava. */
 function crack(s: Sheet, rng: Rng, x: number, y: number, steps: number, step: number, color: string, glow?: string, width = glow ? 3 : 1.6) {
-  s.c.lineWidth = width;
-  s.h.lineWidth = width + 1;
-  s.c.strokeStyle = color;
-  s.h.strokeStyle = grey(0.15);
-  s.c.beginPath();
-  s.h.beginPath();
-  s.c.moveTo(x, y);
-  s.h.moveTo(x, y);
-  if (glow) {
-    s.glowUsed = true;
-    s.g.strokeStyle = glow;
-    s.g.lineWidth = 4;
-    s.g.beginPath();
-    s.g.moveTo(x, y);
-  }
+  const pts: [number, number][] = [[x, y]];
   let a = rng.next() * Math.PI * 2;
   for (let k = 0; k < steps; k++) {
     a += (rng.next() - 0.5) * 1.4;
     x += Math.cos(a) * step;
     y += Math.sin(a) * step;
-    s.c.lineTo(x, y);
-    s.h.lineTo(x, y);
-    if (glow) s.g.lineTo(x, y);
+    pts.push([x, y]);
   }
-  s.c.stroke();
-  s.h.stroke();
-  if (glow) s.g.stroke();
+  s.c.lineWidth = width;
+  s.h.lineWidth = width + 1;
+  s.c.strokeStyle = color;
+  s.h.strokeStyle = grey(0.15);
+  const layers = [s.c, s.h];
+  if (glow) {
+    s.glowUsed = true;
+    s.g.strokeStyle = glow;
+    s.g.lineWidth = 4;
+    layers.push(s.g);
+  }
+  polyline(s, pts, layers);
 }
 
 /* ---------------- ground ---------------- */
