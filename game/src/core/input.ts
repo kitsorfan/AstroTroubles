@@ -47,6 +47,8 @@ export class Input {
       if (b) this.press(b, false);
     });
     window.addEventListener('blur', () => this.reset());
+    // A long press (holding BLAST to charge) must never open the WebView's context menu and cancel the touch.
+    window.addEventListener('contextmenu', (e) => e.preventDefault());
     surface.addEventListener('pointerdown', (e) => this.onDown(e));
     surface.addEventListener('pointermove', (e) => this.onMove(e));
     surface.addEventListener('pointerup', (e) => this.onUp(e));

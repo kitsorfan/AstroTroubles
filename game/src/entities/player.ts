@@ -53,6 +53,8 @@ export class Player {
   charge = 0;
   private holdT = 0;
   private wasHeld = false;
+  /** Seconds a tap stays queued while the blaster cools down. */
+  private shootBuf = 0;
   private sinceShot = 99;
   private chargedFx = false;
   private blinkT = 2;
@@ -145,7 +147,6 @@ export class Player {
   private startReload() {
     if (this.reloadT > 0 || this.ammo >= this.clipSize) return;
     this.reloadT = this.reloadTime;
-    this.charge = 0;
     audio.play('reload', 0.8);
     this.world.hooks.hud();
   }
@@ -249,6 +250,7 @@ export class Player {
     this.invuln = Math.max(0, this.invuln - dt);
     this.sinceHurt += dt;
     if (this.down || w.cutscene) {
+      this.cancelCharge();
       this.animate(dt, 0);
       return;
     }
@@ -460,9 +462,18 @@ export class Player {
     return c.kind === 'void' || c.kind === 'wall' ? -99 : c.h;
   }
 
+  /** Drops a half-built fireball (Jason was knocked down, or a cutscene took over). */
+  private cancelCharge() {
+    this.charge = 0;
+    this.holdT = 0;
+    this.wasHeld = false;
+    this.chargedFx = false;
+    this.shootBuf = 0;
+  }
+
   private updateBlaster(dt: number, input: Input) {
     const held = input.isHeld('shoot');
-    const pressed = input.take('shoot');
+    this.shootBuf = input.take('shoot') ? PLAYER.shootBuffer : this.shootBuf - dt;
     this.sinceShot += dt;
     if (this.reloadT > 0) {
       this.reloadT -= dt;
@@ -476,20 +487,25 @@ export class Player {
       // Top the clip up after a short break from shooting.
       this.startReload();
     }
-    if (pressed && this.spinT <= 0) {
+    // A tap fires as soon as the blaster is ready, so quick tapping never swallows a shot.
+    if (this.shootBuf > 0 && this.spinT <= 0 && this.shootCd <= 0) {
+      this.shootBuf = 0;
       if (this.reloadT > 0) audio.play('empty');
       else if (this.ammo <= 0) {
         audio.play('empty');
         this.startReload();
-      } else if (this.shootCd <= 0) this.shoot();
+      } else this.shoot();
     }
-    // Holding BLAST charges a fireball (it needs a few shots' worth of energy in the clip).
+    // Holding BLAST charges a fireball. It costs a few shots from the clip: if the clip is too low,
+    // holding reloads it while the charge builds, and the fireball is ready once both are done.
     if (held) {
       this.holdT += dt;
-      const canCharge = this.reloadT <= 0 && this.ammo >= PLAYER.fireballCost && this.spinT <= 0;
-      if (this.holdT > 0.22 && canCharge) {
+      if (this.holdT > PLAYER.chargeDelay && this.spinT <= 0) {
+        if (this.reloadT <= 0 && this.ammo < PLAYER.fireballCost) this.startReload();
         if (this.charge === 0) audio.play('charge');
-        this.charge = Math.min(1, this.charge + dt / PLAYER.chargeTime);
+        // The ring stops just short of full until the reload finishes.
+        const cap = this.reloadT > 0 ? 0.95 : 1;
+        this.charge = Math.min(cap, this.charge + dt / PLAYER.chargeTime);
         if (this.charge >= 1 && !this.chargedFx) {
           this.chargedFx = true;
           audio.play('charged');
@@ -502,8 +518,6 @@ export class Player {
           const a = Math.random() * Math.PI * 2;
           this.world.particles.emit(gx + Math.cos(a) * 1.1, b.y + 1 + Math.sin(a) * 0.8, gz + Math.sin(a) * 1.1, { count: 1, color: this.charge >= 1 ? '#ffd166' : '#ff9a3d', speed: 0.2, life: 0.25, size: 0.35, gravity: 0 });
         }
-      } else if (this.holdT > 0.22 && this.ammo < PLAYER.fireballCost && this.reloadT <= 0 && this.charge === 0) {
-        this.startReload();
       }
     } else if (this.wasHeld) {
       if (this.charge >= 1) this.fireball();
@@ -551,7 +565,7 @@ export class Player {
     const w = this.world;
     const [origin, dir] = this.aimShot(PLAYER.aimRange + 4);
     const dmg = 4 + (w.save.upgrades.blaster ?? 0) * 2;
-    w.shots.fire('fireball', origin, dir, PLAYER.fireballSpeed, dmg);
+    if (!w.shots.fire('fireball', origin, dir, PLAYER.fireballSpeed, dmg)) return;
     this.ammo = Math.max(0, this.ammo - PLAYER.fireballCost);
     this.sinceShot = 0;
     this.shootPose = 0.4;
