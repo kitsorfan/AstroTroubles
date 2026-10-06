@@ -634,6 +634,7 @@ export const EL: Record<string, string> = {
   "END OF CHAPTER 1": "ΤΕΛΟΣ ΤΟΥ ΚΕΦΑΛΑΙΟΥ 1",
   "Chapter 2: Gaia Nova": "Κεφάλαιο 2: Γαία Νόβα",
   "TAKE OFF": "ΑΠΟΓΕΙΩΣΗ",
+  "on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.": "στη Γαία Νόβα, κοίτα προς έναν κρίκο που λάμπει και πάτα το κουμπί του ΛΟΥΞ για να πεταχτείς κατευθείαν ως εκεί, πάνω από κενά και πάνω σε γκρεμούς.",
   // Gaia Nova: each region keeps its own Greek in ./el/<region>.ts.
   ...EL_STUB,
   ...EL_PLAINS,

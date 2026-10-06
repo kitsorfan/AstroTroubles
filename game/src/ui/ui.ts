@@ -969,6 +969,7 @@ export class UI {
         ${item('#ffd166', tr('SPIN'), tr('a spin attack that also blocks enemy attacks. You get 3 in a row, then a long recharge. In mid-air it becomes a GROUND POUND for red switches.'))}
         ${item('#b58cff', tr('DASH'), tr('ram through enemies and zoom over gaps. Each dash uses one energy cell: refill at checkpoints and with violet energy cells.'))}
         ${item('#8ab4ff', tr('PULSE'), tr('LUX’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.'))}
+        ${item('#7fe6ff', tr('GRAPPLE'), tr('on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.'))}
       </div>
       <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
