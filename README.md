@@ -8,7 +8,9 @@ A 3D action-adventure platformer for Android, built with three.js inside an Expo
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **LUX**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
-It's made for players around 10 and up: bright, forgiving, and about 2–3 hours long if you hunt for the secrets.
+In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find that General Brennus got there forty years earlier. He has captured the science team and stolen GaScu to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
+
+It's made for players around 10 and up: bright, forgiving, and about 5–6 hours long across both chapters if you hunt for the secrets.
 
 | | |
 | --- | --- |
@@ -63,7 +65,8 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | **SPIN** | Spin attack that also blocks enemy attacks and bats their shots back (lasers and lava still hurt). Jason gets 3 spins in a row, then a long recharge. In mid-air it becomes a **ground pound**, which presses red switches, hurts more and never runs out |
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
 | **PULSE** | LUX's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
-| LUX button | Appears near terminals, pylons, signs, the shop and lifts |
+| **GRAPPLE** | The grapple hook (found in the Glass Desert): look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs |
+| LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings |
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
@@ -78,12 +81,25 @@ Jason finds a new ability on each deck, and it's needed to finish that deck:
 | 5. Security Deck | LUX's Force Pulse (shorts out lasers) | CERBERUS |
 | 6. The Bridge | Everything at once | The Heart of GaScu, then GaScu Reborn |
 
+Chapter 2 takes place outdoors on Gaia Nova. Jason keeps every ability, finds the grapple hook, and meets wind gusts, quicksand and rolling boulders:
+
+| Region | New trick | Boss |
+| --- | --- | --- |
+| 1. Whispering Plains | River rafts, windy ridges | The Thresher (make it crash, then hit its engine) |
+| 2. Glass Desert | The grapple hook; quicksand and sandstorms | The Dune Driller (hit its drill head when it surfaces) |
+| 3. Frostpeak Tundra | Ice, blizzards and rolling snowballs; the prison camp | BOREAS (block from the front, blast its back) |
+| 4. Titan Rockies | Grapple climbs, boulders, cable cars | STHENO, the Gorgon's gunship (shoot its three engines) |
+| 5. Thornwood Jungle | Shut down the pollen pumps; dark root caves | The Thorn Hydra (heads first, then the heart) |
+| 6. Mount Atlantas | Everything at once, inside a volcano | The Colossus, General Brennus's war machine |
+
 - **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
+- **The Colossus**, chapter 2's final boss, is longer still: 110 health plus 20 per Blaster Power level, in three phases (shield generators, swinging arms, overheating core).
+- **Journal pages.** On Gaia Nova the collectibles are the 18 pages of General Brennus's journal, telling how a boy who named all 300 of his grandmother's tomato plants became a man who wants to own a whole planet. Like memory shards, every 6 give an extra heart.
 
 ### Enemies
 
@@ -120,7 +136,7 @@ Every deck has four side quests, listed with their rewards in the pause menu. LU
 
 For the switch puzzles, a clock at the top of the screen counts down from the first switch, with a dot for each one that's down. A cracked vault stays open, even when you replay the deck.
 
-The Elevator on the title screen lets you replay any deck you've reached.
+**Replay a level** on the title screen lets you replay any deck or region you've reached.
 
 Progress saves at every checkpoint and when you leave the app.
 
@@ -139,6 +155,12 @@ Cutscenes play in the game world with letterbox bars:
 - Boss defeats play in slow motion, and each deck ends with a lift ride.
 - Between decks the lift climbs the outside of the ship while the crew talks, and the star looks bigger every time.
 - Both endings have their own cinematic, followed by credits that list the colonists you rescued.
+
+**Chapter 2: Gaia Nova** (more spoilers):
+
+- **The arrival.** The ship reaches Gaia Nova and sends Dr. Hypatia's science team down first. Their radio goes quiet, General Brennus broadcasts that the planet is his, and his drones steal GaScu. Jason and LUX take the shuttle down.
+- **The journey.** Each region frees two captured scientists (thorn cocoons) and beats one of Brennus's machines. Dr. Hypatia's field logs and Brennus's own recordings play on hologram projectors, and between regions the shuttle flies over the planet while the crew talks.
+- **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets GaScu go himself (the secret ending).
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 
@@ -173,7 +195,7 @@ The files left at the root are the ones each tool looks for there: `package.json
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), and `_` is ice. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
 
 ## Development
 
