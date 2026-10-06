@@ -96,15 +96,23 @@ canvas#game {
   gap: 6px;
 }
 
+.hud-left {
+  /* Above the centred objective and boss bar, so a long row of hearts is never hidden under them. */
+  z-index: 1;
+}
+
 .hearts {
   display: flex;
-  gap: 3px;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  flex-wrap: wrap;
+  gap: 2px;
+  /* Five hearts per row: ten hearts fit in two short rows instead of one long one. */
+  max-width: calc(5 * 17px + 4 * 2px);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
 
 .hearts svg {
-  width: 26px;
-  height: 26px;
+  width: 17px;
+  height: 17px;
   transition: transform 0.15s;
 }
 
