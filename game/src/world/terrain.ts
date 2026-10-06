@@ -280,33 +280,35 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
     }
     case 'basalt': {
       blobs(s, rng, 40, [light, dark], 40 * k, 120 * k, 0.4, 0.1);
-      // The tops of basalt columns: rough hexagons with dark seams.
-      const r = 64 * k;
-      for (let row = -1; row < S / (r * 1.5) + 1; row++) {
-        for (let col = -1; col < S / (r * 1.73) + 1; col++) {
-          const x = col * r * 1.73 + (row % 2 ? r * 0.87 : 0);
-          const y = row * r * 1.5;
-          const c = shade(base, 0.85 + rng.next() * 0.35);
-          s.c.fillStyle = c;
-          s.h.fillStyle = grey(0.55 + rng.next() * 0.2);
-          s.c.beginPath();
-          s.h.beginPath();
-          for (let p = 0; p < 6; p++) {
-            const a = (p / 6) * Math.PI * 2 + Math.PI / 6;
-            const px = x + Math.cos(a) * (r - 3);
-            const py = y + Math.sin(a) * (r - 3);
-            if (p === 0) {
-              s.c.moveTo(px, py);
-              s.h.moveTo(px, py);
-            } else {
-              s.c.lineTo(px, py);
-              s.h.lineTo(px, py);
+      // The tops of basalt columns: rough hexagons with dark seams. The grid repeats exactly once per
+      // texture (5 columns, 6 rows), and each column's shade comes from its place in the grid, so the
+      // copies drawn past the edges match and the texture tiles without a seam.
+      const cols = 5;
+      const rows = 6;
+      const colW = S / cols;
+      const rowH = S / rows;
+      const rx = colW / 1.732;
+      const ry = rowH / 1.5;
+      const tones = Array.from({ length: cols * rows }, () => [0.85 + rng.next() * 0.35, 0.55 + rng.next() * 0.2]);
+      for (let row = -1; row <= rows; row++) {
+        for (let col = -1; col <= cols; col++) {
+          const x = col * colW + (((row % 2) + 2) % 2 ? colW / 2 : 0);
+          const y = row * rowH;
+          const [tone, hv] = tones[(((row % rows) + rows) % rows) * cols + (((col % cols) + cols) % cols)];
+          s.c.fillStyle = shade(base, tone);
+          s.h.fillStyle = grey(hv);
+          for (const ctx of [s.c, s.h]) {
+            ctx.beginPath();
+            for (let p = 0; p < 6; p++) {
+              const a = (p / 6) * Math.PI * 2 + Math.PI / 6;
+              const px = x + Math.cos(a) * (rx - 3);
+              const py = y + Math.sin(a) * (ry - 3);
+              if (p === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
             }
+            ctx.closePath();
+            ctx.fill();
           }
-          s.c.closePath();
-          s.h.closePath();
-          s.c.fill();
-          s.h.fill();
         }
       }
       if (variant !== 0) for (let i = 0; i < (variant === 2 ? 6 : 3); i++) crack(s, d, d.next() * S, d.next() * S, 7, 24 * k, '#ffb04a', '#ff6a12');
