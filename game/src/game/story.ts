@@ -1,9 +1,9 @@
 import { GAME_NAME } from '../core/brand';
 import { tr, upper } from '../core/i18n';
 import type { SaveData } from '../core/save';
-import { LEVELS, LEVEL_ORDER } from '../levels';
+import { CHAPTER_DECKS, LEVELS, chapterTotals, inChapter, type Chapter } from '../levels';
 import type { BadgeKind } from '../entities/badges';
-import type { BossKind, DeckId, Line } from '../world/levelTypes';
+import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
 
 /**
  * The story of ASTROTROUBLES!
@@ -14,6 +14,14 @@ import type { BossKind, DeckId, Line } from '../world/levelTypes';
  * follows the Captain's recorded logs up six decks, saves Aunt Rosa, frees HALCYON (the ship's
  * computer) from GaScu pollen, and learns the truth: GaScu isn't a monster, it's lost. At the
  * top, Jason can stop the Heart of GaScu, or, with every memory shard, LUX can talk to it in lights.
+ *
+ * Chapter 2, GAIA NOVA. The ship reaches its new home, but General Brennus (Captain Atalanta's old
+ * commander, thrown out of the Fleet for experimenting on living things) got there forty years
+ * earlier in the warship Gorgon. He has captured Dr. Hypatia's science team, and his drones steal
+ * GaScu so he can force its pollen into a Thorn Legion of machines and build the Colossus inside
+ * the volcano Mount Atlantas. Jason and LUX cross six regions to free the scientists and GaScu. The
+ * 18 pages of Brennus's journal tell how a boy who loved his grandmother's greenhouse became a man
+ * who tries to own everything; with all of them, Jason can talk him down instead of beating him.
  */
 
 /** Narration for the opening cinematic, one caption per shot. */
@@ -35,6 +43,12 @@ export const FLYOVER: Record<DeckId, string> = {
   habitat: 'The <b>Habitat Ring</b>, where the colonists live. Home, sweet, gooey home.',
   security: 'The <b>Security Deck</b>. Lasers, cameras... and a voice that does not sound like HALCYON anymore.',
   bridge: '<b>The Bridge</b>. The star fills every window now. At the very top, the Heart of GaScu is waiting.',
+  plains: 'The <b>Whispering Plains</b> of Gaia Nova. Golden grass as far as you can see... and the science team’s camp, empty.',
+  desert: 'The <b>Glass Desert</b>. Sand that sparkles like sugar, ruins older than anyone remembers, and Brennus’s drills chewing through it all.',
+  snow: 'The <b>Frostpeak Tundra</b>. Somewhere in this blizzard is Brennus’s prison camp, and the scientists he captured.',
+  rockies: 'The <b>Titan Rockies</b>. Cliffs taller than the {ship}, rickety bridges, and up at the very top... the wreck of the Gorgon.',
+  jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and GaScu’s pollen hangs in the air like fog.',
+  volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. GaScu is in there. So is the end of this.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -70,7 +84,65 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'halcyon', text: 'With every memory shard, LUX might learn its language. If not, you will have to stop the Heart the hard way.' },
   ],
   bridge: [],
+  plains: [
+    { who: 'halcyon', text: 'Shuttle systems online. Next stop: the Glass Desert. Dr. Hypatia’s team was digging there before the radio went quiet.' },
+    { who: 'jason', text: 'The scientists we freed said Brennus took the others south. Why would he want a bunch of scientists?' },
+    { who: 'bolt', text: 'Maybe he needs someone clever. He does not seem clever. He seems... grumpy.' },
+    { who: 'halcyon', text: 'Grumpy AND dangerous. His drills are all over the desert. Please land somewhere soft.' },
+  ],
+  desert: [
+    { who: 'bolt', text: 'Jason, those ruins! The lights on the walls were GaScu’s light-words. Hello, safe, together!' },
+    { who: 'jason', text: 'So GaScu’s people were here once? A long, long time ago?' },
+    { who: 'halcyon', text: 'That would explain why GaScu dreamed of a warm blue world. It was not a dream. It was a memory.' },
+    { who: 'jason', text: 'And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!' },
+  ],
+  snow: [
+    { who: 'halcyon', text: 'The freed scientists are safe on board the {ship}. Dr. Galen sent you a message.' },
+    { who: 'jason', text: 'What did he say?' },
+    { who: 'halcyon', text: '“Brennus is building something called the COLOSSUS. And he keeps a journal. Find the pages, and you will understand him.”' },
+    { who: 'bolt', text: 'A journal? Brennus has FEELINGS? ...Should I be more scared or less scared?' },
+  ],
+  rockies: [
+    { who: 'jason', text: 'The Gorgon crashed up there forty years ago. Brennus has been alone on this planet ever since.' },
+    { who: 'bolt', text: 'Forty years alone. I was alone in a dark storeroom for ONE day, and I did not like it at all.' },
+    { who: 'halcyon', text: 'Warning: the jungle ahead is thick with GaScu pollen. Something has gone very wrong down there.' },
+    { who: 'jason', text: 'Then we fix it. Hang on, GaScu. We’re coming.' },
+  ],
+  jungle: [
+    { who: 'gascu', text: '...Jason... ...LUX... ...hot... ...trapped... ...please...' },
+    { who: 'bolt', text: 'That was GaScu! It flashed to me through the pollen. It is inside the volcano!' },
+    { who: 'halcyon', text: 'Mount Atlantas. Brennus’s fortress. The Colossus will be waiting for you.' },
+    { who: 'jason', text: 'So will we. One last climb, LUX.' },
+    { who: 'bolt', text: 'One last climb. I will be brave if you are brave.' },
+  ],
+  volcano: [],
 };
+
+/** Narration for the opening of chapter 2, one caption per shot. */
+export const PROLOGUE2 = {
+  arrive: 'After months between the stars, the <b>{ship}</b> reached its new home: a green and blue world called <b>Gaia Nova</b>.',
+  team: 'Captain Atalanta sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
+  quiet: 'Three days later, their radio went quiet...',
+  signal: '...and then a message came up from the planet.',
+  snatch: 'That night, little black drones swooped onto the {ship}, grabbed GaScu and flew it down to the planet.',
+  down: 'So Jason and LUX climbed into the shuttle and flew down to Gaia Nova.',
+};
+
+/** General Brennus's broadcast, and what the ship says back. */
+export const BROADCAST: Line[] = [
+  { who: 'brennus', text: 'Attention, colony ship. This is General Brennus, of the warship Gorgon.' },
+  { who: 'brennus', text: 'I reached Gaia Nova forty years before you. This world is MINE. Every tree, every river, every rock.' },
+  { who: 'brennus', text: 'Your scientists came poking around my planet. They will be my guests for a while.' },
+  { who: 'captain', text: 'Brennus... my old commander. The Fleet threw him out for experimenting on living things.' },
+  { who: 'brennus', text: 'Hello, Atalanta. Turn your ship around and fly away, or meet my THORN LEGION.' },
+];
+
+/** After the drones steal GaScu. */
+export const STOLEN: Line[] = [
+  { who: 'bolt', text: 'GaScu! They took GaScu! Jason, they TOOK it!' },
+  { who: 'captain', text: 'He wants GaScu’s pollen for his army. Jason, LUX: take the shuttle down. Find the scientists, and bring GaScu home.' },
+  { who: 'jason', text: 'We will, Captain. Come on, LUX. Gaia Nova needs us.' },
+];
 
 /** Name cards for boss entrances. */
 export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
@@ -81,6 +153,12 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   wardog: { sub: 'Chief security robot · controlled by the pollen', color: '#ff3a4c' },
   heart: { sub: 'GaScu itself · steering the ship', color: '#ff6fcf' },
   reborn: { sub: 'Every vine on the ship · its very last stand', color: '#ff2a8a' },
+  thresher: { sub: 'Brennus’s giant harvester · it mows down everything', color: '#ffd166' },
+  driller: { sub: 'A mining machine as long as a river · and twice as loud', color: '#ff9a3a' },
+  boreas: { sub: 'Warden of the prison camp · colder than the tundra', color: '#7fe6ff' },
+  stheno: { sub: 'Last gunship of the Gorgon · guards the mountain pass', color: '#ffb347' },
+  hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
+  colossus: { sub: 'General Brennus’s war machine · with GaScu caged inside', color: '#ff3a4c' },
 };
 
 /**
@@ -99,12 +177,12 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
-/** Narration for the two ending cinematics. */
-export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
+/** Narration for the ending cinematics. */
+export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
   saved: [
     'With one mighty pull on the wheel, the <b>{ship}</b> swung away from the star.',
     'The vines let go of the ship. The Heart of GaScu curled up into a tiny, sleeping seed.',
-    'Weeks later, the pods opened one by one above a green-and-blue world: <b>Nova Terra</b>.',
+    'Weeks later, the pods opened one by one above a green-and-blue world: <b>Gaia Nova</b>.',
     'Ten thousand colonists had a new home. And a brand new hero.',
   ],
   friends: [
@@ -113,11 +191,27 @@ export const ENDING_CAPTIONS: Record<'saved' | 'friends', string[]> = {
     'Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.',
     'Ten thousand colonists woke up in a garden between the stars. And LUX was never scared of the dark again, because now something always glows.',
   ],
+  freed: [
+    'The Colossus crashed down into the crater, and Mount Atlantas let out one last, tired puff of smoke.',
+    'GaScu’s vines slipped free of the machines. All over Gaia Nova, the Thorn Legion switched off and went quiet.',
+    'General Brennus was taken up to the {ship} to explain himself to Captain Atalanta. It was going to be a VERY long talk.',
+    'And at last, the colonists stepped out onto <b>Gaia Nova</b>: a brand new home that belonged to everyone.',
+  ],
+  redeemed: [
+    'Brennus read the very first page of his journal, the one he wrote when he was twelve... and lowered his hands.',
+    '“I came here to make this world obey me,” he said. “I forgot that the best gardens are the ones you share.”',
+    'Together, Brennus, the scientists and GaScu turned the Thorn Legion into the <b>Green Legion</b>: robots that plant forests instead of fighting.',
+    'On the colony’s first morning, GaScu bloomed across the whole valley. Gaia Nova was home at last, for everyone.',
+  ],
 };
 
+/** Which chapter an ending belongs to. */
+export const endingChapter = (kind: EndingKind): Chapter => (kind === 'saved' || kind === 'friends' ? 1 : 2);
+
 /** The short epilogue on the final stats card. */
-export function endingText(kind: 'saved' | 'friends', save: SaveData): string[] {
-  const n = save.colonists.length;
+export function endingText(kind: EndingKind, save: SaveData): string[] {
+  if (endingChapter(kind) === 2) return endingText2(kind, save);
+  const n = inChapter(save.colonists, 1);
   const rosa = save.colonists.includes('security.c1');
   const captain = save.colonists.includes('bridge.c1');
   const out: string[] = [];
@@ -128,14 +222,30 @@ export function endingText(kind: 'saved' | 'friends', save: SaveData): string[] 
   );
   if (captain) out.push(tr('Captain Atalanta promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
   if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Jason saved the ship. Twice a day. Sometimes three times.'));
-  out.push(n ? tr('You rescued {n} of 12 colonists from their cocoons.', { n }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
-  if (kind === 'saved' && save.shards.length < 18) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and LUX might learn to talk to it.'));
+  out.push(n ? tr('You rescued {n} of {total} colonists from their cocoons.', { n, total: chapterTotals(1).colonists }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
+  if (kind === 'saved' && inChapter(save.shards, 1) < chapterTotals(1).shards) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and LUX might learn to talk to it.'));
   return out;
 }
 
-function colonistNames(save: SaveData): string[] {
+function endingText2(kind: EndingKind, save: SaveData): string[] {
+  const n = inChapter(save.colonists, 2);
+  const hypatia = save.colonists.includes('volcano.c1');
+  const out: string[] = [];
+  out.push(
+    kind === 'redeemed'
+      ? tr('Brennus planted his grandmother’s tomato seeds in the colony’s very first garden. He gave every single plant a name.')
+      : tr('GaScu planted itself in the middle of the Whispering Plains. By spring, the whole valley was in flower.'),
+  );
+  if (hypatia) out.push(tr('Dr. Hypatia named a brand new flower after LUX. It glows in the dark, of course.'));
+  out.push(tr('Captain Atalanta made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
+  out.push(n ? tr('You freed {n} of {total} scientists from Brennus’s camps.', { n, total: chapterTotals(2).colonists }) : tr('The scientists found their own way home, and told everyone about the boy and his robot.'));
+  if (kind === 'freed' && inChapter(save.shards, 2) < chapterTotals(2).shards) out.push(tr('Psst... Brennus’s journal still has missing pages. Find all 18 and you might reach the man inside the machine.'));
+  return out;
+}
+
+function colonistNames(save: SaveData, ch: Chapter): string[] {
   const names: string[] = [];
-  for (const id of LEVEL_ORDER) {
+  for (const id of CHAPTER_DECKS[ch]) {
     for (const spec of Object.values(LEVELS[id].legend)) {
       if (spec.type === 'cocoon' && save.colonists.includes(`${id}.${spec.id}`)) names.push(spec.name);
     }
@@ -143,10 +253,35 @@ function colonistNames(save: SaveData): string[] {
   return names;
 }
 
-export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
-  const rescued = colonistNames(save);
+export function creditsHtml(kind: EndingKind, save: SaveData): string {
   const p = (s: string) => `<p>${tr(s)}</p>`;
   const head = (s: string) => `<h3>${tr(s)}</h3>`;
+  if (endingChapter(kind) === 2) {
+    const rescued = colonistNames(save, 2);
+    return [
+      `<h1>${upper(tr(GAME_NAME))}</h1>`,
+      `<h2>${upper(tr('Gaia Nova'))}</h2>`,
+      head('STARRING'),
+      p('Jason, junior engineer'),
+      p('LUX, a very brave little drone'),
+      head('WITH'),
+      p('HALCYON, the ship computer'),
+      p('Captain Atalanta'),
+      p('Dr. Hypatia, chief scientist'),
+      p('PANDORA, the travelling shop'),
+      p('GaScu, home at last'),
+      kind === 'redeemed' ? p('General Brennus, a gardener at last') : p('General Brennus, a very grumpy old general'),
+      head('THE THORN LEGION'),
+      p('Thresher · Dune Driller · Boreas'),
+      p('Stheno · the Thorn Hydra · the Colossus'),
+      head('SCIENTISTS YOU FREED'),
+      ...(rescued.length ? rescued.map(p) : [p('Everyone made it home safe and sound!')]),
+      head('JOURNAL PAGES'),
+      `<p>${tr('{n} of 18', { n: inChapter(save.shards, 2) })}</p>`,
+      `<p class="end">${tr('Thank you for playing!')}</p>`,
+    ].join('');
+  }
+  const rescued = colonistNames(save, 1);
   return [
     `<h1>${upper(tr(GAME_NAME))}</h1>`,
     head('STARRING'),
@@ -164,7 +299,7 @@ export function creditsHtml(kind: 'saved' | 'friends', save: SaveData): string {
     head('COLONISTS YOU RESCUED'),
     ...(rescued.length ? rescued.map(p) : [p('Everyone woke up safe and sound!')]),
     head('MEMORY SHARDS'),
-    `<p>${tr('{n} of 18', { n: save.shards.length })}</p>`,
+    `<p>${tr('{n} of 18', { n: inChapter(save.shards, 1) })}</p>`,
     `<p class="end">${tr('Thank you for playing!')}</p>`,
   ].join('');
 }

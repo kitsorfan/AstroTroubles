@@ -6,8 +6,8 @@
  * Doors are treated as open: the checker proves the geometry works, the level's conditions
  * decide the order.
  */
-import { CELL, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
-import type { Ability, Cond, ParsedLevel, PlacedEntity, Spec } from '../src/world/levelTypes';
+import { CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
+import { PASSABLE_DECOR, type Ability, type Cond, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
 type SpotKind = 'floor' | 'plat' | 'pad' | 'vent';
 
@@ -68,7 +68,7 @@ function maxRise(abilities: Ability[], launch: number) {
   return apex - 0.3;
 }
 
-const SOLID_DECOR = (s: Spec) => s.type === 'decor' && s.solid !== false;
+const SOLID_DECOR = (s: Spec) => s.type === 'decor' && s.solid !== false && !PASSABLE_DECOR.includes(s.kind);
 
 export interface ReachResult {
   reached: Set<string>;
@@ -146,6 +146,24 @@ export function buildSpots(level: ParsedLevel, abilities: Ability[] = []): Spot[
   return spots;
 }
 
+/** True if the grapple rope from `a` to the anchor at `b` doesn't pass through a wall, a shut door or a cliff. */
+function ropeClear(level: ParsedLevel, shut: Set<number>, a: Spot, b: Spot) {
+  const d = Math.hypot(b.cx - a.cx, b.cz - a.cz);
+  const steps = Math.ceil(d * 4);
+  for (let i = 1; i < steps; i++) {
+    const f = i / steps;
+    const cx = Math.round(a.cx + (b.cx - a.cx) * f);
+    const cz = Math.round(a.cz + (b.cz - a.cz) * f);
+    if ((cx === a.cx && cz === a.cz) || (cx === b.cx && cz === b.cz)) continue;
+    const c = level.cells[cz * level.width + cx];
+    if (!c) return false;
+    if (c.kind === 'wall' || shut.has(cz * level.width + cx)) return false;
+    // The rope runs 1.5 above Jason's chest line; a floor higher than that blocks it.
+    if (c.kind !== 'void' && c.kind !== 'hazard' && c.h > a.h + (b.h - a.h) * f + 1.5) return false;
+  }
+  return true;
+}
+
 function lineClear(level: ParsedLevel, shut: Set<number>, a: Spot, b: Spot) {
   const top = Math.max(a.h, b.h) + 0.6;
   const d = Math.hypot(b.cx - a.cx, b.cz - a.cz);
@@ -200,6 +218,10 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
   };
   const start = spots.findIndex((s) => s.cx === level.spawn.cx && s.cz === level.spawn.cz && s.kind !== 'plat');
   if (start < 0) throw new Error('spawn is not on a walkable cell');
+  // Grapple anchors: with the hook, any spot in range (and in sight) can zip to an anchor's own cell.
+  const anchors = moves.includes('grapple')
+    ? level.entities.filter((e) => e.spec.type === 'anchor').flatMap((e) => spots.flatMap((s, i) => (s.cx === e.cx && s.cz === e.cz && s.kind !== 'plat' ? [i] : [])))
+    : [];
   const edges = new Map<number, number[]>();
   const next = (ai: number) => {
     const known = edges.get(ai);
@@ -228,6 +250,11 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
           if (ok) out.push(bi);
         }
       }
+    }
+    for (const bi of anchors) {
+      if (bi === ai || out.includes(bi)) continue;
+      const b = spots[bi];
+      if (Math.hypot(b.cx - a.cx, b.cz - a.cz) <= GRAPPLE.range && Math.abs(b.h - a.h) <= GRAPPLE.rise && ropeClear(level, shut, a, b)) out.push(bi);
     }
     edges.set(ai, out);
     return out;

@@ -7,7 +7,7 @@ import type { Ability, DeckId } from '../src/world/levelTypes';
 import { deckAbilities } from './deckAbilities';
 import { isCollectible, reach, refillGaps, renderReach, timedRoutes } from './reach';
 
-const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse'];
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
 
 function check(id: DeckId, showMap: boolean) {
   const level = parseLevel(LEVELS[id]);

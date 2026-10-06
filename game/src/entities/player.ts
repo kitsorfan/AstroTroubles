@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GRAPPLE, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
@@ -55,6 +55,11 @@ export class Player {
   private wasHeld = false;
   /** Seconds a tap stays queued while the blaster cools down. */
   private shootBuf = 0;
+  /** A grapple zip in progress: where Jason left from, where he lands, where the rope hooks on, and how far along it is (0..1). */
+  private zip: { from: THREE.Vector3; to: THREE.Vector3; hook: THREE.Vector3; k: number; time: number } | null = null;
+  /** Seconds left wading through quicksand (refreshed every frame he stands in it), and how far he has sunk. */
+  private mudT = 0;
+  private sink = 0;
   private sinceShot = 99;
   private chargedFx = false;
   private blinkT = 2;
@@ -104,6 +109,72 @@ export class Player {
     const b = this.body;
     this.world.particles.emit(b.x, b.y + 1, b.z, { count: 26, color: '#ffd166', speed: 4, life: 0.6, size: 0.45, up: 2 });
     this.squash = 0.25;
+  }
+
+  get zipping() {
+    return this.zip !== null;
+  }
+
+  /** Fires the grapple at an anchor's hook and zips over to land on `land`. */
+  grappleTo(land: THREE.Vector3, hook: THREE.Vector3) {
+    if (this.zip || this.down) return;
+    const b = this.body;
+    const from = new THREE.Vector3(b.x, b.y, b.z);
+    const to = land.clone().add(new THREE.Vector3(0, 0.05, 0));
+    this.zip = { from, to, hook: hook.clone(), k: 0, time: GRAPPLE.time + from.distanceTo(to) * GRAPPLE.timePerUnit };
+    this.facing = Math.atan2(to.x - b.x, to.z - b.z);
+    this.pounding = false;
+    this.dashT = 0;
+    this.sink = 0;
+    this.shootPose = 0.5;
+    audio.play('zap', 1.8);
+    audio.play('dash', 1.3);
+    haptic('light');
+  }
+
+  /** The zip itself: an arc from Jason to the anchor, with the rope drawn from his hand to the hook. */
+  private updateZip(dt: number) {
+    const z = this.zip;
+    if (!z) return;
+    const b = this.body;
+    z.k = Math.min(1, z.k + dt / z.time);
+    const e = z.k * z.k * (3 - 2 * z.k);
+    const lift = Math.min(3, z.from.distanceTo(z.to) * 0.12) * Math.sin(z.k * Math.PI);
+    b.x = z.from.x + (z.to.x - z.from.x) * e;
+    b.z = z.from.z + (z.to.z - z.from.z) * e;
+    b.y = z.from.y + (z.to.y - z.from.y) * e + lift;
+    b.vx = 0;
+    b.vz = 0;
+    b.vy = 0;
+    this.vx = 0;
+    this.vz = 0;
+    const w = this.world;
+    const hand = new THREE.Vector3(b.x + Math.sin(this.facing) * 0.6, b.y + 1.2, b.z + Math.cos(this.facing) * 0.6);
+    if (z.k < 0.92) w.beams.zap(hand, z.hook, '#7fe6ff');
+    if (Math.random() < 0.6) w.particles.emit(b.x, b.y + 0.9, b.z, { count: 1, color: '#bff4ff', speed: 0.6, life: 0.35, size: 0.4, gravity: 0 });
+    if (z.k >= 1) {
+      this.zip = null;
+      b.grounded = false;
+      this.jumps = 1;
+      this.airDashed = false;
+      this.cut = true;
+      w.particles.emit(b.x, b.y + 0.2, b.z, { count: 10, color: '#ffffff', speed: 2.5, life: 0.35, size: 0.4, gravity: 2 });
+      audio.play('land');
+    }
+    this.animate(dt, 0.6);
+  }
+
+  /** Called every frame Jason stands in quicksand: he slows down and slowly sinks (faster if he stands still). */
+  wade(dt: number) {
+    this.mudT = 0.12;
+    const moving = Math.hypot(this.vx, this.vz) > 1;
+    this.sink += dt * (moving ? 0.45 : 1);
+    if (Math.random() < 0.25) this.world.particles.emit(this.body.x, this.body.y + 0.1, this.body.z, { count: 1, color: '#c8a66a', speed: 1, life: 0.4, size: 0.4, up: 1 });
+    if (this.sink >= OUTDOOR.sinkTime) {
+      this.sink = 0;
+      this.world.hooks.toast('Quicksand! Keep moving, or jump out of it fast.', 'bolt');
+      this.fellOff();
+    }
   }
 
   has(a: Ability) {
@@ -262,9 +333,17 @@ export class Player {
     this.sinceHurt += dt;
     if (this.down || w.cutscene) {
       this.cancelCharge();
+      this.zip = null;
       this.animate(dt, 0);
       return;
     }
+    if (this.zip) {
+      this.updateZip(dt);
+      return;
+    }
+    // Quicksand slows Jason down while he is in it; out of it, he climbs back up.
+    this.mudT -= dt;
+    if (this.mudT <= 0) this.sink = Math.max(0, this.sink - dt * 2);
 
     // Camera-relative movement.
     const yaw = w.cameraYaw;
@@ -282,7 +361,7 @@ export class Player {
     const ground = b.grounded ? b.ground : null;
     const onIce = ground?.kind === 'ice';
     const accel = b.grounded ? (onIce ? PLAYER.iceAccel : PLAYER.accel) : PLAYER.airAccel;
-    const speed = PLAYER.speed * (this.carrying ? 0.85 : 1);
+    const speed = PLAYER.speed * (this.carrying ? 0.85 : 1) * (this.mudT > 0 ? OUTDOOR.sandSpeed : 1);
 
     if (this.dashT > 0) {
       this.dashT -= dt;
@@ -597,7 +676,7 @@ export class Player {
     const b = this.body;
     this.renderY = b.grounded ? damp(this.renderY, b.y, 22, dt) : b.y;
     if (Math.abs(this.renderY - b.y) > 1.2) this.renderY = b.y;
-    m.root.position.set(b.x, this.renderY, b.z);
+    m.root.position.set(b.x, this.renderY - Math.min(0.9, this.sink * 0.35), b.z);
     m.root.rotation.y = this.facing;
     const shadow = m.root.children[m.root.children.length - 1];
     shadow.position.y = Math.max(0.02, this.groundBelow() - this.renderY + 0.03);

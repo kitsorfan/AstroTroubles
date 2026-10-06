@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 import { Rng } from '../core/math';
+import { outdoorSurfaces } from './terrain';
 import type { Theme } from './themes';
 
 /**
@@ -29,21 +30,21 @@ export interface DeckSurfaces {
 
 type Ctx = CanvasRenderingContext2D;
 
-function ctx(w: number, h: number): Ctx {
+export function ctx(w: number, h: number): Ctx {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   return c.getContext('2d') as Ctx;
 }
 
-const shade = (hex: string, f: number) => `#${new THREE.Color(hex).multiplyScalar(f).getHexString()}`;
-const mix = (a: string, b: string, t: number) => `#${new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString()}`;
-const grey = (v: number) => {
+export const shade = (hex: string, f: number) => `#${new THREE.Color(hex).multiplyScalar(f).getHexString()}`;
+export const mix = (a: string, b: string, t: number) => `#${new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString()}`;
+export const grey = (v: number) => {
   const c = Math.round(Math.max(0, Math.min(1, v)) * 255);
   return `rgb(${c},${c},${c})`;
 };
 
-class Sheet {
+export class Sheet {
   readonly c: Ctx;
   readonly h: Ctx;
   readonly g: Ctx;
@@ -392,7 +393,7 @@ function grate(theme: Theme, seed: number): Surface {
   return s.surface(2.5);
 }
 
-function ice(theme: Theme, seed: number): Surface {
+export function ice(theme: Theme, seed: number): Surface {
   const S = 512;
   const rng = new Rng(seed);
   const s = new Sheet(S, S, theme.ice, 0.5);
@@ -613,6 +614,7 @@ type FloorStyle = 'metal' | 'garden' | 'soot' | 'frost';
 
 /** Paints every surface for one deck. Not cached: the textures are freed with the deck to save memory. */
 export function deckSurfaces(theme: Theme, key: string): DeckSurfaces {
+  if (theme.outdoor) return outdoorSurfaces(theme, theme.outdoor);
   const style: FloorStyle = key === 'hydro' ? 'garden' : key === 'engine' ? 'soot' : key === 'cryo' ? 'frost' : 'metal';
   const stripes = key === 'engine' || key === 'security';
   const out: DeckSurfaces = {

@@ -83,3 +83,29 @@ export const PULSE = {
   overloadRadius: 12,
   overloadTime: 6,
 };
+
+/** The grapple hook (found in the Glass Desert): zips Jason to a glowing anchor ring. */
+export const GRAPPLE = {
+  /** Farthest anchor Jason can reach, in cells (straight line). */
+  range: 8,
+  /** How much higher (or lower) than Jason an anchor may be, in world units. */
+  rise: 7,
+  /** Seconds for the zip: a base plus a little per unit of distance. */
+  time: 0.32,
+  timePerUnit: 0.022,
+};
+
+/** Wind, quicksand and rolling boulders on Gaia Nova. */
+export const OUTDOOR = {
+  /** Default push of a gust, in units per second (Jason runs at 7). */
+  wind: 5,
+  /** Seconds a gust blows, and how long it warns before it starts. */
+  gust: 1.6,
+  gustWarn: 0.7,
+  /** How fast Jason wades through quicksand, and how long he can stand still in it before he sinks. */
+  sandSpeed: 0.45,
+  sinkTime: 2.6,
+  /** Rolling boulders: speed (units per second) and how close they must be to knock Jason over. */
+  boulderSpeed: 7,
+  boulderRadius: 1.15,
+};

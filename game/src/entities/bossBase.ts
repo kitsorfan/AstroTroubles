@@ -1,0 +1,120 @@
+import * as THREE from 'three';
+
+import { audio } from '../core/audio';
+import { haptic } from '../core/bridge';
+import { CELL } from '../core/constants';
+import type { World } from '../game/world';
+import type { BossKind } from '../world/levelTypes';
+import { Entity } from './entity';
+
+const tmp = new THREE.Vector3();
+
+/* ---------------- base ---------------- */
+
+export abstract class Boss extends Entity {
+  abstract readonly title: string;
+  hp: number;
+  maxHp: number;
+  started = false;
+  defeated = false;
+  protected t = 0;
+  readonly center: THREE.Vector3;
+
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    hp: number,
+  ) {
+    super(world, id);
+    this.hp = hp;
+    this.maxHp = hp;
+    this.center = new THREE.Vector3(cx * CELL + CELL / 2, h, cz * CELL + CELL / 2);
+  }
+
+  protected get player() {
+    return this.world.player;
+  }
+
+  protected playerDist() {
+    const p = this.player.body;
+    return Math.hypot(p.x - this.center.x, p.z - this.center.z);
+  }
+
+  /** True once the entrance cutscene has played; retries after a knock-out skip straight to the fight. */
+  introSeen = false;
+  private introPlaying = false;
+
+  begin() {
+    if (this.started || this.defeated || this.introPlaying) return;
+    this.introPlaying = true;
+    this.onIntro();
+    void this.world.bossIntro(this).then(() => {
+      this.introPlaying = false;
+      this.engage();
+    });
+  }
+
+  /** Starts the fight right away (used after a cutscene that already introduced the boss). */
+  engage() {
+    this.introSeen = true;
+    if (this.defeated || this.started) return;
+    this.started = true;
+    this.onStart();
+    this.world.bossStarted(this);
+  }
+
+  /** Called as the entrance begins (before the cutscene). */
+  protected onIntro() {}
+
+  /** Called when the fight actually begins, after the entrance. */
+  protected onStart() {}
+
+  /** Roughly how big the boss is, for framing cutscene shots. */
+  get size() {
+    return this.focusHeight;
+  }
+
+  /** How high the boss's "face" is, for cutscene cameras. */
+  protected focusHeight = 2.6;
+
+  /** Where the boss stands right now (bosses that walk override this). */
+  get where(): THREE.Vector3 {
+    return this.center;
+  }
+
+  /** Where cutscene cameras look: the boss's face. */
+  get focus(): THREE.Vector3 {
+    const w = this.where;
+    return new THREE.Vector3(w.x, w.y + this.focusHeight, w.z);
+  }
+
+  get kind(): BossKind {
+    return this.bossKind;
+  }
+
+  bossKind: BossKind = 'warden';
+
+  damage(n: number) {
+    if (this.defeated || !this.started) return;
+    this.hp = Math.max(0, this.hp - n);
+    this.world.hooks.bossBar(this.title, this.hp / this.maxHp);
+    if (this.hp <= 0) this.finish();
+  }
+
+  protected finish() {
+    this.defeated = true;
+    const c = this.center;
+    audio.play('explode');
+    haptic('heavy');
+    this.world.shake(0.8);
+    for (let i = 0; i < 4; i++) this.world.particles.emit(c.x, c.y + 2 + i, c.z, { count: 40, color: i % 2 ? '#ffffff' : this.world.theme.accent, speed: 10, life: 1.2, size: 0.9 });
+    this.world.dropBolts(tmp.set(c.x, c.y + 2, c.z), 40);
+    this.world.bossDefeated(this);
+  }
+
+  /** Resets the fight after Jason is knocked out. */
+  abstract reset(): void;
+}

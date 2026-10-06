@@ -8,6 +8,7 @@ import type { Boss } from '../entities/bosses';
 import type { BoltFind, Exit, Holo } from '../entities/props';
 import type { World } from '../game/world';
 import { BOSS_CARD, FLYOVER } from '../game/story';
+import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
 
@@ -229,10 +230,19 @@ export async function boltFound(d: Director, w: World, find: BoltFind) {
 function bossLines(w: World, b: Boss): Line[] {
   const lines = [...w.dialogue('boss')];
   if (b.kind === 'heart') {
+    const n = inChapter(w.save.shards, 1);
     lines.push(
-      w.save.shards.length >= 18
+      n >= 18
         ? { who: 'bolt', text: 'Jason, I know its light-words now! Get close to the Heart and press SPEAK!' }
-        : { who: 'bolt', text: tr('If only we had all 18 memory shards... (we have {n}) then I could try to TALK to it.', { n: w.save.shards.length }) },
+        : { who: 'bolt', text: tr('If only we had all 18 memory shards... (we have {n}) then I could try to TALK to it.', { n }) },
+    );
+  }
+  if (b.kind === 'colossus') {
+    const n = inChapter(w.save.shards, 2);
+    lines.push(
+      n >= 18
+        ? { who: 'bolt', text: 'Jason, you read every page of his journal. You know who he really is. Get close and TALK to him!' }
+        : { who: 'bolt', text: tr('If only we had all 18 journal pages... (we have {n}) then maybe we could reach the man inside that machine.', { n }) },
     );
   }
   return lines;
@@ -308,7 +318,7 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
     await d.wait(1.2);
   }
   await d.say(w.dialogue('bossDown'));
-  if (w.def.id === 'bridge') {
+  if (isFinale(w.def.id)) {
     await d.fade('#ffffff', 1, 1.4);
     return;
   }
@@ -426,6 +436,34 @@ export async function befriend(d: Director, w: World) {
   } finally {
     w.bolt.override = null;
   }
+}
+
+/** The secret ending of chapter 2: Jason talks General Brennus down, and he steps out of the Colossus. */
+export async function talkDown(d: Director, w: World) {
+  const b = w.boss;
+  if (!b) return;
+  const c = b.where.clone();
+  const f = b.focus.clone();
+  const k = jason(w);
+  face(w, c);
+  const u = toward(c, k);
+  const side = V(u.z, 0, -u.x);
+  const giant = b as Boss & Partial<{ surrender(k: number): void }>;
+  await d.cam(k.clone().addScaledVector(u, 5).addScaledVector(side, 3.5).add(V(0, 2.4, 0)), f.clone().lerp(k, 0.3), 1.4);
+  await d.say(w.dialogue('redeem'));
+  // The machine powers down, piece by piece, and GaScu's glow turns gold.
+  audio.play('upgrade');
+  await d.tween(
+    2.4,
+    (x) => {
+      giant.surrender?.(x);
+      if (Math.random() < 0.5) w.particles.emit(f.x + (Math.random() - 0.5) * 6, f.y + (Math.random() - 0.5) * 3, f.z + (Math.random() - 0.5) * 6, { count: 2, color: '#ffd166', speed: 1.5, up: 1, life: 1.4, size: 0.7, gravity: -0.4 });
+    },
+    ease.inOut,
+  );
+  w.flash(f.x, f.y, f.z, '#ffd166', 90, 1.2);
+  await d.say(w.dialogue('redeemed'));
+  await Promise.all([d.cam(c.clone().addScaledVector(u, 15).add(V(0, 9, 0)), f, 2.4), after(d, 1, () => d.fade('#ffffff', 1, 1.4))]);
 }
 
 /* ---------------- the lift ride out of a deck ---------------- */

@@ -16,6 +16,8 @@ import { makeEnemy, type Enemy } from '../entities/enemies';
 import { difficultyFor, type Difficulty } from './difficulty';
 import type { PuzzleKind } from './puzzles';
 import { COLONIST_BOLTS, HINTS } from './quests';
+import { chapterOf, chapterTotals, inChapter, isFinale } from '../levels';
+import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { Impacts } from '../entities/moveFx';
@@ -52,7 +54,7 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, BossKind, Cond, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
 import { Ambience, Particles } from '../world/particles';
 import { pointBlocked, type Box, type Ground } from '../world/physics';
 import { buildSky } from '../world/sky';
@@ -73,7 +75,7 @@ export interface WorldHooks {
   down(): void;
   music(track: Track): void;
   objective(text: string): void;
-  ending(kind: 'saved' | 'friends'): void;
+  ending(kind: EndingKind): void;
   /** A vault chest was opened. */
   prize(reward: string): void;
   /** A gold banner for rewards (bolts, hearts, quests). */
@@ -420,6 +422,18 @@ export class World {
       case 'boltfind':
         if (!this.flags.has('bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h));
         break;
+      case 'anchor':
+        this.addEntity(new Anchor(this, id, cx, cz, h));
+        break;
+      case 'wind':
+        this.addEntity(new Wind(this, id, cx, cz, h, spec.dx, spec.dz, spec.w, spec.d, spec.period, spec.offset, spec.strength));
+        break;
+      case 'quicksand':
+        this.addEntity(new Quicksand(this, id, cx, cz, h));
+        break;
+      case 'boulder':
+        this.addEntity(new Boulder(this, id, cx, cz, h, spec.axis, spec.length, spec.period, spec.offset));
+        break;
       case 'decor':
         this.decorItems.push({
           kind: spec.kind,
@@ -552,7 +566,8 @@ export class World {
     if (kind === 'colonist' && !s.colonists.includes(id)) {
       s.colonists.push(id);
       s.bolts += COLONIST_BOLTS;
-      this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / 12 saved', { n: COLONIST_BOLTS, saved: s.colonists.length }));
+      const ch = chapterOf(this.def.id);
+      this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / {total} saved', { n: COLONIST_BOLTS, saved: inChapter(s.colonists, ch), total: chapterTotals(ch).colonists }));
     }
     this.hooks.collect(kind, id);
     this.hooks.hud();
@@ -593,6 +608,19 @@ export class World {
       }
     }
     return best;
+  }
+
+  /** True if Jason can fire the grapple at an anchor standing at `to`: no wall or cliff in the way. */
+  canGrapple(to: THREE.Vector3) {
+    const p = this.player.body;
+    const a = tmpL.set(p.x, p.y + 1.5, p.z);
+    const b = new THREE.Vector3(to.x, to.y + 1.5, to.z);
+    const steps = Math.ceil(a.distanceTo(b) / 0.8);
+    for (let i = 1; i < steps; i++) {
+      tmpV.copy(a).lerp(b, i / steps);
+      if (pointBlocked(this.grid, NO_BOXES, tmpV.x, tmpV.y, tmpV.z)) return false;
+    }
+    return true;
   }
 
   private clearLine(a: THREE.Vector3, b: THREE.Vector3) {
@@ -974,17 +1002,19 @@ export class World {
     this.flags.add('boss');
     this.hooks.bossBar(null, 0);
     this.hooks.checkpoint();
-    const last = this.def.id === 'bridge';
+    const last = isFinale(this.def.id);
     if (!last) this.hooks.music(this.def.music as Track);
     void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b)).then(() => {
-      if (last) this.hooks.ending('saved');
+      if (last) this.hooks.ending(chapterOf(this.def.id) === 1 ? 'saved' : 'freed');
     });
   }
 
+  /** The secret ending of a chapter: LUX talks GaScu round (chapter 1), or Jason talks Brennus down (chapter 2). */
   communed() {
     this.flags.add('boss');
     this.hooks.music('ending');
-    void this.hooks.cutscene((d) => scenes.befriend(d, this)).then(() => this.hooks.ending('friends'));
+    if (chapterOf(this.def.id) === 1) void this.hooks.cutscene((d) => scenes.befriend(d, this)).then(() => this.hooks.ending('friends'));
+    else void this.hooks.cutscene((d) => scenes.talkDown(d, this)).then(() => this.hooks.ending('redeemed'));
   }
 
   /** Replaces the current boss with a new one at the same spot (GaScu's rebirth). */
@@ -1102,7 +1132,27 @@ export class World {
     }
     for (const e of this.entities) {
       if (!e.alive) continue;
-      const kind = e instanceof Cocoon ? 'cocoon' : e instanceof Shard ? 'shard' : e instanceof Canister ? 'canister' : e instanceof Prize ? 'prize' : e instanceof Rune ? 'rune' : e instanceof Vendor ? 'vendor' : null;
+      const planet = chapterOf(this.def.id) === 2;
+      const kind =
+        e instanceof Cocoon
+          ? planet
+            ? 'scientist'
+            : 'cocoon'
+          : e instanceof Shard
+            ? planet
+              ? 'page'
+              : 'shard'
+            : e instanceof Canister
+              ? 'canister'
+              : e instanceof Prize
+                ? 'prize'
+                : e instanceof Rune
+                  ? 'rune'
+                  : e instanceof Vendor
+                    ? 'vendor'
+                    : e instanceof Anchor
+                      ? 'anchor'
+                      : null;
       if (!kind || seen.includes(kind)) continue;
       const at = (e as unknown as { spot?: THREE.Vector3; aim?: THREE.Vector3 }).spot ?? (e as unknown as { aim?: THREE.Vector3 }).aim ?? e.obj.position;
       if (near(at.x, at.z) && tell(kind)) return;
@@ -1124,12 +1174,18 @@ export class World {
     for (const it of this.interactables) {
       if (!it.alive) continue;
       const d = Math.hypot(it.spot.x - p.x, it.spot.z - p.z);
-      if (d > it.range || Math.abs(it.spot.y - p.y) > 3) continue;
-      if (!it.label()) continue;
-      if (d < bd) {
-        bd = d;
-        best = it;
+      if (d > it.range || Math.abs(it.spot.y - p.y) > (it.reachY ?? 3)) continue;
+      let score = d;
+      if (it.aimed) {
+        // Grapple anchors: prefer the one Jason is facing (and anything close by over any anchor).
+        let diff = Math.abs(Math.atan2(it.spot.x - p.x, it.spot.z - p.z) - this.player.facing) % (Math.PI * 2);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        score = 3 + d * (1 + diff * 1.6);
       }
+      if (score >= bd) continue;
+      if (!it.label()) continue;
+      bd = score;
+      best = it;
     }
     return best;
   }
@@ -1191,6 +1247,14 @@ export class World {
     // Shadows follow whatever the camera is looking at.
     if (this.camRig || this.blendT > 0) this.placeSun(look.x, look.y - 1.2, look.z);
     else this.placeSun(p.x, this.groundY, p.z);
+  }
+
+  /** Puts the follow camera straight on Jason, with no easing (after a teleport). */
+  snapCamera() {
+    const p = this.player.body;
+    this.camTarget.set(p.x, p.y + 1.2, p.z);
+    this.groundY = p.y;
+    this.placeCamera(0);
   }
 
   /** Where the follow camera would be right now, at the given distance from Jason. */

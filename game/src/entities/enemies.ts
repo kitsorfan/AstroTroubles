@@ -352,8 +352,8 @@ class Snapper extends Enemy {
   private lunge = 0;
   private jaw = 0.1;
 
-  constructor(world: World, id: string, x: number, y: number, z: number) {
-    super(world, id, x, y, z, 3, 0.6, makeSnapper());
+  constructor(world: World, id: string, x: number, y: number, z: number, variant?: string) {
+    super(world, id, x, y, z, 3, 0.6, makeSnapper(variant));
     this.bolts = 4;
     this.contact = false;
     this.aimHeight = 1.3;
@@ -417,8 +417,8 @@ class Buzzer extends Enemy {
   private diveCd = 4 + Math.random() * 3;
   private diveDir = new THREE.Vector3();
 
-  constructor(world: World, id: string, x: number, y: number, z: number) {
-    super(world, id, x, y + 2.6, z, 2, 0.5, makeBuzzer());
+  constructor(world: World, id: string, x: number, y: number, z: number, variant?: string) {
+    super(world, id, x, y + 2.6, z, 2, 0.5, makeBuzzer(variant));
     this.flying = true;
     this.bolts = 4;
     this.baseY = y + 2.6;
@@ -518,8 +518,8 @@ class Sentry extends Enemy {
   private ventT = 0;
   private raised = false;
 
-  constructor(world: World, id: string, x: number, y: number, z: number) {
-    super(world, id, x, y, z, 4, 0.7, makeSentry());
+  constructor(world: World, id: string, x: number, y: number, z: number, variant?: string) {
+    super(world, id, x, y, z, 4, 0.7, makeSentry(variant));
     this.bolts = 6;
     this.heartChance = 0.2;
     this.aimHeight = 1.1;
@@ -632,8 +632,8 @@ class Sentry extends Enemy {
 class Turret extends Enemy {
   private shootT = 1.5;
 
-  constructor(world: World, id: string, x: number, y: number, z: number) {
-    super(world, id, x, y, z, 3, 0.7, makeTurret());
+  constructor(world: World, id: string, x: number, y: number, z: number, variant?: string) {
+    super(world, id, x, y, z, 3, 0.7, makeTurret(variant));
     this.bolts = 5;
     this.aimHeight = 1;
     this.kind = 'turret';
@@ -687,8 +687,8 @@ class Brute extends Enemy {
   private calmGlow: THREE.Color;
   private calmGlowI: number;
 
-  constructor(world: World, id: string, x: number, y: number, z: number) {
-    super(world, id, x, y, z, 10, 1.1, makeBrute());
+  constructor(world: World, id: string, x: number, y: number, z: number, variant?: string) {
+    super(world, id, x, y, z, 10, 1.1, makeBrute(variant));
     this.bolts = 15;
     this.heartChance = 0.7;
     this.aimHeight = 1.3;
@@ -822,19 +822,19 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       e = new Sporeling(world, id, x, h, z, variant ?? 'default');
       break;
     case 'snapper':
-      e = new Snapper(world, id, x, h, z);
+      e = new Snapper(world, id, x, h, z, variant);
       break;
     case 'buzzer':
-      e = new Buzzer(world, id, x, h, z);
+      e = new Buzzer(world, id, x, h, z, variant);
       break;
     case 'sentry':
-      e = new Sentry(world, id, x, h, z);
+      e = new Sentry(world, id, x, h, z, variant);
       break;
     case 'turret':
-      e = new Turret(world, id, x, h, z);
+      e = new Turret(world, id, x, h, z, variant);
       break;
     case 'brute':
-      e = new Brute(world, id, x, h, z);
+      e = new Brute(world, id, x, h, z, variant);
       break;
   }
   const d = world.difficulty;

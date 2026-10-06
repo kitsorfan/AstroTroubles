@@ -4,6 +4,7 @@ import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL, MAX_HEARTS, PLAYER } from '../core/constants';
 import type { World } from '../game/world';
+import { chapterOf } from '../levels';
 import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { Entity } from './entity';
@@ -279,14 +280,32 @@ export class EnergyPickup extends Floater {
   }
 }
 
+/** A memory shard on the ship (a pink crystal), or a page of Brennus's journal on Gaia Nova (a glowing gold page). */
 export class Shard extends Floater {
+  private spark: string;
+
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 1.2);
-    const pink = mat('#ffc6ef', { emissive: '#ff5fc8', ei: 1.4, rough: 0.1, metal: 0.3 });
-    const crystal = mesh(new THREE.OctahedronGeometry(0.42), pink);
-    crystal.scale.set(0.7, 1.25, 0.7);
-    this.obj.add(crystal, glowSprite('#ff6fcf', 2.8, 0.55));
-    const ring = mesh(torus(0.62, 0.03), mat('#ffffff', { emissive: '#ffc6ef', ei: 1 }), 0, 0, 0, false);
+    const page = chapterOf(world.def.id) === 2;
+    this.spark = page ? '#ffe08a' : '#ff9ae0';
+    if (page) {
+      // A slightly curled page, its lines of handwriting glowing, with a red wax seal.
+      const paper = mat('#fff4d6', { emissive: '#ffcf5a', ei: 0.7, rough: 0.6 });
+      const sheet = mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.9, 12, 1, true, -0.28, 0.56), paper, 0, 0, -1.3, false);
+      sheet.material = paper;
+      (sheet.material as THREE.MeshStandardMaterial).side = THREE.DoubleSide;
+      this.obj.add(sheet);
+      const ink = mat('#c88a2a', { emissive: '#ffb020', ei: 1.2 });
+      for (let i = 0; i < 4; i++) this.obj.add(mesh(new THREE.BoxGeometry(0.5 - (i === 3 ? 0.2 : 0), 0.04, 0.02), ink, -0.04, 0.24 - i * 0.14, 0.1, false));
+      this.obj.add(mesh(sphere(0.08, 10), mat('#c8202a', { emissive: '#ff3a4c', ei: 0.6 }), 0.2, -0.3, 0.12, false));
+      this.obj.add(glowSprite('#ffd166', 2.8, 0.55));
+    } else {
+      const pink = mat('#ffc6ef', { emissive: '#ff5fc8', ei: 1.4, rough: 0.1, metal: 0.3 });
+      const crystal = mesh(new THREE.OctahedronGeometry(0.42), pink);
+      crystal.scale.set(0.7, 1.25, 0.7);
+      this.obj.add(crystal, glowSprite('#ff6fcf', 2.8, 0.55));
+    }
+    const ring = mesh(torus(0.62, 0.03), mat('#ffffff', { emissive: page ? '#ffe08a' : '#ffc6ef', ei: 1 }), 0, 0, 0, false);
     ring.rotation.x = Math.PI / 2;
     this.obj.add(ring);
   }
@@ -295,7 +314,7 @@ export class Shard extends Floater {
     super.update(dt);
     if (Math.random() < 0.15) {
       const o = this.obj.position;
-      this.world.particles.emit(o.x, o.y, o.z, { count: 1, color: '#ff9ae0', speed: 1.5, life: 0.8, size: 0.35, gravity: -1 });
+      this.world.particles.emit(o.x, o.y, o.z, { count: 1, color: this.spark, speed: 1.5, life: 0.8, size: 0.35, gravity: -1 });
     }
   }
 
@@ -304,7 +323,7 @@ export class Shard extends Floater {
     audio.play('shard');
     haptic('success');
     const o = this.obj.position;
-    w.particles.emit(o.x, o.y, o.z, { count: 40, color: '#ff9ae0', speed: 7, life: 0.9, size: 0.6 });
+    w.particles.emit(o.x, o.y, o.z, { count: 40, color: this.spark, speed: 7, life: 0.9, size: 0.6 });
     w.collect('shard', this.id);
     this.remove();
   }
@@ -344,6 +363,7 @@ const ABILITY_LOOK: Record<Ability, { color: string; name: string }> = {
   dash: { color: '#ffd166', name: 'Dash Thrusters' },
   glide: { color: '#c6ff7a', name: 'Hover Pack' },
   pulse: { color: '#8ab4ff', name: 'Force Pulse' },
+  grapple: { color: '#7fe6ff', name: 'Grapple Hook' },
 };
 
 export class UpgradePickup extends Floater {
