@@ -9,7 +9,7 @@ import type { World } from '../game/world';
 import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
-import { makeJason, type JasonModel } from './models';
+import { dressJason, makeJason, type JasonModel } from './models';
 import { JasonFx } from './moveFx';
 
 /** How long Jason hangs in the air (and flips) before a ground pound slams down. */
@@ -86,6 +86,7 @@ export class Player {
     this.body = makeBody(x, y, z, PLAYER.radius, PLAYER.height);
     this.body.grounded = true;
     this.model = makeJason();
+    dressJason(this.model, world.save.upgrades);
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.ammo = this.clipSize;
@@ -93,6 +94,16 @@ export class Player {
     this.safe.set(x, y, z);
     world.scene.add(this.model.root);
     this.fx = new JasonFx(world.scene);
+  }
+
+  /** Puts on the gear for any newly bought upgrades, with a little sparkle when something changed. */
+  refreshGear() {
+    const before = this.model.gearKey;
+    dressJason(this.model, this.world.save.upgrades);
+    if (this.model.gearKey === before) return;
+    const b = this.body;
+    this.world.particles.emit(b.x, b.y + 1, b.z, { count: 26, color: '#ffd166', speed: 4, life: 0.6, size: 0.45, up: 2 });
+    this.squash = 0.25;
   }
 
   has(a: Ability) {

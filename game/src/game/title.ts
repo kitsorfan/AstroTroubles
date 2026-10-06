@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
 import { ColonyShip } from '../cinema/colonyShip';
-import { makeBolt, makeJason, mat, mesh } from '../entities/models';
+import type { SaveData } from '../core/save';
+import { dressJason, makeBolt, makeJason, mat, mesh } from '../entities/models';
 import { buildSky } from '../world/sky';
 import { THEMES } from '../world/themes';
 
@@ -63,7 +64,9 @@ export class TitleScene {
     this.camera.updateProjectionMatrix();
   }
 
-  update(dt: number) {
+  /** `upgrades` dresses Jason in the gear he has bought (cheap when nothing changed). */
+  update(dt: number, upgrades: SaveData['upgrades']) {
+    dressJason(this.jason, upgrades);
     this.t += dt;
     const t = this.t;
     this.ship.update(dt);

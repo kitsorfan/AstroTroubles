@@ -604,6 +604,7 @@ export class Game {
         this.ui.reward(msg);
         if (w) {
           w.player.heal(99);
+          w.player.refreshGear();
           for (const m of payQuests(w.def.id, this.save)) this.ui.reward(m);
         }
         this.persist();
@@ -640,6 +641,7 @@ export class Game {
       this.save.maxHearts = Math.min(MAX_HEARTS, this.save.maxHearts + 1);
       this.world?.player.heal(99);
     }
+    this.world?.player.refreshGear();
     audio.play('upgrade');
     haptic('success');
     writeSave(this.save);
@@ -776,7 +778,7 @@ export class Game {
       this.post.render(w.scene, w.camera);
       return;
     }
-    this.title.update(dt);
+    this.title.update(dt, this.save.upgrades);
     this.post.setStrength(0.2);
     this.post.render(this.title.scene, this.title.camera);
   }
