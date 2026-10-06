@@ -33,7 +33,7 @@ export const EL: Record<string, string> = {
   "Warning! The FROST WARDEN guards the lift, and GaScu’s vines have scrambled its brain!": "Προσοχή! Ο ΦΥΛΑΚΑΣ ΤΟΥ ΠΑΓΟΥ φρουρεί τον ανελκυστήρα, και τα κλήματα της Γάκου έχουν κάνει το μυαλό του κουρκούτι!",
   "JUMP over its ice rings! When its chest hatch opens, BLAST the glowing core!": "Κάνε ΑΛΜΑ πάνω από τους δακτυλίους πάγου του! Όταν ανοίξει η θυρίδα στο στήθος του, ρίξε ΒΟΛΗ στον πυρήνα που λάμπει!",
   "We did it! The Warden is just a sleepy old robot again.": "Τα καταφέραμε! Ο Φύλακας ξανάγινε ένα νυσταγμένο γέρικο ρομπότ.",
-  "Sorry, big guy. Sweet dreams.": "Συγγνώμη, μεγάλε. Γλυκά όνειρα.",
+  "Sorry, big guy. Sweet dreams.": "Συγγνώμη, μεγάλε. Όνειρα γλυκά.",
   "The lift is unlocked. Next stop: Hydroponics!": "Ο ανελκυστήρας ξεκλειδώθηκε. Επόμενη στάση: Υδροπονία!",
   "A memory shard! GaScu crystals remember things. Look, it is showing a picture...": "Ένα θραύσμα μνήμης! Οι κρύσταλλοι της Γάκου θυμούνται πράγματα. Κοίτα, δείχνει μια εικόνα...",
   "...cold... so cold and dark out here between the stars...": "...κρύο... τόσο κρύο και σκοτάδι εδώ έξω, ανάμεσα στα αστέρια...",
