@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 
 import { audio } from '../core/audio';
-import { haptic } from '../core/bridge';
-import { CELL } from '../core/constants';
 import { tr } from '../core/i18n';
 import { damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';

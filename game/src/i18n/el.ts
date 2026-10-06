@@ -3,7 +3,6 @@ import { EL_JUNGLE } from './el/jungle';
 import { EL_PLAINS } from './el/plains';
 import { EL_ROCKIES } from './el/rockies';
 import { EL_SNOW } from './el/snow';
-import { EL_STUB } from './el/stub';
 import { EL_VOLCANO } from './el/volcano';
 
 /**
@@ -636,7 +635,6 @@ export const EL: Record<string, string> = {
   "TAKE OFF": "ΑΠΟΓΕΙΩΣΗ",
   "on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.": "στη Γαία Νόβα, κοίτα προς έναν κρίκο που λάμπει και πάτα το κουμπί του ΛΟΥΞ για να πεταχτείς κατευθείαν ως εκεί, πάνω από κενά και πάνω σε γκρεμούς.",
   // Gaia Nova: each region keeps its own Greek in ./el/<region>.ts.
-  ...EL_STUB,
   ...EL_PLAINS,
   ...EL_DESERT,
   ...EL_SNOW,
