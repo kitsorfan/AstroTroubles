@@ -1378,7 +1378,8 @@ export class Reborn extends Boss implements Target, Interactable {
   private cz: number;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
-    super(world, id, cx, cz, h, 44);
+    // The last fight should be a long one: tougher still for every level of Blaster Power.
+    super(world, id, cx, cz, h, 80 + 16 * (world.save.upgrades.blaster ?? 0));
     this.cx = cx;
     this.cz = cz;
     this.spot = this.center.clone();
