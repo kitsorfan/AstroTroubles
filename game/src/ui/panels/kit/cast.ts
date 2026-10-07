@@ -33,6 +33,9 @@ const OLD_FACE = `<path d="M-30 -6L-14 30" stroke="#9a5848" stroke-width="3.5" s
   <path d="M32 2Q40 24 30 44" fill="none" stroke="#d8b050" stroke-width="2"/>
   <path d="M-44 4Q-46 -14 -40 -22L-36 2ZM44 4Q46 -14 40 -22L36 2Z" fill="#c8c8d2"/>`;
 
+/** A happy tear on Brennus's cheek. */
+const TEAR = `<path d="M-16 6q-7 12 0 17q7 -5 0 -17Z" fill="${C.cyan}" ${ink(2)}/>`;
+
 /**
  * General Brennus. `young`: forty years ago (dark hair, no moustache); `capOff`: no cap; `rifle`:
  * holding his big blaster rifle, aimed `aim` degrees (negative = up) in the 'rifle' pose.
@@ -72,11 +75,12 @@ export function brennus(
     pose,
     arms,
     legs: o.legs,
-    face: o.face ?? (young ? 'stern' : 'angry'),
+    // Old Brennus's happy tears: smiling closed eyes (the monocle hides one) and a tear on the other.
+    face: o.face === 'teary' && !young ? 'happy' : (o.face ?? (young ? 'stern' : 'angry')),
     hat: o.capOff ? 'none' : 'general',
     bulk: young ? 1.05 : 1.15,
     bodyExtra: UNIFORM + (young ? '' : MEDALS),
-    headExtra: young ? '' : OLD_FACE,
+    headExtra: young ? '' : OLD_FACE + (o.face === 'teary' ? TEAR : ''),
     lite: o.lite,
   });
   return at(x, y, s, body + rifle, o.flip);

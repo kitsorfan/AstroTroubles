@@ -27,13 +27,13 @@ export function ch2Freed(): string {
       ridge(21, 470, 80, '#7ab878', 6) +
       ridge(5, 560, 70, '#6aaa4a', 5) +
       ridge(8, 660, 60, C.green2, 4) +
-      meadow(3, 26, 520, 700) +
+      meadow(3, 18, 520, 700) +
       shuttle(id + 'a', 360, 330, 0.55, 12) +
       shuttle(id + 'c', 1180, 380, 0.4, 8) +
       shuttle(id + 'd', 560, 200, 0.32, 14) +
       gascuBloom(id + 'g', 800, 430, 1.0, 270) +
       `<path d="M0 760Q400 720 800 750T1600 740V900H0Z" fill="#5f9a3a"/>` +
-      meadow(9, 14, 770, 880) +
+      meadow(9, 10, 770, 880) +
       captain(300, 930, 1.0, { pose: 'cheer', face: 'happy' }) +
       jason(560, 920, 0.95, { pose: 'cheer', face: 'grin' }) +
       lux(1040, 560, 1.05, 'happy') +

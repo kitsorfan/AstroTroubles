@@ -29,7 +29,8 @@ export function face(e: Expr, k = 1, o = 4, brow = '#3b2416', blush = true, lite
   const ey = -2 * k;
   const my = 22 * k;
   const mx = o + 1;
-  const n = (v: number) => Math.round(v * 10) / 10;
+  // Whole units are plenty at the size faces are drawn.
+  const n = (v: number) => Math.round(v);
   let out = '';
   // Eyes: both drawn with one path per layer (whites, pupils, glints) to keep the markup small.
   const ell = (cx: number, cy: number, rx: number, ry: number) =>

@@ -69,7 +69,7 @@ const shared = (body: string) =>
 
 /** A group placed at (x, y), scaled, optionally mirrored (facing left) and rotated. */
 export function at(x: number, y: number, s: number, body: string, flip = false, rot = 0): string {
-  const sc = s === 1 && !flip ? '' : ` scale(${flip ? -s : s} ${s})`;
+  const sc = s === 1 && !flip ? '' : flip ? ` scale(${-s} ${s})` : ` scale(${s})`;
   const ro = rot ? ` rotate(${rot})` : '';
   return `<g transform="translate(${r1(x)} ${r1(y)})${sc}${ro}">${body}</g>`;
 }
@@ -190,7 +190,10 @@ export function ridge(seed: number, y: number, amp: number, color: string, bumps
 }
 
 /** The whole panel's svg wrapper. */
-export const panel = (body: string) => `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${shared(body)}${body}</svg>`;
+export const panel = (body: string) => `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${shared(body)}${squeeze(body)}</svg>`;
+
+/** Shortens path data (no space before a minus sign, no leading zero) to keep the markup small. */
+const squeeze = (svg: string) => svg.replace(/ d="([^"]*)"/g, (_, d: string) => ` d="${d.replace(/ -/g, '-').replace(/(^|[^\d.])0\./g, '$1.')}"`);
 
 /** A colour mixed toward another (t = 0 keeps a, 1 gives b). Both as #rrggbb. */
 export function mix(a: string, b: string, t: number): string {

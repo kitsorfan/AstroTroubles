@@ -34,8 +34,8 @@ export function jungle(id: string, seed: number, tone: [string, string, string],
 export function undergrowth(seed: number, y: number, color: string, light: string): string {
   const rand = rng(seed);
   let out = '';
-  for (let i = 0; i < 10; i++) {
-    const x = r1(-40 + i * 175 + rand() * 40);
+  for (let i = 0; i < 8; i++) {
+    const x = r1(-40 + i * 225 + rand() * 40);
     const c = i % 3 ? color : light;
     out += leaf(x, y + 20, 1.6 + rand(), -150 + rand() * 60, c) + leaf(x, y + 20, 1.4 + rand(), -60 - rand() * 50, c);
   }
