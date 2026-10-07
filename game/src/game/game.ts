@@ -170,7 +170,7 @@ export class Game {
     // (&still skips its opening, &all hands over every ability), #cinema=<arrival|descent|hop|finale> plays a
     // chapter 2 cinematic, #cinema=<argo|voyage|argohop> a chapter 3 one.
     const dev = inApp() ? null : new URLSearchParams(location.hash.slice(1));
-    if (dev && (dev.get('deck') || dev.get('cinema') || dev.get('panel'))) {
+    if (dev && (dev.get('deck') || dev.get('cinema') || dev.get('panel') || dev.get('menu'))) {
       void ready.then(() => this.devJump(dev));
       return;
     }
@@ -225,6 +225,11 @@ export class Game {
           w.snapCamera();
         }, 3400);
       }
+      return;
+    }
+    // #menu=decks opens the level select (with &all, every level unlocked).
+    if (dev.get('menu') === 'decks') {
+      this.deckSelect();
       return;
     }
     // #panel=<id> shows one storybook illustration on its own (for checking the art).

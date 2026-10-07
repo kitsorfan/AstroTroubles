@@ -18,7 +18,7 @@ export interface ArgoModel {
   update(t: number, thrust: number): void;
 }
 
-const WHITE = '#dfe4ee';
+const WHITE = '#cfd5e2';
 const GOLD = '#ffc94a';
 
 /** The sail's solar cells: a gold frame around a grid of blue cells with a ram's head emblem. */
@@ -68,7 +68,7 @@ export function makeArgo(): ArgoModel {
   const gold = new THREE.MeshStandardMaterial({ color: GOLD, roughness: 0.3, metalness: 0.75, emissive: '#5a3a00', emissiveIntensity: 0.25 });
   const darkGold = new THREE.MeshStandardMaterial({ color: '#c8901e', roughness: 0.35, metalness: 0.8 });
   const glass = new THREE.MeshStandardMaterial({ color: '#7fe6ff', emissive: '#3fb6ff', emissiveIntensity: 0.9, roughness: 0.08, transparent: true, opacity: 0.85 });
-  const cell = new THREE.MeshStandardMaterial({ color: '#4a9cff', emissive: '#2a6aff', emissiveIntensity: 0.6, roughness: 0.25, metalness: 0.4 });
+  const cell = new THREE.MeshStandardMaterial({ color: '#4a9cff', emissive: '#2a6aff', emissiveIntensity: 0.3, roughness: 0.35, metalness: 0.4 });
 
   // The hull: a long white galley with a gold belly and a gold rail along the deck.
   const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), white);
@@ -157,7 +157,7 @@ export function makeArgo(): ArgoModel {
     const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.5, 12).rotateX(Math.PI / 2), darkGold);
     nozzle.position.set(s * 0.5, -0.12, 3.1);
     body.add(nozzle);
-    const e = glowSprite('#7fe6ff', 1.2, 0.7);
+    const e = glowSprite('#7fe6ff', 1, 0.5);
     e.position.set(s * 0.5, -0.12, 3.45);
     body.add(e);
     engines.push(e);
@@ -194,7 +194,7 @@ export function makeArgo(): ArgoModel {
       }
       sp.needsUpdate = true;
       const pulse = 1 + Math.sin(t * 30) * 0.08;
-      for (const e of engines) e.scale.setScalar((0.9 + thrust * 1.1) * pulse);
+      for (const e of engines) e.scale.setScalar((0.7 + thrust * 0.9) * pulse);
       boostGlow.material.opacity = thrust * 0.6;
       boostGlow.scale.setScalar(3 + thrust * 3);
       ram.rotation.x = Math.sin(t * 1.3) * 0.04;

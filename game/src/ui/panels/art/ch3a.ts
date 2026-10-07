@@ -107,7 +107,7 @@ export function ch3Aeetes(): string {
     .join('');
   return panel(
     backdrop(id + 'b', [[0, '#05061a'], [1, '#1a1040']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.6)}${glowDef(id + 'h', '#7fe6ff', 0.5)}${lin(id + 'f', [[0, '#c8902a'], [1, '#6a4410']])}</defs>` +
+      `<defs>${glowDef(id + 'g', C.gold, 0.6)}${glowDef(id + 'h', '#7fe6ff', 0.5)}${lin(id + 'f', [[0, '#5a3a5a'], [1, '#22142a']])}</defs>` +
       stars(31, 140, 0, 0, 1600, 700) +
       gasGiant(id + 'j', 1080, 300, 170) +
       goldShip(id + 's', 420, 260, 0.55) +
@@ -119,7 +119,7 @@ export function ch3Aeetes(): string {
       `<path d="M0 0H1600V900H0ZM80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="#2a1a10" fill-rule="evenodd"/>` +
       `<path d="M80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="none" stroke="${C.gold}" stroke-width="16"/>` +
       `<path d="M800 30V700" stroke="${C.gold}" stroke-width="12"/>` +
-      `<path d="M0 700Q800 660 1600 700V900H0Z" fill="url(#${id}f)" ${ink(6)}/>` +
+      `<path d="M0 700Q800 660 1600 700V900H0Z" fill="url(#${id}f)" ${ink(6)}/><path d="M0 760Q800 724 1600 760" fill="none" stroke="${C.gold}" stroke-width="6" opacity=".5"/>` +
       coins +
       // The hologram table and the Fleece spinning above it.
       `<path d="M1120 900L1160 760H1400L1440 900Z" fill="#3a2a40" ${ink(5)}/><ellipse cx="1280" cy="760" rx="120" ry="20" fill="#7fe6ff" opacity=".6"/>` +
@@ -127,7 +127,7 @@ export function ch3Aeetes(): string {
       glow(id + 'h', 1280, 520, 200, 0.7) +
       `<g opacity=".85">${fleece(id + 'l', 1280, 520, 0.7)}</g>` +
       glow(id + 'g', 600, 560, 340, 0.4) +
-      aeetes(620, 905, 1.25, { pose: 'spread' }) +
+      aeetes(600, 960, 1.45, { pose: 'spread' }) +
       sparkle(1170, 420, 14, '#fff6d0') +
       sparkle(1390, 600, 10, '#bff4ff') +
       vignette(id + 'v', 0.45),

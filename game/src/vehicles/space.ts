@@ -130,7 +130,7 @@ export function makeGasGiant(): GasGiant {
     m.position.set(Math.cos(a) * 2.9, Math.sin(a * 2) * 0.12, Math.sin(a) * 2.9);
     moons.add(m);
     if (i === MOONS.length - 1) {
-      const halo = glowSprite('#ffd166', r * 6, 0.55);
+      const halo = glowSprite('#ffd166', r * 3.5, 0.5);
       m.add(halo);
       colchis = m;
     }

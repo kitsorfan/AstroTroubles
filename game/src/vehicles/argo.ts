@@ -418,7 +418,7 @@ export class ArgoFlight implements Vehicle {
         this.doveRun = null;
         d.tail.visible = true;
       }
-    } else if (h || this.world.cutscene) {
+    } else if (h) {
       // Perched in the air just above the Argo's bow, ready to go.
       d.root.visible = true;
       d.root.position.set(f.x + 1.6, f.y + 1.9 + Math.sin(this.time * 3) * 0.12, -2.6);
@@ -434,8 +434,10 @@ export class ArgoFlight implements Vehicle {
     const f = this.flight;
     const m = this.model;
     if (dt > 0) {
-      this.steerVX = damp(this.steerVX, (f.x - this.pos.x) / dt, 8, dt);
-      this.steerVY = damp(this.steerVY, (f.y - this.pos.y) / dt, 8, dt);
+      // Bank with the steering (never more than full stick, even after a jump back to a checkpoint).
+      const cap = FLIGHT.steer;
+      this.steerVX = damp(this.steerVX, Math.max(-cap, Math.min(cap, (f.x - this.pos.x) / dt)), 8, dt);
+      this.steerVY = damp(this.steerVY, Math.max(-cap, Math.min(cap, (f.y - this.pos.y) / dt)), 8, dt);
     }
     this.pos.set(f.x, f.y, 0);
     m.root.position.copy(this.pos).add(this.offset);

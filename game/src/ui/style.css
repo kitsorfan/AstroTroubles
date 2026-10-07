@@ -2363,3 +2363,54 @@ canvas#game {
     font-size: 13px;
   }
 }
+
+/* ---------------- level select: one page per chapter ---------------- */
+
+.deck-panel {
+  width: min(760px, 92vw);
+}
+
+.deck-panel .chapter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.deck-panel .chapter-tabs button {
+  flex: 1;
+}
+
+.deck-grid.many {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.deck-grid .menu-btn.deck.soon {
+  opacity: 0.55;
+}
+
+.soon-note {
+  margin: 10px 0 0;
+  color: var(--gold, #ffd166);
+  font-weight: 700;
+}
+
+@media (max-height: 460px) {
+  .deck-panel h2 {
+    margin-bottom: 4px;
+  }
+  .deck-panel .chapter-head {
+    margin: 4px 0;
+    font-size: 14px;
+  }
+  .deck-grid {
+    gap: 6px;
+  }
+  .deck-grid .menu-btn.deck {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .deck-grid.many .menu-btn.deck.soon small {
+    display: none;
+  }
+}

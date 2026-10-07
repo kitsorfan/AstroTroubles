@@ -40,7 +40,7 @@ const CSS = `
 #ui .vhud .vprompt { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); padding:8px 22px; border-radius:16px;
   background:rgba(10,14,40,.55); color:#fff; font:800 22px Fredoka, sans-serif; letter-spacing:.04em; text-align:center;
   text-shadow:0 2px 6px rgba(0,0,0,.6); white-space:nowrap; transition:opacity .2s; }
-#ui .vhud .vprompt.off { opacity:0; }
+#ui .vhud .vprompt.off, #ui .buttons.hidden ~ .vhud .vprompt { opacity:0; }
 #ui .vhud .vprompt.urgent { color:#ffd166; border:2px solid #ffd166; font-size:30px; animation: vpulse .45s infinite alternate; }
 @keyframes vpulse { from { transform:translate(-50%,-50%) scale(1); } to { transform:translate(-50%,-50%) scale(1.08); } }
 @media (max-height: 460px) { #ui .vhud .vprompt { font-size:18px; } #ui .vhud .vprompt.urgent { font-size:24px; } }
