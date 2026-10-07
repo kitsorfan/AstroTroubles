@@ -142,7 +142,7 @@ export const bridge: LevelDef = {
     '*': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '!': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Captain Atalanta', line: 'You made it all the way up here? Incredible. The ship is in good hands!' },
+    K: { type: 'cocoon', id: 'c1', name: 'Captain Argus', line: 'You made it all the way up here? Incredible. The ship is in good hands!' },
     Q: { type: 'cocoon', id: 'c2', name: 'Navigator Tiphys', line: 'Thank you! The star charts are in the navigation computer. Go, go, go!' },
     G: { type: 'breakwall' },
     '+': { type: 'canister', id: 'hc' },

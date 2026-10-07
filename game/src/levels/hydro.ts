@@ -152,7 +152,7 @@ export const hydro: LevelDef = {
       { who: 'captain', text: 'Captain’s log, day two. GaScu went straight for the gardens. It loves light and water.' },
       { who: 'captain', text: 'It keeps wrapping sleeping people up in cocoons... gently. Like tucking them in with a blanket.' },
       { who: 'captain', text: 'I don’t think it wants to hurt us. I think it’s cold. And very, very lost.' },
-      { who: 'bolt', text: 'That was the Captain’s voice! She sounds so tired...' },
+      { who: 'bolt', text: 'That was the Captain’s voice! He sounds so tired...' },
     ],
     boss: [
       { who: 'halcyon', text: 'That is the VINE QUEEN! Her three golden bulbs power every vine on this deck.' },

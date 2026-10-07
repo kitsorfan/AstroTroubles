@@ -160,7 +160,10 @@ const CAPTAIN = person({
     <path d="M24.4 27.2Q40 33.6 55.6 27.2L55.6 28.6Q40 35.4 24.4 28.6Z" fill="#0a1022"/>
     <path d="M36.6 19.2L40 16.4L43.4 19.2L42.2 22.8H37.8Z" fill="#ffd166"/><circle cx="40" cy="20" r="1.2" fill="${CAP_NAVY}"/>
     <path d="M27.6 38.6Q28.4 39.8 29.6 40.2M52.4 38.6Q51.6 39.8 50.4 40.2" fill="none" stroke="#3e2519" stroke-width=".5" opacity=".45"/>
-    <path d="M36 47.8Q35.2 49.8 35.8 51.6M44 47.8Q44.8 49.8 44.2 51.6" fill="none" stroke="#3e2519" stroke-width=".55" opacity=".4"/>`,
+    <path d="M36 47.8Q35.2 49.8 35.8 51.6M44 47.8Q44.8 49.8 44.2 51.6" fill="none" stroke="#3e2519" stroke-width=".55" opacity=".4"/>
+    <path d="M27.4 42.6Q27.6 54.8 40 58.6Q52.4 54.8 52.6 42.6Q50.6 49.8 46.4 51.4Q43.6 49.2 40 49.4Q36.4 49.2 33.6 51.4Q29.4 49.8 27.4 42.6Z" fill="#c9c9d2"/>
+    <path d="M33.8 49.2Q37 46.8 40 48Q43 46.8 46.2 49.2Q43 50.4 40 49.8Q37 50.4 33.8 49.2Z" fill="#b4b4be"/>
+    <path d="M37 52.4Q40 53.8 43 52.4" fill="none" stroke="#7a4436" stroke-width=".9"/>`,
 });
 
 const ROSA_HAIR = '#23150e';
@@ -323,7 +326,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
   colonist: 'Colonist',
-  captain: 'Captain Atalanta',
+  captain: 'Captain Argus',
   rosa: 'Aunt Rosa',
   vendy: 'Pandora',
   gascu: 'GaScu',

@@ -1,4 +1,4 @@
-# AstroTroubles! privacy policy · Πολιτική απορρήτου
+# Argonauts of the Galaxy privacy policy · Πολιτική απορρήτου
 
 [English](#english) · [Ελληνικά](#ελληνικά)
 
@@ -6,7 +6,7 @@
 
 **Effective date:** 5 October 2026
 
-AstroTroubles! (in Greek, Αστρομπελάδες) is a single-player game for Android made by Kitsos Orfanopoulos.
+Argonauts of the Galaxy (in Greek, Αργοναύτες του Γαλαξία; formerly AstroTroubles!) is a single-player game for Android made by Kitsos Orfanopoulos.
 
 **In short: the game collects no information about you.** It has no accounts, no ads, no analytics and no in-app purchases, and it never sends anything over the internet.
 
@@ -51,7 +51,7 @@ Questions about this policy: **[contact email]**
 
 **Ισχύει από:** 5 Οκτωβρίου 2026
 
-Τα Αστρομπελάδες (στα αγγλικά, AstroTroubles!) είναι ένα παιχνίδι ενός παίκτη για Android, από τον Κίτσο Ορφανόπουλο.
+Οι Αργοναύτες του Γαλαξία (στα αγγλικά, Argonauts of the Galaxy· παλιότερα Αστρομπελάδες) είναι ένα παιχνίδι ενός παίκτη για Android, από τον Κίτσο Ορφανόπουλο.
 
 **Με λίγα λόγια: το παιχνίδι δεν συλλέγει καμία πληροφορία για σένα.** Δεν έχει λογαριασμούς, διαφημίσεις, στατιστικά χρήσης ή αγορές μέσα στην εφαρμογή, και δεν στέλνει ποτέ τίποτα μέσω του διαδικτύου.
 

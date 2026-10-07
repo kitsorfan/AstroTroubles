@@ -125,7 +125,7 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
 /** Narration for the opening of chapter 2, one caption per shot. */
 export const PROLOGUE2 = {
   arrive: 'After months between the stars, the <b>{ship}</b> reached its new home: a green and blue world called <b>Gaia Nova</b>.',
-  team: 'Captain Atalanta sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
+  team: 'Captain Argus sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
   quiet: 'Three days later, their radio went quiet...',
   signal: '...and then a message came up from the planet.',
   snatch: 'That night, little black drones swooped onto the {ship}, grabbed Celestia and flew it down to the planet.',
@@ -139,7 +139,7 @@ export const BROADCAST: Line[] = [
   { who: 'brennus', text: 'Your scientists came poking around my planet. They will be my guests for a while.' },
   { who: 'brennus', text: 'And you have brought back something of mine. That little plant you call GaScu. Its real name is CELESTIA.' },
   { who: 'captain', text: 'Brennus... my first commander. He led the first expedition here, forty years ago. We all thought he was lost.' },
-  { who: 'brennus', text: 'Hello, Atalanta. Turn your ship around and fly away, or meet my THORN LEGION.' },
+  { who: 'brennus', text: 'Hello, Argus. Turn your ship around and fly away, or meet my THORN LEGION.' },
 ];
 
 /** After the drones steal Celestia. */
@@ -203,7 +203,7 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
   freed: [
     'The Colossus crashed down into the crater, and Mount Atlantas let out one last, tired puff of smoke.',
     'Celestia’s vines slipped free of the machines. All over Gaia Nova, the Thorn Legion switched off and went quiet.',
-    'General Brennus was taken up to the {ship} to explain himself to Captain Atalanta. It was going to be a VERY long talk.',
+    'General Brennus was taken up to the {ship} to explain himself to Captain Argus. It was going to be a VERY long talk.',
     'And at last, the colonists stepped out onto <b>Gaia Nova</b>: a brand new home that belonged to everyone.',
   ],
   redeemed: [
@@ -229,7 +229,7 @@ export function endingText(kind: EndingKind, save: SaveData): string[] {
       ? tr('GaScu became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever LUX flies by.')
       : tr('LUX kept the little GaScu seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
   );
-  if (captain) out.push(tr('Captain Atalanta promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
+  if (captain) out.push(tr('Captain Argus promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
   if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Jason saved the ship. Twice a day. Sometimes three times.'));
   out.push(n ? tr('You rescued {n} of {total} colonists from their cocoons.', { n, total: chapterTotals(1).colonists }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
   if (kind === 'saved' && inChapter(save.shards, 1) < chapterTotals(1).shards) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and LUX might learn to talk to it.'));
@@ -246,7 +246,7 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
       : tr('Celestia planted itself in the middle of the Whispering Plains. By spring, the whole valley was in flower.'),
   );
   if (hypatia) out.push(tr('Dr. Hypatia named a brand new flower after LUX. It glows in the dark, of course.'));
-  out.push(tr('Captain Atalanta made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
+  out.push(tr('Captain Argus made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
   out.push(n ? tr('You freed {n} of {total} scientists from Brennus’s camps.', { n, total: chapterTotals(2).colonists }) : tr('The scientists found their own way home, and told everyone about the boy and his robot.'));
   if (kind === 'freed' && inChapter(save.shards, 2) < chapterTotals(2).shards) out.push(tr('Psst... Brennus’s journal still has missing pages. Find all 18 and you might reach the man inside the machine.'));
   return out;
@@ -275,7 +275,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
       p('LUX, a very brave little drone'),
       head('WITH'),
       p('HALCYON, the ship computer'),
-      p('Captain Atalanta'),
+      p('Captain Argus'),
       p('Dr. Hypatia, chief scientist'),
       p('PANDORA, the travelling shop'),
       p('Celestia, home at last'),
@@ -298,7 +298,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
     p('LUX, a very brave little drone'),
     head('WITH'),
     p('HALCYON, the ship computer'),
-    p('Captain Atalanta'),
+    p('Captain Argus'),
     p('Aunt Rosa, Security Chief'),
     p('PANDORA, the travelling shop'),
     kind === 'friends' ? p('GaScu, as our new friend') : p('GaScu, as a sleepy seed'),

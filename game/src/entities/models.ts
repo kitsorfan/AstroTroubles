@@ -632,8 +632,19 @@ function holoFaceTexture(who: HoloSpeaker) {
   g.quadraticCurveTo(cx, 172, cx - 16, 164);
   g.fill();
   line(2.2, '#1e1e1e', [cx - 17, 164, cx, 167, cx + 17, 164]);
-  // Jaw shadow along the bottom of the face.
+  // Jaw shadow along the bottom of the face, and the Captain's short beard.
   line(3, 'rgba(40,40,40,0.5)', [cx - 44, 170, cx, 206, cx + 44, 170]);
+  if (who === 'captain') {
+    g.fillStyle = '#d0d0d0';
+    g.beginPath();
+    g.moveTo(cx - 50, 140);
+    g.quadraticCurveTo(cx - 48, 200, cx, 212);
+    g.quadraticCurveTo(cx + 48, 200, cx + 50, 140);
+    g.quadraticCurveTo(cx + 34, 178, cx, 176);
+    g.quadraticCurveTo(cx - 34, 178, cx - 50, 140);
+    g.fill();
+    line(5, '#bdbdbd', [cx - 20, 158, cx, 152, cx + 20, 158]);
+  }
   // Grain and scanlines, like an old recording.
   for (let i = 0; i < 1800; i++) {
     g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)';
