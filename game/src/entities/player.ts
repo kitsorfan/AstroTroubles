@@ -2,15 +2,19 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, GEAR, GRAPPLE, OUTDOOR, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GEAR, GRAPPLE, HERO_SWITCH, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { Grid } from '../world/grid';
-import type { Ability } from '../world/levelTypes';
+import type { Ability, HeroId } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
-import { dressJason, makeJason, type JasonModel } from './models';
+import { dressJason, makeJason, type HeroModel, type JasonModel } from './models';
 import type { Target } from './entity';
+import { Arrows } from './heroes/arrows';
+import { AtalantaMoves } from './heroes/atalanta';
+import { Follower } from './heroes/follower';
+import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
 import { JasonFx } from './moveFx';
 import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
 
@@ -20,9 +24,26 @@ const POUND_HANG = 0.18;
 const tmp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
 
+/**
+ * The player: one body, one set of hearts, armor and spins, and whichever hero is in control. Jason's
+ * moves live here; other heroes take over the controls through their own moveset (Atalanta's is in
+ * `heroes/atalanta.ts`) while sharing the body, the physics step and the hit rules below.
+ */
 export class Player {
   readonly body: Body;
-  readonly model: JasonModel;
+  /** Jason's model (always built: he's in every level, playing or following). */
+  readonly jason: JasonModel;
+  /** The hero in control, and every hero this level lets the player switch to (in switch order). */
+  hero: HeroId;
+  readonly roster: HeroId[];
+  /** Atalanta's moves and model (built only on levels where she can play). */
+  readonly ata: AtalantaMoves | null;
+  /** Her arrows in flight (they keep flying after a switch). */
+  readonly arrows: Arrows | null;
+  /** The hero not in control, walking along behind. */
+  private follower: Follower | null = null;
+  /** Seconds before the next switch is allowed. */
+  swapCd = 0;
   facing: number;
   hearts: number;
   invuln = 0;
@@ -38,6 +59,7 @@ export class Player {
   energy: number = PLAYER.dashEnergy;
   pounding = false;
   private poundHang = 0;
+  /** Seconds left on the current spin (Jason) or spinning kick (Atalanta). */
   private spinT = 0;
   private spinHit = new Set<unknown>();
   /** Spins left before the long recharge. */
@@ -67,27 +89,28 @@ export class Player {
   private zip: { from: THREE.Vector3; to: THREE.Vector3; hook: THREE.Vector3; k: number; time: number } | null = null;
   /** Seconds left wading through quicksand (refreshed every frame he stands in it), and how far he has sunk. */
   private mudT = 0;
-  private sink = 0;
+  sink = 0;
   private sinceShot = 99;
   private chargedFx = false;
   private blinkT = 2;
   gliding = false;
-  private squash = 0;
-  private phase = 0;
-  private renderY: number;
+  squash = 0;
+  phase = 0;
+  renderY: number;
   private safe = new THREE.Vector3();
   private safeT = 0;
   private wasGrounded = true;
-  private airTime = 0;
-  private vx = 0;
-  private vz = 0;
+  airTime = 0;
+  /** Horizontal velocity the hero is steering (the body's own is reset by collisions). */
+  vx = 0;
+  vz = 0;
   down = false;
   carrying: THREE.Object3D | null = null;
-  private fx: JasonFx;
+  readonly fx: JasonFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
-  /** Lets a cutscene pose Jason's model (called after the normal animation each frame). */
-  pose: ((m: JasonModel, dt: number) => void) | null = null;
+  /** Lets a cutscene pose the playing hero's model (called after the normal animation each frame). */
+  pose: ((m: HeroModel, dt: number) => void) | null = null;
 
   constructor(
     private world: World,
@@ -98,8 +121,13 @@ export class Player {
   ) {
     this.body = makeBody(x, y, z, PLAYER.radius, PLAYER.height);
     this.body.grounded = true;
-    this.model = makeJason();
-    dressJason(this.model, world.save.upgrades, this.weapon);
+    this.jason = makeJason();
+    dressJason(this.jason, world.save.upgrades, this.weapon);
+    this.roster = heroRoster(world.def.heroes, heroDev);
+    this.hero = this.roster[0];
+    const withAtalanta = this.roster.includes('atalanta');
+    this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
+    this.arrows = withAtalanta ? new Arrows(world) : null;
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.energy = this.energyMax;
@@ -108,15 +136,100 @@ export class Player {
     this.ammo = this.clipSize;
     this.renderY = y;
     this.safe.set(x, y, z);
-    world.scene.add(this.model.root);
+    world.scene.add(this.jason.root);
+    if (this.ata) world.scene.add(this.ata.model.root);
     this.fx = new JasonFx(world.scene);
+    this.showHero();
+  }
+
+  /** The playing hero's model. */
+  get model(): HeroModel {
+    return this.hero === 'atalanta' && this.ata ? this.ata.model : this.jason;
+  }
+
+  private modelOf(id: HeroId): HeroModel {
+    return id === 'atalanta' && this.ata ? this.ata.model : this.jason;
+  }
+
+  /** Shows the playing hero, and hands the other one (if any) to the follower. */
+  private showHero() {
+    for (const id of this.roster) this.modelOf(id).root.visible = id === this.hero;
+    const other = nextHero(this.roster, this.hero);
+    if (!other) return;
+    const m = this.modelOf(other);
+    m.root.visible = true;
+    if (this.follower) this.follower.swap(m, other);
+    else {
+      this.follower = new Follower(this.world, m, other);
+      const b = this.body;
+      this.follower.place(b.x - Math.sin(this.facing) * 1.4, b.y, b.z - Math.cos(this.facing) * 1.4, this.facing);
+    }
+  }
+
+  /** Why switching heroes isn't possible right now (null: it is). */
+  switchBlocked(): SwitchBlock | null {
+    const b = this.body;
+    return switchBlock({
+      roster: this.roster,
+      current: this.hero,
+      cooldown: this.swapCd,
+      grounded: b.grounded || this.coyote > 0,
+      locked: this.down || this.world.cutscene,
+      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false),
+      cramped: this.ata?.cramped ?? false,
+    });
+  }
+
+  /** The hero a switch would change to (for the HUD), or null on single-hero levels. */
+  get nextHero(): HeroId | null {
+    return nextHero(this.roster, this.hero);
+  }
+
+  /** 0..1 while the switch cools down (1 = ready). */
+  get swapReady() {
+    return 1 - Math.max(0, this.swapCd) / HERO_SWITCH.cooldown;
+  }
+
+  /**
+   * Switches to the next hero, right where the current one stands, in a flash of light. The hero who
+   * was playing steps aside and follows along. Hearts, bolts, armor and spins are shared.
+   */
+  switchHero(): boolean {
+    const next = this.nextHero;
+    if (!next || this.switchBlocked()) {
+      if (next && !this.down && !this.world.cutscene) audio.play('empty');
+      return false;
+    }
+    const w = this.world;
+    const b = this.body;
+    const was = this.hero;
+    this.cancelCharge();
+    this.ata?.reset();
+    this.hero = next;
+    this.swapCd = HERO_SWITCH.cooldown;
+    b.h = HEROES[next].height;
+    this.showHero();
+    this.follower?.place(b.x - Math.sin(this.facing) * 1.4, b.y, b.z - Math.cos(this.facing) * 1.4, this.facing);
+    this.refreshGear();
+    const color = HEROES[next].color;
+    w.particles.emit(b.x, b.y + 1, b.z, { count: 40, color: '#ffffff', speed: 6, life: 0.55, size: 0.55, up: 1.5 });
+    w.particles.emit(b.x, b.y + 1, b.z, { count: 24, color, speed: 4, life: 0.7, size: 0.5, up: 2 });
+    w.rings.burst(b.x, b.y + 0.05, b.z, 4.5, color, 0.4);
+    w.flash(b.x, b.y + 1.4, b.z, color, 35, 0.3);
+    this.squash = 0.2;
+    audio.play('charged', was === 'jason' ? 1.25 : 0.9);
+    audio.play('djump', 1.4, 0.6);
+    haptic('light');
+    w.hooks.hud();
+    return true;
   }
 
   /** Puts on the gear for any newly bought upgrades, with a little sparkle when something changed. */
   refreshGear() {
-    const before = this.model.gearKey;
-    dressJason(this.model, this.world.save.upgrades, this.weapon);
-    if (this.model.gearKey === before) return;
+    if (this.ata?.dress()) this.world.hooks.hud();
+    const before = this.jason.gearKey;
+    dressJason(this.jason, this.world.save.upgrades, this.weapon);
+    if (this.jason.gearKey === before || this.hero !== 'jason') return;
     const b = this.body;
     this.world.particles.emit(b.x, b.y + 1, b.z, { count: 26, color: '#ffd166', speed: 4, life: 0.6, size: 0.45, up: 2 });
     this.squash = 0.25;
@@ -211,6 +324,8 @@ export class Player {
 
   /** How far the grapple reaches, in cells (Grapple Range adds a little). */
   get grappleRange() {
+    // Only Jason has the hook: with anyone else, no anchor is ever in reach.
+    if (this.hero !== 'jason') return 0;
     return GRAPPLE.range + (this.world.save.upgrades.grapple ?? 0) * GEAR.grappleCells;
   }
 
@@ -302,13 +417,82 @@ export class Player {
     return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
   }
 
-  /** True while a ground spin is whirling (and guarding Jason). */
+  /** True while a ground spin (or Atalanta's spinning kick) is whirling, and guarding the hero. */
   get spinning() {
     return this.spinT > 0;
   }
 
+  /** Dashing (Jason) or sliding (Atalanta): enemies bumped into don't hurt. */
   get dashing() {
-    return this.dashT > 0;
+    return this.dashT > 0 || (this.ata?.sliding ?? false);
+  }
+
+  /**
+   * Starts a spin (Jason) or a spinning kick (Atalanta) from the shared set of charges. Returns false
+   * (with a dud sound) when they are all used up.
+   */
+  startSpin(time = PLAYER.spinTime): boolean {
+    if (this.spinT > 0) return false;
+    if (this.spins <= 0) {
+      audio.play('empty');
+      return false;
+    }
+    this.spins -= 1;
+    this.sinceSpin = 0;
+    this.spinReloadT = 0;
+    if (this.spins === 0) this.startSpinReload();
+    this.spinT = time;
+    this.fx.spin(time);
+    this.spinHit.clear();
+    audio.play('spin');
+    this.world.hooks.hud();
+    return true;
+  }
+
+  /** Spin timers: the whirl itself (hitting what it touches) and the recharge of used charges. */
+  tickSpins(dt: number) {
+    const w = this.world;
+    this.sinceSpin += dt;
+    if (this.spinReloadT > 0) {
+      this.spinReloadT -= dt;
+      if (this.spinReloadT <= 0) {
+        this.spinReloadT = 0;
+        this.spins = this.spinMax;
+        audio.play('reload', 1.6);
+        w.hooks.hud();
+      }
+    } else if (this.spins < this.spinMax && this.sinceSpin > PLAYER.spinTopUp) {
+      this.startSpinReload();
+    }
+    if (this.spinT > 0) {
+      this.spinT -= dt;
+      w.spinAttack(this, this.spinHit);
+    }
+  }
+
+  /** Seconds left on the current spin or kick. */
+  get spinLeft() {
+    return Math.max(0, this.spinT);
+  }
+
+  /** True while wading through quicksand (it slows every hero down). */
+  get inMud() {
+    return this.mudT > 0;
+  }
+
+  /** The stick turned into a world direction (relative to the camera) and how hard it is pushed. */
+  moveInput(input: Input): { wx: number; wz: number; mag: number } {
+    const yaw = this.world.cameraYaw;
+    const mx = input.moveX;
+    const mz = input.moveZ;
+    let wx = Math.cos(yaw) * mx + Math.sin(yaw) * mz;
+    let wz = -Math.sin(yaw) * mx + Math.cos(yaw) * mz;
+    const len = Math.hypot(wx, wz);
+    if (len > 0.01) {
+      wx /= len;
+      wz /= len;
+    }
+    return { wx, wz, mag: Math.min(1, len) };
   }
 
   /** 0..1 while the spins recharge. */
@@ -399,6 +583,8 @@ export class Player {
     this.safe.set(x, y, z);
     this.pounding = false;
     this.dashT = 0;
+    this.ata?.reset();
+    this.follower?.place(x - Math.sin(this.facing) * 1.4, y, z - Math.cos(this.facing) * 1.4, this.facing);
   }
 
   /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */
@@ -410,6 +596,7 @@ export class Player {
     this.cut = true;
     this.coyote = 0;
     this.wasGrounded = false;
+    this.ata?.launched();
   }
 
   revive() {
@@ -442,33 +629,34 @@ export class Player {
     const b = this.body;
     this.invuln = Math.max(0, this.invuln - dt);
     this.sinceHurt += dt;
+    this.swapCd -= dt;
     this.updateArmor(dt);
+    this.arrows?.update(dt);
+    this.follower?.update(dt, this);
     if (this.down || w.cutscene) {
       this.cancelCharge();
       this.zip = null;
-      this.animate(dt, 0);
+      this.ata?.reset();
+      if (this.ata && this.hero === 'atalanta') this.ata.animate(dt, 0);
+      else this.animate(dt, 0);
       return;
     }
     if (this.zip) {
       this.updateZip(dt);
       return;
     }
-    // Quicksand slows Jason down while he is in it; out of it, he climbs back up.
+    // Quicksand slows the hero down while in it; out of it, they climb back up.
     this.mudT -= dt;
     if (this.mudT <= 0) this.sink = Math.max(0, this.sink - dt * 2);
 
-    // Camera-relative movement.
-    const yaw = w.cameraYaw;
-    const mx = input.moveX;
-    const mz = input.moveZ;
-    let wx = Math.cos(yaw) * mx + Math.sin(yaw) * mz;
-    let wz = -Math.sin(yaw) * mx + Math.cos(yaw) * mz;
-    const len = Math.hypot(wx, wz);
-    const mag = Math.min(1, len);
-    if (len > 0.01) {
-      wx /= len;
-      wz /= len;
+    if (input.take('swap')) this.switchHero();
+    if (this.ata && this.hero === 'atalanta') {
+      this.ata.update(dt, input);
+      return;
     }
+
+    // Camera-relative movement.
+    const { wx, wz, mag } = this.moveInput(input);
 
     const ground = b.grounded ? b.ground : null;
     const onIce = ground?.kind === 'ice';
@@ -487,12 +675,7 @@ export class Player {
       this.vx = 0;
       this.vz = 0;
     } else {
-      const tx = wx * mag * speed;
-      const tz = wz * mag * speed;
-      const k = 1 - Math.exp(-(accel / speed) * dt * 1.6);
-      this.vx += (tx - this.vx) * k;
-      this.vz += (tz - this.vz) * k;
-      if (mag > 0.1 && this.spinT <= 0) this.facing = dampAngle(this.facing, Math.atan2(wx, wz), 16, dt);
+      this.steer(dt, wx, wz, mag, speed, accel);
     }
 
     // Timers.
@@ -501,18 +684,6 @@ export class Player {
     this.dashCd -= dt;
     this.shootCd -= dt;
     this.shootPose = Math.max(0, this.shootPose - dt);
-    this.sinceSpin += dt;
-    if (this.spinReloadT > 0) {
-      this.spinReloadT -= dt;
-      if (this.spinReloadT <= 0) {
-        this.spinReloadT = 0;
-        this.spins = this.spinMax;
-        audio.play('reload', 1.6);
-        w.hooks.hud();
-      }
-    } else if (this.spins < this.spinMax && this.sinceSpin > PLAYER.spinTopUp) {
-      this.startSpinReload();
-    }
     if (b.grounded) {
       this.jumps = 0;
       this.airDashed = false;
@@ -571,19 +742,7 @@ export class Player {
     // Spin (ground, from a set of three) / ground pound (air, always available for switches).
     if (input.take('spin') && !this.pounding) {
       if (b.grounded || this.airTime < 0.05) {
-        if (this.spinT <= 0 && this.spins > 0) {
-          this.spins -= 1;
-          this.sinceSpin = 0;
-          this.spinReloadT = 0;
-          if (this.spins === 0) this.startSpinReload();
-          this.spinT = PLAYER.spinTime;
-          this.fx.spin(PLAYER.spinTime);
-          this.spinHit.clear();
-          audio.play('spin');
-          w.hooks.hud();
-        } else if (this.spinT <= 0) {
-          audio.play('empty');
-        }
+        this.startSpin();
       } else if (b.y > this.groundBelow() + 0.9) {
         this.pounding = true;
         this.poundHang = POUND_HANG;
@@ -591,10 +750,7 @@ export class Player {
         audio.play('spin', 1.4);
       }
     }
-    if (this.spinT > 0) {
-      this.spinT -= dt;
-      w.spinAttack(this, this.spinHit);
-    }
+    this.tickSpins(dt);
     if (this.pounding) {
       if (this.poundHang > 0) {
         this.poundHang -= dt;
@@ -608,6 +764,38 @@ export class Player {
     if (input.take('weapon')) this.cycleWeapon();
     this.updateBlaster(dt, input);
 
+    const ok = this.stepBody(dt, (impact) => {
+      if (this.pounding) {
+        this.pounding = false;
+        w.groundPound(this);
+      } else if (impact > 8) {
+        audio.play('land');
+        this.squash = 0.12;
+        w.particles.emit(b.x, b.y + 0.1, b.z, { count: 6, color: '#ffffff', speed: 2, life: 0.3, size: 0.35, gravity: 1 });
+      }
+    });
+    if (!ok) return;
+    this.animate(dt, Math.hypot(this.vx, this.vz) / PLAYER.speed);
+  }
+
+  /** Eases the steered velocity toward the stick direction at `speed`, and turns the hero to face it. */
+  steer(dt: number, wx: number, wz: number, mag: number, speed: number, accel: number) {
+    const tx = wx * mag * speed;
+    const tz = wz * mag * speed;
+    const k = 1 - Math.exp(-(accel / speed) * dt * 1.6);
+    this.vx += (tx - this.vx) * k;
+    this.vz += (tz - this.vz) * k;
+    if (mag > 0.1 && this.spinT <= 0) this.facing = dampAngle(this.facing, Math.atan2(wx, wz), 16, dt);
+  }
+
+  /**
+   * One physics step for whichever hero is playing: ride platforms, move and collide, land (calling
+   * `onLand` with the impact speed), floor effects, hazards, the last safe spot and falling off the
+   * world. Returns false if the hero fell or touched a hazard (and was put back).
+   */
+  stepBody(dt: number, onLand: (impact: number) => void): boolean {
+    const w = this.world;
+    const b = this.body;
     // Ride moving platforms.
     if (b.grounded && b.ground?.box) {
       const box = b.ground.box;
@@ -624,15 +812,7 @@ export class Player {
 
     if (!b.grounded) this.airTime += dt;
     if (b.grounded && !this.wasGrounded) {
-      const impact = -vyBefore;
-      if (this.pounding) {
-        this.pounding = false;
-        w.groundPound(this);
-      } else if (impact > 8) {
-        audio.play('land');
-        this.squash = 0.12;
-        w.particles.emit(b.x, b.y + 0.1, b.z, { count: 6, color: '#ffffff', speed: 2, life: 0.3, size: 0.35, gravity: 1 });
-      }
+      onLand(-vyBefore);
       this.airTime = 0;
       const fx = w.floorEffect(b.ground);
       fx?.land?.(this);
@@ -642,10 +822,10 @@ export class Player {
       fx?.stand?.(this, dt);
       if (b.ground?.kind === 'hazard') {
         this.fellOff();
-        return;
+        return false;
       }
       this.safeT -= dt;
-      if (this.safeT <= 0 && b.ground && b.ground.kind !== 'box' && !fx?.unsafe) {
+      if (this.safeT <= 0 && b.ground && b.ground.kind !== 'box' && !fx?.unsafe && !(this.ata?.cramped ?? false)) {
         const c = w.grid.cell(b.ground.cx, b.ground.cz);
         this.safe.set(Grid.center(b.ground.cx), c.h, Grid.center(b.ground.cz));
         this.safeT = 0.25;
@@ -654,13 +834,36 @@ export class Player {
     this.wasGrounded = b.grounded;
     if (b.y < DEATH_Y) {
       this.fellOff();
-      return;
+      return false;
     }
-
-    this.animate(dt, Math.hypot(this.vx, this.vz) / PLAYER.speed);
+    return true;
   }
 
-  private groundBelow(): number {
+  /** Jason's jump state as Atalanta's moveset needs it: true while the coyote window is open. */
+  get canCoyote() {
+    return this.coyote > 0;
+  }
+
+  /** Places a hero model on the body: height smoothing, shadow, blinking, the hurt flicker and cutscene poses. */
+  placeModel(m: HeroModel, dt: number, sinkBy = 0) {
+    const b = this.body;
+    this.renderY = b.grounded ? damp(this.renderY, b.y, 22, dt) : b.y;
+    if (Math.abs(this.renderY - b.y) > 1.2) this.renderY = b.y;
+    m.root.position.set(b.x, this.renderY - Math.min(0.9, sinkBy), b.z);
+    m.root.rotation.y = this.facing;
+    const shadow = m.root.children[m.root.children.length - 1];
+    shadow.position.y = Math.max(0.02, this.groundBelow() - this.renderY + 0.03);
+    shadow.visible = this.groundBelow() > -50;
+    this.blinkT -= dt;
+    const blink = this.blinkT < 0.12;
+    if (this.blinkT < 0) this.blinkT = 2 + Math.random() * 3;
+    for (const e of m.eyes) e.scale.y = blink ? 0.12 : 1;
+    m.root.visible = this.invuln <= 0 || Math.floor(this.invuln * 12) % 2 === 0 || this.down;
+    if (this.carrying) this.carrying.rotation.y += dt * 2;
+  }
+
+  /** Height of the floor under the hero, or -99 over a void or a wall. */
+  groundBelow(): number {
     const c = this.world.grid.cell(Grid.toCell(this.body.x), Grid.toCell(this.body.z));
     return c.kind === 'void' || c.kind === 'wall' ? -99 : c.h;
   }
@@ -829,15 +1032,9 @@ export class Player {
   }
 
   private animate(dt: number, speedFrac: number) {
-    const m = this.model;
+    const m = this.jason;
     const b = this.body;
-    this.renderY = b.grounded ? damp(this.renderY, b.y, 22, dt) : b.y;
-    if (Math.abs(this.renderY - b.y) > 1.2) this.renderY = b.y;
-    m.root.position.set(b.x, this.renderY - Math.min(0.9, this.sink * 0.35), b.z);
-    m.root.rotation.y = this.facing;
-    const shadow = m.root.children[m.root.children.length - 1];
-    shadow.position.y = Math.max(0.02, this.groundBelow() - this.renderY + 0.03);
-    shadow.visible = this.groundBelow() > -50;
+    this.placeModel(m, dt, this.sink * 0.35);
 
     const air = !b.grounded;
     this.phase += dt * (5 + 9 * speedFrac);
@@ -867,12 +1064,6 @@ export class Player {
     const glow = this.charge > 0 ? 0.4 + this.charge * 1.6 + (this.charge >= 1 ? Math.sin(this.phase * 3) * 0.3 : 0) : 0;
     m.gunGlow.scale.setScalar(Math.max(0.001, glow));
     m.gunGlow.material.color.set(this.chargeColor);
-    this.blinkT -= dt;
-    const blink = this.blinkT < 0.12;
-    if (this.blinkT < 0) this.blinkT = 2 + Math.random() * 3;
-    for (const e of m.eyes) e.scale.y = blink ? 0.12 : 1;
-    m.root.visible = this.invuln <= 0 || Math.floor(this.invuln * 12) % 2 === 0 || this.down;
-    if (this.carrying) this.carrying.rotation.y += dt * 2;
     this.fx.update(dt, b.x, this.renderY, b.z, { pounding: this.pounding, hang: this.poundHang, hangMax: POUND_HANG, airborne: !b.grounded });
     this.pose?.(m, dt);
   }

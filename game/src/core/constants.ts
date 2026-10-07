@@ -68,6 +68,65 @@ export const PLAYER = {
   magnetRange: 3.2,
 };
 
+/**
+ * Atalanta, the scout (chapter 3): quicker on her feet than Jason, a higher single jump, wall-jumps
+ * and wall-runs, a slide under low gaps, and a bow with long, straight arrows instead of a blaster.
+ */
+export const ATALANTA = {
+  speed: 8,
+  /** Top speed once she breaks into a sprint: full stick (or a held direction key) for `sprintBuild` seconds. */
+  sprintSpeed: 11.5,
+  sprintBuild: 0.35,
+  /** Stick push that counts as "full" (0..1), and how sharp a turn (radians) breaks the sprint. */
+  sprintStick: 0.9,
+  sprintTurn: 1.2,
+  /** One strong jump (no jet boots): apex about 2.6 units, against Jason's 2.1 for a single jump. */
+  jumpV: 13,
+  /** Kick off a wall: straight up this fast, and away from it at `wallKick`. */
+  wallJumpV: 11.5,
+  wallKick: 7,
+  /** Wall-run on marked walls: at least this fast along the wall, for at most `wallRunTime` seconds. */
+  wallRunTime: 1.1,
+  wallRunLift: 3.5,
+  /** Gravity is scaled by this while she runs along a wall. */
+  wallRunGravity: 0.25,
+  /** Slide (her DASH button): speed, length in seconds, cooldown, and her height while low. */
+  slideSpeed: 14,
+  slideTime: 0.45,
+  slideCooldown: 0.45,
+  crouchHeight: 0.8,
+  /** Crawl speed while a low ceiling keeps her down after the slide. */
+  crawlSpeed: 3.2,
+  /** A slide trips enemies: this much damage (plus Blaster Power) and a stagger. */
+  slideDamage: 1,
+  slideHitRadius: 1.1,
+  /** BOW: quick arrows (tap) and the power arrow (hold). No clip: just a short cooldown. */
+  arrowCooldown: 0.38,
+  arrowSpeed: 34,
+  /** World units a quick arrow flies (Jason's blaster shots fly 22). */
+  arrowRange: 32,
+  /** Auto-aim reach for the bow, in world units. */
+  aimRange: 18,
+  chargeDelay: 0.2,
+  chargeTime: 0.7,
+  powerSpeed: 42,
+  powerRange: 44,
+  /** Enemies a power arrow can pass through before it stops. */
+  pierce: 4,
+  powerDamage: 3,
+};
+
+/** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */
+export const HERO_SWITCH = {
+  cooldown: 1,
+  /** How far behind the leader the follower walks (world units), and how fast it may go. */
+  followDist: 2.6,
+  followSpeed: 10,
+  /** Farther than this (or stuck for `stuckTime` seconds) and the follower pops over in a flash. */
+  teleportDist: 16,
+  stuckTime: 2,
+};
+
 export const START_HEARTS = 5;
 /** Most hearts Jason can have: heart canisters, shards and the shop stop here... */
 export const MAX_HEARTS = 10;

@@ -20,6 +20,7 @@ import { chapterOf, chapterTotals, inChapter, isFinale } from '../levels';
 import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
+import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
 import { Player } from '../entities/player';
@@ -448,6 +449,15 @@ export class World {
         break;
       case 'boulder':
         this.addEntity(new Boulder(this, id, cx, cz, h, spec.axis, spec.length, spec.period, spec.offset));
+        break;
+      case 'target':
+        this.addEntity(new ArrowTarget(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'wallrun':
+        this.addEntity(new WallRun(this, id, cx, cz, h));
+        break;
+      case 'lowgap':
+        this.addEntity(new LowGap(this, id, cx, cz, h, spec.axis));
         break;
       case 'decor':
         this.decorItems.push({

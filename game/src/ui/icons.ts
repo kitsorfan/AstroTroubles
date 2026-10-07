@@ -26,6 +26,12 @@ export const ICON = {
   shield: (full = true) =>
     `<svg viewBox="0 0 24 24"><path d="M12 2.5l8 3v6c0 5-3.6 8.6-8 10-4.4-1.4-8-5-8-10v-6z" fill="${full ? '#5ec8ff' : 'rgba(0,0,0,0.45)'}" stroke="${full ? '#d6f3ff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.6" stroke-linejoin="round"/>${full ? '<path d="M8 8.5h3.2v6.5" fill="none" stroke="#fff" stroke-width="1.6" opacity=".6" stroke-linecap="round"/>' : ''}</svg>`,
   grapple: `<svg viewBox="0 0 24 24"><circle cx="16" cy="8" r="4.2" fill="none" stroke="#7fe6ff" stroke-width="2.4"/><path d="M3 21l9.6-9.6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="2.6 2.4"/></svg>`,
+  /** Atalanta's buttons: BOW, KICK and SLIDE. */
+  bow: `<svg viewBox="0 0 24 24"><path d="M7 2.5Q16 6 16 12T7 21.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M7 2.5V21.5" stroke="#8ff8e4" stroke-width="1.2"/><path d="M3 12H21M18 9l3 3-3 3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  kick: `<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="3 2.4"/><path d="M8 17l5-5 4 1.5M13 12l-1-4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  slide: `<svg viewBox="0 0 24 24"><path d="M3 19H21" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="10.5" r="2.4" fill="#fff"/><path d="M5 16.5L12 15L15 12.5M12 15l-2-4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h3M1 15h3" stroke="#8ff8e4" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  /** The badge on the switch-hero button. */
+  swap: `<svg viewBox="0 0 24 24"><path d="M5 9a7 7 0 0 1 12.5-3M19 15a7 7 0 0 1-12.5 3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M18.5 2.5V7H14M5.5 21.5V17H10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
 /** A weapon's icon (shop, the weapon button). Each has its own shape and colour. */
@@ -261,9 +267,33 @@ const AEETES = person({
     <path d="M30.6 48.4Q31 50.4 32.4 50.8M50.6 48Q50.4 50 49 50.6" fill="none" stroke="#7a4e3a" stroke-width=".6"/>`,
 });
 
+/**
+ * Atalanta: the colony's scout, about 13. Warm light-brown skin, green eyes, dark auburn hair with a
+ * side-swept fringe and a long braid over her shoulder, a light visor band, a teal-and-white suit and
+ * the gold strap of her bow across her chest.
+ */
+const ATA_HAIR = '#6a2618';
+const ATALANTA = person({
+  id: 'pt',
+  skin: '#c68a5e',
+  hair: ATA_HAIR,
+  iris: '#3f9a4a',
+  lips: '#a8604e',
+  suit: '#2fb7a3',
+  back: `<path d="M23 54C17 38 19 15 40 14C61 15 63 38 57 54L53 51C54 40 54 30 51 26C46 23 34 23 29 26C26 30 26 40 27 51Z" fill="${ATA_HAIR}"/>`,
+  front: `<path d="M24.4 35C22 21 30 13.6 40.4 13.6C51 13.6 58.4 20.6 55.8 34C55 28 53 25.2 50 24C44 24.6 37 23.4 31.6 26.8C29 28.6 26.6 31.4 24.4 35Z" fill="${ATA_HAIR}"/>
+    ${shine('M28.6 21.6Q35 15.8 45 16.8', ATA_HAIR)}`,
+  collar: `<path d="M26 61Q40 68 54 61L57 64Q40 73 23 64Z" fill="#eef3f6"/><path d="M23 64Q40 73 57 64" fill="none" stroke="#ffc94a" stroke-width="1.2"/>
+    <path d="M16 80L52 61.5" stroke="#ffc94a" stroke-width="2.4"/><circle cx="31" cy="73" r="1.6" fill="#8ff8e4"/>`,
+  extra: `<path d="M24.8 27.6Q40 21.6 55.2 27.6L55 30.6Q40 25 25 30.6Z" fill="#eef3f6"/><path d="M31 26.8Q40 23.8 49 26.8L48.8 28.6Q40 26 31.2 28.6Z" fill="#8ff8e4" opacity=".9"/>
+    ${[0, 1, 2, 3, 4, 5].map((i) => `<ellipse cx="${55.5 + i * 0.9}" cy="${47 + i * 5.2}" rx="${(3.8 - i * 0.25).toFixed(2)}" ry="3.3" fill="${ATA_HAIR}" stroke="${shade(ATA_HAIR, 0.6)}" stroke-width=".7"/>`).join('')}
+    <rect x="58.2" y="74" width="5" height="2.4" rx=".8" fill="#ffc94a"/>`,
+});
+
 const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
   aeetes: AEETES,
+  atalanta: ATALANTA,
   brennus: BRENNUS,
   hypatia: HYPATIA,
   bolt: `<svg viewBox="0 0 80 80">
@@ -343,6 +373,7 @@ export const PORTRAIT: Record<Speaker, string> = { ...FACES, celestia: FACES.gas
 
 export const SPEAKER_NAME: Record<Speaker, string> = {
   jason: 'Jason',
+  atalanta: 'Atalanta',
   bolt: 'LUX',
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
@@ -359,6 +390,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
   jason: '#ffb07a',
+  atalanta: '#5fe0c8',
   bolt: '#7fe6ff',
   halcyon: '#ff8a6a',
   glitch: '#ff4fd8',

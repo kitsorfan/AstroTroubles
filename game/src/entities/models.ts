@@ -79,7 +79,11 @@ export function blobShadow(size: number): THREE.Mesh {
 
 /* ---------------- Jason ---------------- */
 
-export interface JasonModel {
+/**
+ * The parts every hero model has, so cutscenes can pose whichever hero is playing. The root's last
+ * child is always the blob shadow.
+ */
+export interface HeroModel {
   root: THREE.Group;
   body: THREE.Group;
   head: THREE.Group;
@@ -87,13 +91,17 @@ export interface JasonModel {
   armR: THREE.Group;
   legL: THREE.Group;
   legR: THREE.Group;
+  /** Where a carried power cell floats. */
+  carry: THREE.Group;
+  /** Eye groups, squashed to blink. */
+  eyes: THREE.Object3D[];
+}
+
+export interface JasonModel extends HeroModel {
   jets: THREE.Sprite[];
   /** The helmet lamp, which glows brighter in dark rooms. */
   visor: THREE.MeshStandardMaterial;
   suit: THREE.MeshStandardMaterial;
-  carry: THREE.Group;
-  /** Eye groups, squashed to blink. */
-  eyes: THREE.Object3D[];
   /** Glow at the blaster's muzzle while a fireball charges. */
   gunGlow: THREE.Sprite;
   /** Parts added by shop upgrades (see `dressJason`), and the upgrade levels they were built for. */

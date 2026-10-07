@@ -16,6 +16,11 @@ export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
+/**
+ * The playable heroes (see `entities/heroes/heroes.ts` for what each one can do). Jason is the
+ * default; chapter 3 adds Atalanta, and General Brennus gets his own levels later.
+ */
+export type HeroId = 'jason' | 'atalanta' | 'brennus';
 /** The last four are General Brennus's robots (chapter 2 only). */
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
 export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
@@ -95,6 +100,12 @@ export type Spec = Base &
     | { type: 'quicksand' }
     /** A lane that a boulder (or log, or snowball) rolls down every `period` seconds: jump over it. */
     | { type: 'boulder'; axis: 'x' | 'z'; length: number; period?: number; offset?: number }
+    /** A bullseye on a post: only an arrow from Atalanta's bow (a charged power arrow) sets `flag`. */
+    | { type: 'target'; flag: string }
+    /** A wall cell with a glowing running stripe: Atalanta can wall-run along its faces. The cell is a wall. */
+    | { type: 'wallrun' }
+    /** A wall with a low crawl hole: only Atalanta's slide fits under it. `axis` is the way through (guessed from the walls beside it). */
+    | { type: 'lowgap'; axis?: 'x' | 'z' }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -151,8 +162,24 @@ export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', '
 /** Who can appear in a hologram log. */
 export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
 
-/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. `aeetes` is chapter 3's villain. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia' | 'aeetes';
+/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
+export type Speaker =
+  | 'jason'
+  | 'bolt'
+  | 'halcyon'
+  | 'glitch'
+  | 'colonist'
+  | 'vendy'
+  | 'gascu'
+  | 'celestia'
+  | 'captain'
+  | 'rosa'
+  | 'brennus'
+  | 'hypatia'
+  /** Aeëtes, the salvage tycoon who wants the Golden Fleece (chapter 3's villain). */
+  | 'aeetes'
+  /** Atalanta, the scout who joins the Argonauts in chapter 3 (a playable hero). */
+  | 'atalanta';
 
 export interface Line {
   who: Speaker;
@@ -196,6 +223,10 @@ export interface LevelDef {
   vehicle?: VehicleKind;
   /** The Argo's flight course (for `vehicle: 'argo'`). */
   flight?: FlightCourse;
+   * Heroes the player can switch between on this level, the first one starting (default: just
+   * Jason). With two or more, the HUD shows the switch button.
+   */
+  heroes?: HeroId[];
 }
 
 export interface Cell {
