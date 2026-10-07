@@ -55,7 +55,9 @@ EAS runs `npm run game:build` automatically after installing dependencies (`eas-
 npm run game:build     # writes game/dist/index.html
 ```
 
-Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **I** fires LUX's force pulse, **E** is the action button, **Q / R** turn the camera, **Esc** pauses. `npm run game:dev` rebuilds on every save.
+Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Space** jumps, **J** blasts, **K** spins or ground-pounds, **L / Shift** dashes, **I** fires LUX's force pulse, **E** is the action button, **Q / R** turn the camera, **Esc** pauses, and **C** (or **Tab**) switches heroes where you can. `npm run game:dev` rebuilds on every save.
+
+Developer shortcuts (desktop browser only): `#deck=<id>` jumps into a deck (`&still` skips the fly-over, `&all` hands over every ability), `&heroes=jason,atalanta` lets you switch heroes on any deck, `&hero=atalanta` starts as Atalanta, and `&course` swaps the deck for a small practice course with every hero gadget (a sprint gap, a wall-run, a low gap and an arrow target).
 
 ## How to play
 
@@ -71,6 +73,21 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | **GRAPPLE** | The grapple hook (found in the Glass Desert): look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs |
 | **Weapon button** | On Gaia Nova, once Jason owns a second weapon: switch weapons (or press **X** on a keyboard) |
 | LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings |
+| **Switch** (a face button above the others) | On levels with two heroes: switch to the hero whose face it shows, right where you stand (or press **C**). It works on the ground, between moves, with a one-second cooldown. The other hero follows you around, and hearts, armor, spins and bolts are shared |
+
+#### Playing as Atalanta
+
+Atalanta, the colony's fastest runner and best archer, joins in Chapter 3. Her buttons do different things:
+
+| Control | What it does |
+| --- | --- |
+| Move | She runs faster than Jason. Keep the stick pushed **all the way** (or hold a direction key) and she breaks into a **sprint** for long jumps; a sharp turn or letting go ends it |
+| **JUMP** | One strong jump (higher than Jason's first jump, but no jet boots). Jump while touching a wall to **wall-jump** off it (not off the same wall twice in a row). In mid-air, run at a wall with a glowing **teal stripe** to **wall-run** along it, and jump to kick off |
+| **BOW** (the BLAST button) | Tap for quick arrows that fly far and straight. **Hold** to charge a **power arrow** that goes through up to 4 enemies and is the only thing that sets off a **bullseye target**. No clip, just a short cooldown; Blaster Power makes her arrows stronger |
+| **KICK** (the SPIN button) | A spinning kick that blocks enemy shots like Jason's spin (from the same charges), on the ground or once in mid-air |
+| **SLIDE** (the DASH button) | A low, fast slide that trips enemies and fits under **low gaps** (the walls with yellow-and-black stripes). Under a low ceiling she crawls until there's room to stand. Jump out of a slide for a long jump. It needs no energy cells |
+
+She has no grapple, no ground pound and none of Jason's weapons: red floor switches and grapple rings need Jason, low gaps and bullseyes need her.
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
@@ -193,6 +210,8 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/core/              input, audio (synthesized music and sound effects), save data, app bridge, translations
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
   src/entities/          Jason, LUX, enemies, bosses, pickups and interactive props
+  src/entities/heroes/   the hero table and switching rules, Atalanta (model, moves, arrows), the follower,
+                         hero props (arrow targets, wall-run walls, low gaps) and the dev practice course
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
@@ -212,7 +231,7 @@ The files left at the root are the ones each tool looks for there: `package.json
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Levels that list `heroes: ['jason', 'atalanta']` can also place arrow `target`s, `wallrun` walls and `lowgap` crawl holes. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors and, on levels with Atalanta, her jumps, sprint long jumps (after a two-cell run-up), wall-jumps, wall-runs, crawling through low gaps and power-arrow shots at targets; heroes can switch anywhere on the ground, so it also reports what each hero can't reach alone. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
 
 ## Development
 

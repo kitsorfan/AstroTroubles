@@ -205,6 +205,9 @@ export class Player {
     const was = this.hero;
     this.cancelCharge();
     this.ata?.reset();
+    // Jason reloads while he follows along, so his clip is full when he's back.
+    this.ammo = this.clipSize;
+    this.reloadT = 0;
     this.hero = next;
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
@@ -404,8 +407,9 @@ export class Player {
     return PLAYER.clip + (this.world.save.upgrades.clip ?? 0) * 2;
   }
 
+  /** Jason's blaster is reloading (enemies take the chance to rush in). Atalanta's bow never reloads. */
   get reloading() {
-    return this.reloadT > 0;
+    return this.hero === 'jason' && this.reloadT > 0;
   }
 
   /** 0..1 while reloading. */
