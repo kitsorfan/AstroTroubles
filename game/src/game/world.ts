@@ -597,6 +597,21 @@ export class World {
     this.hooks.checkpoint();
   }
 
+  /** Dev helper (`#deck=...&flags=...&play=...`): sets story flags and plays one of LUX's chapter 2 scenes. */
+  devStory(flags: string[], play: string | null) {
+    for (const f of flags) this.flags.add(f);
+    this.refreshCompanions();
+    const find = this.entities.find((e): e is BoltFind => e instanceof BoltFind);
+    const rogue = this.entities.find((e) => (e as Boss).bossKind === 'rogue') as Boss | undefined;
+    if (play === 'taken') void this.hooks.cutscene((d) => scenes.luxTaken(d, this));
+    else if (play === 'iris' && find) this.findBolt(find);
+    else if (play === 'rogue' && rogue) rogue.begin();
+    else if (play === 'reunion' && rogue) {
+      rogue.defeated = true;
+      this.luxBack(rogue);
+    }
+  }
+
   /** Brennus's reprogrammed LUX waits at the `rogue` marker until he is beaten and himself again. */
   private spawnRogue() {
     const at = this.markers.get(ROGUE_MARKER);

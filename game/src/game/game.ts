@@ -204,6 +204,12 @@ export class Game {
         }, hold + 380);
       }
       if (dev.has('shop')) setTimeout(() => this.world && this.hooks().shop(), 3600);
+      // &flags=iris,luxback starts with story flags set, &play=taken|iris|rogue|reunion plays one of
+      // LUX's chapter 2 scenes, and &talk clicks through dialogue by itself (for checking cutscenes).
+      const flags = dev.get('flags')?.split(',') ?? [];
+      const play = dev.get('play');
+      if (flags.length || play) setTimeout(() => this.world?.devStory(flags, play), 3600);
+      if (dev.has('talk')) setInterval(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' })), 900);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
       if (at && at.length === 2) {

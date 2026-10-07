@@ -36,12 +36,12 @@ export function ch2LuxTaken(): string {
       `<path d="M0 720Q400 690 800 724T1600 712V900H0Z" fill="#e8f2ff"/><path d="M0 760Q500 740 1000 770T1600 760" fill="none" stroke="#b8cce8" stroke-width="10" opacity=".7"/>` +
       // Jason's footprints in the snow, then Jason running and reaching up.
       [160, 250, 340, 430].map((x, i) => `<ellipse cx="${x}" cy="${790 + (i % 2) * 18}" rx="22" ry="8" fill="#b8cce8"/>`).join('') +
-      jason(560, 830, 1.05, { pose: 'reach', legs: 'run', face: 'shock' }) +
+      jason(500, 860, 1.3, { pose: 'reach', legs: 'run', face: 'shock' }) +
       // The drone, its cage and LUX.
-      `<path d="M700 460Q850 380 980 330" fill="none" stroke="#ffffff" stroke-width="8" stroke-dasharray="20 18" opacity=".35" stroke-linecap="round"/>` +
-      glow(id + 'c', 1100, 340, 230, 0.6) +
-      snare(1100, 200, 1.25, lux(1100, 330, 0.9, 'scared')) +
-      at(1100, 330, 0.9, `<path d="M-60 -40q-10 -14 -2 -26M66 -48q10 -12 2 -26" fill="none" stroke="${C.cyan}" stroke-width="5" stroke-linecap="round"/>`) +
+      `<path d="M640 420Q780 300 880 250" fill="none" stroke="#ffffff" stroke-width="8" stroke-dasharray="20 18" opacity=".35" stroke-linecap="round"/>` +
+      glow(id + 'c', 1080, 430, 330, 0.6) +
+      snare(1080, 200, 2.2, lux(1080, 430, 1.45, 'scared')) +
+      at(1080, 430, 1.45, `<path d="M-60 -40q-10 -14 -2 -26M66 -48q10 -12 2 -26" fill="none" stroke="${C.cyan}" stroke-width="5" stroke-linecap="round"/>`) +
       blizzard(12, 120) +
       vignette(id + 'v', 0.5),
   );
@@ -92,23 +92,24 @@ export function ch2LuxBack(): string {
       glow(id + 'l', 800, 900, 900, 0.8, 300) +
       `<path d="M0 760Q400 730 800 750T1600 740V900H0Z" fill="#3a1a14" ${ink(6)}/>` +
       // The broken armour and the cracked control chip.
-      shard(420, 800, -20) +
-      shard(1000, 812, 30, 0.9) +
-      shard(1110, 790, 160, 0.8) +
-      shard(560, 830, 80, 0.7) +
-      at(880, 820, 1, `<rect x="-24" y="-16" width="48" height="32" rx="6" fill="#ff3a4c" ${ink(4)}/><path d="M-10 -16L2 0L-6 6L8 16" fill="none" ${ink(4)}/>`, false, 12) +
+      shard(380, 850, -20, 1.3) +
+      shard(960, 868, 30, 1.2) +
+      shard(1110, 830, 160, 1.1) +
+      shard(470, 880, 80, 1) +
+      at(860, 870, 1.3, `<rect x="-24" y="-16" width="48" height="32" rx="6" fill="#ff3a4c" ${ink(4)}/><path d="M-10 -16L2 0L-6 6L8 16" fill="none" ${ink(4)}/>`, false, 12) +
       // IRIS sings her light-words.
-      glow(id + 'i', 1150, 330, 220, 0.8) +
-      `<g fill="none" stroke-linecap="round" stroke-width="10" opacity=".85"><path d="M1050 300Q960 260 880 330" stroke="${C.hello}"/><path d="M1060 350Q960 330 900 400" stroke="${C.pink}"/><path d="M1070 400Q980 410 930 470" stroke="${C.gold}"/></g>` +
-      iris(1150, 330, 1.3, 'sing', true) +
-      // Jason hugs LUX, eyes shut, smiling.
-      glow(id + 'h', 760, 650, 260, 0.7) +
-      jason(760, 870, 1.25, { pose: 'hold', face: 'teary' }) +
-      lux(760, 700, 1.05, 'happy') +
-      `<circle cx="712" cy="760" r="17" fill="#e9edf3" ${ink(5)}/><circle cx="808" cy="760" r="17" fill="#e9edf3" ${ink(5)}/>` +
-      `<path d="M760 560c-14 -22 -44 -10 -30 12l30 26 30 -26c14 -22 -16 -34 -30 -12Z" fill="${C.pink}" ${ink(4)}/>` +
-      sparkle(640, 560, 14, C.cyan, 0.9) +
-      sparkle(890, 590, 10, C.gold, 0.9) +
+      glow(id + 'i', 1180, 300, 260, 0.8) +
+      `<g fill="none" stroke-linecap="round" stroke-width="12" opacity=".85"><path d="M1050 280Q900 260 800 420" stroke="${C.hello}"/><path d="M1060 340Q930 340 830 470" stroke="${C.pink}"/><path d="M1070 400Q960 420 860 520" stroke="${C.gold}"/></g>` +
+      iris(1180, 300, 1.7, 'sing', true) +
+      // Jason hugs LUX, smiling through happy tears.
+      glow(id + 'h', 640, 640, 320, 0.7) +
+      jason(640, 900, 1.9, { pose: 'hold', face: 'teary' }) +
+      lux(648, 752, 1.8, 'happy', C.cyan, true) +
+      `<circle cx="596" cy="800" r="27" fill="#e9edf3" ${ink(6)}/><circle cx="700" cy="800" r="27" fill="#e9edf3" ${ink(6)}/>` +
+      at(800, 440, 1.6, `<path d="M0 0c-14 -22 -44 -10 -30 12l30 26 30 -26c14 -22 -16 -34 -30 -12Z" fill="${C.pink}" ${ink(4)}/>`) +
+      sparkle(470, 520, 16, C.cyan, 0.9) +
+      sparkle(520, 420, 10, C.gold, 0.9) +
+      sparkle(860, 560, 12, C.gold, 0.9) +
       vignette(id + 'v', 0.45),
   );
 }

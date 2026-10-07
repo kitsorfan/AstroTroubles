@@ -13,7 +13,7 @@ import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
 import { luxTaken, rogueIntro } from './luxScenes';
 
-export { irisFound, luxReunion } from './luxScenes';
+export { irisFound, luxReunion, luxTaken } from './luxScenes';
 
 /**
  * Cutscenes that play inside a deck. Each script poses the camera through the director's rig,
