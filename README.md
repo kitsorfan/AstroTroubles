@@ -89,6 +89,19 @@ Atalanta, the colony's fastest runner and best archer, joins in Chapter 3. Her b
 
 She has no grapple, no ground pound and none of Jason's weapons: red floor switches and grapple rings need Jason, low gaps and bullseyes need her.
 
+#### Playing as General Brennus
+
+On his own levels in Chapter 3 (level 3, Aeëtes's Mine, and later level 8) you play General Brennus, alone: he never switches with the others. He is old, slow and strong, with a low jump (two steps up at most) and no jet boots, glider or grapple:
+
+| Control | What it does |
+| --- | --- |
+| **CANNON** (the BLAST button) | A heavy shell on a low arc that splashes everything around where it lands. **Hold** for a **big blast** that smashes **cracked walls** (rock with glowing gold cracks) and knocks robots' shields away. No clip: a short cooldown and a **heat** gauge beside the button. Too many shots in a row and the cannon overheats, and he has to wait for it to cool |
+| **SHIELD** (the SPIN button, held) | Raises the Legion's big shield: every shot and bump from the front is blocked (shots bounce back), but he walks slowly behind it. Let go to **bash** forward. In mid-air, the button is a heavy **stomp** that presses red switches |
+| **CHARGE** (the DASH button) | A shoulder charge along the ground that smashes crates, crate barricades and cracked walls and knocks robots over. **Jump while charging** for a **charge-leap**, the only way he gets across two-cell gaps. It needs no energy cells |
+| **COMMAND** (the action button) | At a Legion **command post**, his old Thorn Legion robots (painted gold by Aeëtes) obey his voice: one marches onto a **heavy plate** that holds a gate open, a **hauler** robot carries him over a gap, or a whole squad switches sides and fights for him |
+
+His signs and hints are in his own voice (there is no droid with him); his wrist computer still hacks terminals. Developer shortcut: `#deck=mine` plays his level, and `&hero=brennus` puts him on any deck.
+
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
 Jason finds a new ability on each deck, and it's needed to finish that deck:
@@ -199,6 +212,10 @@ Cutscenes play in the game world with letterbox bars:
 - **Shadow LUX.** In Mount Atlantas, Brennus has clamped thorny armour and a control chip onto LUX and sends him against Jason. Blast the chip whenever he overheats; twice, IRIS sings him a rainbow light-word, and when the chip breaks LUX is himself again. LUX and IRIS both fly with Jason up to the Colossus (and in the secret ending LUX still talks to Celestia).
 - **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets Celestia go himself (the secret ending).
 
+**Chapter 3: The Argonauts** (being built; more spoilers):
+
+- **Aeëtes's Mine (level 3, General Brennus alone).** While the Argonauts fight on the Harpy Isles, Brennus flies the Gorgon's old lifeboat to Aeëtes's mining moon, talking to the little pot of Celestia's sprout on his belt: Captain Argus gave him a second chance (whether he was in the brig or in the garden after Chapter 2), and he means to pay his debts. Aeëtes is digging the whole moon into a golden pit with Brennus's own old Legion robots, which he found in the snow and painted gold, and he taunts Brennus on the radio all the way. Brennus blasts through cracked rock, charge-leaps into the mine, marches up a walkway under fire behind his shield, orders a robot onto a heavy plate, rides an ore cart over the pit and turns a whole squad back to his side. The boss is **THE GOLD EXCAVATOR**, his old digging machine "Rumble" with Aeëtes's control box bolted on: block its charges with the shield (or make it crash into a pillar), blast the box, and when it kneels, **COMMAND** it to stand down. In Aeëtes's office he finds the golden map to the Fleece vault on Colchis and sends it to the Argo; next stop, the Sirens' Sea (coming soon).
+
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 
 ## Languages
@@ -214,7 +231,9 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
   src/entities/          Jason, LUX and IRIS, enemies, bosses, pickups and interactive props
   src/entities/heroes/   the hero table and switching rules, Atalanta (model, moves, arrows), the follower,
-                         hero props (arrow targets, wall-run walls, low gaps) and the dev practice course
+                         hero props (arrow targets, wall-run walls, low gaps) and the dev practice course,
+                         General Brennus (model, moves, cannon) and his Legion props (cracked walls, heavy
+                         plates, command posts, his old robots)
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
@@ -234,7 +253,7 @@ The files left at the root are the ones each tool looks for there: `package.json
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Levels that list `heroes: ['jason', 'atalanta']` can also place arrow `target`s, `wallrun` walls and `lowgap` crawl holes. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors and, on levels with Atalanta, her jumps, sprint long jumps (after a two-cell run-up), wall-jumps, wall-runs, crawling through low gaps and power-arrow shots at targets; heroes can switch anywhere on the ground, so it also reports what each hero can't reach alone. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Levels that list `heroes: ['jason', 'atalanta']` can also place arrow `target`s, `wallrun` walls and `lowgap` crawl holes, and General Brennus's levels (`heroes: ['brennus']`) `cracked` walls, heavy `plate`s, Legion command `post`s, idle `legionbot`s, and moving platforms dressed as ore carts or haulers (`look: 'cart' | 'hauler'`). Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors and, on levels with Atalanta, her jumps, sprint long jumps (after a two-cell run-up), wall-jumps, wall-runs, crawling through low gaps and power-arrow shots at targets, and on Brennus's levels his low jump, his charge-leaps and the cracked walls only he gets through; heroes can switch anywhere on the ground, so it also reports what each hero can't reach alone. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
 
 ## Development
 
