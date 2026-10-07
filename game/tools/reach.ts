@@ -258,6 +258,7 @@ export function wallRunStrips(level: ParsedLevel): RunStrip[] {
       [0, 1],
       [0, -1],
     ]) {
+      if (e.cx + nx < 0 || e.cx + nx >= level.width) continue;
       const f = level.cells[(e.cz + nz) * level.width + (e.cx + nx)];
       if (!f || f.kind === 'wall') continue;
       // Faces along x (normal ±z) share a row cz + nz; faces along z share a column cx + nx.

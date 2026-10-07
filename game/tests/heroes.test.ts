@@ -1,5 +1,6 @@
 import { ATALANTA, CELL, PLAYER } from '../src/core/constants';
 import { HERO_IDS, HEROES, heroCan, heroRoster, nextHero, parseHeroes, switchBlock, type SwitchState } from '../src/entities/heroes/heroes';
+import { heroCourse } from '../src/entities/heroes/course';
 import { LOWGAP_CLEAR } from '../src/entities/heroes/heroProps';
 import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { Grid, parseLevel } from '../src/world/grid';
@@ -180,5 +181,14 @@ describe('reach checker with heroes', () => {
     expect(both).toEqual([]);
     expect(reach(lv, ['doubleJump'], ['jason']).missing.map((e) => e.spec.type)).toEqual(['checkpoint']);
     expect(reach(lv, ['doubleJump'], ['atalanta']).missing.map((e) => e.spec.type)).toEqual(['checkpoint']);
+  });
+});
+
+describe('the dev practice course', () => {
+  const lv = parseLevel(heroCourse('plains', 'Course'));
+
+  it('is all reachable when you can switch, and needs Atalanta', () => {
+    expect(reach(lv, []).missing.map((e) => e.id)).toEqual([]);
+    expect(reach(lv, [], ['jason']).missing.map((e) => e.spec.type)).toContain('checkpoint');
   });
 });

@@ -14,6 +14,7 @@ import { haptic, inApp, post, setHaptics } from '../core/bridge';
 import { CELL } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
+import { heroCourse } from '../entities/heroes/course';
 import { heroDev, parseHeroes } from '../entities/heroes/heroes';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
 import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER, catchUpChapters, chapterIndex, chapterOf, chapterSize, chapterTotals, comingSoon, inChapter, isFinale, nextChapterStart, type Chapter } from '../levels';
@@ -204,6 +205,15 @@ export class Game {
     if (heroes.length) heroDev.heroes = heroes;
     const hero = parseHeroes(dev.get('hero'))[0];
     if (hero) heroDev.hero = hero;
+    // &course swaps the deck for the small hero practice course (dressed as that deck).
+    if (dev.has('course')) heroDev.course = true;
+    // &press=KeyW:3600:6000,Space:4200 holds keys from/to those milliseconds, for scripted test runs.
+    for (const step of dev.get('press')?.split(',') ?? []) {
+      const [code, from, to] = step.split(':');
+      const t0 = Number(from) || 0;
+      setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { code })), t0);
+      setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { code })), Number(to) || t0 + 90);
+    }
     const deck = dev.get('deck') as DeckId | null;
     if (deck && LEVELS[deck]) {
       this.startDeck(deck, false, dev.has('still') ? 'none' : 'auto');
@@ -593,7 +603,7 @@ export class Game {
 
   private startDeck(id: DeckId, resume: boolean, opening: Opening = 'auto') {
     this.disposeWorld();
-    const def = LEVELS[id];
+    const def = heroDev.course ? heroCourse(id, LEVELS[id].name) : LEVELS[id];
     this.state = 'card';
     this.ui.showHud(false);
     audio.music(def.music as Track);

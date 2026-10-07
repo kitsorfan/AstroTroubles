@@ -184,7 +184,15 @@ export class WallRun extends Entity {
       plane.position.set(x + dx * (CELL / 2 + 0.02), floor + 1.7, z + dz * (CELL / 2 + 0.02));
       plane.rotation.y = Math.atan2(dx, dz);
       this.obj.add(plane);
+      // A glowing edge along the top too, so the wall reads from the camera above.
+      const top = world.grid.cell(cx, cz).h;
+      const edge = mesh(boxG(Math.abs(dz) * CELL + 0.2, 0.08, Math.abs(dx) * CELL + 0.2), this.edge, x + dx * (CELL / 2 - 0.1), top + 0.04, z + dz * (CELL / 2 - 0.1), false);
+      this.obj.add(edge);
     }
+  }
+
+  private get edge() {
+    return mat('#8ff8e4', { emissive: '#8ff8e4', ei: 1.4 });
   }
 
   update() {

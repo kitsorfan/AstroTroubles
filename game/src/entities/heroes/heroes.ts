@@ -97,7 +97,7 @@ export const heroCan = (id: HeroId, move: HeroMove) => HEROES[id].moves.includes
  * Developer overrides from the browser hash (`&heroes=jason,atalanta`, `&hero=atalanta`), set by
  * the game before a deck starts. Never used in the app.
  */
-export const heroDev: { heroes?: HeroId[]; hero?: HeroId } = {};
+export const heroDev: { heroes?: HeroId[]; hero?: HeroId; course?: boolean } = {};
 
 /** Reads a comma-separated hero list, dropping anything that isn't a hero. */
 export function parseHeroes(list: string | null | undefined): HeroId[] {

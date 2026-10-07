@@ -1,6 +1,7 @@
 import { audio } from '../../core/audio';
 import { HERO_SWITCH } from '../../core/constants';
 import { Grid } from '../../world/grid';
+import { pointBlocked } from '../../world/physics';
 import { clamp, damp, dampAngle } from '../../core/math';
 import type { World } from '../../game/world';
 import type { HeroId } from '../../world/levelTypes';
@@ -112,6 +113,11 @@ export class Follower {
       const dx = target.x - this.x;
       const dz = target.z - this.z;
       const d = Math.hypot(dx, dz);
+      // Crumbs far apart mean a move only the leader could make (a long jump, a wall-run, a crawl): catch up by magic.
+      if (d > 5 || Math.abs(target.y - this.y) > 3 || this.blocked(target)) {
+        this.popTo(p);
+        return;
+      }
       // A gap or a ledge between crumbs: hop it.
       if (this.hop <= 0 && (Math.abs(target.y - this.y) > 0.6 || d > 1.6)) {
         this.hop = 1;
@@ -156,6 +162,18 @@ export class Follower {
     m.body.rotation.set(walk * 0.08, 0, 0);
     m.body.scale.set(1, 1, 1);
     m.root.visible = true;
+  }
+
+  /** True if a wall, a door or a low gap stands between the follower and a crumb (it can't walk through). */
+  private blocked(c: Crumb): boolean {
+    const w = this.world;
+    for (const f of [0.25, 0.5, 0.75]) {
+      const x = this.x + (c.x - this.x) * f;
+      const z = this.z + (c.z - this.z) * f;
+      const y = Math.max(this.y, c.y) + 1.3;
+      if (pointBlocked(w.grid, w.boxes, x, y, z)) return true;
+    }
+    return false;
   }
 
   /** Too far behind: a sparkle, and the follower appears right behind the leader. */
