@@ -7,7 +7,7 @@ import type { Entity } from '../src/entities/entity';
 import { ROBOT_KINDS, ROBOT_TUNING } from '../src/entities/robots';
 import { INTEL } from '../src/game/story';
 import type { World } from '../src/game/world';
-import { CHAPTER_DECKS, LEVELS } from '../src/levels';
+import { CHAPTER_DECKS, LEVEL_ORDER, LEVELS } from '../src/levels';
 import { Grid, parseLevel } from '../src/world/grid';
 import type { EnemyKind, LevelDef } from '../src/world/levelTypes';
 import { makeBody } from '../src/world/physics';
@@ -168,6 +168,12 @@ describe('robots on Gaia Nova', () => {
     for (const id of CHAPTER2) expect(robotsIn(id).length).toBeGreaterThan(0);
     for (const id of CHAPTER_DECKS[1]) expect(robotsIn(id)).toEqual([]);
     expect(robotsIn('harpies').length).toBeGreaterThan(0);
+    // On General Brennus's own levels, Aeëtes has painted every one of them gold.
+    const brennus = (x: string) => LEVELS[x as keyof typeof LEVELS].heroes?.includes('brennus');
+    for (const id of LEVEL_ORDER.filter(brennus)) {
+      const legend = Object.values(LEVELS[id].legend);
+      expect(legend.filter((s) => s.type === 'enemy' && (ROBOT_KINDS as readonly string[]).includes(s.enemy)).every((s) => s.type === 'enemy' && s.variant === 'gold')).toBe(true);
+    }
   });
 
   it('are introduced gradually: troopers and mines first, mortars in the desert, bulwarks in the snow', () => {

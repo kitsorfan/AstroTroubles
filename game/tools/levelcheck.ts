@@ -21,7 +21,8 @@ function check(id: DeckId, showMap: boolean) {
   const { before, after } = deckAbilities(level);
   const lines: string[] = [`== ${id} (${level.width}x${level.depth}) abilities: [${before.join(', ')}] -> [${after.join(', ')}]`];
   const heroes = levelHeroes(level);
-  if (heroes.length > 1 || heroes[0] !== 'jason') {
+  if (heroes.length === 1 && heroes[0] !== 'jason') lines.push(`  hero: ${heroes[0]} only (no switching on this level)`);
+  else if (heroes.length > 1) {
     lines.push(`  heroes: ${heroes.join(' + ')} (switching anywhere on the ground)`);
     for (const h of heroes) {
       const alone = reach(level, after, [h]).missing.filter((e) => !isCollectible(e.spec));

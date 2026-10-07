@@ -7,7 +7,7 @@ import type { FlightCourse } from '../vehicles/course';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
@@ -18,7 +18,7 @@ export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 /**
  * The playable heroes (see `entities/heroes/heroes.ts` for what each one can do). Jason is the
- * default; chapter 3 adds Atalanta, and General Brennus gets his own levels later.
+ * default; chapter 3 adds Atalanta, and General Brennus plays his own levels (3 and 8).
  */
 export type HeroId = 'jason' | 'atalanta' | 'brennus';
 /**
@@ -26,7 +26,7 @@ export type HeroId = 'jason' | 'atalanta' | 'brennus';
  * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
  */
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -77,6 +77,8 @@ export type Spec = Base &
         wait?: number;
         size?: number;
         needs?: Cond;
+        /** Dressed as a mine's ore cart on rails, or one of Brennus's hauler robots (default: the deck's own platform). */
+        look?: 'cart' | 'hauler';
       }
     | { type: 'faller' }
     | { type: 'bounce' }
@@ -110,6 +112,20 @@ export type Spec = Base &
     | { type: 'wallrun' }
     /** A wall with a low crawl hole: only Atalanta's slide fits under it. `axis` is the way through (guessed from the walls beside it). */
     | { type: 'lowgap'; axis?: 'x' | 'z' }
+    /* General Brennus's puzzles (his own levels). */
+    /** A cracked rock wall veined with gold: only a charged CANNON blast or Brennus's CHARGE smashes it. The cell under it is floor. */
+    | { type: 'cracked' }
+    /**
+     * A Legion command post: Brennus walks up and gives the order with the action button (COMMAND), which
+     * sets `flag`. `order` says what his robots do: walk onto a heavy plate (`plate`), carry him over a
+     * gap (`carry`: a hauler platform with `needs: { flag }`), or switch sides and fight for him
+     * (`fight`: the gold robots of `room`).
+     */
+    | { type: 'post'; flag: string; order: 'plate' | 'carry' | 'fight'; room?: string }
+    /** One of Brennus's old Legion robots, painted gold by Aeëtes and standing idle: on the post's `flag` it marches to the nearest heavy plate. */
+    | { type: 'legionbot'; flag: string }
+    /** A heavy plate: sets `flag` while something heavy (Brennus, or a robot for good) stands on it. */
+    | { type: 'plate'; flag: string }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 

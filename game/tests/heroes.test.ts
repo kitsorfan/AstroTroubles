@@ -1,4 +1,4 @@
-import { ATALANTA, CELL, PLAYER } from '../src/core/constants';
+import { ATALANTA, BRENNUS, CELL, PLAYER } from '../src/core/constants';
 import { HERO_IDS, HEROES, heroCan, heroRoster, nextHero, parseHeroes, switchBlock, type SwitchState } from '../src/entities/heroes/heroes';
 import { heroCourse } from '../src/entities/heroes/course';
 import { LOWGAP_CLEAR } from '../src/entities/heroes/heroProps';
@@ -6,7 +6,8 @@ import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { Grid, parseLevel } from '../src/world/grid';
 import type { HeroId, LevelDef, Spec } from '../src/world/levelTypes';
 import { makeBody, moveBody, type Box } from '../src/world/physics';
-import { atalantaReach, jumpReach, reach, wallRunStrips } from '../tools/reach';
+import { atalantaReach, brennusReach, jumpReach, reach, wallRunStrips } from '../tools/reach';
+import { voiceOf } from '../src/game/companions';
 
 // heroProps builds three.js props; the test only needs its constants, so give it the real module.
 jest.mock('three', () => process.getBuiltinModule('node:module').createRequire(__filename)('three'));
@@ -22,10 +23,10 @@ describe('hero table', () => {
     expect(HERO_IDS).toEqual(['jason', 'atalanta', 'brennus']);
   });
 
-  it('keeps Jason and Atalanta playable, and Brennus waiting for his levels', () => {
+  it('makes all three heroes playable', () => {
     expect(HEROES.jason.playable).toBe(true);
     expect(HEROES.atalanta.playable).toBe(true);
-    expect(HEROES.brennus.playable).toBe(false);
+    expect(HEROES.brennus.playable).toBe(true);
   });
 
   it('gives each hero moves of their own', () => {
@@ -37,9 +38,30 @@ describe('hero table', () => {
       expect(heroCan('atalanta', m)).toBe(true);
       expect(heroCan('jason', m)).toBe(false);
     }
-    // Brennus: slow and strong.
+    // Brennus: slow and strong, with his own buttons and no jet boots, glider or grapple.
     expect(HEROES.brennus.speed).toBeLessThan(HEROES.jason.speed);
-    expect(heroCan('brennus', 'smash')).toBe(true);
+    for (const m of ['cannon', 'shield', 'smash', 'stomp', 'command'] as const) {
+      expect(heroCan('brennus', m)).toBe(true);
+      expect(heroCan('jason', m)).toBe(false);
+    }
+    for (const m of ['doubleJump', 'glide', 'grapple', 'dash', 'wallJump'] as const) expect(heroCan('brennus', m)).toBe(false);
+    expect(HEROES.brennus.buttons).toEqual({ shoot: 'CANNON', spin: 'SHIELD', dash: 'CHARGE' });
+  });
+
+  it('makes Brennus the slow, heavy one: a low jump, but a charge-leap and a cannon that overheats', () => {
+    const apex = (v: number) => (v * v) / 64;
+    expect(apex(BRENNUS.jumpV)).toBeLessThan(apex(PLAYER.jumpV));
+    // He can climb two steps (1 unit) with a jump, but not three.
+    expect(apex(BRENNUS.jumpV) - 0.3).toBeGreaterThan(1);
+    expect(apex(BRENNUS.jumpV) - 0.3).toBeLessThan(1.5);
+    expect(BRENNUS.shieldSpeed).toBeLessThan(BRENNUS.speed);
+    expect(BRENNUS.leapSpeed).toBeGreaterThan(BRENNUS.speed);
+    expect(BRENNUS.chargeSpeed).toBeGreaterThan(BRENNUS.leapSpeed);
+    // A few shells in a row are fine; a long burst (or two big blasts and a shell) overheats.
+    expect(BRENNUS.heatShell * 3).toBeLessThan(1);
+    expect(BRENNUS.heatShell * 6).toBeGreaterThanOrEqual(1);
+    expect(BRENNUS.heatBlast * 2 + BRENNUS.heatShell).toBeGreaterThanOrEqual(1);
+    expect(BRENNUS.blastDamage).toBeGreaterThan(BRENNUS.shellDamage);
   });
 
   it('makes Atalanta the quicker runner with the higher single jump', () => {
@@ -64,8 +86,8 @@ describe('hero roster and switching', () => {
 
   it('uses the level list, dropping unplayable heroes and repeats', () => {
     expect(heroRoster(['atalanta', 'jason'])).toEqual(['atalanta', 'jason']);
-    expect(heroRoster(['jason', 'brennus', 'jason'])).toEqual(['jason']);
-    expect(heroRoster(['brennus'])).toEqual(['jason']);
+    expect(heroRoster(['jason', 'brennus', 'jason'])).toEqual(['jason', 'brennus']);
+    expect(heroRoster(['brennus'])).toEqual(['brennus']);
   });
 
   it('lets the developer hash override the list and the starting hero', () => {
@@ -97,11 +119,18 @@ describe('hero roster and switching', () => {
     expect(switchBlock({ ...ok, cooldown: 0.2 })).toBe('cooldown');
   });
 
-  it('leaves the first two chapters to Jason alone, and lets Atalanta join on the Harpy Isles', () => {
+  it('leaves the first two chapters to Jason, lets Atalanta join on the Harpy Isles, and gives Brennus his own levels', () => {
     for (const id of LEVEL_ORDER.slice(0, 13)) expect(heroRoster(LEVELS[id].heroes)).toEqual(['jason']);
     expect(heroRoster(LEVELS.harpies.heroes)).toEqual(['jason', 'atalanta']);
     // She only joins when Jason meets her by her skiff.
     expect(LEVELS.harpies.joins?.atalanta).toBe('atalanta');
+    // General Brennus is never switched with anyone on his own levels.
+    for (const id of LEVEL_ORDER) {
+      const roster = heroRoster(LEVELS[id].heroes);
+      if (roster.includes('brennus')) expect(roster).toEqual(['brennus']);
+    }
+    expect(heroRoster(LEVELS.mine.heroes)).toEqual(['brennus']);
+    expect(nextHero(['brennus'], 'brennus')).toBeNull();
   });
 });
 
@@ -193,5 +222,86 @@ describe('the dev practice course', () => {
   it('is all reachable when you can switch, and needs Atalanta', () => {
     expect(reach(lv, []).missing.map((e) => e.id)).toEqual([]);
     expect(reach(lv, [], ['jason']).missing.map((e) => e.spec.type)).toContain('checkpoint');
+  });
+});
+
+describe('reach checker with General Brennus', () => {
+  it('works out his jumps: short on foot, much longer as a charge-leap', () => {
+    expect(brennusReach(0, false)).toBeLessThan(jumpReach(0, []));
+    expect(brennusReach(0, false)).toBeLessThan(3);
+    expect(brennusReach(0, true)).toBeGreaterThanOrEqual(3);
+    expect(brennusReach(0, true)).toBeLessThan(4);
+    expect(brennusReach(1.5, true)).toBe(0);
+  });
+
+  it('crosses a two-cell gap only with a charge-leap, and never a three-cell one', () => {
+    const two = level(['@..  .C'], { C: { type: 'checkpoint', id: 'cp' } }, ['brennus']);
+    expect(missingWith(two, ['brennus'])).toEqual([]);
+    const three = level(['@..   .C'], { C: { type: 'checkpoint', id: 'cp' } }, ['brennus']);
+    expect(missingWith(three, ['brennus'])).toEqual(['checkpoint']);
+  });
+
+  it('climbs two steps with a jump, not three', () => {
+    const two = level(['@.2C'], { C: { type: 'checkpoint', id: 'cp', h: 1 } }, ['brennus']);
+    expect(missingWith(two, ['brennus'])).toEqual([]);
+    const three = level(['@.3C'], { C: { type: 'checkpoint', id: 'cp', h: 1.5 } }, ['brennus']);
+    expect(missingWith(three, ['brennus'])).toEqual(['checkpoint']);
+  });
+
+  it('lets only him smash through a cracked wall', () => {
+    const lv = level(['#########', '#@..%..C#', '#########'], { '%': { type: 'cracked' }, C: { type: 'checkpoint', id: 'cp' } }, ['brennus']);
+    expect(missingWith(lv, ['brennus'])).toEqual([]);
+    expect(missingWith(lv, ['jason'])).toEqual(['checkpoint']);
+    expect(missingWith(lv, ['atalanta'])).toEqual(['checkpoint']);
+  });
+
+  it('has him say the lines LUX would (signs and hints) on his own levels', () => {
+    const alone = { lead: null, tag: null };
+    expect(voiceOf('bolt', alone, true, 'brennus')).toBe('brennus');
+    expect(voiceOf('bolt', alone, false, 'brennus')).toBe('brennus');
+    expect(voiceOf('bolt', alone, true)).toBe('halcyon');
+    expect(voiceOf('aeetes', alone, false, 'brennus')).toBe('aeetes');
+  });
+});
+
+describe('Aeëtes’s Mine (General Brennus’s level)', () => {
+  const lv = parseLevel(LEVELS.mine);
+  const specs = lv.entities.map((e) => e.spec);
+
+  it('is his alone, and Jason could not get through it', () => {
+    expect(LEVELS.mine.heroes).toEqual(['brennus']);
+    expect(reach(lv, []).missing.map((e) => e.id)).toEqual([]);
+    expect(reach(lv, ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'], ['jason']).missing.map((e) => e.spec.type)).toContain('boss');
+  });
+
+  it('builds its puzzles on his moves: cracked walls, plates, posts, haulers and a fight post', () => {
+    expect(specs.filter((s) => s.type === 'cracked').length).toBeGreaterThan(0);
+    const posts = specs.flatMap((s) => (s.type === 'post' ? [s] : []));
+    expect(posts.map((p) => p.order).sort()).toEqual(['carry', 'fight', 'plate']);
+    for (const p of posts) {
+      if (p.order === 'plate') {
+        expect(specs.some((s) => s.type === 'legionbot' && s.flag === p.flag)).toBe(true);
+        expect(specs.some((s) => s.type === 'plate')).toBe(true);
+      }
+      if (p.order === 'carry') expect(specs.some((s) => s.type === 'platform' && s.look === 'hauler' && s.needs && 'flag' in s.needs && s.needs.flag === p.flag)).toBe(true);
+      if (p.order === 'fight') expect(specs.filter((s) => s.type === 'enemy' && s.room === p.room && s.variant === 'gold').length).toBeGreaterThan(2);
+    }
+    // The heavy plate's gate opens on the plate's flag.
+    const plate = specs.find((s) => s.type === 'plate');
+    expect(specs.some((s) => s.type === 'door' && plate?.type === 'plate' && 'flag' in s.open && s.open.flag === plate.flag)).toBe(true);
+  });
+
+  it('needs a charge-leap to get into the mine', () => {
+    // Without the leap (his walking jump only), the hall past the gap is out of reach.
+    const hall = lv.entities.find((e) => e.id === 'mine.cp1');
+    expect(hall).toBeDefined();
+    expect(brennusReach(0, false)).toBeLessThan(3);
+  });
+
+  it('ends with the Gold Excavator and an exit to the lifeboat', () => {
+    expect(LEVELS.mine.boss).toBe('excavator');
+    expect(LEVELS.mine.dialogues.command?.length).toBeGreaterThan(0);
+    expect(LEVELS.mine.stories?.opening?.[0].panel).toBe('ch3-brennus');
+    expect(LEVELS.mine.stories?.map?.[0].panel).toBe('ch3-map');
   });
 });

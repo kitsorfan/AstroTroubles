@@ -24,6 +24,9 @@ import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
+import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
+import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
 import { Player } from '../entities/player';
@@ -482,6 +485,18 @@ export class World {
       case 'lowgap':
         this.addEntity(new LowGap(this, id, cx, cz, h, spec.axis));
         break;
+      case 'cracked':
+        if (!this.taken.has(id)) this.addEntity(new CrackedWall(this, id, cx, cz, h));
+        break;
+      case 'post':
+        this.addEntity(new CommandPost(this, id, cx, cz, h, spec.flag, spec.order, spec.room));
+        break;
+      case 'legionbot':
+        this.addEntity(new LegionBot(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'plate':
+        this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
       case 'decor':
         this.decorItems.push({
           kind: spec.kind,
@@ -622,7 +637,7 @@ export class World {
 
   /** Who really says a line written for LUX (see `voiceOf`). */
   voice(who: Speaker, toast = false): Speaker {
-    return voiceOf(who, this.plan, toast);
+    return voiceOf(who, this.plan, toast, this.player?.hero);
   }
 
   /** A droid joins Jason: LUX on the Cryo Deck, IRIS in the jungle. */
@@ -828,6 +843,39 @@ export class World {
     this.hitStop(0.05);
     audio.play('pound', 1.5);
     haptic('medium');
+  }
+
+  /**
+   * General Brennus's shoulder charge and shield bash: a heavy `smash` just in front of him (each target
+   * once per move). It knocks robots over and their shields away, and smashes crates and cracked walls.
+   */
+  smash(player: Player, r: number, dmg: number, hitSet: Set<unknown>) {
+    const b = player.body;
+    const p = new THREE.Vector3(b.x + Math.sin(player.facing) * 0.6, b.y + 0.9, b.z + Math.cos(player.facing) * 0.6);
+    if (!this.hitAll(p, r, dmg, 'smash', hitSet)) return;
+    this.impacts.slam(p.x, b.y, p.z, 2.4, '#ffb04a');
+    this.particles.emit(p.x, p.y, p.z, { count: 18, color: '#ffd8a0', speed: 8, life: 0.4, size: 0.55 });
+    this.shake(0.4);
+    this.hitStop(0.06);
+    audio.play('pound', 1.2);
+    haptic('medium');
+  }
+
+  /** The stolen Legion robots still fighting in a room (all of them if `room` is left out). */
+  goldRobots(room?: string): Enemy[] {
+    return this.enemies.filter((e) => e.alive && (room === undefined || e.room === room) && isRobot(e.kind as EnemyKind));
+  }
+
+  /** A command post's "fight" order: every Legion robot in the room switches back to Brennus's side. */
+  turnRobots(room?: string): number {
+    const list = this.goldRobots(room);
+    for (const e of list) {
+      const root = e.model.root;
+      this.addEntity(new AllyBot(this, root.position.x, root.position.y, root.position.z, root.rotation.y));
+      e.remove();
+      this.enemyDied(e);
+    }
+    return list.length;
   }
 
   get pulseReady() {
@@ -1122,7 +1170,12 @@ export class World {
     this.player.revive();
     this.pulseCd = 0;
     this.shots.clear();
+    this.player.bren?.cannon.clear();
     this.respawnEnemies();
+    // Robots that changed sides go back to Aeëtes's paint with the rest of their squad.
+    const lw = legionWorld(this);
+    for (const a of lw.allies) a.remove();
+    lw.allies.length = 0;
     this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();

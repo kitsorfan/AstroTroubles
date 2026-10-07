@@ -36,6 +36,9 @@ export const PANEL_IDS = [
   // The Harpy Isles: Atalanta, and old Phineus's stolen dinner.
   'ch3-atalanta',
   'ch3-phineus',
+  // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
+  'ch3-brennus',
+  'ch3-map',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

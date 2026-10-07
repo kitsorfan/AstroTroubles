@@ -23,13 +23,30 @@ const glow = (c: string, ei = 2.2) => mat(c, { emissive: c, ei, rough: 0.3 });
 
 /** The shared paint set: armour flashes white when hit, so every robot gets its own copy. */
 function paints() {
+  const armour = ownMat(LEGION.armour, { emissive: '#ff3040', ei: 0.02, rough: 0.5, metal: 0.25 });
+  // Marked so a repaint (Aeëtes's gold, see `paintRobot`) can find it.
+  armour.userData.armour = true;
   return {
-    armour: ownMat(LEGION.armour, { emissive: '#ff3040', ei: 0.02, rough: 0.5, metal: 0.25 }),
+    armour,
     dark: mat(LEGION.dark, { rough: 0.6, metal: 0.4 }),
     brass: mat(LEGION.brass, { emissive: '#5a3a08', ei: 0.25, rough: 0.3, metal: 0.8 }),
     red: mat(LEGION.red, { emissive: LEGION.red, ei: 0.4, rough: 0.4 }),
     pollen: glow(LEGION.pollen, 2.4),
   };
+}
+
+/**
+ * Repaints a robot's armour: `gold` is Aeëtes's shiny paint on the Legion robots he stole (chapter 3),
+ * `legion` puts the old olive back (a robot that went back to General Brennus's side).
+ */
+export function paintRobot(root: THREE.Object3D, paint: 'gold' | 'legion') {
+  root.traverse((o) => {
+    const m = (o as THREE.Mesh).material;
+    if (!(m instanceof THREE.MeshStandardMaterial) || !m.userData.armour) return;
+    m.color.set(paint === 'gold' ? '#e2b236' : LEGION.armour);
+    m.metalness = paint === 'gold' ? 0.75 : 0.25;
+    m.roughness = paint === 'gold' ? 0.28 : 0.5;
+  });
 }
 
 /** A capsule stretched between two points: arms and struts. */

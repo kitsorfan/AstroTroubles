@@ -162,11 +162,11 @@ export abstract class Enemy extends Entity implements Target {
     if (!this.aggro) this.wake();
     this.flashT = 0.12;
     // LUX's zap is mostly a stun: it freezes the enemy for a moment. His force pulse stuns for longer.
-    this.stagger = kind === 'pulse' ? PULSE.stun : kind === 'zap' ? 1.3 : kind === 'dash' ? 0.75 : kind === 'shot' ? 0.12 : 0.35;
+    this.stagger = kind === 'pulse' ? PULSE.stun : kind === 'zap' ? 1.3 : kind === 'dash' ? 0.75 : kind === 'smash' ? 1.1 : kind === 'shot' ? 0.12 : 0.35;
     const dx = this.body.x - from.x;
     const dz = this.body.z - from.z;
     const d = Math.hypot(dx, dz) || 1;
-    const kb = kind === 'shot' || kind === 'zap' ? 2.5 : kind === 'blast' || kind === 'dash' || kind === 'pulse' ? 13 : 9;
+    const kb = kind === 'shot' || kind === 'zap' ? 2.5 : kind === 'blast' || kind === 'dash' || kind === 'pulse' || kind === 'smash' ? 13 : 9;
     if (!this.flying) {
       this.body.vx += (dx / d) * kb;
       this.body.vz += (dz / d) * kb;
@@ -902,7 +902,7 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
     case 'minebot':
     case 'bulwark':
     case 'mortar':
-      e = makeRobot(world, id, kind, x, h, z);
+      e = makeRobot(world, id, kind, x, h, z, variant);
       break;
     case 'harpy':
       e = makeHarpy(world, id, x, h, z);

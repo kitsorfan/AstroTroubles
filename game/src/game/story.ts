@@ -58,6 +58,7 @@ export const FLYOVER: Record<DeckId, string> = {
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
+  mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -139,10 +140,19 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
   harpies: [
     { who: 'halcyon', text: 'Captain, a message is coming in from Gaia Nova. It is... General Brennus?' },
     { who: 'brennus', text: 'Argus. I saw Aeëtes’s gold ships fly over the colony. I know that kind of greed. I used to have it.' },
-    { who: 'brennus', text: 'He is digging for the Fleece in a mine on the next moon. I have borrowed a shuttle, and I am going after him. Alone.' },
+    { who: 'brennus', text: 'He is digging for the Fleece in a mine on the next moon. I am taking the Gorgon’s old lifeboat, and I am going after him. Alone.' },
     { who: 'captain', text: 'Brennus, wait! ...He switched his radio off. Stubborn as ever.' },
     { who: 'atalanta', text: 'Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.' },
-    { who: 'jason', text: 'Then let’s catch up with him. Next stop: Aeëtes’s mine!' },
+    { who: 'jason', text: 'Then we keep going, and we listen for his signal. Hang on, General!' },
+  ],
+  // Brennus's map reaches the Argo (the next level, the Sirens' Sea, is still being built).
+  mine: [
+    { who: 'captain', text: 'Argo to everyone: a message is coming in. From... the Gorgon’s old lifeboat?' },
+    { who: 'brennus', text: 'Argus. It is Brennus. I am sending you a map: the way into the Fleece vault on Colchis. Aeëtes was hiding it in his desk.' },
+    { who: 'hypatia', text: 'You went into Aeëtes’s mine ALONE? Brennus, are you hurt?' },
+    { who: 'brennus', text: 'A few dents. My robots and I are flying home. You fly to Colchis. The map says the way goes through the Sirens’ Sea.' },
+    { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
+    { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
 };
 
@@ -234,6 +244,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
+  excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
 };
 
 /**

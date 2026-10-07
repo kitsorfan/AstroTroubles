@@ -116,6 +116,55 @@ export const ATALANTA = {
   powerDamage: 3,
 };
 
+/**
+ * General Brennus (chapter 3, his own levels): old, slow and strong. A low jump (no jet boots, no
+ * grapple), an arm CANNON with an overheat meter instead of a clip, a big SHIELD, a shoulder CHARGE
+ * that smashes, a heavy STOMP in the air, and COMMAND for his old Legion robots.
+ */
+export const BRENNUS = {
+  speed: 5.6,
+  /** Walking behind the raised shield. */
+  shieldSpeed: 2.4,
+  height: 1.9,
+  /** One low jump: apex about 1.7 units (Jason's single jump reaches 2.1). */
+  jumpV: 10.5,
+  /** CHARGE (the DASH button): a shoulder charge along the ground; jump out of it for a charge-leap. */
+  chargeSpeed: 13,
+  chargeTime: 0.42,
+  chargeCooldown: 0.9,
+  chargeDamage: 3,
+  chargeRadius: 1.35,
+  /** How fast a charge-leap carries on through the air. */
+  leapSpeed: 10,
+  /** CANNON (the BLAST button): heavy shells, no clip, a short cooldown and an overheat meter. */
+  shellCooldown: 0.5,
+  shellSpeed: 21,
+  shellGravity: 6,
+  shellDamage: 2,
+  /** Each shell splashes the targets around where it lands. */
+  shellSplash: 1.6,
+  /** Hold to charge the BIG BLAST: it smashes cracked walls and knocks robots' shields away. */
+  chargeDelay: 0.25,
+  blastCharge: 0.9,
+  blastSpeed: 17,
+  blastDamage: 5,
+  blastRadius: 3.2,
+  /** Heat added by a shell and by a big blast, cooling per second, and the cool-down after overheating. */
+  heatShell: 0.2,
+  heatBlast: 0.45,
+  cool: 0.32,
+  overheat: 2.2,
+  aimRange: 14,
+  /** SHIELD (the SPIN button, held): blocks everything from the front (within this cosine of straight ahead). */
+  shieldArc: 0.3,
+  /** Letting go of the shield bashes forward. */
+  bashSpeed: 10,
+  bashTime: 0.22,
+  bashDamage: 2,
+  /** STOMP (SPIN in the air): the heavy landing presses red switches like Jason's ground pound. */
+  stompSpeed: 24,
+} as const;
+
 /** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */
 export const HERO_SWITCH = {
   cooldown: 1,

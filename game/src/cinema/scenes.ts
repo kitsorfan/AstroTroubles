@@ -99,6 +99,9 @@ export async function wakeUp(d: Director, w: World) {
 /* ---------------- every deck: fly over it once ---------------- */
 
 export async function flyover(d: Director, w: World) {
+  // A level can open with a storybook scene first (General Brennus on his way to Aeëtes's Mine).
+  const opening = w.def.stories?.opening;
+  if (opening?.length) await d.story(opening);
   const lv = w.level;
   const boss = lv.entities.find((e) => e.spec.type === 'boss');
   const k = jason(w);

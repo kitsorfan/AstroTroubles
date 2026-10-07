@@ -4,12 +4,13 @@
  * Models the heroes' movement envelopes on a level grid and reports which entities cannot be reached
  * from the spawn: Jason (walk, jump, jet boots, dash, hover, grapple), Atalanta on levels that let
  * the player switch to her (her strong jump, sprint long jumps after a run-up, wall-jumps, wall-runs
- * along `wallrun` strips, crawling through low gaps, and power arrows for `target` bullseyes), plus
- * bounce pads, vents and moving platforms. Heroes switch anywhere on the ground, so a spot either
+ * along `wallrun` strips, crawling through low gaps, and power arrows for `target` bullseyes),
+ * General Brennus on his own levels (a low jump, charge-leaps over wide gaps, and smashing `cracked`
+ * walls nobody else gets through), plus bounce pads, vents and moving platforms. Heroes switch anywhere on the ground, so a spot either
  * hero reaches counts for both. Doors are treated as open: the checker proves the geometry works,
  * the level's conditions decide the order.
  */
-import { ATALANTA, CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
+import { ATALANTA, BRENNUS, CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
 import { heroRoster } from '../src/entities/heroes/heroes';
 import { PASSABLE_DECOR, type Ability, type Cond, type HeroId, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
@@ -229,6 +230,23 @@ export function atalantaReach(dh: number, speed: number, wallJump: boolean, laun
   return Math.min((Math.max(...options) * MARGIN + EDGE) / CELL, 9);
 }
 
+/** Cells holding a cracked wall (`cracked`): only General Brennus can smash through. */
+function crackedCells(level: ParsedLevel): Set<number> {
+  return new Set(level.entities.filter((e) => e.spec.type === 'cracked').map((e) => e.cz * level.width + e.cx));
+}
+
+/**
+ * Largest centre-to-centre distance (in cells) for one of General Brennus's jumps that ends `dh`
+ * higher: his low jump at walking speed, or a charge-leap (a jump out of his CHARGE keeps its speed).
+ */
+export function brennusReach(dh: number, leap: boolean, launch: number = BRENNUS.jumpV): number {
+  if (dh > (launch * launch) / (2 * GRAVITY) - 0.3) return 0;
+  const t = flight(launch, dh);
+  if (t === null) return 0;
+  const speed = leap ? BRENNUS.leapSpeed : BRENNUS.speed;
+  return Math.min((speed * t * MARGIN + EDGE) / CELL, 9);
+}
+
 /** Highest rise for Atalanta from a launch speed (with a wall-jump when a wall is in reach). */
 function atalantaRise(launch: number, wallJump: boolean) {
   let apex = (launch * launch) / (2 * GRAVITY);
@@ -291,13 +309,16 @@ const RUN_CELLS = (ATALANTA.wallRunTime * ATALANTA.sprintSpeed * MARGIN) / CELL;
  * player can switch between (anywhere on the ground), so a spot either one reaches works for both.
  */
 function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors, heroes: HeroId[] = levelHeroes(level)): JumpGraph {
-  const spots = buildSpots(level, doors);
+  const jason = heroes.includes('jason');
+  const atalanta = heroes.includes('atalanta');
+  const brennus = heroes.includes('brennus');
+  // Cracked walls only fall to General Brennus's big blast or charge: for anyone else they are walls.
+  const cracked = brennus ? new Set<number>() : crackedCells(level);
+  const spots = buildSpots(level, doors).filter((s) => s.kind === 'plat' || !cracked.has(s.cz * level.width + s.cx));
   const shut = shutDoors(level, doors);
   const low = lowGaps(level);
   // Low gaps block jumps and grapple ropes like walls do: they can only be crawled through.
-  const solid = new Set([...shut, ...low]);
-  const jason = heroes.includes('jason');
-  const atalanta = heroes.includes('atalanta');
+  const solid = new Set([...shut, ...low, ...cracked]);
   const byCell = new Map<string, number[]>();
   spots.forEach((s, i) => {
     const k = `${s.cx},${s.cz}`;
@@ -437,6 +458,32 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     }
   };
 
+  /** General Brennus: one low jump at walking speed, or a charge-leap (jumping out of a charge) that carries much farther. */
+  const brennusEdges = (ai: number, out: Set<number>) => {
+    const a = spots[ai];
+    const pad = a.kind === 'pad';
+    const launch = pad ? PLAYER.bounceV : BRENNUS.jumpV;
+    const rise = a.kind === 'vent' ? 8 : (launch * launch) / (2 * GRAVITY) - 0.3;
+    const radius = a.kind === 'vent' ? 3 : 6;
+    for (let dz = -radius; dz <= radius; dz++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (const bi of byCell.get(`${a.cx + dx},${a.cz + dz}`) ?? []) {
+          if (bi === ai || out.has(bi)) continue;
+          const b = spots[bi];
+          if (isLow(b)) continue;
+          const dh = b.h - a.h;
+          const d = Math.hypot(dx, dz);
+          let ok = false;
+          if (a.group >= 0 && a.group === b.group) ok = true;
+          else if (Math.abs(dx) + Math.abs(dz) === 1 && dh <= STEP_UP) ok = true;
+          else if (a.kind === 'vent') ok = dh <= 8 && d <= 2.5 && lineClear(level, solid, a, b);
+          else if (dh <= rise) ok = d <= brennusReach(dh, !pad, launch) && lineClear(level, solid, a, b);
+          if (ok) out.add(bi);
+        }
+      }
+    }
+  };
+
   const edges = new Map<number, number[]>();
   const next = (ai: number) => {
     const known = edges.get(ai);
@@ -444,6 +491,7 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     const out = new Set<number>();
     if (jason && !isLow(spots[ai])) jasonEdges(ai, out);
     if (atalanta) atalantaEdges(ai, out);
+    if (brennus && !isLow(spots[ai])) brennusEdges(ai, out);
     const list = [...out];
     edges.set(ai, list);
     return list;
@@ -623,11 +671,12 @@ function runClear(level: ParsedLevel, blocked: Set<number>, a: Spot, b: Spot) {
  * left out, so every time is a little slow on purpose.
  */
 function moveTime(level: ParsedLevel, blocked: Set<number>, a: Spot, b: Spot, heroes: HeroId[] = ['jason']): number {
-  // Jason's times when he's on the level (he is the slower runner), else Atalanta's: her jump, then a wall-jump.
+  // The slowest hero on the level sets the pace: General Brennus, else Jason, else Atalanta (her jump, then a wall-jump).
   const jason = heroes.includes('jason');
-  const run = (Math.hypot(b.cx - a.cx, b.cz - a.cz) * CELL) / (jason ? PLAYER.speed : ATALANTA.speed);
+  const brennus = heroes.includes('brennus');
+  const run = (Math.hypot(b.cx - a.cx, b.cz - a.cz) * CELL) / (brennus ? BRENNUS.speed : jason ? PLAYER.speed : ATALANTA.speed);
   if (runClear(level, blocked, a, b)) return run;
-  const jumpV = jason ? PLAYER.jumpV : ATALANTA.jumpV;
+  const jumpV = brennus ? BRENNUS.jumpV : jason ? PLAYER.jumpV : ATALANTA.jumpV;
   const launch = a.kind === 'pad' ? PLAYER.bounceV : a.kind === 'vent' ? PLAYER.ventV : jumpV;
   const dh = b.h - a.h;
   const apex = (launch * launch) / (2 * GRAVITY);

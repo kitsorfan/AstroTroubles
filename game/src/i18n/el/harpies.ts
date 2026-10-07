@@ -157,10 +157,10 @@ export const EL_HARPIES: Record<string, string> = {
   "Captain, a message is coming in from Gaia Nova. It is... General Brennus?": "Κυβερνήτη, έρχεται μήνυμα από τη Γαία Νόβα. Είναι... ο Στρατηγός Βρέννος;",
   "Argus. I saw Aeëtes’s gold ships fly over the colony. I know that kind of greed. I used to have it.":
     "Άργο. Είδα τα χρυσά πλοία του Αιήτη να πετούν πάνω από την αποικία. Ξέρω αυτή την απληστία. Την είχα κι εγώ κάποτε.",
-  "He is digging for the Fleece in a mine on the next moon. I have borrowed a shuttle, and I am going after him. Alone.":
-    "Σκάβει για το Δέρας σε ένα ορυχείο στο επόμενο φεγγάρι. Δανείστηκα ένα σκάφος και πάω να τον βρω. Μόνος.",
+  "He is digging for the Fleece in a mine on the next moon. I am taking the Gorgon’s old lifeboat, and I am going after him. Alone.":
+    "Σκάβει για το Δέρας σε ένα ορυχείο στο επόμενο φεγγάρι. Παίρνω την παλιά σωσίβια λέμβο της Γοργούς και πάω να τον βρω. Μόνος.",
   "Brennus, wait! ...He switched his radio off. Stubborn as ever.": "Βρέννο, περίμενε! ...Έκλεισε τον ασύρματο. Πεισματάρης όπως πάντα.",
   "Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.":
     "Να φύγει μόνος του χωρίς να πει σε κανέναν; Ποιος θα έκανε κάτι τόσο ανόητο; ...Μη με κοιτάτε έτσι.",
-  "Then let’s catch up with him. Next stop: Aeëtes’s mine!": "Τότε ας τον προλάβουμε. Επόμενη στάση: το ορυχείο του Αιήτη!",
+  "Then we keep going, and we listen for his signal. Hang on, General!": "Τότε συνεχίζουμε, και ακούμε για το σήμα του. Κράτα γερά, Στρατηγέ!",
 };

@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -277,6 +277,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.....x...x.....', s: '....x.......x...', h: '..x.x...x.x.x..x' },
     lead: 'bell',
     padLevel: 0.85,
+  },
+  // Aeëtes's Mine, with General Brennus: an old soldier's march, heavy boots and a snare roll.
+  mine: {
+    bpm: 104,
+    chords: [
+      [45, 'min'],
+      [41, 'maj'],
+      [43, 'maj'],
+      [40, 'sus'],
+    ],
+    bass: '0...0.0.2...0.0.',
+    arp: '0.2.1.2.0.2.3.2.',
+    drums: { k: 'x.....x.x.....x.', s: '....x.......xxxx', h: 'x.x.x.x.x.x.x.x.' },
+    lead: 'square',
+    padLevel: 0.65,
   },
   boss: {
     bpm: 144,

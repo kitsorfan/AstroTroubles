@@ -58,6 +58,9 @@ export function companionPlan(deck: DeckId, has: (flag: string) => boolean, crew
       return { lead: has(IRIS_FLAG) ? 'iris' : null, tag: null };
     case 'volcano':
       return has(LUX_BACK_FLAG) ? { lead: 'lux', tag: 'iris' } : { lead: 'iris', tag: null };
+    // Aeëtes's Mine (chapter 3): General Brennus goes alone, with his old Legion wrist computer.
+    case 'mine':
+      return { lead: null, tag: null };
     default:
       if (crew?.chapter === 3) return voyagePlan(crew);
       return { lead: has('bolt') ? 'lux' : null, tag: null };
@@ -70,16 +73,18 @@ export function companionPlan(deck: DeckId, has: (flag: string) => boolean, crew
  */
 export function helperOf(deck: DeckId, plan: CompanionPlan): Helper | null {
   if (plan.lead) return plan.lead;
-  return deck === 'snow' || deck === 'rockies' || deck === 'jungle' || deck === 'volcano' ? 'wrist' : null;
+  return deck === 'snow' || deck === 'rockies' || deck === 'jungle' || deck === 'volcano' || deck === 'mine' ? 'wrist' : null;
 }
 
 /**
  * Lines and toasts written for LUX (`bolt`) when LUX isn't there: IRIS says them if she is around,
  * otherwise toasts come over HALCYON's radio and dialogue lines are Jason thinking out loud. While LUX
  * only tags along (chapter 3, playing Atalanta), he still says his own lines, and IRIS gives the hints.
+ * General Brennus, alone on his own levels, says them to himself (signs, hints, "area clear!").
  */
-export function voiceOf(who: Speaker, plan: CompanionPlan, toast: boolean): Speaker {
+export function voiceOf(who: Speaker, plan: CompanionPlan, toast: boolean, hero: HeroId = 'jason'): Speaker {
   if (who !== 'bolt' || plan.lead === 'lux' || (!toast && plan.tag === 'lux')) return who;
+  if (hero === 'brennus') return 'brennus';
   if (plan.lead === 'iris') return 'iris';
   return toast ? 'halcyon' : 'jason';
 }
