@@ -152,9 +152,11 @@ export function person(x: number, y: number, s: number, o: PersonOpts): string {
   const neck = at(0, hy, hs, behind) + `<rect x="-10" y="${b(-186)}" width="20" height="20" fill="${o.skin}" ${ink(4)}/>`;
   const headG = at(0, hy, hs, head);
   const backOver = pose === 'cheer' || pose === 'shock' || pose === 'fist' || pose === 'rifle';
-  const shadow = `<ellipse cx="0" cy="4" rx="${o.legs === 'kneel' ? 92 : 62}" ry="10" fill="#000" opacity=".18"/>`;
-  const backArm = arm(-1, back);
-  const frontArm = arm(1, front);
+  // 'none' legs is a bust (head and shoulders only, for windows and screens): no arms or shadow.
+  const bust = o.legs === 'none';
+  const shadow = bust ? '' : `<ellipse cx="0" cy="4" rx="${o.legs === 'kneel' ? 92 : 62}" ry="10" fill="#000" opacity=".18"/>`;
+  const backArm = bust ? '' : arm(-1, back);
+  const frontArm = bust ? '' : arm(1, front);
   const inner = backOver ? shadow + legs + neck + torso + headG + backArm + frontArm : shadow + backArm + legs + neck + torso + headG + frontArm;
   return at(x, y, s, inner, o.flip);
 }

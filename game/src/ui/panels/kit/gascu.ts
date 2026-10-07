@@ -3,7 +3,7 @@
  * in a pot, the giant flower of Gaia Nova), plus the leaves, vines, flowers and sparkles around it.
  * Shapes with gradients take an `id` prefix so their ids stay unique on the page.
  */
-import { at, C, glow, glowDef, ink, limb, lin, r1, rad } from './base';
+import { at, C, glow, glowDef, ink, limb, lin, r1, rad, smooth } from './base';
 
 export const VINE = '#3f7a3a';
 export const LEAF = '#5f9a3a';
@@ -29,8 +29,12 @@ export function flower(x: number, y: number, r: number, color: string, center: s
 }
 
 /** A curly vine along points with leaves every so often. */
-export function vine(pts: number[][], w: number, leaves = true, color = VINE): string {
-  let out = limb(pts, color, w, 5, true);
+export function vine(pts: number[][], w: number, leaves = true, color = VINE, glowColor = ''): string {
+  const d = smooth(pts);
+  let out = glowColor
+    ? `<g class="sbL" stroke="${glowColor}"><path d="${d}" stroke-width="${w * 4.5}" opacity=".08"/><path d="${d}" stroke-width="${w * 3}" opacity=".12"/><path d="${d}" stroke-width="${w * 1.9}" opacity=".2"/></g>`
+    : '';
+  out += limb(pts, color, w, 5, true);
   if (leaves) {
     for (let i = 1; i < pts.length; i++) {
       const [x, y] = pts[i];
