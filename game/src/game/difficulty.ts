@@ -29,6 +29,9 @@ export function difficultyFor(deckIndex: number, save: SaveData): Difficulty {
     mk2 += Math.max(0, lvl - 2);
   }
   const arms = ownedWeapons(save.weapons).length - 1;
-  const tier = deckIndex - 1 + 0.5 * ship + 0.35 * mk2 + 0.1 * arms;
+  // Chapter 3 keeps getting a little harder, but slowly: past Mount Atlantas (deck 12) each level adds a
+  // quarter tier, so enemies stay close to the volcano's and every hero (even slow Brennus) can keep up.
+  const base = Math.min(deckIndex, 12) - 1 + 0.25 * Math.max(0, deckIndex - 12);
+  const tier = base + 0.5 * ship + 0.35 * mk2 + 0.1 * arms;
   return { tier, hp: 1 + 0.22 * tier, speed: 1 + 0.06 * tier, rate: 1 + 0.1 * tier, aggro: 11 + tier * 0.7 };
 }
