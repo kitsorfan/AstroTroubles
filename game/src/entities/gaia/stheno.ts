@@ -234,7 +234,7 @@ export class Stheno extends Boss implements Target {
     // The searchlight under the belly.
     this.lamp = mesh(sphere(0.32, 12), mat('#ffffff', { emissive: '#ff5e6a', ei: 2 }), 0, -0.95, -2.2, false);
     s.add(this.lamp);
-    // Vines wrapped all round it (GaScu's pollen got here too).
+    // Vines wrapped all round it (Celestia's pollen got here too).
     for (let i = 0; i < 4; i++) {
       const ring = mesh(torus(1.55, 0.09), vine, 0, 0.1, -1.8 + i * 1.3, false);
       ring.rotation.y = 0.15 * (i % 2 ? 1 : -1);

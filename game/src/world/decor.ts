@@ -317,7 +317,7 @@ function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.
       r = 0.2;
       break;
     case 'pillar':
-      // An ancient pillar of GaScu's long-gone gardeners, with glowing light-words.
+      // An ancient pillar of Celestia's long-gone gardeners, with glowing light-words.
       s.push(colored(C(0.55, 0.65, 3, 8), '#d8b88a', 0, 1.5));
       s.push(colored(B(1.5, 0.3, 1.5), '#c8a478', 0, 3.15));
       s.push(colored(B(1.6, 0.3, 1.6), '#c8a478', 0, 0.15));

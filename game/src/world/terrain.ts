@@ -383,7 +383,7 @@ function cliff(theme: Theme, o: Outdoor, variant: number, seed: number): Surface
     }
   }
   if (o.ground === 'sand' && variant === 3) {
-    // Old glyphs carved into the sandstone, still faintly glowing in GaScu's colours.
+    // Old glyphs carved into the sandstone, still faintly glowing in Celestia's colours.
     const cols = ['#5e9bff', '#ff6fcf', '#ffd166'];
     for (let i = 0; i < 3; i++) {
       const gx = 40 + i * 70;

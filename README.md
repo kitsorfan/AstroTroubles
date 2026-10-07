@@ -8,7 +8,7 @@ A 3D action-adventure platformer for Android, built with three.js inside an Expo
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **LUX**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
-In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find General Brennus waiting. Forty years ago he led the planet's first expedition, and when he tried to destroy GaScu, the heart of all its plants, his own scientists mutinied and launched it into space. That is why GaScu turned the ship away: it was running from him. Now he has captured the science team and stolen GaScu to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
+In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find General Brennus waiting. Forty years ago he led the planet's first expedition, and when he tried to destroy the heart of all its plants, a great glowing flower the scientists named **Celestia**, they mutinied and launched it into space. Celestia is GaScu: that is why it turned the ship away, it was running from him. In Chapter 2 it goes by its real name. Brennus has captured the science team and stolen Celestia to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
 
 It's made for players around 10 and up: bright, forgiving, and about 5–6 hours long across both chapters if you hunt for the secrets.
 
@@ -172,16 +172,16 @@ Cutscenes play in the game world with letterbox bars:
 
 **Chapter 2: Gaia Nova** (more spoilers):
 
-- **The arrival.** The ship reaches Gaia Nova and sends Dr. Hypatia's science team down first. Their radio goes quiet, General Brennus broadcasts that the planet is his, and his drones steal GaScu. Jason and LUX take the shuttle down.
-- **The first expedition.** Dr. Galen, freed in the snow, slept for forty years: he was one of the twelve scientists who came here with Brennus. His story plays as storybook pictures: the planet fighting back, Brennus's order to destroy GaScu, the mutiny, and the escape pod that carried GaScu into space.
+- **The arrival.** The ship reaches Gaia Nova and sends Dr. Hypatia's science team down first. Their radio goes quiet, General Brennus broadcasts that the planet is his (and that GaScu's real name is Celestia), and his drones steal it. Jason and LUX take the shuttle down.
+- **The first expedition.** Dr. Galen, freed in the snow, slept for forty years: he was one of the twelve scientists who came here with Brennus. His story plays as storybook pictures: the planet fighting back, Brennus's order to destroy Celestia, the mutiny, and the escape pod that carried it into space.
 - **The journey.** Each region frees two captured scientists (thorn cocoons) and beats one of Brennus's machines. Dr. Hypatia's field logs and Brennus's own recordings play on hologram projectors, and between regions the shuttle flies over the planet while the crew talks.
-- **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets GaScu go himself (the secret ending).
+- **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets Celestia go himself (the secret ending).
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 
 ## Languages
 
-The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσονας** and GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη), and the app shows that name on phones set to Greek (`assets/languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
+The game is in English and Greek: in Greek it is called **Αστρομπελάδες**, the ship is the **Συρακουσία**, Jason is **Ιάσονας** GaScu is **Γάκου** (Γαλαξιακή Κουσκούτα Εχινόχλοη) and Celestia is **Σελέστια**, and the app shows that name on phones set to Greek (`assets/languages/el.json`, for builds made with EAS). The game starts in Greek on a phone set to Greek, and you can switch at any time in **Settings**. The Greek is written as natural Greek for young players rather than word for word. Every string the player sees goes through `tr()` (`game/src/core/i18n.ts`) with its English text as the key, and the Greek table lives in `game/src/i18n/el.ts`. The game and ship names are in `game/src/core/brand.ts`; story text refers to the ship as `{ship}`. `npm run game:i18n` lists anything still missing, and the Jest suite fails if a visible string has no Greek. Fredoka and Orbitron have no Greek letters, so the build fills them in with just the Greek glyphs of M PLUS Rounded 1c and Play.
 
 ## Project layout
 

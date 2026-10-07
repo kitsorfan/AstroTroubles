@@ -5,7 +5,7 @@ import { blobShadow, boxG, capsule, cyl, glowSprite, mat, mesh, ownMat, sphere, 
 
 /**
  * General Brennus's robots, the Thorn Legion: chunky, rounded machines in olive army paint with brass
- * trim, a red gear emblem and red lenses. Little pink lights in their vents and cores show the GaScu
+ * trim, a red gear emblem and red lenses. Little pink lights in their vents and cores show the Celestia
  * pollen that powers them. Friendly toy-like shapes, but easy to read from the camera's height.
  */
 

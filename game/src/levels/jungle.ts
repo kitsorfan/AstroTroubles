@@ -1,7 +1,7 @@
 import type { LevelDef } from '../world/levelTypes';
 
 /**
- * Region 5 of Gaia Nova — the Thornwood Jungle. Brennus pumps GaScu's pollen into the swamp and the
+ * Region 5 of Gaia Nova — the Thornwood Jungle. Brennus pumps Celestia's pollen into the swamp and the
  * jungle is getting sick. Hop along the boardwalks and sinking logs over the toxic swamp to the
  * first pollen pump, wade through the bog and bounce up the giant mushrooms, find the second pump
  * in the dark root caves, zip across the treetops on grapple rings to the third, and then face the
@@ -134,7 +134,7 @@ export const jungle: LevelDef = {
     O: { type: 'door', id: 'cavemouth', open: { all: [] } },
     Q: { type: 'door', id: 'rootgate', open: { flag: 'pump2' } },
     G: { type: 'door', id: 'pumpgate', open: { all: [{ flag: 'pump1' }, { flag: 'pump2' }, { flag: 'pump3' }] } },
-    // The flower vault: sun (gold), sky (blue), GaScu (pink), leaves (green).
+    // The flower vault: sun (gold), sky (blue), Celestia (pink), leaves (green).
     g: { type: 'rune', group: 'vault', order: 1, color: '#ffd166' },
     j: { type: 'rune', group: 'vault', order: 2, color: '#5ee0ff' },
     k: { type: 'rune', group: 'vault', order: 3, color: '#ff6fcf' },
@@ -157,13 +157,13 @@ export const jungle: LevelDef = {
     // Signs.
     '>': { type: 'sign', text: 'Welcome to the Thornwood Jungle! The green swamp is toxic, so stay on the wooden planks and the mossy islands.' },
     '(': { type: 'sign', text: 'Mossy logs sink as soon as you step on them. Don’t stop: hop, hop, hop!' },
-    '[': { type: 'sign', text: 'POLLEN PUMP! Brennus is pumping GaScu’s pollen into the swamp. Walk up to the terminal and HACK it to switch the pump off.' },
+    '[': { type: 'sign', text: 'POLLEN PUMP! Brennus is pumping Celestia’s pollen into the swamp. Walk up to the terminal and HACK it to switch the pump off.' },
     '&': { type: 'sign', text: 'Bog ahead! The mud slows you down, and if you stand still too long you start to sink. Keep moving!' },
     ')': { type: 'sign', text: 'Giant mushrooms are super bouncy. Jump on one to fly up onto the high ridge!' },
     E: { type: 'sign', text: 'The root caves are pitch dark. Stay close to LUX: his light shows the way to the second pump.' },
     J: { type: 'sign', text: 'Glowing rings hang from the treetops. Face one and press GRAPPLE to zip across, like swinging on a vine!' },
     S: { type: 'sign', text: 'The last pump is up on the tallest tree. Zip up with the GRAPPLE, or bounce up on the mushroom!' },
-    '<': { type: 'sign', text: 'VAULT RIDDLE: Step on the flower pads in the order the jungle wakes up. First the sun, then the sky, then GaScu’s favourite colour. The leaves wake up last.' },
+    '<': { type: 'sign', text: 'VAULT RIDDLE: Step on the flower pads in the order the jungle wakes up. First the sun, then the sky, then Celestia’s favourite colour. The leaves wake up last.' },
     // Story.
     H: { type: 'holo', log: 'log', who: 'brennus' },
     R: { type: 'cocoon', id: 'c1', name: 'Biologist Melissa', line: 'The jungle can heal! Once the pumps stop, it will grow back greener than ever.' },
@@ -194,13 +194,13 @@ export const jungle: LevelDef = {
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'The Thornwood Jungle. Pollen levels: off the charts.' },
-      { who: 'bolt', text: 'The trees look sick. Grey and droopy. GaScu’s pollen should make things GROW, not wilt.' },
+      { who: 'bolt', text: 'The trees look sick. Grey and droopy. Celestia’s pollen should make things GROW, not wilt.' },
       { who: 'jason', text: 'Brennus is pumping too much of it. He’s hurting the whole jungle.' },
       { who: 'halcyon', text: 'Find the pollen pumps and shut them down. Something big is drinking that pollen... and growing.' },
     ],
     log: [
       { who: 'brennus', text: 'Personal log. The jungle is dying. The pollen was supposed to make my Legion strong. It is making everything sick.' },
-      { who: 'brennus', text: 'Hypatia says GaScu cries in its cage at night. I told her plants do not cry.' },
+      { who: 'brennus', text: 'Hypatia says Celestia cries in its cage at night. I told her plants do not cry.' },
       { who: 'brennus', text: '...I can hear it too.' },
     ],
     boss: [
@@ -211,17 +211,17 @@ export const jungle: LevelDef = {
     ],
     bossDown: [
       { who: 'bolt', text: 'The Hydra is crumbling... into flowers!' },
-      { who: 'gascu', text: '...thank... you...' },
-      { who: 'jason', text: 'GaScu! Hang on. We’re coming to get you.' },
+      { who: 'celestia', text: '...thank... you...' },
+      { who: 'jason', text: 'Celestia! Hang on. We’re coming to get you.' },
       { who: 'halcyon', text: 'The volcano is just past the jungle. This is it, Jason.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “GaScu’s pollen makes my machines unstoppable. But the jungle is getting sick. Was that... me?”' },
+      { who: 'bolt', text: 'A journal page! “Celestia’s pollen makes my machines unstoppable. But the jungle is getting sick. Was that... me?”' },
       { who: 'jason', text: 'Yes. But it’s not too late to stop.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“Hypatia says GaScu cries in its cage. Plants do not cry. ...Do they?”' },
-      { who: 'bolt', text: 'GaScu cries in light. I have seen it. It is pink and very, very sad.' },
+      { who: 'bolt', text: '“Hypatia says Celestia cries in its cage. Plants do not cry. ...Do they?”' },
+      { who: 'bolt', text: 'Celestia cries in light. I have seen it. It is pink and very, very sad.' },
     ],
     'shard:s3': [
       { who: 'bolt', text: '“Today I found Grandma’s old seed packet in my coat pocket. Tomatoes. Forty years, and I never planted them.”' },

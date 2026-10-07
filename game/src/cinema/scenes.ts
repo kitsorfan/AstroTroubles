@@ -463,7 +463,7 @@ export async function talkDown(d: Director, w: World) {
   await d.cam(k.clone().addScaledVector(u, 5).addScaledVector(side, 3.5).add(V(0, 2.4, 0)), f.clone().lerp(k, 0.3), 1.4);
   // While Jason talks, the picture of a boy in his grandmother's greenhouse.
   await d.panel('ch2-grandma', { lines: w.dialogue('redeem') });
-  // The machine powers down, piece by piece, and GaScu's glow turns gold.
+  // The machine powers down, piece by piece, and Celestia's glow turns gold.
   audio.play('upgrade');
   await d.tween(
     2.4,

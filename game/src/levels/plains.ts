@@ -176,7 +176,7 @@ export const plains: LevelDef = {
     ],
     camp: [
       { who: 'bolt', text: 'The camp is empty. The tents are torn... and look, thorny cocoons!' },
-      { who: 'jason', text: 'Brennus wrapped the scientists up, the way GaScu wrapped up the colonists. Let’s blast them free!' },
+      { who: 'jason', text: 'Brennus wrapped the scientists up, the way Celestia wrapped up the colonists. Let’s blast them free!' },
     ],
     log: [
       { who: 'hypatia', text: 'Field log, day one. Dr. Hypatia here. Gaia Nova is perfect: fresh water, rich soil, and grass that hums in the wind.' },

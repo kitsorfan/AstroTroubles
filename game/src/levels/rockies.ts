@@ -214,7 +214,7 @@ export const rockies: LevelDef = {
     ],
     log: [
       { who: 'hypatia', text: 'Field log, Dr. Hypatia, written in secret. Brennus is taking me to his fortress in the volcano.' },
-      { who: 'hypatia', text: 'He asked me to help him put GaScu inside his machine. I said no. He did not shout. He just looked... tired.' },
+      { who: 'hypatia', text: 'He asked me to help him put Celestia inside his machine. I said no. He did not shout. He just looked... tired.' },
       { who: 'hypatia', text: 'If anyone finds the Gorgon: his journal pages are scattered all over these mountains. Read them. There is a person in there.' },
     ],
     boss: [
@@ -226,15 +226,15 @@ export const rockies: LevelDef = {
       { who: 'bolt', text: 'Stheno is going down... into the clouds!' },
       { who: 'jason', text: 'Look, LUX. Brennus planted a little garden in the wreck.' },
       { who: 'bolt', text: 'Dead flowers. Forty years of dead flowers.' },
-      { who: 'halcyon', text: 'GaScu’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.' },
+      { who: 'halcyon', text: 'Celestia’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.' },
     ],
     'shard:s1': [
       { who: 'bolt', text: 'A journal page! “The Gorgon fell on the mountains in the storm that night. I built a fortress inside the volcano. Warm. Safe. MINE.”' },
       { who: 'jason', text: 'He keeps saying MINE. Like a little kid with a toy.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“The colony ship is coming at last. And GaScu is riding on it. After forty years, it came BACK.”' },
-      { who: 'bolt', text: 'GaScu did not come back on purpose! It tried as hard as it could to steer us AWAY!' },
+      { who: 'bolt', text: '“The colony ship is coming at last. And Celestia is riding on it. After forty years, it came BACK.”' },
+      { who: 'bolt', text: 'Celestia did not come back on purpose! It tried as hard as it could to steer us AWAY!' },
     ],
     'shard:s3': [
       { who: 'bolt', text: '“I will not destroy it this time. I will cage it, and its power will make my Legion unstoppable. ...So why do I feel worse?”' },

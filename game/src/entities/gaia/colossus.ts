@@ -167,7 +167,7 @@ const CYCLE: Record<1 | 2 | 3, State[]> = {
 };
 
 /**
- * THE COLOSSUS: General Brennus's war machine, four times as tall as Jason, with GaScu caged in its
+ * THE COLOSSUS: General Brennus's war machine, four times as tall as Jason, with Celestia caged in its
  * chest and Brennus in the cockpit on top. Three phases, by health:
  * 1. SHIELD: an energy shield blocks everything; knock out its three generators (blast or hack) to drop
  *    it for a few seconds. It fires cannon volleys and stomps out shockwaves.
@@ -299,7 +299,7 @@ export class Colossus extends Boss implements Target, Interactable {
     }
     cage.add(mesh(torus(1.03, 0.05), bars, 0, 0, 0, false).rotateX(Math.PI / 2));
     cage.add(mesh(torus(1.25, 0.12), this.core, 0, 0, -0.1, false));
-    // GaScu inside: a glowing pink bud with petals, wrapped in Brennus's vines.
+    // Celestia inside: a glowing pink bud with petals, wrapped in Brennus's vines.
     cage.add(mesh(sphere(0.4, 18), this.gascu, 0, 0, 0, false));
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
@@ -504,7 +504,7 @@ export class Colossus extends Boss implements Target, Interactable {
     });
   }
 
-  /** The secret ending: the machine powers down, its arms drop, the cage opens and GaScu glows gold. */
+  /** The secret ending: the machine powers down, its arms drop, the cage opens and Celestia glows gold. */
   surrender(k: number) {
     this.calm = true;
     this.redeemed = true;
@@ -601,7 +601,7 @@ export class Colossus extends Boss implements Target, Interactable {
     this.doors[1].rotation.y = k * 1.5;
   }
 
-  /** GaScu's glow, from frightened pink (0) to happy gold (1). */
+  /** Celestia's glow, from frightened pink (0) to happy gold (1). */
   private setGlow(k: number) {
     this.gascu.color.set('#ffc6ef').lerp(new THREE.Color('#fff0b0'), k);
     this.gascu.emissive.set(PINK).lerp(new THREE.Color(GOLD), k);
@@ -639,7 +639,7 @@ export class Colossus extends Boss implements Target, Interactable {
     this.t += dt;
     const c = this.center;
     const p = this.player.body;
-    // Ambient life: GaScu flickers in its cage, the shield shimmers.
+    // Ambient life: Celestia flickers in its cage, the shield shimmers.
     this.gascu.emissiveIntensity = 1.4 + Math.sin(this.t * 3) * 0.4;
     this.shield.visible = this.powered;
     (this.shield.material as THREE.MeshStandardMaterial).opacity = 0.18 + Math.sin(this.t * 3) * 0.05;
