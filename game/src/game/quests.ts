@@ -2,6 +2,7 @@ import { tr } from '../core/i18n';
 import type { SaveData, UpgradeId } from '../core/save';
 import { LEVELS, chapterOf, chapterTotals, inChapter } from '../levels';
 import type { DeckId, LevelDef } from '../world/levelTypes';
+import { flightQuests } from '../vehicles/quests';
 import { heartCap, levelUp } from './shop';
 
 /**
@@ -20,6 +21,8 @@ export interface Quest {
   done: boolean;
   progress: string;
   reward: string;
+  /** Bolts paid out when it's done (the flight levels' quests; the classic four pay as below). */
+  pay?: number;
 }
 
 const UPGRADE_NAME: Record<UpgradeId, string> = {
@@ -50,6 +53,8 @@ function vaultReward(def: LevelDef): string {
 
 export function deckQuests(id: DeckId, save: SaveData): Quest[] {
   const def = LEVELS[id];
+  // A flight has its own quests: rings, drones and the dove's timing.
+  if (def.vehicle) return flightQuests(id, def, save);
   const planet = chapterOf(id) === 2;
   const out: Quest[] = [];
   const cols = def.colonistIds ?? [];
@@ -89,7 +94,10 @@ export function payQuests(id: DeckId, save: SaveData): string[] {
     if (!q.done || done.includes(q.id)) continue;
     done.push(q.id);
     const planet = chapterOf(id) === 2;
-    if (q.id.endsWith(':colonists')) {
+    if (q.pay) {
+      save.bolts += q.pay;
+      out.push(tr('Side quest done! +{n} bolts', { n: q.pay }));
+    } else if (q.id.endsWith(':colonists')) {
       save.bolts += QUEST_BOLTS;
       out.push(planet ? tr('Side quest done: every scientist here is free! +{n} bolts', { n: QUEST_BOLTS }) : tr('Side quest done: every colonist on this deck is free! +{n} bolts', { n: QUEST_BOLTS }));
     } else if (q.id.endsWith(':shards')) {
@@ -109,6 +117,7 @@ export function shardMilestone(save: SaveData, deck: DeckId): string | null {
   const ch = chapterOf(deck);
   const n = inChapter(save.shards, ch);
   const total = chapterTotals(ch).shards;
+  if (!total) return null;
   if (n === total) return ch === 1 ? tr('ALL 18 memory shards! LUX has learned GaScu’s light-language...') : tr('ALL 18 journal pages! Now you know Brennus’s whole story...');
   if (n % SHARDS_PER_HEART === 0) {
     save.maxHearts = Math.min(heartCap(save), save.maxHearts + 1);

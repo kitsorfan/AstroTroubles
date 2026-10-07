@@ -11,9 +11,9 @@ import { join } from 'node:path';
 
 import { GAME_NAME, SHIP } from '../src/core/brand';
 import { HINTS } from '../src/game/quests';
-import { BOSS_CARD, BROADCAST, ENDING_CAPTIONS, FLYOVER, INTEL, PROLOGUE, PROLOGUE2, STOLEN, TRANSITIONS } from '../src/game/story';
+import { AEETES_INTRO, ARGO_BUILT, BOSS_CARD, BROADCAST, ENDING_CAPTIONS, FLEECE, FLYOVER, INTEL, PROLOGUE, PROLOGUE2, PROLOGUE3, STOLEN, TRANSITIONS } from '../src/game/story';
 import { EL } from '../src/i18n/el';
-import { LEVELS, LEVEL_ORDER } from '../src/levels';
+import { CHAPTERS, CHAPTER_PLAN, LEVELS, LEVEL_ORDER } from '../src/levels';
 
 /** The game's sources, from the project root (where npm scripts and Jest run). */
 const SRC = join(process.cwd(), 'game/src');
@@ -69,7 +69,10 @@ export function englishStrings(): Set<string> {
   }
   Object.values(PROLOGUE).forEach(add);
   Object.values(PROLOGUE2).forEach(add);
-  for (const l of [...BROADCAST, ...STOLEN]) add(l.text);
+  Object.values(PROLOGUE3).forEach(add);
+  for (const l of [...BROADCAST, ...STOLEN, ...FLEECE, ...ARGO_BUILT, ...AEETES_INTRO]) add(l.text);
+  // The names of levels still being built show in the level select as "coming soon".
+  for (const ch of CHAPTERS) CHAPTER_PLAN[ch].forEach(add);
   Object.values(FLYOVER).forEach(add);
   for (const lines of Object.values(TRANSITIONS)) for (const l of lines) add(l.text);
   for (const c of Object.values(BOSS_CARD)) add(c.sub);

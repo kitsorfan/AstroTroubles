@@ -241,8 +241,29 @@ const HYPATIA = person({
     <path d="M29.6 34.6Q31 33.4 32.6 33.6M43.6 34.6Q45 33.4 46.6 33.6" fill="none" stroke="#ffffff" stroke-width=".7" opacity=".5"/>`,
 });
 
+/** Aeëtes: slicked-back silver hair, a gold-rimmed eyepatch screen, a too-wide smile and a high gold collar. */
+const AEETES = person({
+  id: 'pa',
+  skin: '#e8c0a0',
+  hair: '#d8dce8',
+  iris: '#3a5a7a',
+  lips: '#a0505a',
+  suit: '#e2b23c',
+  front: `<path d="M24.6 33C22.6 19 31 14.4 40 14.4C49.4 14.4 57.6 19 55.4 33C54.8 26 51 22.4 40 22C31 22.2 26.4 25.2 24.6 33Z" fill="#d8dce8"/>
+    <path d="M28 22Q38 17 52 21M27 26Q38 20.6 53 25" fill="none" stroke="#ffffff" stroke-width=".9" opacity=".7"/><path d="M30 19.4Q40 16 50 18.6" fill="none" stroke="#9aa0b4" stroke-width=".6"/>`,
+  collar: `<path d="M26 60L33 56L40 66L47 56L54 60L50 68L40 72L30 68Z" fill="#5a1a4a"/>
+    <path d="M24 61L32 52L37 64L30 74Z" fill="#f6d27a"/><path d="M56 61L48 52L43 64L50 74Z" fill="#c89a2a"/>
+    <path d="M34 70Q40 74 46 70" fill="none" stroke="#fff2b0" stroke-width="1.2"/><circle cx="40" cy="72.6" r="2" fill="#fff2b0"/>`,
+  extra: `<rect x="41" y="31.6" width="12.4" height="11" rx="3" fill="#12202e" stroke="#ffd166" stroke-width="1.4"/>
+    <path d="M42.6 39.6L45 37.6L47 39L51.4 34.4" fill="none" stroke="#7dff9a" stroke-width=".9" stroke-linecap="round"/>
+    <path d="M41 34L25.6 30.6M53.4 34L55.4 33" stroke="#3a2a20" stroke-width=".8"/>
+    <path d="M31.6 49.6Q40 58.4 49.6 49.2Q40 53.2 31.6 49.6Z" fill="#6a1e2a"/><path d="M33 50.2Q40 53.8 48.2 49.8L47.6 51.4Q40 55.2 33.6 51.6Z" fill="#ffffff"/>
+    <path d="M30.6 48.4Q31 50.4 32.4 50.8M50.6 48Q50.4 50 49 50.6" fill="none" stroke="#7a4e3a" stroke-width=".6"/>`,
+});
+
 const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
+  aeetes: AEETES,
   brennus: BRENNUS,
   hypatia: HYPATIA,
   bolt: `<svg viewBox="0 0 80 80">
@@ -333,6 +354,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   celestia: 'Celestia',
   brennus: 'General Brennus',
   hypatia: 'Dr. Hypatia',
+  aeetes: 'Aeëtes',
 };
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
@@ -348,6 +370,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   celestia: '#ff6fcf',
   brennus: '#ff6a5a',
   hypatia: '#9adfff',
+  aeetes: '#ffd166',
 };
 
 let portraitCopies = 0;

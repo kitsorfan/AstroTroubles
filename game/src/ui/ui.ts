@@ -101,9 +101,11 @@ export interface DeckInfo {
   shardTotal: number;
   unlocked: boolean;
   completed: boolean;
-  chapter: 1 | 2;
-  /** Its number within the chapter (1-6). */
+  chapter: 1 | 2 | 3;
+  /** Its number within the chapter (1-6, or 1-10 in chapter 3). */
   number: number;
+  /** A level of a chapter still being built: shown by name, marked "coming soon", not playable. */
+  soon?: boolean;
 }
 
 /** Everything the ability buttons show, refreshed every frame. */
@@ -991,7 +993,24 @@ export class UI {
     }, 2300);
   }
 
-  pause(opts: { deck: string; shards: string; colonists: string; planet: boolean; quests: { text: string; done: boolean; progress: string; reward: string }[]; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
+  pause(opts: {
+    deck: string;
+    shards: string;
+    colonists: string;
+    planet: boolean;
+    /** Replaces the shard and colonist rows (a flight shows its rings and drones instead). */
+    stats?: [string, string][];
+    quests: { text: string; done: boolean; progress: string; reward: string }[];
+    onResume: () => void;
+    onSettings: () => void;
+    onHelp: () => void;
+    onRestart: () => void;
+    onQuit: () => void;
+  }) {
+    const stats = opts.stats ?? [
+      [opts.planet ? 'Journal pages' : 'Memory shards', opts.shards],
+      [opts.planet ? 'Scientists freed' : 'Colonists rescued', opts.colonists],
+    ];
     const el = this.open(`<div class="panel pause-panel">
       <h2>${tr('PAUSED')} · ${upper(tr(opts.deck))}</h2>
       <div class="row">
@@ -1003,9 +1022,8 @@ export class UI {
           <button class="menu-btn danger quit">${tr('Save & quit to title')}</button>
         </div>
         <div class="col-info">
-          <div class="stat"><span>${opts.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${opts.shards}</b></div>
-          <div class="stat"><span>${opts.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${opts.colonists}</b></div>
-          <div class="quests"><div class="qh">${opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
+          ${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
+          <div class="quests"><div class="qh">${opts.stats ? tr('SIDE QUESTS ON THIS LEVEL') : opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
             .map((q) => `<div class="q ${q.done ? 'done' : ''}"><i>${q.done ? '✔' : ''}</i><div><b>${q.text}</b><small>${q.progress} · ${tr('Reward')}: ${q.reward}</small></div></div>`)
             .join('')}</div>
         </div>
@@ -1164,38 +1182,83 @@ export class UI {
     render();
   }
 
-  results(r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean }, next: () => void) {
-    const go = r.next ? (r.planet ? `${tr('Fly the shuttle to {deck}', { deck: tr(r.next) })} ✈` : `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲`) : tr('Continue');
+  /**
+   * The results card. `voyage` is a chapter 3 level (the Argo sails on); `rows` are extra stats (a
+   * flight's rings and drones); `soon` names the next level when it isn't built yet.
+   */
+  results(
+    r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean; voyage?: boolean; rows?: [string, string][]; soon?: string | null },
+    next: () => void,
+  ) {
+    const go = r.next
+      ? r.voyage
+        ? `${tr('Sail the Argo to {deck}', { deck: tr(r.next) })} ⛵`
+        : r.planet
+          ? `${tr('Fly the shuttle to {deck}', { deck: tr(r.next) })} ✈`
+          : `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲`
+      : tr('Continue');
+    const kicker = r.voyage ? tr('LEVEL COMPLETE') : r.planet ? tr('REGION COMPLETE') : tr('DECK COMPLETE');
     const el = this.open(`<div class="panel card" style="width:min(520px,88vw)">
-      <div class="deck">${r.planet ? tr('REGION COMPLETE') : tr('DECK COMPLETE')}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
+      <div class="deck">${kicker}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
       <div class="stat"><span>${tr('Time')}</span><b>${r.time}</b></div>
       <div class="stat"><span>${tr('Bolts collected')}</span><b>${r.bolts}</b></div>
-      <div class="stat"><span>${r.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${r.shards}</b></div>
+      ${r.shards ? `<div class="stat"><span>${r.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${r.shards}</b></div>` : ''}
       ${r.colonists ? `<div class="stat"><span>${r.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${r.colonists}</b></div>` : ''}
+      ${(r.rows ?? []).map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
+      ${r.soon ? `<p class="soon-note">${tr('Next: {deck}. Coming soon!', { deck: tr(r.soon) })}</p>` : ''}
       <button class="menu-btn primary next" style="margin-top:14px">${go}</button></div>`);
     this.button(el, '.next', next);
   }
 
+  /** The chapter page the level select shows (kept between visits). */
+  private deckTab = 0;
+
+  /**
+   * The level select: one page per chapter, with tabs along the top (a chapter's tab appears once any
+   * of its levels is unlocked). Levels of a chapter still being built show as "coming soon".
+   */
   decks(list: DeckInfo[], pick: (id: string) => void, back: () => void) {
-    const button = (d: DeckInfo) => `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
-          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${d.unlocked ? tr(d.name) : '???'}
-          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}${d.chapter === 2 ? '▤' : '◆'} ${d.shards}/${d.shardTotal}` : ICON.lock}</small></button>`;
-    const section = (ch: 1 | 2, title: string) => {
-      const decks = list.filter((d) => d.chapter === ch);
-      if (ch === 2 && !decks.some((d) => d.unlocked)) return '';
-      return `<h3 class="chapter-head">${title}</h3><div class="grid2">${decks.map(button).join('')}</div>`;
+    const chapters = ([1, 2, 3] as const).filter((ch) => ch === 1 || list.some((d) => d.chapter === ch && d.unlocked && !d.soon));
+    if (!chapters.includes(this.deckTab as 1 | 2 | 3)) this.deckTab = chapters[chapters.length - 1];
+    const titles: Record<number, string> = {
+      1: tr('THE {ship} · ELEVATOR', { ship: upper(tr(SHIP)) }),
+      2: tr('GAIA NOVA · SHUTTLE'),
+      3: tr('THE ARGONAUTS · THE ARGO'),
     };
-    const el = this.open(`<div class="panel" style="width:min(760px,92vw)"><h2>${tr('REPLAY A LEVEL')}</h2>
-      ${section(1, tr('THE {ship} · ELEVATOR', { ship: upper(tr(SHIP)) }))}
-      ${section(2, tr('GAIA NOVA · SHUTTLE'))}
-      <button class="menu-btn back" style="margin-top:10px">${tr('Back')}</button></div>`);
-    for (const b of el.querySelectorAll<HTMLElement>('.deck')) {
-      b.addEventListener('click', () => {
-        audio.play('select');
-        pick(b.dataset.id as string);
-      });
-    }
-    this.button(el, '.back', back);
+    const icon = (d: DeckInfo) => (d.chapter === 1 ? '◆' : d.chapter === 2 ? '▤' : '✦');
+    const button = (d: DeckInfo) =>
+      d.soon
+        ? `<button class="menu-btn deck soon" disabled style="border-color:${d.color}"><span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${tr(d.name)}<small>${tr('coming soon')}</small></button>`
+        : `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
+          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${d.unlocked ? tr(d.name) : '???'}
+          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}${d.shardTotal ? `${icon(d)} ${d.shards}/${d.shardTotal}` : icon(d)}` : ICON.lock}</small></button>`;
+    const render = () => {
+      const ch = this.deckTab;
+      const decks = list.filter((d) => d.chapter === ch);
+      const tabs =
+        chapters.length > 1
+          ? `<div class="seg chapter-tabs">${chapters.map((c) => `<button data-ch="${c}" class="${c === ch ? 'on' : ''}">${tr('Chapter {n}', { n: c })}</button>`).join('')}</div>`
+          : '';
+      const el = this.open(`<div class="panel deck-panel"><h2>${tr('REPLAY A LEVEL')}</h2>${tabs}
+        <h3 class="chapter-head">${titles[ch]}</h3><div class="grid2 deck-grid ${decks.length > 6 ? 'many' : ''}">${decks.map(button).join('')}</div>
+        <button class="menu-btn back" style="margin-top:10px">${tr('Back')}</button></div>`);
+      for (const b of el.querySelectorAll<HTMLElement>('.deck[data-id]')) {
+        b.addEventListener('click', () => {
+          audio.play('select');
+          pick(b.dataset.id as string);
+        });
+      }
+      for (const b of el.querySelectorAll<HTMLElement>('[data-ch]')) {
+        b.addEventListener('click', () => {
+          if (Number(b.dataset.ch) === this.deckTab) return;
+          this.deckTab = Number(b.dataset.ch);
+          audio.play('select');
+          render();
+        });
+      }
+      this.button(el, '.back', back);
+    };
+    render();
   }
 
   down(done: () => void) {
@@ -1210,8 +1273,11 @@ export class UI {
     this.open(html);
   }
 
-  /** The final card of a chapter. `next` (after chapter 1) offers to fly straight on to Gaia Nova. */
-  ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void) {
+  /**
+   * The final card of a chapter (`chapter`). `next` offers to go straight on to the next chapter: Gaia
+   * Nova after chapter 1, the Argonauts' voyage after chapter 2.
+   */
+  ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void, chapter = 1) {
     const secret = kind === 'friends' || kind === 'redeemed';
     const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' ? 'var(--gold)' : 'var(--good)';
     const title =
@@ -1222,13 +1288,14 @@ export class UI {
           : kind === 'freed'
             ? tr('GAIA NOVA IS FREE!')
             : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
-    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER 1') : tr('THE END');
+    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
+    const nextLabel = chapter === 1 ? tr('Chapter 2: Gaia Nova') : tr('Chapter 3: The Argonauts');
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kicker}</div>
       <div class="big-msg" style="color:${color};margin:6px 0 12px">${title}</div>
       <div class="story" style="font-size:17px;max-width:none">${paragraphs.map((p) => `<p>${tr(p)}</p>`).join('')}</div>
       <div class="grid2" style="text-align:left;margin:8px 0">${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}</div>
-      ${next ? `<button class="menu-btn primary next">▶ ${tr('Chapter 2: Gaia Nova')}</button>` : ''}
+      ${next ? `<button class="menu-btn primary next">▶ ${nextLabel}</button>` : ''}
       <button class="menu-btn ${next ? '' : 'primary'} done">${tr('Back to title')}</button></div>`);
     this.button(el, '.done', done);
     if (next) this.button(el, '.next', next);

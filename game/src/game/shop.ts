@@ -38,19 +38,22 @@ export const UPGRADES: Upgrade[] = [
 
 const upgrade = (id: UpgradeId) => UPGRADES.find((u) => u.id === id) as Upgrade;
 
-/** True once Jason has reached Gaia Nova (any chapter 2 region unlocked), or is playing there right now. */
+/** True once Jason has reached Gaia Nova (any chapter 2 region unlocked), or is playing there (or beyond) right now. */
 export function gaiaReached(save: SaveData, deck?: DeckId): boolean {
-  return save.unlocked > CHAPTER_DECKS[1].length || (!!deck && chapterOf(deck) === 2);
+  return save.unlocked > CHAPTER_DECKS[1].length || (!!deck && chapterOf(deck) >= 2);
 }
 
-/** Which chapter's stock the shop shows (and which caps vault prizes respect). */
+/**
+ * Which chapter's stock the shop shows (and which caps vault prizes respect). Chapter 3 sells the
+ * same stock as chapter 2 for now.
+ */
 export function shopChapter(save: SaveData, deck?: DeckId): Chapter {
   return gaiaReached(save, deck) ? 2 : 1;
 }
 
-/** The highest level of each upgrade, per chapter: the ship's levels, then the Mk II ones on Gaia Nova. */
+/** The highest level of each upgrade, per chapter: the ship's levels, then the Mk II ones from Gaia Nova on. */
 export const UPGRADE_MAX = Object.fromEntries(
-  CHAPTERS.map((ch) => [ch, Object.fromEntries(UPGRADES.map((u) => [u.id, u.prices.length + (ch === 2 ? u.mk2.length : 0)]))]),
+  CHAPTERS.map((ch) => [ch, Object.fromEntries(UPGRADES.map((u) => [u.id, u.prices.length + (ch >= 2 ? u.mk2.length : 0)]))]),
 ) as Record<Chapter, Record<UpgradeId, number>>;
 
 /** The highest level of an upgrade this save can reach right now. */

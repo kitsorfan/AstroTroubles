@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 import { Director, type Rig } from '../cinema/director';
+import { argoHop, argoPrologue, argoVoyage } from '../cinema/chapter3';
+import { MoonScene } from '../cinema/moonScene';
 import { flyover, wakeUp } from '../cinema/scenes';
 import { PlanetScene } from '../cinema/planetScene';
 import * as planet from '../cinema/planetScenes';
@@ -13,7 +15,7 @@ import { CELL } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
-import { LEVELS, LEVEL_ORDER, chapterIndex, chapterOf, chapterTotals, inChapter, isFinale, nextChapterStart } from '../levels';
+import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER, catchUpChapters, chapterIndex, chapterOf, chapterSize, chapterTotals, comingSoon, inChapter, isFinale, nextChapterStart, type Chapter } from '../levels';
 import type { DeckId, EndingKind, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { PANEL_IDS, type PanelId } from '../ui/panels';
@@ -27,6 +29,7 @@ import { takeReviewAsk } from './review';
 import { INTEL, creditsHtml, endingChapter, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
+import { VehicleHudView } from '../vehicles/hud';
 
 type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending' | 'cutscene' | 'cinema';
 
@@ -104,6 +107,8 @@ export class Game {
   private director: Director | null = null;
   private ship: CinemaScene | null = null;
   private queue: { script: (d: Director) => Promise<void>; resolve: () => void }[] = [];
+  /** The boost button, progress bar and call-outs of a vehicle level. */
+  private vehicleHud: VehicleHudView;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -111,6 +116,8 @@ export class Game {
     uiRoot: HTMLElement,
   ) {
     this.save = loadSave() ?? newSave();
+    // Finished a chapter before the next one existed? It's open now.
+    if (catchUpChapters(this.save)) writeSave(this.save);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.save.settings.quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -127,6 +134,7 @@ export class Game {
     this.input = new Input(touch);
     this.ui = new UI(uiRoot, this.input);
     this.ui.onPause = () => this.pause();
+    this.vehicleHud = new VehicleHudView(uiRoot, this.input);
     this.applySettings(this.save.settings);
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -160,7 +168,7 @@ export class Game {
     })();
     // Developer shortcut, only in a desktop browser (never in the app): #deck=<id> jumps straight into a deck
     // (&still skips its opening, &all hands over every ability), #cinema=<arrival|descent|hop|finale> plays a
-    // chapter 2 cinematic.
+    // chapter 2 cinematic, #cinema=<argo|voyage|argohop> a chapter 3 one.
     const dev = inApp() ? null : new URLSearchParams(location.hash.slice(1));
     if (dev && (dev.get('deck') || dev.get('cinema') || dev.get('panel'))) {
       void ready.then(() => this.devJump(dev));
@@ -231,6 +239,9 @@ export class Game {
     else if (film === 'descent') void this.planetCinema((d, p) => planet.descent(d, p)).then(done);
     else if (film === 'hop') void this.planetCinema((d, p) => planet.hop(d, p, 'plains', 'desert')).then(done);
     else if (film === 'finale') void this.planetCinema((d, p) => planet.finale(d, p, 'freed')).then(done);
+    else if (film === 'argo') void this.planetCinema((d, p) => argoPrologue(d, p)).then(() => this.moonCinema((d, m) => argoVoyage(d, m))).then(done);
+    else if (film === 'voyage') void this.moonCinema((d, m) => argoVoyage(d, m)).then(done);
+    else if (film === 'argohop') void this.moonCinema((d, m) => argoHop(d, m, 'rocks', null)).then(done);
   }
 
   private applySettings(s: Settings) {
@@ -278,8 +289,9 @@ export class Game {
       hasDecks: this.save.unlocked > 1 || this.save.completed.length > 0,
       onContinue: () => {
         if (!r) return;
-        // The first time chapter 2 starts, the arrival at Gaia Nova plays first.
-        if (r.deck === nextChapterStart('bridge') && !r.checkpoint && !this.save.gaiaIntro) this.startChapter2();
+        // The first time a chapter starts, its opening plays first.
+        const ch = chapterOf(r.deck);
+        if (ch > 1 && r.deck === CHAPTER_DECKS[ch][0] && !r.checkpoint && !this.introSeen(ch)) this.startChapter(ch);
         else this.startDeck(r.deck, true);
       },
       onNew: () => {
@@ -302,41 +314,68 @@ export class Game {
     void this.cinema((d, ship) => space.prologue(d, ship)).then(() => this.startDeck('cryo', false, 'wake'));
   }
 
-  /** Chapter 2: the ship arrives at Gaia Nova, GaScu is stolen, and the shuttle flies down to the Whispering Plains. */
-  private startChapter2() {
-    const first = nextChapterStart('bridge') as DeckId;
+  /** True once a chapter's opening has been shown. */
+  private introSeen(ch: Chapter): boolean {
+    return ch === 1 || (ch === 2 ? !!this.save.gaiaIntro : !!this.save.argoIntro);
+  }
+
+  /**
+   * Opens a chapter with its cinematic, then its first level. Chapter 2: the ship arrives at Gaia Nova,
+   * Celestia is stolen, and the shuttle flies down to the Whispering Plains. Chapter 3: Celestia fades,
+   * the Argo is built and sets off for the ring of moons, and Aeëtes shows up.
+   */
+  private startChapter(ch: Chapter) {
+    const first = CHAPTER_DECKS[ch][0];
     this.state = 'menu';
     this.save.unlocked = Math.max(this.save.unlocked, LEVELS[first].index);
     this.save.resume = { deck: first, checkpoint: null, flags: [], taken: [], dead: [] };
     writeSave(this.save);
     audio.music('title');
-    void this.cinema((d, ship) => planet.arrival(d, ship))
-      .then(() => this.planetCinema((d, p) => planet.descent(d, p)))
-      .then(() => {
-        this.save.gaiaIntro = true;
-        writeSave(this.save);
-        this.startDeck(first, false, 'fly');
-      });
+    const film =
+      ch === 2
+        ? this.cinema((d, ship) => planet.arrival(d, ship)).then(() => this.planetCinema((d, p) => planet.descent(d, p)))
+        : this.planetCinema((d, p) => argoPrologue(d, p)).then(() => this.moonCinema((d, m) => argoVoyage(d, m)));
+    void film.then(() => {
+      if (ch === 2) this.save.gaiaIntro = true;
+      else this.save.argoIntro = true;
+      writeSave(this.save);
+      this.startDeck(first, false, 'fly');
+    });
   }
 
   private deckSelect() {
     this.state = 'menu';
+    const levels = LEVEL_ORDER.map((id) => {
+      const d = LEVELS[id];
+      return {
+        index: d.index,
+        id,
+        name: d.name,
+        color: THEMES[id].accent,
+        shards: d.shardIds.filter((s) => this.save.shards.includes(`${id}.${s}`)).length,
+        shardTotal: d.shardIds.length,
+        unlocked: d.index <= this.save.unlocked,
+        completed: this.save.completed.includes(id),
+        chapter: chapterOf(id),
+        number: chapterIndex(id),
+      };
+    });
+    // The levels of chapter 3 that are still being built, listed after the ones that exist.
+    const soon = comingSoon(3).map((name, i) => ({
+      index: 0,
+      id: `soon${i}`,
+      name,
+      color: '#8a90b0',
+      shards: 0,
+      shardTotal: 0,
+      unlocked: false,
+      completed: false,
+      chapter: 3 as const,
+      number: CHAPTER_DECKS[3].length + i + 1,
+      soon: true,
+    }));
     this.ui.decks(
-      LEVEL_ORDER.map((id) => {
-        const d = LEVELS[id];
-        return {
-          index: d.index,
-          id,
-          name: d.name,
-          color: THEMES[id].accent,
-          shards: d.shardIds.filter((s) => this.save.shards.includes(`${id}.${s}`)).length,
-          shardTotal: d.shardIds.length,
-          unlocked: d.index <= this.save.unlocked,
-          completed: this.save.completed.includes(id),
-          chapter: chapterOf(id),
-          number: chapterIndex(id),
-        };
-      }),
+      [...levels, ...soon],
       (id) => this.startDeck(id as DeckId, false),
       () => this.toTitle(),
     );
@@ -383,6 +422,7 @@ export class Game {
     this.ui.pause({
       deck: d.name,
       planet: ch === 2,
+      stats: w.vehicle?.stats(),
       shards: tr('{n} / {m} here · {t} / {total} total', {
         n: d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length,
         m: d.shardIds.length,
@@ -440,7 +480,9 @@ export class Game {
   /* ---------------- decks ---------------- */
 
   private disposeWorld() {
+    this.vehicleHud.show(null);
     if (!this.world) return;
+    this.world.vehicle?.dispose();
     // Free every buffer, texture, material and shadow map the deck uploaded; phones have little GPU memory.
     // Shared helpers (cached geometry, glow textures) are simply uploaded again when the next deck uses them.
     disposeScene(this.world.scene);
@@ -503,6 +545,11 @@ export class Game {
     return this.stage(() => new PlanetScene(), script, 0.4);
   }
 
+  /** Plays a cinematic among the moons of the gas giant (chapter 3's opening and the Argo's voyage). */
+  private moonCinema(script: (d: Director, m: MoonScene) => Promise<void>) {
+    return this.stage(() => new MoonScene(), script, 0.25);
+  }
+
   private async stage<S extends CinemaScene>(make: () => S, script: (d: Director, s: S) => Promise<void>, env: number) {
     this.disposeWorld();
     this.ui.close();
@@ -551,7 +598,9 @@ export class Game {
     const early = setTimeout(() => {
       ready = build();
     }, 80);
-    const kicker = chapterOf(id) === 1 ? tr('DECK {n} OF 6', { n: chapterIndex(id) }) : tr('GAIA NOVA · REGION {n} OF 6', { n: chapterIndex(id) });
+    const ch = chapterOf(id);
+    const n = chapterIndex(id);
+    const kicker = ch === 1 ? tr('DECK {n} OF 6', { n }) : ch === 2 ? tr('GAIA NOVA · REGION {n} OF 6', { n }) : tr('THE ARGONAUTS · LEVEL {n} OF {m}', { n, m: chapterSize(3) });
     this.ui.card(kicker, def.name, def.subtitle, THEMES[id].accent, () => {
       clearTimeout(early);
       this.world = ready ?? build();
@@ -562,6 +611,7 @@ export class Game {
       this.state = 'play';
       this.ui.showHud(true);
       this.ui.showControls(true);
+      this.vehicleHud.show(this.world.vehicle?.kind ?? null);
       this.ui.setShards(
         def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)),
         chapterOf(id) === 2,
@@ -572,13 +622,19 @@ export class Game {
       const how = r || opening === 'none' ? null : opening === 'auto' ? (id === 'cryo' ? 'wake' : 'fly') : opening;
       if (how !== 'wake') this.ui.fade('#000000', 0, 0.7);
       if (how === 'wake') void this.cutscene((d) => wakeUp(d, w));
-      else if (how === 'fly') void this.cutscene((d) => flyover(d, w));
+      else if (how === 'fly') void this.cutscene((d) => (w.vehicle ? w.vehicle.intro(d) : flyover(d, w)));
     });
   }
 
   private refreshHud() {
     const w = this.world;
     if (!w) return;
+    if (w.vehicle) {
+      // In a vehicle the hearts are its hull.
+      this.ui.setHearts(w.vehicle.hull, w.vehicle.hullMax);
+      this.ui.setBolts(this.save.bolts);
+      return;
+    }
     this.ui.setHearts(w.player.hearts, this.save.maxHearts, w.player.armor, w.player.armorMax);
     this.ui.setBolts(this.save.bolts);
     this.refreshAbilities(w);
@@ -763,6 +819,13 @@ export class Game {
         this.ui.threat(icon, info.name, info.tip, kind === 'elite' ? '#ffd166' : '#ff8a9a');
         audio.play('blip', 0.8);
       },
+      progress: () => {
+        const w = this.world;
+        if (!w) return;
+        for (const m of payQuests(w.def.id, this.save)) this.ui.reward(m);
+        this.refreshHud();
+        writeSave(this.save);
+      },
       dashEmpty: () => {
         this.ui.dashEmpty();
         const now = performance.now();
@@ -797,8 +860,12 @@ export class Game {
     this.ui.showHud(false);
     audio.play('success');
     if (!this.save.completed.includes(d.id)) this.save.completed.push(d.id);
-    // A chapter's last deck ends with its finale, never with an exit; the next deck is always in the same chapter.
-    const nextId = isFinale(d.id) ? undefined : (LEVEL_ORDER[d.index] as DeckId | undefined);
+    // A chapter's last deck ends with its finale, never with an exit; the next deck is always in the same chapter
+    // (in a chapter still being built, the next level may not exist yet: it's "coming soon").
+    const ch = chapterOf(d.id);
+    const after = LEVEL_ORDER[d.index] as DeckId | undefined;
+    const nextId = isFinale(d.id) || !after || chapterOf(after) !== ch ? undefined : after;
+    const soon = !nextId && !isFinale(d.id) ? (comingSoon(ch)[0] ?? null) : null;
     this.save.unlocked = Math.max(this.save.unlocked, Math.min(LEVEL_ORDER.length, d.index + 1));
     const best = this.save.bestTimes[d.id];
     if (!best || this.deckTime < best) this.save.bestTimes[d.id] = Math.round(this.deckTime);
@@ -812,15 +879,19 @@ export class Game {
         deck: d.name,
         time: `${m}:${String(s).padStart(2, '0')}`,
         bolts: this.save.bolts - this.boltsAtStart,
-        shards: `${d.shardIds.filter((x) => this.save.shards.includes(`${d.id}.${x}`)).length} / ${d.shardIds.length}`,
+        shards: d.shardIds.length ? `${d.shardIds.filter((x) => this.save.shards.includes(`${d.id}.${x}`)).length} / ${d.shardIds.length}` : '',
         colonists: colonistsHere ? `${d.colonistIds?.filter((c) => this.save.colonists.includes(`${d.id}.${c}`)).length} / ${colonistsHere}` : '',
         next: nextId ? LEVELS[nextId].name : null,
-        planet: chapterOf(d.id) === 2,
+        planet: ch === 2,
+        voyage: ch === 3,
+        rows: w.vehicle?.stats(),
+        soon,
       },
       () => {
         this.ui.close();
-        if (!nextId) this.toTitle();
-        else if (chapterOf(d.id) === 1) void this.cinema((dir, ship) => space.interlude(dir, ship, d.id, d.index)).then(() => this.startDeck(nextId, false, 'fly'));
+        if (ch === 3) void this.moonCinema((dir, m) => argoHop(dir, m, d.id, nextId ?? null)).then(() => (nextId ? this.startDeck(nextId, false, 'fly') : this.toTitle()));
+        else if (!nextId) this.toTitle();
+        else if (ch === 1) void this.cinema((dir, ship) => space.interlude(dir, ship, d.id, d.index)).then(() => this.startDeck(nextId, false, 'fly'));
         else void this.planetCinema((dir, p) => planet.hop(dir, p, d.id, nextId)).then(() => this.startDeck(nextId, false, 'fly'));
       },
     );
@@ -846,13 +917,14 @@ export class Game {
     this.ui.showHud(false);
     if (!this.save.endings.includes(kind)) this.save.endings.push(kind);
     if (!this.save.completed.includes(finale)) this.save.completed.push(finale);
-    // After the ship is saved, chapter 2 opens: Continue on the title screen goes straight to Gaia Nova.
+    // After a chapter's ending the next chapter opens: Continue on the title screen goes straight there.
     const next = nextChapterStart(finale);
-    // Replaying the Bridge once chapter 2 is under way must not throw away the place reached on Gaia Nova.
-    const midChapter2 = !!next && !!this.save.gaiaIntro && !!this.save.resume;
+    const nextCh = next ? chapterOf(next) : null;
+    // Replaying a finale once the next chapter is under way must not throw away the place reached there.
+    const midNext = !!nextCh && this.introSeen(nextCh) && !!this.save.resume && chapterOf(this.save.resume.deck) >= nextCh;
     if (next) {
       this.save.unlocked = Math.max(this.save.unlocked, LEVELS[next].index);
-      if (!midChapter2) this.save.resume = { deck: next, checkpoint: null, flags: [], taken: [], dead: [] };
+      if (!midNext) this.save.resume = { deck: next, checkpoint: null, flags: [], taken: [], dead: [] };
     } else this.save.resume = null;
     writeSave(this.save);
     audio.music('ending');
@@ -874,7 +946,8 @@ export class Game {
             [tr('Play time'), tr('{h}h {m}m', { h: hours, m: mins })],
           ],
           () => this.toTitle(),
-          next ? () => (midChapter2 && this.save.resume ? this.startDeck(this.save.resume.deck, true) : this.startChapter2()) : undefined,
+          next && nextCh ? () => (midNext && this.save.resume ? this.startDeck(this.save.resume.deck, true) : this.startChapter(nextCh)) : undefined,
+          ch,
         );
         this.askForReview(LEVELS[finale].index);
       });
@@ -918,8 +991,11 @@ export class Game {
         } else {
           w.update(dt, this.input, this.save.settings.camSpeed);
           const pl = w.player;
-          this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
-          this.refreshAbilities(w);
+          if (w.vehicle) this.vehicleHud.update(w.vehicle.hud());
+          else {
+            this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
+            this.refreshAbilities(w);
+          }
           this.ui.setCountdown(w.countdown());
           this.placeWaypoint(w);
           this.hudT -= dt;

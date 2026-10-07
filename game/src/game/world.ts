@@ -54,7 +54,9 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity, Speaker } from '../world/levelTypes';
+import { makeVehicle } from '../vehicles';
+import type { Vehicle } from '../vehicles/vehicle';
 import { Ambience, Particles } from '../world/particles';
 import { pointBlocked, type Box, type Ground } from '../world/physics';
 import { buildSky } from '../world/sky';
@@ -64,7 +66,7 @@ export type Collectible = 'shard' | 'canister' | 'colonist' | 'ability';
 
 export interface WorldHooks {
   say(lines: Line[], then?: () => void): void;
-  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason'): void;
+  toast(text: string, who?: Speaker): void;
   hack(length: number, done: (ok: boolean) => void, kind?: PuzzleKind): void;
   shop(): void;
   complete(): void;
@@ -84,6 +86,8 @@ export interface WorldHooks {
   threat(kind: BadgeKind | 'elite'): void;
   /** Jason tried to dash with no energy left. */
   dashEmpty(): void;
+  /** A side quest may have just been finished (a flight's best run improved): pay it out and save. */
+  progress(): void;
   /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
   cutscene(script: (d: Director) => Promise<void>): Promise<void>;
 }
@@ -186,6 +190,8 @@ export class World {
   private flashPower = 0;
   /** Remaining hit-stop: a split-second freeze that sells heavy impacts. */
   private freezeT = 0;
+  /** On a vehicle level (the Argo...), the vehicle that runs instead of Jason on foot. */
+  readonly vehicle: Vehicle | null = null;
 
   constructor(
     def: LevelDef,
@@ -247,7 +253,9 @@ export class World {
     this.built = buildLevel(this.level, this.grid, th, shadows);
     this.scene.add(this.built.group);
     const span = Math.max(this.level.width, this.level.depth) * CELL;
-    this.scene.add(buildSky(th, new THREE.Vector3((this.level.width * CELL) / 2, 0, (this.level.depth * CELL) / 2), span));
+    // A vehicle level has no deck to walk on: the vehicle stages its own surroundings.
+    if (def.vehicle) this.built.group.visible = false;
+    else this.scene.add(buildSky(th, new THREE.Vector3((this.level.width * CELL) / 2, 0, (this.level.depth * CELL) / 2), span));
 
     this.particles = new Particles(quality === 'low' ? 900 : 1600);
     this.scene.add(this.particles.points);
@@ -280,6 +288,13 @@ export class World {
     this.bolt.place(pb.x - 1, pb.y + 2, pb.z + 1);
     this.camTarget.set(pb.x, pb.y + 1.2, pb.z);
     this.groundY = pb.y;
+    if (def.vehicle) {
+      // Jason and LUX ride inside the vehicle.
+      this.player.model.root.visible = false;
+      this.bolt.active = false;
+      this.bolt.model.root.visible = false;
+      this.vehicle = makeVehicle(def.vehicle, this);
+    }
     this.placeCamera(0);
   }
 
@@ -963,6 +978,11 @@ export class World {
   }
 
   respawn() {
+    if (this.vehicle) {
+      this.shots.clear();
+      this.vehicle.respawn();
+      return;
+    }
     const cp = this.activeCheckpoint;
     const sp = this.level.spawn;
     const x = cp ? cp.spot.x : Grid.center(sp.cx);
@@ -1066,6 +1086,10 @@ export class World {
       dt *= 0.05;
     }
     this.time += dt;
+    if (this.vehicle) {
+      this.updateVehicle(this.vehicle, dt, input);
+      return;
+    }
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
     this.bolt.update(dt);
@@ -1130,6 +1154,35 @@ export class World {
     this.placeCamera(dt);
     const p = this.player.body;
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
+  }
+
+  /** A frame of a vehicle level: the vehicle flies (or drives), the shared effects and objectives keep running. */
+  private updateVehicle(v: Vehicle, dt: number, input: Input) {
+    v.update(dt, input, this.cutscene);
+    for (const e of [...this.entities]) if (e.alive) e.update(dt);
+    this.beams.update(dt);
+    this.rings.update(dt);
+    this.impacts.update(dt);
+    this.particles.update(dt);
+    if (this.flashLight) {
+      this.flashT = Math.max(0, this.flashT - dt);
+      const k = this.flashT / this.flashMax;
+      this.flashLight.intensity = this.flashPower * k * k;
+    }
+    this.focus = null;
+    this.objT -= dt;
+    if (this.objT <= 0) {
+      this.objT = 0.3;
+      const obj = this.def.objectives.find((o) => !this.cond(o.until));
+      const text = obj?.text ?? '';
+      if (text !== this.lastObjective) {
+        this.lastObjective = text;
+        this.hooks.objective(text);
+      }
+      this.waypoint = null;
+    }
+    input.consumeCamDrag();
+    this.placeCamera(dt);
   }
 
   /** LUX explains each kind of collectible the first time Jason gets close to one. */
@@ -1207,6 +1260,12 @@ export class World {
   }
 
   private placeCamera(dt: number) {
+    if (this.vehicle) {
+      this.vehicle.cameraPose(this.follow, dt);
+      this.follow.fov += this.baseFov - 50;
+      this.aimCamera(dt, this.vehicle.pos);
+      return;
+    }
     const p = this.player.body;
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
     if (dt === 0) this.camTarget.copy(aim);
@@ -1228,11 +1287,15 @@ export class World {
     this.followPose(this.follow, dist);
     const ground = p.grounded ? p.y : Math.min(this.groundY, p.y);
     this.groundY = dt === 0 ? ground : damp(this.groundY, ground, 5, dt);
+    this.aimCamera(dt, tmpV.set(p.x, this.groundY, p.z));
+  }
 
+  /** Puts the camera on the follow pose (or a cutscene rig, or between the two), shakes it, and moves the shadows to `focus`. */
+  private aimCamera(dt: number, focus: THREE.Vector3) {
     // Cutscenes steer the camera through a rig; afterwards it eases back to following Jason.
     const c = this.camera.position;
     const look = tmpL;
-    let fov = this.baseFov;
+    let fov = this.follow.fov;
     if (this.camRig) {
       c.copy(this.camRig.pos);
       look.copy(this.camRig.look);
@@ -1243,7 +1306,7 @@ export class World {
       const e = k * k * (3 - 2 * k);
       c.lerpVectors(this.blendFrom.pos, this.follow.pos, e);
       look.lerpVectors(this.blendFrom.look, this.follow.look, e);
-      fov = this.blendFrom.fov + (this.baseFov - this.blendFrom.fov) * e;
+      fov = this.blendFrom.fov + (this.follow.fov - this.blendFrom.fov) * e;
     } else {
       c.copy(this.follow.pos);
       look.copy(this.follow.look);
@@ -1262,7 +1325,7 @@ export class World {
     this.cameraLook.copy(look);
     // Shadows follow whatever the camera is looking at.
     if (this.camRig || this.blendT > 0) this.placeSun(look.x, look.y - 1.2, look.z);
-    else this.placeSun(p.x, this.groundY, p.z);
+    else this.placeSun(focus.x, focus.y, focus.z);
   }
 
   /** Puts the follow camera straight on Jason, with no easing (after a teleport). */

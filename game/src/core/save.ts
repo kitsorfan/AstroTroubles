@@ -17,9 +17,16 @@ export interface Settings {
   lang: Lang;
 }
 
+/** A flight level's best results: the most rings and drones in one flight, and whether the dove's way was ever flown clean. */
+export interface FlightRecord {
+  rings: number;
+  drones: number;
+  clean: boolean;
+}
+
 export interface SaveData {
   version: 1;
-  /** Highest deck index the player may enter (1-6). */
+  /** Highest level index the player may enter (1-6 on the ship, 7-12 on Gaia Nova, 13 on for chapter 3). */
   unlocked: number;
   /** Deck and checkpoint to resume from, with the deck's switches, pickups and defeated enemies. */
   resume: { deck: DeckId; checkpoint: string | null; flags: string[]; taken: string[]; dead: string[] } | null;
@@ -47,6 +54,10 @@ export interface SaveData {
   playSeconds: number;
   /** True once the arrival at Gaia Nova (the start of chapter 2) has been shown. */
   gaiaIntro?: boolean;
+  /** True once the building of the Argo (the start of chapter 3) has been shown. */
+  argoIntro?: boolean;
+  /** Best results on the flight levels (rings, drones, a clean run), for their side quests. */
+  flights?: Partial<Record<DeckId, FlightRecord>>;
   /** Weapons Jason owns (see entities/weapons.ts); the Blaster is always one of them. */
   weapons: string[];
   /** The weapon he has equipped. */

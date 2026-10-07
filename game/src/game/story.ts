@@ -53,6 +53,7 @@ export const FLYOVER: Record<DeckId, string> = {
   rockies: 'The <b>Titan Rockies</b>. Cliffs taller than the {ship}, rickety bridges, and up at the very top... the wreck of the Gorgon.',
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
+  rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -120,6 +121,12 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'bolt', text: 'One last climb. I will be brave if you are brave.' },
   ],
   volcano: [],
+  rocks: [
+    { who: 'halcyon', text: 'Course set for the first moon. Its floating islands are called the Harpy Isles.' },
+    { who: 'bolt', text: 'Harpies? Like the grabby bird monsters in the old story?' },
+    { who: 'captain', text: 'Probably just a name. Probably.' },
+    { who: 'jason', text: 'We got through the Clashing Rocks. We can get through anything!' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -147,6 +154,50 @@ export const STOLEN: Line[] = [
   { who: 'bolt', text: 'GaScu! I mean... Celestia! They took it! Jason, they TOOK it!' },
   { who: 'captain', text: 'Celestia: the name the first expedition gave it. He wants its pollen for his army. Jason, LUX: take the shuttle down. Find the scientists, and bring Celestia back.' },
   { who: 'jason', text: 'We will, Captain. Come on, LUX. Gaia Nova needs us.' },
+];
+
+/* ---------------- Chapter 3: The Argonauts ---------------- */
+
+/**
+ * Chapter 3, THE ARGONAUTS. After chapter 2, Celestia starts to fade: she is the last of her kind.
+ * Dr. Hypatia and LUX read the light-word ruins of Celestia's people, the Gardeners: they left a Golden
+ * Fleece, a living golden cloak of seeds that can make any world bloom, on Colchis, a moon of the gas
+ * giant next door. Captain Argus rebuilds the shuttle into the Argo, and the crew (the Argonauts) set
+ * off. But the salvage tycoon Aeëtes wants the Fleece too, to sell green planets to the highest bidder.
+ */
+export const PROLOGUE3 = {
+  garden: 'Spring came to <b>Gaia Nova</b>. The colonists planted their very first garden, and Celestia bloomed right in the middle of it.',
+  fading: 'But one morning, Celestia’s glow began to fade. She was the last of her kind... and she was getting very tired.',
+  argo: 'So Captain Argus rebuilt the old shuttle into a brand new ship, and named her the <b>Argo</b>.',
+  crew: 'Her crew called themselves the <b style="color:#ffd166">Argonauts</b>.',
+  launch: 'One bright morning, the Argo lifted off from the Whispering Plains...',
+  moons: '...toward the gas giant next door and its ring of moons. One of them was <b>Colchis</b>.',
+  gold: 'But someone else was heading there too.',
+  soon: 'The voyage continues soon...',
+};
+
+/** The ruins, the Fleece and the plan: said over the storybook picture of the fading Celestia. */
+export const FLEECE: Line[] = [
+  { who: 'celestia', text: '...tired... ...alone... ...the last one...' },
+  { who: 'bolt', text: 'Celestia? Celestia, please wake up! Dr. Hypatia, what do we do?' },
+  { who: 'hypatia', text: 'These old ruins are covered in Celestia’s light-words. LUX, can you read them with me?' },
+  { who: 'bolt', text: 'They say... GARDENERS. Celestia’s people called themselves the Gardeners!' },
+  { who: 'hypatia', text: 'The Gardeners left a gift on Colchis, a moon of the gas giant next door: a living golden cloak of seeds. The GOLDEN FLEECE. It can make any world bloom.' },
+  { who: 'jason', text: 'Then it can make Celestia strong again! How do we get there?' },
+];
+
+/** Captain Argus and his new ship. */
+export const ARGO_BUILT: Line[] = [
+  { who: 'captain', text: 'In the old stories, a ship called the Argo carried the bravest heroes in the world on a quest for a Golden Fleece.' },
+  { who: 'captain', text: 'Our Argo has a ram’s head on the prow, solar oars and a great solar sail. And our heroes are... a little shorter.' },
+  { who: 'jason', text: 'Hey!' },
+  { who: 'halcyon', text: 'All systems ready. Crew: Jason, LUX, Dr. Hypatia, Captain Argus, and me. Please keep your hands inside the ship.' },
+];
+
+/** Our first look at Aeëtes, on his golden flagship. */
+export const AEETES_INTRO: Line[] = [
+  { who: 'aeetes', text: 'A golden cloak that makes dead worlds bloom? Ha! Imagine the PRICE of a brand new green planet.' },
+  { who: 'aeetes', text: 'I am Aeëtes, and I buy and sell EVERYTHING. Find me that Fleece, my little drones. Before anyone else does.' },
 ];
 
 /** Name cards for boss entrances. */

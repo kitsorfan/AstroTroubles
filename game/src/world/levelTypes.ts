@@ -1,8 +1,18 @@
 import type { PuzzleKind } from '../game/puzzles';
 import type { PanelId } from '../ui/panels/ids';
+import type { FlightCourse } from '../vehicles/course';
 
-/** Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova. */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano';
+/**
+ * Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova;
+ * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
+ * one by one: see `CHAPTER_PLAN` in levels/index.ts).
+ */
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks';
+/**
+ * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
+ * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
+ */
+export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
@@ -130,7 +140,8 @@ export type DecorKind =
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
- * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`).
+ * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`). Chapter 3's
+ * endings (the true final ones) come with its last level.
  */
 export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 
@@ -140,8 +151,8 @@ export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', '
 /** Who can appear in a hologram log. */
 export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
 
-/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
+/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. `aeetes` is chapter 3's villain. */
+export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia' | 'aeetes';
 
 export interface Line {
   who: Speaker;
@@ -178,6 +189,13 @@ export interface LevelDef {
    */
   stories?: Record<string, StoryBeat[]>;
   boss?: BossKind;
+  /**
+   * Driven instead of walked: the vehicle replaces Jason on foot, with its own controls, camera and HUD.
+   * A vehicle level still has a (tiny) map for the spawn, but its play happens on the vehicle's course.
+   */
+  vehicle?: VehicleKind;
+  /** The Argo's flight course (for `vehicle: 'argo'`). */
+  flight?: FlightCourse;
 }
 
 export interface Cell {

@@ -25,6 +25,10 @@ export const PANEL_IDS = [
   'ch2-grandma',
   'ch2-freed',
   'ch2-redeemed',
+  // Chapter 3: the Argonauts.
+  'ch3-fading',
+  'ch3-argo',
+  'ch3-aeetes',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];
