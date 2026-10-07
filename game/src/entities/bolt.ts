@@ -86,7 +86,7 @@ export class Bolt {
     if (threat && this.zapCd <= 0 && !w.cutscene) {
       // LUX is a helper, not a weapon: his zap only stuns until it is upgraded at PANDORA's.
       const lvl = w.save.upgrades.boltZap ?? 0;
-      this.zapCd = [8, 6, 4.5][lvl] ?? 4.5;
+      this.zapCd = [8, 6, 4.5, 3.5][lvl] ?? 3.5;
       w.beams.zap(this.pos.clone().add(new THREE.Vector3(0, 0, 0)), threat.aim.clone());
       threat.hit(lvl, 'zap', this.pos);
       audio.play('zap');

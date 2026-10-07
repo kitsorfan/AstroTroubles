@@ -253,9 +253,9 @@ export function makeJason(): JasonModel {
  * - Bolt Magnet: a horseshoe magnet on his backpack, which grows and glows gold.
  * Gear hangs off the body, arms and head (never the root, whose last child is the shadow).
  */
-export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>) {
+export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>, weapon = 'blaster') {
   const lv = (id: UpgradeId) => upgrades[id] ?? 0;
-  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet'] as const).map(lv).join('');
+  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet', 'armor', 'dashCell', 'spinCharge', 'grapple'] as const).map(lv).join('') + weapon;
   if (key === m.gearKey) return;
   m.gearKey = key;
   for (const o of m.gear) o.removeFromParent();
@@ -364,6 +364,104 @@ export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, nu
     }
     g.position.set(0, 1.08, -0.47);
     put(m.body, g);
+  }
+
+  dressMk2(m, lv, put);
+  dressWeapon(weapon, (...parts) => put(m.armR, ...parts));
+}
+
+/**
+ * Gear for what PANDORA sells on Gaia Nova:
+ * - Mk II levels: a glowing heart core on the chest plate, a third (cyan) blaster coil, a second
+ *   drum band, a gold gauntlet ring, a gold antenna tip, and a brighter magnet glow.
+ * - Armor Plating: blue shin guards, then a blue belt. Dash Cell: violet cells on the backpack.
+ *   Spin Charge: a gold ring round the waist. Grapple Range: a coiled hook on the hip.
+ */
+function dressMk2(m: JasonModel, lv: (id: UpgradeId) => number, put: (parent: THREE.Object3D, ...parts: THREE.Object3D[]) => void) {
+  const cyan = mat('#9ff2ff', { emissive: '#5ee0ff', ei: 1.3 });
+  const gold = mat('#ffcf5a', { emissive: '#ff9a1a', ei: 0.6, rough: 0.3, metal: 0.7 });
+  const blue = mat('#6fc4ff', { emissive: '#2f8fff', ei: 0.7, rough: 0.3, metal: 0.4 });
+  const violet = mat('#d9c4ff', { emissive: '#8a5cff', ei: 1.2 });
+  const steel = mat('#6f7a8e', { rough: 0.45, metal: 0.4 });
+  if (lv('heart') >= 4) {
+    const core = mesh(sphere(lv('heart') >= 5 ? 0.07 : 0.055, 12), mat('#ff6d8a', { emissive: '#ff2d55', ei: 1.8 }), 0, 1.0, 0.285, false);
+    put(m.body, core);
+  }
+  if (lv('blaster') >= 3) put(m.armR, mesh(torus(0.115, 0.022), cyan, 0, -0.48, 0.12, false));
+  if (lv('clip') >= 3) {
+    const band = mesh(cyl(0.106, 0.106, 0.03, 16), gold, 0, -0.63, 0.12, false);
+    band.rotation.z = Math.PI / 2;
+    put(m.armR, band);
+  }
+  if (lv('rapid') >= 3) {
+    const ring = mesh(torus(0.13, 0.02), gold, 0, -0.22, 0, false);
+    ring.rotation.x = Math.PI / 2;
+    put(m.armR, ring);
+  }
+  if (lv('boltZap') >= 3) put(m.head, mesh(sphere(0.06, 10), gold, -0.24, 0.62, -0.08, false));
+  if (lv('magnet') >= 3) {
+    const glow = glowSprite('#ffd166', 1.1, 0.5);
+    glow.position.set(0, 1.08, -0.5);
+    put(m.body, glow);
+  }
+  const armor = lv('armor');
+  if (armor >= 1) for (const leg of [m.legL, m.legR]) put(leg, mesh(boxG(0.17, 0.2, 0.05), blue, 0, -0.3, 0.12));
+  if (armor >= 2) put(m.body, mesh(cyl(0.33, 0.33, 0.07, 20), blue, 0, 0.62, 0));
+  for (let i = 0; i < lv('dashCell'); i++) {
+    const cell = mesh(cyl(0.04, 0.04, 0.16, 10), violet, -0.12 + i * 0.24, 0.92, -0.5, false);
+    put(m.body, cell);
+  }
+  if (lv('spinCharge') >= 1) {
+    const ring = mesh(torus(0.36, 0.022), gold, 0, 0.7, 0, false);
+    ring.rotation.x = Math.PI / 2;
+    put(m.body, ring);
+  }
+  if (lv('grapple') >= 1) {
+    const coil = mesh(torus(0.08, 0.025), steel, -0.34, 0.66, 0.05);
+    coil.rotation.y = Math.PI / 2;
+    put(m.body, coil, mesh(cone(0.035, 0.09, 8), cyan, -0.36, 0.56, 0.05, false));
+  }
+}
+
+/**
+ * The equipped weapon shows on the blaster (which points along +Z in the right arm, muzzle near z 0.4):
+ * a coloured band, plus three little barrels (Spread Shot), an ice crystal (Frost Ray), two spark
+ * prongs (Thunder Arc) or a targeting dome (Seeker).
+ */
+function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) {
+  if (weapon === 'blaster') return;
+  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'] };
+  const [c, e] = colors[weapon] ?? ['#ffffff', '#ffffff'];
+  const glowM = mat(c, { emissive: e, ei: 1.4 });
+  const band = mesh(cyl(0.118, 0.118, 0.06, 14), glowM, 0, -0.48, 0.3, false);
+  band.rotation.x = Math.PI / 2;
+  put(band);
+  if (weapon === 'spread') {
+    for (const k of [-1, 0, 1]) {
+      const b = mesh(cyl(0.032, 0.04, 0.2, 10), glowM, k * 0.06, -0.48, 0.47, false);
+      b.rotation.x = Math.PI / 2;
+      b.rotation.z = -k * 0.35;
+      put(b);
+    }
+  } else if (weapon === 'frost') {
+    const crystal = mesh(new THREE.OctahedronGeometry(0.09, 0), mat(c, { emissive: e, ei: 1, opacity: 0.85 }), 0, -0.34, 0.2, false);
+    crystal.scale.set(0.8, 1.6, 0.8);
+    const nose = mesh(cone(0.07, 0.16, 8), glowM, 0, -0.48, 0.48, false);
+    nose.rotation.x = Math.PI / 2;
+    put(crystal, nose);
+    const tip = glowSprite(e, 0.32, 0.8);
+    tip.position.set(0, -0.48, 0.56);
+    put(tip);
+  } else if (weapon === 'thunder') {
+    for (const x of [-0.06, 0.06]) put(mesh(boxG(0.025, 0.025, 0.2), glowM, x, -0.44, 0.48, false));
+    const spark = glowSprite(e, 0.34, 0.9);
+    spark.position.set(0, -0.44, 0.58);
+    put(spark);
+  } else if (weapon === 'seeker') {
+    put(mesh(sphere(0.07, 12), glowM, 0, -0.37, 0.24, false), mesh(cyl(0.05, 0.05, 0.04, 12), mat('#2a3242', { rough: 0.6 }), 0, -0.48, 0.41, false));
+    const lens = glowSprite(e, 0.26, 0.9);
+    lens.position.set(0, -0.37, 0.3);
+    put(lens);
   }
 }
 

@@ -1,4 +1,4 @@
-export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause';
+export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause' | 'weapon';
 
 const KEYMAP: Record<string, ButtonName> = {
   Space: 'jump',
@@ -10,6 +10,7 @@ const KEYMAP: Record<string, ButtonName> = {
   ShiftRight: 'dash',
   KeyI: 'pulse',
   KeyU: 'pulse',
+  KeyX: 'weapon',
   KeyE: 'action',
   KeyF: 'action',
   Escape: 'pause',

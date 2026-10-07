@@ -97,6 +97,28 @@ export abstract class Boss extends Entity {
 
   bossKind: BossKind = 'warden';
 
+  /** Frost Ray: bosses shrug most of the cold off. A chill only slows them a little, and never freezes them. */
+  private chillT = 0;
+  private chillSlow = 1;
+
+  chill(seconds: number, _freeze = false, slow = 0.75) {
+    if (this.defeated || !this.started) return;
+    this.chillT = Math.max(this.chillT, seconds);
+    this.chillSlow = Math.max(slow, 0.6);
+  }
+
+  /** How fast the boss acts right now (the world scales its time by this); counts the chill down. */
+  tempo(dt: number): number {
+    if (this.chillT <= 0) return 1;
+    this.chillT -= dt;
+    if (Math.random() < dt * 10) {
+      const w = this.where;
+      const a = Math.random() * Math.PI * 2;
+      this.world.particles.emit(w.x + Math.cos(a) * 1.4, w.y + 1 + Math.random() * this.focusHeight, w.z + Math.sin(a) * 1.4, { count: 1, color: '#dff6ff', speed: 0.8, life: 0.7, size: 0.45, gravity: 1.5 });
+    }
+    return this.chillSlow;
+  }
+
   damage(n: number) {
     if (this.defeated || !this.started) return;
     this.hp = Math.max(0, this.hp - n);

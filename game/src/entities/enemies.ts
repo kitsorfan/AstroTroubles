@@ -12,9 +12,11 @@ import type { Difficulty } from '../game/difficulty';
 import { Badge, type BadgeKind } from './badges';
 import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
+import { makeRobot } from './robots';
 
 const v3 = new THREE.Vector3();
 const WHITE = new THREE.Color('#ffffff');
+const ICE = new THREE.Color('#2f8fff');
 
 
 function hash01(s: string) {
@@ -52,8 +54,14 @@ export abstract class Enemy extends Entity implements Target {
   bolts = 3;
   heartChance = 0.12;
   private flashBase: { m: THREE.MeshStandardMaterial; e: THREE.Color; i: number }[] = [];
-  private flashing = false;
+  /** What the emissive glow shows: 0 normal, 1 hit flash, 2 chilled, 3 frozen. */
+  private look = 0;
   private badge: Badge | null = null;
+  /** Frost Ray: seconds left chilled (slowed to `chillSlow`) and frozen solid, and the ice shell shown while frozen. */
+  private chillT = 0;
+  private freezeT = 0;
+  private chillSlow = 1;
+  private ice: THREE.Mesh | null = null;
 
   constructor(
     world: World,
@@ -192,8 +200,54 @@ export abstract class Enemy extends Entity implements Target {
 
   protected abstract think(dt: number): void;
 
+  /**
+   * Frost Ray: chills this enemy for `seconds`, slowing everything it does to `slow` of its normal
+   * speed (with an icy blue tint). With `freeze` it is frozen solid (and harmless) for that long instead.
+   */
+  chill(seconds: number, freeze = false, slow = 0.5) {
+    if (!this.alive) return;
+    this.chillSlow = Math.min(this.chillT > 0 ? this.chillSlow : 1, slow);
+    if (freeze) this.freezeT = Math.max(this.freezeT, seconds);
+    this.chillT = Math.max(this.chillT, seconds + (freeze ? 1.5 : 0));
+  }
+
+  get frozen() {
+    return this.freezeT > 0;
+  }
+
+  /** How fast this enemy moves and thinks right now: 1 normally, less while chilled, 0 frozen solid. */
+  get tempo() {
+    return this.freezeT > 0 ? 0 : this.chillT > 0 ? this.chillSlow : 1;
+  }
+
+  /** Counts the chill down; tints the enemy icy blue and shows the ice shell while it lasts. */
+  private updateChill(dt: number) {
+    if (this.chillT <= 0 && !this.ice?.visible) return;
+    this.chillT = Math.max(0, this.chillT - dt);
+    this.freezeT = Math.max(0, this.freezeT - dt);
+    if (this.chillT <= 0) this.chillSlow = 1;
+    if (this.freezeT > 0 && !this.ice) {
+      const m = new THREE.MeshStandardMaterial({ color: '#cff4ff', emissive: '#5ec8ff', emissiveIntensity: 0.5, transparent: true, opacity: 0.45, roughness: 0.1, depthWrite: false });
+      this.ice = new THREE.Mesh(new THREE.IcosahedronGeometry(this.radius * 1.45, 0), m);
+      this.obj.add(this.ice);
+    }
+    if (this.ice) {
+      this.ice.visible = this.freezeT > 0;
+      this.ice.position.set(this.body.x, this.body.y + this.radius, this.body.z);
+      this.ice.scale.setScalar(this.model.root.scale.y);
+    }
+    if (this.chillT > 0 && Math.random() < dt * 6) {
+      this.world.particles.emit(this.aim.x, this.aim.y + 0.3, this.aim.z, { count: 1, color: '#dff6ff', speed: 0.8, life: 0.6, size: 0.35, gravity: 1.5 });
+    }
+  }
+
   update(dt: number) {
     if (!this.alive) return;
+    // Chilled enemies think and move slower; frozen ones not at all (they still fall).
+    const realDt = dt;
+    this.updateChill(realDt);
+    const tempo = this.tempo;
+    dt *= tempo;
     this.t += dt;
     this.alarmT = Math.max(0, this.alarmT - dt);
     const dist = this.distToPlayer();
@@ -208,20 +262,27 @@ export abstract class Enemy extends Entity implements Target {
       this.think(dt);
     }
     if (!this.flying) {
-      moveBody(this.body, dt, this.world.grid, this.world.boxes, { stepUp: 0.55 });
+      // Gravity keeps its full pace; only walking is slowed by a chill.
+      this.body.vx *= tempo;
+      this.body.vz *= tempo;
+      moveBody(this.body, realDt, this.world.grid, this.world.boxes, { stepUp: 0.55 });
+      if (tempo > 0) {
+        this.body.vx /= tempo;
+        this.body.vz /= tempo;
+      }
       if (this.body.y < -12) {
         this.die();
         return;
       }
     }
-    if (this.contact && !this.world.cutscene) this.touchPlayer();
-    this.flashT -= dt;
-    const flashing = this.flashT > 0;
-    if (flashing !== this.flashing) {
-      this.flashing = flashing;
+    if (this.contact && !this.world.cutscene && tempo > 0) this.touchPlayer();
+    this.flashT -= realDt;
+    const look = this.flashT > 0 ? 1 : this.freezeT > 0 ? 3 : this.chillT > 0 ? 2 : 0;
+    if (look !== this.look) {
+      this.look = look;
       for (const f of this.flashBase) {
-        f.m.emissive.copy(flashing ? WHITE : f.e);
-        f.m.emissiveIntensity = flashing ? 1.4 : f.i;
+        f.m.emissive.copy(look === 1 ? WHITE : look > 1 ? ICE : f.e);
+        f.m.emissiveIntensity = look === 1 ? 1.4 : look === 3 ? 0.75 : look === 2 ? 0.45 : f.i;
       }
     }
     this.model.root.position.set(this.body.x, this.body.y, this.body.z);
@@ -234,7 +295,7 @@ export abstract class Enemy extends Entity implements Target {
     const scale = this.model.root.scale.y;
     this.badge.group.position.set(this.body.x, this.body.y + this.badgeY * scale, this.body.z);
     const show = !this.world.cutscene && dist < 16 && (this.aggro || dist < 9) && this.badgeShown();
-    this.badge.update(dt, show, Math.max(0, this.hp / this.maxHp), this.alarmT > 0, this.t);
+    this.badge.update(realDt, show, Math.max(0, this.hp / this.maxHp), this.alarmT > 0, this.t);
   }
 
   /** Returns true if Jason got hurt. */
@@ -835,6 +896,12 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'brute':
       e = new Brute(world, id, x, h, z, variant);
+      break;
+    case 'trooper':
+    case 'minebot':
+    case 'bulwark':
+    case 'mortar':
+      e = makeRobot(world, id, kind, x, h, z);
       break;
   }
   const d = world.difficulty;

@@ -37,12 +37,7 @@ export const EL_ROCKIES: Record<string, string> = {
   "Missiles! Run out of the red circles!": "Πύραυλοι! Τρέξε έξω από τους κόκκινους κύκλους!",
 
   // Journal pages.
-  "A journal page! “The Gorgon fell on the mountains in a storm. I built a fortress inside the volcano. Warm. Safe. MINE.”": "Μια σελίδα ημερολογίου! «Η Γοργώ έπεσε στα βουνά μέσα σε μια καταιγίδα. Έχτισα ένα φρούριο μέσα στο ηφαίστειο. Ζεστό. Ασφαλές. ΔΙΚΟ ΜΟΥ.»",
   "He keeps saying MINE. Like a little kid with a toy.": "Όλο λέει ΔΙΚΟ ΜΟΥ. Σαν μικρό παιδί με ένα παιχνίδι.",
-  "“A colony ship is coming. Ten thousand people, trampling my world, picking my flowers. NO.”": "«Έρχεται ένα σκάφος αποίκων. Δέκα χιλιάδες άνθρωποι που θα ποδοπατούν τον κόσμο μου και θα κόβουν τα λουλούδια μου. ΟΧΙ.»",
-  "We are not trampling! I hover. Hovering is very gentle.": "Δεν ποδοπατάμε! Εγώ αιωρούμαι. Η αιώρηση είναι πολύ απαλή.",
-  "“The scientist, Hypatia, asked me why I am so angry. I did not have an answer.”": "«Η επιστήμονας, η Υπατία, με ρώτησε γιατί είμαι τόσο θυμωμένος. Δεν είχα απάντηση.»",
-  "Maybe he has been angry for so long that he forgot why.": "Ίσως είναι θυμωμένος τόσο καιρό, που ξέχασε το γιατί.",
 
   // Scientists.
   "Astronomer Hipparchus": "Αστρονόμος Ίππαρχος",

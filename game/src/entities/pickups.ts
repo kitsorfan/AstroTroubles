@@ -2,7 +2,8 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, MAX_HEARTS, PLAYER } from '../core/constants';
+import { CELL, PLAYER } from '../core/constants';
+import { heartCap } from '../game/shop';
 import type { World } from '../game/world';
 import { chapterOf } from '../levels';
 import { Grid } from '../world/grid';
@@ -351,7 +352,7 @@ export class Canister extends Floater {
     const o = this.obj.position;
     w.particles.emit(o.x, o.y, o.z, { count: 40, color: '#ff8aa0', speed: 7, life: 0.9, size: 0.6 });
     w.collect('canister', this.id);
-    w.save.maxHearts = Math.min(MAX_HEARTS, w.save.maxHearts + 1);
+    w.save.maxHearts = Math.min(heartCap(w.save), w.save.maxHearts + 1);
     w.player.heal(99);
     w.hooks.toast('Heart Canister! Max hearts +1', 'bolt');
     this.remove();

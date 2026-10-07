@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, GRAPPLE, OUTDOOR, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GEAR, GRAPPLE, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
@@ -10,12 +10,15 @@ import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { makeBody, moveBody, type Body } from '../world/physics';
 import { dressJason, makeJason, type JasonModel } from './models';
+import type { Target } from './entity';
 import { JasonFx } from './moveFx';
+import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
 
 /** How long Jason hangs in the air (and flips) before a ground pound slams down. */
 const POUND_HANG = 0.18;
 
 const tmp = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
 
 export class Player {
   readonly body: Body;
@@ -39,6 +42,11 @@ export class Player {
   private spinHit = new Set<unknown>();
   /** Spins left before the long recharge. */
   spins: number = PLAYER.spinCharges;
+  /** Armor points left (Armor Plating), the time since one was last lost, and the shield bubble. */
+  armor = 0;
+  private armorT = 0;
+  private shield: THREE.Mesh | null = null;
+  private shieldT = 0;
   /** Seconds left recharging spins (0 = not recharging). */
   private spinReloadT = 0;
   private spinReloadMax = 1;
@@ -91,9 +99,12 @@ export class Player {
     this.body = makeBody(x, y, z, PLAYER.radius, PLAYER.height);
     this.body.grounded = true;
     this.model = makeJason();
-    dressJason(this.model, world.save.upgrades);
+    dressJason(this.model, world.save.upgrades, this.weapon);
     this.facing = facing;
     this.hearts = world.save.maxHearts;
+    this.energy = this.energyMax;
+    this.spins = this.spinMax;
+    this.armor = this.armorMax;
     this.ammo = this.clipSize;
     this.renderY = y;
     this.safe.set(x, y, z);
@@ -104,7 +115,7 @@ export class Player {
   /** Puts on the gear for any newly bought upgrades, with a little sparkle when something changed. */
   refreshGear() {
     const before = this.model.gearKey;
-    dressJason(this.model, this.world.save.upgrades);
+    dressJason(this.model, this.world.save.upgrades, this.weapon);
     if (this.model.gearKey === before) return;
     const b = this.body;
     this.world.particles.emit(b.x, b.y + 1, b.z, { count: 26, color: '#ffd166', speed: 4, life: 0.6, size: 0.45, up: 2 });
@@ -121,7 +132,7 @@ export class Player {
     const b = this.body;
     const from = new THREE.Vector3(b.x, b.y, b.z);
     const to = land.clone().add(new THREE.Vector3(0, 0.05, 0));
-    this.zip = { from, to, hook: hook.clone(), k: 0, time: GRAPPLE.time + from.distanceTo(to) * GRAPPLE.timePerUnit };
+    this.zip = { from, to, hook: hook.clone(), k: 0, time: (GRAPPLE.time + from.distanceTo(to) * GRAPPLE.timePerUnit) * (this.world.save.upgrades.grapple ? GEAR.grappleZip : 1) };
     this.facing = Math.atan2(to.x - b.x, to.z - b.z);
     this.pounding = false;
     this.dashT = 0;
@@ -181,6 +192,99 @@ export class Player {
     return this.world.save.abilities.includes(a);
   }
 
+  /* ---------------- gear bought on Gaia Nova ---------------- */
+
+  /** Dash energy cells (Dash Cell adds one per level). */
+  get energyMax() {
+    return PLAYER.dashEnergy + (this.world.save.upgrades.dashCell ?? 0);
+  }
+
+  /** Spins in a row before the long recharge (Spin Charge adds one). */
+  get spinMax() {
+    return PLAYER.spinCharges + (this.world.save.upgrades.spinCharge ?? 0);
+  }
+
+  /** Armor points (Armor Plating): each blocks one hit. */
+  get armorMax() {
+    return this.world.save.upgrades.armor ?? 0;
+  }
+
+  /** How far the grapple reaches, in cells (Grapple Range adds a little). */
+  get grappleRange() {
+    return GRAPPLE.range + (this.world.save.upgrades.grapple ?? 0) * GEAR.grappleCells;
+  }
+
+  /** After a shop purchase: new armor, dash cells and spins are ready to use straight away. */
+  refill() {
+    this.rechargeArmor();
+    this.gainEnergy(99);
+    if (this.spinReloadT <= 0) this.spins = this.spinMax;
+    this.world.hooks.hud();
+  }
+
+  /** Fills the armor back up (checkpoints, getting back up). */
+  rechargeArmor() {
+    if (this.armor >= this.armorMax) return;
+    this.armor = this.armorMax;
+    this.shieldFx(0.8);
+    this.world.hooks.hud();
+  }
+
+  /** Armor Plating takes the hit instead of a heart: a bright shield flash, and a moment of safety. */
+  private absorb(fromX?: number, fromZ?: number) {
+    this.armor -= 1;
+    this.armorT = 0;
+    this.invuln = PLAYER.invuln;
+    this.sinceHurt = 0;
+    this.shieldFx(1.6);
+    audio.play('zap', 0.7);
+    haptic('medium');
+    this.world.shake(0.2);
+    const b = this.body;
+    this.world.particles.emit(b.x, b.y + 1, b.z, { count: 18, color: '#9fe0ff', speed: 5, life: 0.45, size: 0.45 });
+    if (fromX !== undefined && fromZ !== undefined) {
+      const d = Math.hypot(b.x - fromX, b.z - fromZ) || 1;
+      this.vx = ((b.x - fromX) / d) * PLAYER.knockback * 0.6;
+      this.vz = ((b.z - fromZ) / d) * PLAYER.knockback * 0.6;
+    }
+    this.world.hooks.hud();
+  }
+
+  /** Shows the shield bubble around Jason for a moment (`power` sets how bright it starts). */
+  private shieldFx(power: number) {
+    if (!this.shield) {
+      const m = new THREE.MeshBasicMaterial({ color: '#7fd4ff', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      this.shield = new THREE.Mesh(new THREE.IcosahedronGeometry(1.15, 2), m);
+      this.world.scene.add(this.shield);
+    }
+    this.shieldT = power;
+  }
+
+  /** Armor slowly comes back while Jason stays out of trouble; the bubble fades and shimmers. */
+  private updateArmor(dt: number) {
+    if (this.armor < this.armorMax) {
+      this.armorT += dt;
+      if (this.armorT >= GEAR.armorRecharge) {
+        this.armorT = 0;
+        this.armor += 1;
+        this.shieldFx(0.8);
+        audio.play('charged', 1.3);
+        this.world.hooks.hud();
+      }
+    }
+    if (!this.shield) return;
+    this.shieldT = Math.max(0, this.shieldT - dt * 1.6);
+    const m = this.shield.material as THREE.MeshBasicMaterial;
+    m.opacity = Math.min(0.45, this.shieldT * 0.3);
+    this.shield.visible = m.opacity > 0.01;
+    if (this.shield.visible) {
+      const b = this.body;
+      this.shield.position.set(b.x, this.renderY + 0.95, b.z);
+      this.shield.rotation.y += dt * 2;
+      this.shield.scale.setScalar(1 + (1.6 - Math.min(1.6, this.shieldT)) * 0.12);
+    }
+  }
+
   get clipSize() {
     return PLAYER.clip + (this.world.save.upgrades.clip ?? 0) * 2;
   }
@@ -213,15 +317,15 @@ export class Player {
   }
 
   private startSpinReload() {
-    const missing = PLAYER.spinCharges - this.spins;
-    this.spinReloadMax = (PLAYER.spinReload * missing) / PLAYER.spinCharges;
+    const missing = this.spinMax - this.spins;
+    this.spinReloadMax = (PLAYER.spinReload * missing) / this.spinMax;
     this.spinReloadT = this.spinReloadMax;
   }
 
   /** Tops up dash energy; returns true if anything was added. */
   gainEnergy(n: number): boolean {
-    if (this.energy >= PLAYER.dashEnergy) return false;
-    this.energy = Math.min(PLAYER.dashEnergy, this.energy + n);
+    if (this.energy >= this.energyMax) return false;
+    this.energy = Math.min(this.energyMax, this.energy + n);
     this.world.hooks.hud();
     return true;
   }
@@ -251,6 +355,11 @@ export class Player {
       this.world.particles.emit(this.body.x, this.body.y + 1, this.body.z, { count: 14, color: '#bff4ff', speed: 6, life: 0.35, size: 0.4 });
       return;
     }
+    if (this.armor > 0) {
+      this.absorb(fromX, fromZ);
+      return;
+    }
+    this.armorT = 0;
     this.hearts = Math.max(0, this.hearts - n);
     this.invuln = PLAYER.invuln;
     this.sinceHurt = 0;
@@ -309,8 +418,10 @@ export class Player {
     this.ammo = this.clipSize;
     this.reloadT = 0;
     this.charge = 0;
-    this.energy = PLAYER.dashEnergy;
-    this.spins = PLAYER.spinCharges;
+    this.energy = this.energyMax;
+    this.spins = this.spinMax;
+    this.armor = this.armorMax;
+    this.armorT = 0;
     this.spinReloadT = 0;
     this.invuln = 1.5;
     this.world.hooks.hud();
@@ -331,6 +442,7 @@ export class Player {
     const b = this.body;
     this.invuln = Math.max(0, this.invuln - dt);
     this.sinceHurt += dt;
+    this.updateArmor(dt);
     if (this.down || w.cutscene) {
       this.cancelCharge();
       this.zip = null;
@@ -394,11 +506,11 @@ export class Player {
       this.spinReloadT -= dt;
       if (this.spinReloadT <= 0) {
         this.spinReloadT = 0;
-        this.spins = PLAYER.spinCharges;
+        this.spins = this.spinMax;
         audio.play('reload', 1.6);
         w.hooks.hud();
       }
-    } else if (this.spins < PLAYER.spinCharges && this.sinceSpin > PLAYER.spinTopUp) {
+    } else if (this.spins < this.spinMax && this.sinceSpin > PLAYER.spinTopUp) {
       this.startSpinReload();
     }
     if (b.grounded) {
@@ -492,7 +604,8 @@ export class Player {
       }
     }
 
-    // Blaster: tap to shoot (limited clip, then reload); hold to charge a big fireball.
+    // Blaster: tap to shoot (limited clip, then reload); hold to charge a big fireball. X / the weapon button switches weapons.
+    if (input.take('weapon')) this.cycleWeapon();
     this.updateBlaster(dt, input);
 
     // Ride moving platforms.
@@ -606,7 +719,7 @@ export class Player {
         const gz = b.z + Math.cos(this.facing) * 0.6 - Math.sin(this.facing) * 0.3;
         if (Math.random() < 0.5 + this.charge * 0.5) {
           const a = Math.random() * Math.PI * 2;
-          this.world.particles.emit(gx + Math.cos(a) * 1.1, b.y + 1 + Math.sin(a) * 0.8, gz + Math.sin(a) * 1.1, { count: 1, color: this.charge >= 1 ? '#ffd166' : '#ff9a3d', speed: 0.2, life: 0.25, size: 0.35, gravity: 0 });
+          this.world.particles.emit(gx + Math.cos(a) * 1.1, b.y + 1 + Math.sin(a) * 0.8, gz + Math.sin(a) * 1.1, { count: 1, color: this.chargeColor, speed: 0.2, life: 0.25, size: 0.35, gravity: 0 });
         }
       }
     } else if (this.wasHeld) {
@@ -619,7 +732,7 @@ export class Player {
   }
 
   /** Where shots leave the blaster, and which way they fly (auto-aiming at the best target). */
-  private aimShot(range: number): [THREE.Vector3, THREE.Vector3] {
+  private aimShot(range: number): [THREE.Vector3, THREE.Vector3, Target | null] {
     const w = this.world;
     const b = this.body;
     const origin = new THREE.Vector3(b.x, b.y + 1.05, b.z);
@@ -634,28 +747,72 @@ export class Player {
     dir.normalize();
     origin.x += Math.sin(this.facing) * 0.55 + Math.cos(this.facing) * 0.3;
     origin.z += Math.cos(this.facing) * 0.55 - Math.sin(this.facing) * 0.3;
-    return [origin, dir];
+    return [origin, dir, target];
+  }
+
+  /** The equipped weapon (the Blaster unless Jason bought and picked another). */
+  get weapon(): WeaponId {
+    return equippedWeapon(this.world.save.weapons, this.world.save.weapon);
+  }
+
+  /** Switches to the next weapon Jason owns. */
+  cycleWeapon() {
+    const s = this.world.save;
+    if (ownedWeapons(s.weapons).length < 2) return;
+    s.weapon = nextWeapon(s.weapons, this.weapon);
+    this.cancelCharge();
+    this.shootCd = Math.max(this.shootCd, 0.15);
+    this.refreshGear();
+    audio.play('reload', WEAPONS[this.weapon].pitch * 1.2);
+    haptic('light');
+    this.world.hooks.hud();
+  }
+
+  /** The colour of the charge glow at the muzzle (gold once a Blaster fireball is ready). */
+  private get chargeColor() {
+    const wp = WEAPONS[this.weapon];
+    if (wp.id === 'blaster') return this.charge >= 1 ? '#ffd166' : '#ff9a3d';
+    return this.charge >= 1 ? wp.core : wp.glow;
+  }
+
+  /** Shot damage: the Blaster's 1 + Blaster Power, times the weapon's power. */
+  private get shotDamage() {
+    return (1 + (this.world.save.upgrades.blaster ?? 0)) * WEAPONS[this.weapon].power;
   }
 
   private shoot() {
     const w = this.world;
+    const wp = WEAPONS[this.weapon];
     const rapid = w.save.upgrades.rapid ?? 0;
-    this.shootCd = PLAYER.shootCooldown * (1 - rapid * 0.15);
-    const [origin, dir] = this.aimShot(PLAYER.aimRange);
-    w.shots.fire('player', origin, dir, PLAYER.shotSpeed, 1 + (w.save.upgrades.blaster ?? 0));
+    this.shootCd = PLAYER.shootCooldown * Math.max(0.4, 1 - rapid * 0.15) * wp.cooldown;
+    const [origin, dir, target] = this.aimShot(PLAYER.aimRange * (wp.id === 'seeker' ? 1.3 : 1));
+    if (wp.id === 'spread') {
+      for (const k of [-1, 0, 1]) w.shots.fire('player', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle), wp.speed, this.shotDamage, 0, { weapon: wp.id });
+    } else {
+      w.shots.fire('player', origin, dir, wp.speed, this.shotDamage, 0, { weapon: wp.id, target: wp.id === 'seeker' ? target : null });
+    }
     this.ammo -= 1;
     this.sinceShot = 0;
     this.shootPose = 0.18;
-    audio.play('shoot', 0.95 + Math.random() * 0.1);
+    audio.play('shoot', wp.pitch * (0.95 + Math.random() * 0.1));
+    if (wp.id === 'thunder') audio.play('zap', 2.2, 0.5);
     if (this.ammo <= 0) this.startReload();
     w.hooks.hud();
   }
 
   private fireball() {
     const w = this.world;
-    const [origin, dir] = this.aimShot(PLAYER.aimRange + 4);
-    const dmg = 4 + (w.save.upgrades.blaster ?? 0) * 2;
-    if (!w.shots.fire('fireball', origin, dir, PLAYER.fireballSpeed, dmg)) return;
+    const wp = WEAPONS[this.weapon];
+    const [origin, dir, target] = this.aimShot((PLAYER.aimRange + 4) * (wp.id === 'seeker' ? 1.3 : 1));
+    const dmg = (4 + (w.save.upgrades.blaster ?? 0) * 2) * wp.power;
+    const speed = wp.id === 'seeker' ? PLAYER.fireballSpeed * 0.75 : PLAYER.fireballSpeed;
+    const opts = { weapon: wp.id, target: wp.id === 'seeker' ? target : null };
+    if (wp.id === 'spread') {
+      // Three smaller fireballs in a fan.
+      let n = 0;
+      for (const k of [-1, 0, 1]) if (w.shots.fire('fireball', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle * 1.3), speed, dmg, 0, opts)) n += 1;
+      if (!n) return;
+    } else if (!w.shots.fire('fireball', origin, dir, speed, dmg, 0, opts)) return;
     this.ammo = Math.max(0, this.ammo - PLAYER.fireballCost);
     this.sinceShot = 0;
     this.shootPose = 0.4;
@@ -663,10 +820,10 @@ export class Player {
     // A kick of recoil.
     this.vx -= dir.x * 4;
     this.vz -= dir.z * 4;
-    audio.play('fireball');
+    audio.play('fireball', wp.id === 'blaster' ? 1 : wp.pitch);
     haptic('medium');
     w.shake(0.25);
-    w.flash(origin.x, origin.y, origin.z, '#ffb04a', 30, 0.25);
+    w.flash(origin.x, origin.y, origin.z, wp.id === 'blaster' ? '#ffb04a' : wp.glow, 30, 0.25);
     if (this.ammo <= 0) this.startReload();
     w.hooks.hud();
   }
@@ -709,7 +866,7 @@ export class Player {
     m.visor.emissiveIntensity = 0.35 + this.world.darkness * 1.2;
     const glow = this.charge > 0 ? 0.4 + this.charge * 1.6 + (this.charge >= 1 ? Math.sin(this.phase * 3) * 0.3 : 0) : 0;
     m.gunGlow.scale.setScalar(Math.max(0.001, glow));
-    m.gunGlow.material.color.set(this.charge >= 1 ? '#ffd166' : '#ff9a3d');
+    m.gunGlow.material.color.set(this.chargeColor);
     this.blinkT -= dt;
     const blink = this.blinkT < 0.12;
     if (this.blinkT < 0) this.blinkT = 2 + Math.random() * 3;

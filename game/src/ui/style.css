@@ -120,6 +120,16 @@ canvas#game {
   animation: shake 0.35s;
 }
 
+/* Eleven or twelve hearts (Heart Plating Mk II): six per row, still two rows. */
+.hearts.wide {
+  max-width: calc(6 * 17px + 5 * 2px);
+}
+
+/* Armor Plating shields follow the hearts. */
+.hearts i.armor {
+  display: flex;
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -1190,6 +1200,60 @@ canvas#game {
   transform: none;
 }
 
+/* Storybook illustrations: a framed cartoon picture that fades in over the scene and drifts slowly. */
+.cine .storypanel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(11vh + 1.5vh);
+  background: radial-gradient(ellipse at center, rgba(4, 6, 18, 0.55), rgba(2, 3, 10, 0.92));
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.cine .storypanel.show {
+  opacity: 1;
+}
+
+.cine .storypanel .frame {
+  /* As big as fits between the letterbox bar and the caption/dialogue area, keeping 16:9. */
+  height: min(calc(100vh - 22vh - 150px), calc(92vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 5px solid #fff6e0;
+  box-shadow: 0 0 0 3px #1a1630, 0 18px 50px rgba(0, 0, 0, 0.7);
+  transform: rotate(-0.6deg) scale(0.97);
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: #0b0f1e;
+}
+
+.cine .storypanel.show .frame {
+  transform: rotate(-0.6deg) scale(1);
+}
+
+.cine .storypanel .art,
+.cine .storypanel .art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cine .storypanel .art.drift {
+  animation: panel-drift 14s ease-out forwards;
+}
+
+@keyframes panel-drift {
+  from {
+    transform: scale(1.02) translateX(0);
+  }
+  to {
+    transform: scale(1.1) translateX(var(--dx, 1.6%));
+  }
+}
+
 .cine .caption {
   position: absolute;
   left: 50%;
@@ -1426,6 +1490,15 @@ canvas#game {
 .ammo .pips i.full {
   background: linear-gradient(#bff4ff, #3fb6ff);
   box-shadow: 0 0 6px #5ee0ff;
+}
+
+/* Bigger Clip Mk II: twelve slimmer pips still fit under the weapon button. */
+.ammo .pips.many {
+  gap: 2px;
+}
+
+.ammo .pips.many i {
+  width: 5px;
 }
 
 .ammo .reload {
@@ -1839,6 +1912,100 @@ canvas#game {
   animation: shake 0.35s;
 }
 
+/* ---------------- weapons: the switch button, and BLAST takes the weapon's colour ---------------- */
+
+.btn.weapon {
+  right: 210px;
+  bottom: 44px;
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle at 35% 30%, #4a5878, #1c2438);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn.weapon .wicon {
+  display: block;
+  width: 62%;
+  height: 62%;
+}
+
+.btn.weapon .wicon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* The weapon's name pops up over the button for a moment after a switch. */
+.btn.weapon .wname {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(8, 12, 26, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.btn.weapon .wname.show {
+  animation: weaponName 1.6s ease both;
+}
+
+@keyframes weaponName {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  12%,
+  75% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.buttons[data-weapon='spread'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #ffe08a, #d9860f);
+}
+
+.buttons[data-weapon='frost'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #e0f8ff, #4aa8e0);
+}
+
+.buttons[data-weapon='thunder'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #e2c8ff, #7a44d6);
+}
+
+.buttons[data-weapon='seeker'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #ffb8d0, #d6306a);
+}
+
+.buttons[data-weapon='spread'] .ammo .pips i.full {
+  background: linear-gradient(#fff2b0, #ffb020);
+  box-shadow: 0 0 6px #ffb020;
+}
+
+.buttons[data-weapon='frost'] .ammo .pips i.full {
+  background: linear-gradient(#ffffff, #7fd4ff);
+  box-shadow: 0 0 6px #7fd4ff;
+}
+
+.buttons[data-weapon='thunder'] .ammo .pips i.full {
+  background: linear-gradient(#fffbd0, #c58cff);
+  box-shadow: 0 0 6px #c58cff;
+}
+
+.buttons[data-weapon='seeker'] .ammo .pips i.full {
+  background: linear-gradient(#ffd0e0, #ff4f8a);
+  box-shadow: 0 0 6px #ff4f8a;
+}
+
 /* ---------------- objective waypoint ---------------- */
 
 .waypoint {
@@ -2078,6 +2245,65 @@ canvas#game {
   flex: none;
   padding: 6px 10px;
   font-size: 14px;
+}
+
+/* On Gaia Nova the shop has two tabs: upgrades and weapons. */
+.shop-tabs {
+  margin: 0 0 10px;
+}
+
+.shop-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.shop-tabs button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.shop-grid .buy.equip {
+  border-color: rgba(127, 230, 255, 0.75);
+  background: rgba(127, 230, 255, 0.14);
+  color: #bff4ff;
+}
+
+.shop-grid .buy.equipped {
+  border-color: rgba(125, 255, 154, 0.7);
+  background: rgba(125, 255, 154, 0.14);
+  color: #b6ffc6;
+  opacity: 1;
+}
+
+.shop-item.weapon.on {
+  border-color: rgba(125, 255, 154, 0.6);
+}
+
+/* Mk II levels (sold on Gaia Nova) show as cyan stars after the gold ones. */
+.shop-item .stars .mk2 {
+  color: #7fe6ff;
+}
+
+.shop-item .stars .mk2 em {
+  color: rgba(127, 230, 255, 0.3);
+}
+
+/* The taller Gaia Nova shop reaches the top of small screens: hide the hearts and bolts behind it. */
+#ui:has(.shop-panel) .hud-left {
+  visibility: hidden;
+}
+
+.shop-item .info b .mk {
+  white-space: nowrap;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: rgba(127, 230, 255, 0.2);
+  color: #7fe6ff;
+  font-size: 10px;
+  vertical-align: middle;
 }
 
 @media (max-width: 720px) {

@@ -1,8 +1,8 @@
-import { MAX_HEARTS } from '../core/constants';
 import { tr } from '../core/i18n';
 import type { SaveData, UpgradeId } from '../core/save';
 import { LEVELS, chapterOf, chapterTotals, inChapter } from '../levels';
 import type { DeckId, LevelDef } from '../world/levelTypes';
+import { heartCap, levelUp } from './shop';
 
 /**
  * Side quests and rewards. Every deck has the same four side quests: rescue its colonists, find
@@ -29,10 +29,14 @@ const UPGRADE_NAME: Record<UpgradeId, string> = {
   boltZap: 'LUX Zapper',
   magnet: 'Bolt Magnet',
   heart: '+1 max heart',
+  armor: 'Armor Plating',
+  dashCell: 'Dash Cell',
+  spinCharge: 'Spin Charge',
+  grapple: 'Grapple Range',
 };
 
-/** Shop upgrade levels (kept here so vault prizes never go past the shop's maximum). */
-export const UPGRADE_MAX: Record<UpgradeId, number> = { heart: 3, blaster: 2, rapid: 2, clip: 2, boltZap: 2, magnet: 2 };
+/** Shop upgrade levels per chapter (vault prizes never go past the shop's maximum). */
+export { UPGRADE_MAX } from './shop';
 
 function entities(def: LevelDef, type: string) {
   return Object.values(def.legend).filter((s) => s.type === type);
@@ -107,27 +111,27 @@ export function shardMilestone(save: SaveData, deck: DeckId): string | null {
   const total = chapterTotals(ch).shards;
   if (n === total) return ch === 1 ? tr('ALL 18 memory shards! LUX has learned GaScu’s light-language...') : tr('ALL 18 journal pages! Now you know Brennus’s whole story...');
   if (n % SHARDS_PER_HEART === 0) {
-    save.maxHearts = Math.min(MAX_HEARTS, save.maxHearts + 1);
+    save.maxHearts = Math.min(heartCap(save), save.maxHearts + 1);
     return ch === 1 ? tr('{n} memory shards! +1 max heart', { n }) : tr('{n} journal pages! +1 max heart', { n });
   }
   const left = SHARDS_PER_HEART - (n % SHARDS_PER_HEART);
   return ch === 1 ? tr('Memory shard {n} / 18 · {left} more for an extra heart', { n, left }) : tr('Journal page {n} / 18 · {left} more for an extra heart', { n, left });
 }
 
-/** Applies a vault prize. Returns what Jason got. */
-export function givePrize(reward: string, save: SaveData): string {
+/**
+ * Applies a vault prize: a free level of an upgrade, never past what the shop sells in this chapter
+ * (on Gaia Nova that includes the Mk II levels). Returns what Jason got.
+ */
+export function givePrize(reward: string, save: SaveData, deck?: DeckId): string {
   if (reward === 'bolts') {
     save.bolts += 300;
     return tr('VAULT PRIZE: 300 bolts!');
   }
   const id = reward as UpgradeId;
-  const lvl = save.upgrades[id] ?? 0;
-  if (lvl >= UPGRADE_MAX[id]) {
+  if (!levelUp(save, id, deck)) {
     save.bolts += 150;
     return tr('VAULT PRIZE: 150 bolts ({name} is already maxed)', { name: tr(UPGRADE_NAME[id]) });
   }
-  save.upgrades[id] = lvl + 1;
-  if (id === 'heart') save.maxHearts = Math.min(MAX_HEARTS, save.maxHearts + 1);
   return tr('VAULT PRIZE: free upgrade, {name}!', { name: tr(UPGRADE_NAME[id]) });
 }
 

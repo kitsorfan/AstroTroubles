@@ -34,8 +34,9 @@ export async function prologue(d: Director, s: ShipScene) {
   d.fade('#000000', 1, 0);
   await d.fade('#000000', 0, 1.6);
 
-  // 1. A slow tracking shot along the hull.
-  await Promise.all([d.cam(V(-30, 14, 48), V(10, 0, 0), 9, ease.inOut), d.caption(PROLOGUE.ship, 4.5).then(() => d.caption(PROLOGUE.quiet, 4))]);
+  // 1. A slow tracking shot along the hull, then the storybook picture of the sleeping ship.
+  await Promise.all([d.cam(V(-30, 14, 48), V(10, 0, 0), 6, ease.inOut), d.caption(PROLOGUE.ship, 5)]);
+  await d.panel('ch1-ship', { caption: PROLOGUE.quiet, seconds: 4.5 });
 
   // 2. Something comes out of the dark.
   ship.group.updateMatrixWorld(true);
@@ -67,13 +68,11 @@ export async function prologue(d: Director, s: ShipScene) {
   s.shake(2.2);
   s.particles.emit(impact.x, impact.y + 1, impact.z, { count: 120, color: '#ff8ae0', speed: 16, life: 1.4, size: 2.2, gravity: 0 });
 
-  // 3. GaScu takes root and spreads over the hull.
-  await Promise.all([
-    d.cam(V(-44, 26, 34), V(-10, 4, 0), 2.2, ease.inOut, 45),
-    d.caption(PROLOGUE.seed, 4.5),
-    d.tween(5.5, (k) => ship.setGrowth(k * 0.55), ease.out),
-  ]);
-  await Promise.all([d.cam(V(20, 30, 62), V(5, 0, 0), 5), d.caption(PROLOGUE.grow, 4.5), d.tween(5, (k) => ship.setGrowth(0.55 + k * 0.25), ease.inOut)]);
+  // 3. It was not a comet... GaScu takes root and spreads over the hull.
+  await d.panel('ch1-comet', { caption: PROLOGUE.seed, seconds: 5 });
+  await Promise.all([d.cam(V(-44, 26, 34), V(-10, 4, 0), 2.2, ease.inOut, 45), d.tween(4, (k) => ship.setGrowth(k * 0.55), ease.out)]);
+  await Promise.all([d.cam(V(20, 30, 62), V(5, 0, 0), 4), d.tween(4, (k) => ship.setGrowth(0.55 + k * 0.25), ease.inOut)]);
+  await d.panel('ch1-grow', { caption: PROLOGUE.grow, seconds: 4.5 });
 
   // 4. The ship turns toward the star.
   await Promise.all([
@@ -91,9 +90,11 @@ export async function prologue(d: Director, s: ShipScene) {
     ),
   ]);
 
-  // 5. Push in toward the Cryo Deck...
+  // 5. Push in toward the Cryo Deck, where one little pod is waking up...
   const cryo = V(ColonyShip.deckX(1), 9, 0);
-  await Promise.all([d.cam(cryo.clone().add(V(-6, 6, 18)), cryo, 4.5, ease.in), d.caption(PROLOGUE.wake, 4), after(d, 3, () => d.fade('#ffffff', 1, 1.5))]);
+  await d.cam(cryo.clone().add(V(-12, 10, 28)), cryo, 2.5, ease.inOut);
+  await d.panel('ch1-wake', { caption: PROLOGUE.wake, seconds: 4.5 });
+  await Promise.all([d.cam(cryo.clone().add(V(-6, 6, 18)), cryo, 3, ease.in), after(d, 1.5, () => d.fade('#ffffff', 1, 1.5))]);
 }
 
 /* ---------------- between decks ---------------- */
@@ -190,9 +191,8 @@ export async function ending(d: Director, s: ShipScene, kind: 'saved' | 'friends
   s.planet.visible = true;
   s.planet.position.copy(home);
   await Promise.all([d.caption(text[2], 5.5), d.cam(V(-70, 14, -60), home, 5.5, ease.inOut)]);
-  await Promise.all([
-    d.caption(text[3], 6),
-    d.cam(home.clone().lerp(V(0, 10, 0), 0.62).add(V(-20, 18, 0)), home, 7, ease.inOut),
-    after(d, 5, () => d.fade('#000000', 1, 1.8)),
-  ]);
+  await d.cam(home.clone().lerp(V(0, 10, 0), 0.62).add(V(-20, 18, 0)), home, 4, ease.inOut);
+  // The storybook picture of how it all ended.
+  await d.panel(kind === 'saved' ? 'ch1-saved' : 'ch1-friends', { caption: text[3], seconds: 6 });
+  await d.fade('#000000', 1, 1.8);
 }

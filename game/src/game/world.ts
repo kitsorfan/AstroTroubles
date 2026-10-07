@@ -584,6 +584,7 @@ export class World {
     else if (name.startsWith('flag:')) this.setFlag(name.slice(5));
     else if (name.startsWith('music:')) this.hooks.music(name.slice(6) as Track);
     else if (name === 'shake') this.shake(0.6);
+    else if (name.startsWith('story:')) this.playStory(name.slice(6));
   }
 
   /* ---------------- combat ---------------- */
@@ -633,16 +634,23 @@ export class World {
     return true;
   }
 
-  /** Hits the first target overlapping a sphere. Returns true if something was hit. */
-  hitAt(p: THREE.Vector3, r: number, dmg: number, kind: HitKind): boolean {
+  /** Hits the first target overlapping a sphere. Returns what was hit, if anything. */
+  hitAt(p: THREE.Vector3, r: number, dmg: number, kind: HitKind): Target | null {
     for (const t of this.targets) {
       if (!t.alive) continue;
       const rr = r + t.radius;
       if (t.aim.distanceToSquared(p) < rr * rr) {
-        if (t.hit(dmg, kind, p)) return true;
+        if (t.hit(dmg, kind, p)) return t;
       }
     }
-    return false;
+    return null;
+  }
+
+  /** Live, aimable targets (enemies, bosses) within `r` of a point, nearest first (Jason's special weapons). */
+  targetsNear(p: THREE.Vector3, r: number): Target[] {
+    return this.targets
+      .filter((t) => t.alive && t.aimable && t.aim.distanceToSquared(p) < r * r && Math.abs(t.aim.y - p.y) < 4)
+      .sort((a, b) => a.aim.distanceToSquared(p) - b.aim.distanceToSquared(p));
   }
 
   /** Hits every target in a cylinder around `p`. Returns how many were hit. */
@@ -763,7 +771,7 @@ export class World {
 
   /** Drops a dash energy cell, but only once Jason has the Dash Thrusters and could use one. */
   dropEnergy(pos: THREE.Vector3) {
-    if (!this.save.abilities.includes('dash') || this.player.energy >= PLAYER.dashEnergy) return;
+    if (!this.save.abilities.includes('dash') || this.player.energy >= this.player.energyMax) return;
     this.addEntity(EnergyPickup.at(this, pos));
   }
 
@@ -936,6 +944,7 @@ export class World {
     audio.play('checkpoint');
     this.player.heal(99);
     this.player.gainEnergy(99);
+    this.player.rechargeArmor();
     this.hooks.toast('Checkpoint saved!', 'bolt');
     this.hooks.checkpoint();
   }
@@ -1033,6 +1042,12 @@ export class World {
     void this.hooks.cutscene((d) => scenes.liftRide(d, this, exit)).then(() => this.hooks.complete());
   }
 
+  /** Plays one of the deck's storybook scenes (illustrated panels with lines). */
+  playStory(key: string) {
+    if (!this.def.stories?.[key]?.length) return;
+    void this.hooks.cutscene((d) => scenes.storyTime(d, this, key));
+  }
+
   /** Jason finds LUX switched off in the dark and switches him back on. */
   findBolt(find: BoltFind) {
     void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
@@ -1054,7 +1069,8 @@ export class World {
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
     this.bolt.update(dt);
-    for (const e of [...this.entities]) if (e.alive) e.update(dt);
+    // A boss chilled by the Frost Ray acts a little slower for a moment.
+    for (const e of [...this.entities]) if (e.alive) e.update(e === this.boss ? dt * this.boss.tempo(dt) : dt);
     this.tickClocks(dt);
     this.boltField.update(dt);
     this.shots.update(dt);

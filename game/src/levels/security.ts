@@ -156,7 +156,7 @@ export const security: LevelDef = {
   ],
   dialogues: {
     intro: [
-      { who: 'glitch', text: 'INTRUDERS DETECTED. GaScu must reach its home. Please... go... back...' },
+      { who: 'glitch', text: 'INTRUDERS DETECTED. GaScu must NOT go to the blue world. Please... go... back...' },
       { who: 'jason', text: 'HALCYON, it’s us! It’s Jason and LUX!' },
       { who: 'glitch', text: 'Jason...? H-help... The pollen is in my core. It makes me say things. CERBERUS will protect GaScu...' },
       { who: 'bolt', text: 'We have to reach HALCYON’s core! The armory has a FORCE PULSE module for drones like me. One blast and those lasers go dark!' },
@@ -180,8 +180,8 @@ export const security: LevelDef = {
       { who: 'bolt', text: 'CERBERUS is down! Now for HALCYON’s core. Hold still, HALCYON, I am going in!' },
       { who: 'halcyon', text: 'Rebooting... Jason? LUX? I am me again. Thank you. Thank you so much.' },
       { who: 'halcyon', text: 'While the pollen was inside me, I could hear GaScu. It is not angry, Jason. It is TERRIFIED.' },
-      { who: 'halcyon', text: 'It was lost in the dark for a very long time. Now it thinks that star is its home. It does not know the star will burn it... and us.' },
-      { who: 'jason', text: 'So it’s not a monster. It’s lost.' },
+      { who: 'halcyon', text: 'It was alone in the dark for a very long time. Someone on Gaia Nova once tried to hurt it, and it would rather fly into a star than go back. But the star will burn it... and us.' },
+      { who: 'jason', text: 'So it’s not a monster. It’s scared.' },
       { who: 'bolt', text: 'Like me in the storeroom...' },
       { who: 'halcyon', text: 'The Bridge is next. Be careful up there... and be kind.' },
     ],

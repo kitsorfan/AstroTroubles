@@ -69,7 +69,19 @@ export const PLAYER = {
 };
 
 export const START_HEARTS = 5;
+/** Most hearts Jason can have: heart canisters, shards and the shop stop here... */
 export const MAX_HEARTS = 10;
+/** ...until Heart Plating Mk II (sold on Gaia Nova) raises the limit by one per level, up to this. */
+export const MAX_HEARTS_MK2 = 12;
+
+/** Upgrades sold on Gaia Nova: Armor Plating, Dash Cell, Spin Charge and Grapple Range. */
+export const GEAR = {
+  /** Seconds out of trouble (not hurt) before a spent armor point comes back on its own. */
+  armorRecharge: 20,
+  /** Extra grapple reach per Grapple Range level, in cells, and how much quicker the zip gets. */
+  grappleCells: 2,
+  grappleZip: 0.8,
+};
 
 /** LUX's force pulse: a shockwave that hits everything around Jason and overloads lasers, then recharges slowly. */
 export const PULSE = {
