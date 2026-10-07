@@ -14,6 +14,7 @@ import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
 import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
 import { makeIris } from './companionModels';
+import { makeHauler, makeOreCart, railSegment } from './mineModels';
 import type { CompanionSkin } from '../game/companions';
 import type { Player } from './player';
 
@@ -541,7 +542,16 @@ export class Platform extends Entity {
     const hw = this.half;
     this.mesh = new THREE.Group();
     const outdoor = world.theme.outdoor;
-    if (outdoor) {
+    if (spec.look === 'cart') {
+      // Aeëtes's Mine: an ore cart, with its rails laid along the whole run.
+      this.mesh.add(makeOreCart(hw));
+      for (let i = 1; i < this.points.length; i++) this.obj.add(railSegment(this.points[i - 1], this.points[i]));
+    } else if (spec.look === 'hauler') {
+      // One of General Brennus's old Legion haulers: it only flies once he gives the order.
+      const hauler = makeHauler(hw);
+      this.mesh.add(hauler.group);
+      this.lens = hauler.lens;
+    } else if (outdoor) {
       // On Gaia Nova: a raft of logs lashed together (stone slabs over lava, so they don't burn).
       const stone = outdoor.ground === 'basalt';
       const logs = Math.max(2, Math.round((hw * 2) / 0.62));
@@ -606,7 +616,17 @@ export class Platform extends Entity {
     this.box.top = this.pos.y;
     this.box.bottom = this.pos.y - 0.5;
     this.mesh.position.copy(this.pos);
+    if (this.lens) {
+      // A hauler's lens turns green once it has its orders, and it bobs a little as it hovers.
+      const go = running;
+      this.lens.color.set(go ? '#3dff8a' : '#ff3a3a');
+      this.lens.emissive.set(go ? '#3dff8a' : '#ff3a3a');
+      this.mesh.position.y += Math.sin(this.world.time * 3) * 0.04;
+    }
   }
+
+  /** A Legion hauler's lens (red until Brennus gives the order). */
+  private lens: THREE.MeshStandardMaterial | null = null;
 }
 
 export class Faller extends Entity {

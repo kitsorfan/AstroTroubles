@@ -16,6 +16,7 @@ import { Colossus } from './gaia/colossus';
 import { Driller } from './gaia/driller';
 import { Hydra } from './gaia/hydra';
 import { RogueLux } from './gaia/rogue';
+import { Excavator } from './ch3/excavator';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
@@ -1565,6 +1566,9 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Colossus(world, id, cx, cz, h);
     case 'rogue':
       return new RogueLux(world, id, cx, cz, h);
+    // Chapter 3.
+    case 'excavator':
+      return new Excavator(world, id, cx, cz, h);
   }
 }
 

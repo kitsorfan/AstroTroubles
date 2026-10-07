@@ -2,8 +2,11 @@ import * as THREE from 'three';
 
 import type { World } from '../game/world';
 
-/** `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse. */
-export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse';
+/**
+ * `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse,
+ * `smash` General Brennus's shoulder charge or shield bash (heavy: it knocks robots over and shields away).
+ */
+export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse' | 'smash';
 
 export abstract class Entity {
   alive = true;

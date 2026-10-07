@@ -57,6 +57,7 @@ export const FLYOVER: Record<DeckId, string> = {
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
+  mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -131,6 +132,15 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'bolt', text: 'Harpies? Like the grabby bird monsters in the old story?' },
     { who: 'captain', text: 'Probably just a name. Probably.' },
     { who: 'jason', text: 'We got through the Clashing Rocks. We can get through anything!' },
+  ],
+  // Brennus's map reaches the Argo (the next level, the Sirens' Sea, is still being built).
+  mine: [
+    { who: 'captain', text: 'Argo to everyone: a message is coming in. From... the Gorgon’s old lifeboat?' },
+    { who: 'brennus', text: 'Argus. It is Brennus. I am sending you a map: the way into the Fleece vault on Colchis. Aeëtes was hiding it in his desk.' },
+    { who: 'hypatia', text: 'You went into Aeëtes’s mine ALONE? Brennus, are you hurt?' },
+    { who: 'brennus', text: 'A few dents. My robots and I are flying home. You fly to Colchis. The map says the way goes through the Sirens’ Sea.' },
+    { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
+    { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
 };
 
@@ -221,6 +231,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
   colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
+  excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
 };
 
 /**

@@ -6,7 +6,7 @@
  * that `Player` hands control to while it is the active hero (see `heroes/atalanta.ts`). Levels list
  * the heroes they allow in `LevelDef.heroes`.
  */
-import { ATALANTA, PLAYER } from '../../core/constants';
+import { ATALANTA, BRENNUS, PLAYER } from '../../core/constants';
 import type { HeroId, Speaker } from '../../world/levelTypes';
 
 /**
@@ -29,10 +29,12 @@ export type HeroMove =
   | 'slide'
   | 'bow'
   | 'kick'
-  /* Brennus (planned for his own levels) */
+  /* Brennus: SHIELD, CANNON, his CHARGE (it smashes cracked walls and crates), the STOMP, and COMMAND at Legion posts */
   | 'shield'
   | 'cannon'
-  | 'smash';
+  | 'smash'
+  | 'stomp'
+  | 'command';
 
 export interface HeroDef {
   id: HeroId;
@@ -75,17 +77,18 @@ export const HEROES: Record<HeroId, HeroDef> = {
     buttons: { shoot: 'BOW', spin: 'KICK', dash: 'SLIDE' },
     moves: ['sprint', 'wallJump', 'wallRun', 'slide', 'bow', 'kick'],
   },
+  // Slow and strong, on his own levels (see `heroes/brennus.ts`): a cannon, a shield, a smashing charge,
+  // a heavy stomp, and his old Legion robots obey him at command posts.
   brennus: {
     id: 'brennus',
     speaker: 'brennus',
     color: '#8a1a22',
-    // His moveset (slow and strong: a shield, a cannon, smashing cracked walls) comes with his levels.
-    playable: false,
-    speed: 5.5,
-    jumpV: 10.5,
-    height: 1.9,
-    buttons: { shoot: 'CANNON', spin: 'SHIELD', dash: 'SMASH' },
-    moves: ['shield', 'cannon', 'smash'],
+    playable: true,
+    speed: BRENNUS.speed,
+    jumpV: BRENNUS.jumpV,
+    height: BRENNUS.height,
+    buttons: { shoot: 'CANNON', spin: 'SHIELD', dash: 'CHARGE' },
+    moves: ['cannon', 'shield', 'smash', 'stomp', 'command'],
   },
 };
 

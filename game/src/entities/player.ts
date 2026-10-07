@@ -13,6 +13,7 @@ import { dressJason, makeJason, type HeroModel, type JasonModel } from './models
 import type { Target } from './entity';
 import { Arrows } from './heroes/arrows';
 import { AtalantaMoves } from './heroes/atalanta';
+import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
 import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
 import { JasonFx } from './moveFx';
@@ -38,6 +39,8 @@ export class Player {
   readonly roster: HeroId[];
   /** Atalanta's moves and model (built only on levels where she can play). */
   readonly ata: AtalantaMoves | null;
+  /** General Brennus's moves, model and cannon (built only on his own levels). */
+  readonly bren: BrennusMoves | null;
   /** Her arrows in flight (they keep flying after a switch). */
   readonly arrows: Arrows | null;
   /** The hero not in control, walking along behind. */
@@ -128,6 +131,8 @@ export class Player {
     const withAtalanta = this.roster.includes('atalanta');
     this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
     this.arrows = withAtalanta ? new Arrows(world) : null;
+    this.bren = this.roster.includes('brennus') ? new BrennusMoves(this, world) : null;
+    this.body.h = HEROES[this.hero].height;
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.energy = this.energyMax;
@@ -138,21 +143,25 @@ export class Player {
     this.safe.set(x, y, z);
     world.scene.add(this.jason.root);
     if (this.ata) world.scene.add(this.ata.model.root);
+    if (this.bren) world.scene.add(this.bren.model.root);
     this.fx = new JasonFx(world.scene);
     this.showHero();
   }
 
   /** The playing hero's model. */
   get model(): HeroModel {
-    return this.hero === 'atalanta' && this.ata ? this.ata.model : this.jason;
+    return this.modelOf(this.hero);
   }
 
   private modelOf(id: HeroId): HeroModel {
+    if (id === 'brennus' && this.bren) return this.bren.model;
     return id === 'atalanta' && this.ata ? this.ata.model : this.jason;
   }
 
   /** Shows the playing hero, and hands the other one (if any) to the follower. */
   private showHero() {
+    // Jason's model is always built; on a level without him (General Brennus's own) it stays hidden.
+    if (!this.roster.includes('jason')) this.jason.root.visible = false;
     for (const id of this.roster) this.modelOf(id).root.visible = id === this.hero;
     const other = nextHero(this.roster, this.hero);
     if (!other) return;
@@ -175,7 +184,7 @@ export class Player {
       cooldown: this.swapCd,
       grounded: b.grounded || this.coyote > 0,
       locked: this.down || this.world.cutscene,
-      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false),
+      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false),
       cramped: this.ata?.cramped ?? false,
     });
   }
@@ -205,6 +214,7 @@ export class Player {
     const was = this.hero;
     this.cancelCharge();
     this.ata?.reset();
+    this.bren?.reset();
     // Jason reloads while he follows along, so his clip is full when he's back.
     this.ammo = this.clipSize;
     this.reloadT = 0;
@@ -428,7 +438,12 @@ export class Player {
 
   /** Dashing (Jason) or sliding (Atalanta): enemies bumped into don't hurt. */
   get dashing() {
-    return this.dashT > 0 || (this.ata?.sliding ?? false);
+    return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false);
+  }
+
+  /** True if General Brennus's raised shield faces a hit coming from (x, z): shots bounce off it. */
+  shieldBlocks(x: number, z: number): boolean {
+    return this.hero === 'brennus' && !!this.bren?.blocks(x, z);
   }
 
   /**
@@ -543,6 +558,15 @@ export class Player {
       this.world.particles.emit(this.body.x, this.body.y + 1, this.body.z, { count: 14, color: '#bff4ff', speed: 6, life: 0.35, size: 0.4 });
       return;
     }
+    if (!hazard && fromX !== undefined && fromZ !== undefined && this.shieldBlocks(fromX, fromZ)) {
+      // Brennus's shield takes it: a clang, and he slides back a little.
+      this.bren?.clang();
+      const d = Math.hypot(this.body.x - fromX, this.body.z - fromZ) || 1;
+      this.vx = ((this.body.x - fromX) / d) * 3;
+      this.vz = ((this.body.z - fromZ) / d) * 3;
+      this.invuln = 0.3;
+      return;
+    }
     if (this.armor > 0) {
       this.absorb(fromX, fromZ);
       return;
@@ -588,6 +612,7 @@ export class Player {
     this.pounding = false;
     this.dashT = 0;
     this.ata?.reset();
+    this.bren?.reset();
     this.follower?.placeNear(x, y, z, this.facing);
   }
 
@@ -601,6 +626,7 @@ export class Player {
     this.coyote = 0;
     this.wasGrounded = false;
     this.ata?.launched();
+    this.bren?.launched();
   }
 
   revive() {
@@ -641,8 +667,12 @@ export class Player {
       this.cancelCharge();
       this.zip = null;
       this.ata?.reset();
+      this.bren?.reset();
       if (this.ata && this.hero === 'atalanta') this.ata.animate(dt, 0);
-      else this.animate(dt, 0);
+      else if (this.bren && this.hero === 'brennus') {
+        this.bren.cannon.update(dt);
+        this.bren.animate(dt, 0);
+      } else this.animate(dt, 0);
       return;
     }
     if (this.zip) {
@@ -656,6 +686,10 @@ export class Player {
     if (input.take('swap')) this.switchHero();
     if (this.ata && this.hero === 'atalanta') {
       this.ata.update(dt, input);
+      return;
+    }
+    if (this.bren && this.hero === 'brennus') {
+      this.bren.update(dt, input);
       return;
     }
 
