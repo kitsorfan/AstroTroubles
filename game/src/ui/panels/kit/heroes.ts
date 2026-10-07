@@ -107,9 +107,9 @@ export function jason(x: number, y: number, s: number, o: JasonOpts = {}): strin
     legsSvg = limb([[-20, -64], lf], SUIT, 30) + limb([[20, -64], rf], SUIT, 30) + boot([lf[0], lf[1] + 16]) + boot([rf[0], rf[1] + 16]);
   } else if (legs === 'kneel') {
     legsSvg =
-      limb([[-20, -24], [-34, -6], [-76, -8]], SUIT, 30) +
+      limb([[-20, -24], [-32, -6], [-62, -8]], SUIT, 30) +
       limb([[22, -24], [58, -36], [60, -16]], SUIT, 30) +
-      boot([-90, 2], -1) +
+      boot([-74, 2], -1) +
       boot([62, 2]);
   }
   const body = `<path d="M-46 ${-60 + dy}Q-52 ${-132 + dy} 0 ${-134 + dy}Q52 ${-132 + dy} 46 ${-60 + dy}Q42 ${-44 + dy} 0 ${-44 + dy}Q-42 ${-44 + dy} -46 ${-60 + dy}Z" fill="${SUIT}" ${ink(6)}/>
