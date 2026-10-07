@@ -68,6 +68,8 @@ export class Anchor extends Entity implements Interactable {
 
   update(dt: number) {
     this.t += dt;
+    // Grapple Range (a Gaia Nova upgrade) lets Jason reach rings from a little farther away.
+    this.range = this.world.player.grappleRange * CELL;
     const has = this.hooked;
     const focused = this.world.focus === this;
     this.ring.rotation.y += dt * (focused ? 4 : 1);

@@ -78,6 +78,10 @@ const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
   rapid: ICON.dash,
   boltZap: ICON.star,
   magnet: ICON.bolt,
+  armor: ICON.shield(true),
+  dashCell: ICON.energy,
+  spinCharge: `<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-linecap="round"/><path d="M3 4l1.8 5.6L10 7.5" fill="none" stroke="#ffd166" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v6M9 12h6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+  grapple: ICON.grapple,
 };
 
 /** What the shop screen can ask the game to do. */
@@ -277,7 +281,8 @@ export class UI {
     }
   }
 
-  setHearts(n: number, max: number) {
+  /** Hearts, then a blue shield for each Armor Plating point (dim once spent). */
+  setHearts(n: number, max: number, armor = 0, armorMax = 0) {
     const el = $(this.hud, '.hearts');
     if (n < this.lastHearts) {
       el.classList.remove('shake');
@@ -285,7 +290,9 @@ export class UI {
       el.classList.add('shake');
     }
     this.lastHearts = n;
-    el.innerHTML = Array.from({ length: max }, (_, i) => ICON.heart(i < n)).join('');
+    const shields = Array.from({ length: armorMax }, (_, i) => `<i class="armor">${ICON.shield(i < armor)}</i>`).join('');
+    el.classList.toggle('wide', max > 10);
+    el.innerHTML = Array.from({ length: max }, (_, i) => ICON.heart(i < n)).join('') + shields;
   }
 
   setBolts(n: number) {
@@ -444,6 +451,7 @@ export class UI {
     const box = $(this.hud, '.ammo');
     const pips = $(box, '.pips');
     if (pips.childElementCount !== clip) pips.innerHTML = '<i></i>'.repeat(clip);
+    pips.classList.toggle('many', clip > 10);
     pips.querySelectorAll('i').forEach((el, i) => el.classList.toggle('full', i < ammo));
     box.classList.toggle('reloading', reload > 0);
     $<HTMLElement>(box, '.reload i').style.width = `${Math.round(reload * 100)}%`;
@@ -1096,15 +1104,18 @@ export class UI {
       const stock = shopStock(save, deck);
       const tabs = stock.weapons.length > 0;
       if (!tabs) this.shopTab = 'upgrades';
-      const card = (id: string, cls: string, icon: string, name: string, stars: string, desc: string, button: string) =>
-        `<div class="shop-item ${cls} ${bought === id ? 'bought' : ''}"><div class="icon">${icon}</div><div class="info"><b>${tr(name)}</b>${stars}<i>${tr(desc)}</i></div>${button}</div>`;
+      const card = (id: string, cls: string, icon: string, name: string, stars: string, desc: string, button: string, tag = '') =>
+        `<div class="shop-item ${cls} ${bought === id ? 'bought' : ''}"><div class="icon">${icon}</div><div class="info"><b>${tr(name)}${tag}</b>${stars}<i>${tr(desc)}</i></div>${button}</div>`;
       const price = (n: number) => `${ICON.bolt}${n}`;
       const upgrades = stock.upgrades
         .map((o) => {
           const maxed = o.price === null;
-          const stars = `<span class="stars">${'★'.repeat(o.level)}<em>${'★'.repeat(o.max - o.level)}</em></span>`;
+          // Gold stars for the ship's levels, cyan ones for the Mk II levels.
+          const row = (from: number, to: number) => `${'★'.repeat(Math.max(0, Math.min(o.level, to) - from))}<em>${'★'.repeat(Math.max(0, to - Math.max(o.level, from)))}</em>`;
+          const mk2 = o.max > o.base ? `<span class="mk2">${row(o.base, o.max)}</span>` : '';
+          const stars = `<span class="stars">${row(0, o.base)}${mk2}</span>`;
           const btn = `<button class="buy" data-up="${o.item.id}" ${!maxed && save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${maxed ? tr('MAX') : price(o.price ?? 0)}</button>`;
-          return card(o.item.id, maxed ? 'maxed' : '', UPGRADE_ICON[o.item.id] ?? ICON.star, o.item.name, stars, o.item.desc, btn);
+          return card(o.item.id, maxed ? 'maxed' : '', UPGRADE_ICON[o.item.id] ?? ICON.star, o.item.name, stars, o.item.desc, btn, o.base > 0 && o.max > o.base && o.level >= o.base ? ' <small class="mk">Mk II</small>' : '');
         })
         .join('');
       const weapons = stock.weapons

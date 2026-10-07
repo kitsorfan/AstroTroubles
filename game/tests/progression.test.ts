@@ -76,10 +76,10 @@ describe('side quests and rewards', () => {
     const save = newSave();
     expect(givePrize('clip', save)).toContain('Bigger Clip');
     expect(save.upgrades.clip).toBe(1);
-    save.upgrades.clip = UPGRADE_MAX.clip;
+    save.upgrades.clip = UPGRADE_MAX[1].clip;
     const before = save.bolts;
     givePrize('clip', save);
-    expect(save.upgrades.clip).toBe(UPGRADE_MAX.clip);
+    expect(save.upgrades.clip).toBe(UPGRADE_MAX[1].clip);
     expect(save.bolts).toBeGreaterThan(before);
     givePrize('heart', save);
     expect(save.maxHearts).toBeGreaterThan(newSave().maxHearts);

@@ -120,6 +120,16 @@ canvas#game {
   animation: shake 0.35s;
 }
 
+/* Eleven or twelve hearts (Heart Plating Mk II): six per row, still two rows. */
+.hearts.wide {
+  max-width: calc(6 * 17px + 5 * 2px);
+}
+
+/* Armor Plating shields follow the hearts. */
+.hearts i.armor {
+  display: flex;
+}
+
 @keyframes shake {
   0%,
   100% {
@@ -1482,6 +1492,15 @@ canvas#game {
   box-shadow: 0 0 6px #5ee0ff;
 }
 
+/* Bigger Clip Mk II: twelve slimmer pips still fit under the weapon button. */
+.ammo .pips.many {
+  gap: 2px;
+}
+
+.ammo .pips.many i {
+  width: 5px;
+}
+
 .ammo .reload {
   width: 60px;
   height: 5px;
@@ -2270,6 +2289,21 @@ canvas#game {
 
 .shop-item .stars .mk2 em {
   color: rgba(127, 230, 255, 0.3);
+}
+
+/* The taller Gaia Nova shop reaches the top of small screens: hide the hearts and bolts behind it. */
+#ui:has(.shop-panel) .hud-left {
+  visibility: hidden;
+}
+
+.shop-item .info b .mk {
+  white-space: nowrap;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: rgba(127, 230, 255, 0.2);
+  color: #7fe6ff;
+  font-size: 10px;
+  vertical-align: middle;
 }
 
 @media (max-width: 720px) {

@@ -19,8 +19,16 @@ export interface Difficulty {
  */
 export function difficultyFor(deckIndex: number, save: SaveData): Difficulty {
   const u = save.upgrades;
-  // Each extra weapon (Gaia Nova's shop) is more choice than raw power, so it counts for little.
+  // The ship's two levels of each weapon upgrade count fully; the Mk II level (Gaia Nova) a little
+  // less, since the regions there already get tougher; each extra weapon is more choice than raw
+  // power, so it counts for little.
+  let ship = 0;
+  let mk2 = 0;
+  for (const lvl of [u.blaster ?? 0, u.rapid ?? 0, u.clip ?? 0]) {
+    ship += Math.min(2, lvl);
+    mk2 += Math.max(0, lvl - 2);
+  }
   const arms = ownedWeapons(save.weapons).length - 1;
-  const tier = deckIndex - 1 + 0.5 * ((u.blaster ?? 0) + (u.rapid ?? 0) + (u.clip ?? 0)) + 0.1 * arms;
+  const tier = deckIndex - 1 + 0.5 * ship + 0.35 * mk2 + 0.1 * arms;
   return { tier, hp: 1 + 0.22 * tier, speed: 1 + 0.06 * tier, rate: 1 + 0.1 * tier, aggro: 11 + tier * 0.7 };
 }

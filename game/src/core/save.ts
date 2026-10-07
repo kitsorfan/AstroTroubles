@@ -4,7 +4,8 @@ import { START_HEARTS } from './constants';
 import { detectLang, type Lang } from './i18n';
 import { equippedWeapon, ownedWeapons } from '../entities/weapons';
 
-export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart';
+/** Shop upgrades. The last four are only sold on Gaia Nova (chapter 2). */
+export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart' | 'armor' | 'dashCell' | 'spinCharge' | 'grapple';
 export type Quality = 'low' | 'medium' | 'high';
 
 export interface Settings {

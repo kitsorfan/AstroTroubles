@@ -9,7 +9,7 @@ import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
-import { CELL, PLAYER } from '../core/constants';
+import { CELL } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
@@ -181,6 +181,8 @@ export class Game {
     // &up=heart:4,armor:1 sets upgrade levels, and &shop opens PANDORA's shop once the deck is up.
     const bolts = Number(dev.get('bolts'));
     if (bolts > 0) this.save.bolts = bolts;
+    const hearts = Number(dev.get('hearts'));
+    if (hearts > 0) this.save.maxHearts = hearts;
     const arms = dev.get('weapons');
     if (arms) this.save.weapons = ownedWeapons(arms.split(','));
     this.save.weapon = equippedWeapon(this.save.weapons, dev.get('weapon') ?? this.save.weapon);
@@ -577,7 +579,7 @@ export class Game {
   private refreshHud() {
     const w = this.world;
     if (!w) return;
-    this.ui.setHearts(w.player.hearts, this.save.maxHearts);
+    this.ui.setHearts(w.player.hearts, this.save.maxHearts, w.player.armor, w.player.armorMax);
     this.ui.setBolts(this.save.bolts);
     this.refreshAbilities(w);
   }
@@ -586,11 +588,11 @@ export class Game {
     const pl = w.player;
     this.ui.setAbilities({
       spins: pl.spins,
-      spinMax: PLAYER.spinCharges,
+      spinMax: pl.spinMax,
       spinReload: pl.spinReloadProgress,
       dash: this.save.abilities.includes('dash'),
       energy: pl.energy,
-      energyMax: PLAYER.dashEnergy,
+      energyMax: pl.energyMax,
       pulse: this.save.abilities.includes('pulse') && w.boltActive,
       pulseCharge: w.pulseCharge,
       pulseLeft: w.pulseCd,
@@ -743,11 +745,12 @@ export class Game {
       cutscene: (script) => this.cutscene(script),
       prize: (reward) => {
         const w = this.world;
-        const msg = givePrize(reward, this.save);
+        const msg = givePrize(reward, this.save, w?.def.id);
         this.ui.reward(msg);
         if (w) {
           w.player.heal(99);
           w.player.refreshGear();
+          w.player.refill();
           for (const m of payQuests(w.def.id, this.save)) this.ui.reward(m);
         }
         this.persist();
@@ -778,6 +781,7 @@ export class Game {
     if (!ok) return;
     if (heart) this.world?.player.heal(99);
     this.world?.player.refreshGear();
+    this.world?.player.refill();
     audio.play('upgrade');
     haptic('success');
     writeSave(this.save);

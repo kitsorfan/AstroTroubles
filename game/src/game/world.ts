@@ -771,7 +771,7 @@ export class World {
 
   /** Drops a dash energy cell, but only once Jason has the Dash Thrusters and could use one. */
   dropEnergy(pos: THREE.Vector3) {
-    if (!this.save.abilities.includes('dash') || this.player.energy >= PLAYER.dashEnergy) return;
+    if (!this.save.abilities.includes('dash') || this.player.energy >= this.player.energyMax) return;
     this.addEntity(EnergyPickup.at(this, pos));
   }
 
@@ -944,6 +944,7 @@ export class World {
     audio.play('checkpoint');
     this.player.heal(99);
     this.player.gainEnergy(99);
+    this.player.rechargeArmor();
     this.hooks.toast('Checkpoint saved!', 'bolt');
     this.hooks.checkpoint();
   }
