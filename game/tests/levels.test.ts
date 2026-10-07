@@ -1,22 +1,26 @@
 import { deckAbilities } from '../tools/deckAbilities';
 import { isCollectible, reach, refillGaps, timedRoutes } from '../tools/reach';
 import { FLYOVER, TRANSITIONS } from '../src/game/story';
-import { CHAPTERS, CHAPTER_DECKS, LEVELS, LEVEL_ORDER, isFinale } from '../src/levels';
+import { CHAPTER_DECKS, FOOT_LEVELS, LEVELS, LEVEL_ORDER, chapterSize, isFinale } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability } from '../src/world/levelTypes';
 
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
-const parsed = LEVEL_ORDER.map((id) => parseLevel(LEVELS[id]));
+// The levels Jason walks; the flight levels have their own checks in chapter3.test.ts.
+const parsed = FOOT_LEVELS.map((id) => parseLevel(LEVELS[id]));
 
 describe('deck data', () => {
-  it('has six decks on the ship and six regions on Gaia Nova, in order', () => {
-    expect(LEVEL_ORDER).toHaveLength(12);
-    for (const ch of CHAPTERS) expect(CHAPTER_DECKS[ch]).toHaveLength(6);
+  it('has six decks on the ship, six regions on Gaia Nova and the chapter 3 levels built so far, in order', () => {
+    expect(CHAPTER_DECKS[1]).toHaveLength(6);
+    expect(CHAPTER_DECKS[2]).toHaveLength(6);
+    expect(CHAPTER_DECKS[3].length).toBeGreaterThanOrEqual(1);
+    expect(CHAPTER_DECKS[3].length).toBeLessThanOrEqual(chapterSize(3));
+    expect(LEVEL_ORDER).toHaveLength(12 + CHAPTER_DECKS[3].length);
     LEVEL_ORDER.forEach((id, i) => expect(LEVELS[id].index).toBe(i + 1));
   });
 
-  it('hides 18 shards and 12 people to rescue in each chapter', () => {
-    for (const ch of CHAPTERS) {
+  it('hides 18 shards and 12 people to rescue in each of the first two chapters', () => {
+    for (const ch of [1, 2] as const) {
       let shards = 0;
       let colonists = 0;
       for (const level of parsed.filter((l) => CHAPTER_DECKS[ch].includes(l.def.id))) {
@@ -81,7 +85,7 @@ describe('deck data', () => {
   });
 });
 
-describe.each(LEVEL_ORDER)('%s layout', (id) => {
+describe.each(FOOT_LEVELS)('%s layout', (id) => {
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
 

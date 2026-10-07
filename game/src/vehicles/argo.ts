@@ -105,6 +105,8 @@ export class ArgoFlight implements Vehicle {
     this.view = new CourseView(things);
     scene.add(this.view.group);
     this.model = makeArgo();
+    // A little smaller than life, so the corridor ahead stays in view over the sail.
+    this.model.root.scale.setScalar(0.72);
     scene.add(this.model.root);
     this.dove = makeDove();
     this.dove.root.visible = false;
@@ -452,7 +454,7 @@ export class ArgoFlight implements Vehicle {
     this.giant.group.position.set(-260 + k * 60, 90 - k * 30, -980 + k * 260);
     this.giant.group.scale.setScalar(190 + k * 50);
     if (dt > 0 && Math.random() < 0.7) {
-      for (const side of [-1, 1]) this.world.particles.emit(f.x + side * 0.5, f.y - 0.1, 3.6, { count: 1, color: f.boosting ? '#ffd166' : '#7fe6ff', speed: 0.4, life: 0.35, size: 0.7, gravity: 0, vel: [0, 0, 18 + f.v * 0.5] });
+      for (const side of [-1, 1]) this.world.particles.emit(f.x + side * 0.36, f.y - 0.1, 2.6, { count: 1, color: f.boosting ? '#ffd166' : '#7fe6ff', speed: 0.3, life: 0.3, size: 0.35, gravity: 0, vel: [0, 0, 18 + f.v * 0.5] });
     }
     // Dust shakes off the Clashing Rocks while they rumble, and the slam is loud.
     for (const c of this.view.visibleClashes) {
@@ -477,8 +479,8 @@ export class ArgoFlight implements Vehicle {
 
   cameraPose(out: Rig, dt: number): Rig {
     const f = this.flight;
-    const want = tmp.set(f.x * 0.55, f.y * 0.5 + 2.7, 10.5);
-    const look = tmp2.set(f.x * 0.8, f.y * 0.7 + 0.9, -16);
+    const want = tmp.set(f.x * 0.55, f.y * 0.5 + 4.6, 12.5);
+    const look = tmp2.set(f.x * 0.8, f.y * 0.7 + 0.4, -22);
     if (!this.camReady || dt === 0) {
       this.camPos.copy(want);
       this.camLook.copy(look);
@@ -559,6 +561,12 @@ export class ArgoFlight implements Vehicle {
       [tr('Drones shot down'), `${this.dronesShot}`],
       [tr('Squished by the rocks'), `${this.flight.crushes}`],
     ];
+  }
+
+  skipTo(at: number) {
+    this.flight.restart(at);
+    this.drones.clear();
+    this.camReady = false;
   }
 
   dispose() {

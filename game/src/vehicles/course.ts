@@ -296,9 +296,15 @@ export function crystalsNear(seed: number, lane: Lane, at: number[]): Crystal[] 
   const rand = seeded(seed);
   return at.map((s) => {
     const [lx, ly] = laneAt(lane, s);
-    const a = rand() * Math.PI * 2;
-    const x = Math.max(-FLIGHT.halfW + 1.5, Math.min(FLIGHT.halfW - 1.5, lx + Math.cos(a) * 4.2));
-    const y = Math.max(-FLIGHT.halfH + 1.2, Math.min(FLIGHT.halfH - 1.2, ly + Math.sin(a) * 2.8));
+    let a = rand() * Math.PI * 2;
+    let x = 0;
+    let y = 0;
+    // Off the lane, but still inside the corridor (turning round if the corridor's edge is in the way).
+    for (let tries = 0; tries < 12; tries++, a += Math.PI / 6) {
+      x = Math.max(-FLIGHT.halfW + 1.5, Math.min(FLIGHT.halfW - 1.5, lx + Math.cos(a) * 4.2));
+      y = Math.max(-FLIGHT.halfH + 1.2, Math.min(FLIGHT.halfH - 1.2, ly + Math.sin(a) * 2.8));
+      if (Math.hypot(x - lx, y - ly) > 3.2) break;
+    }
     return { kind: 'crystal', s, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
   });
 }

@@ -214,6 +214,8 @@ export class Game {
       if (dev.has('shop')) setTimeout(() => this.world && this.hooks().shop(), 3600);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
+      // On a vehicle level, &at=<distance> flies ahead along the course instead.
+      if (at && at.length === 1) setTimeout(() => this.world?.vehicle?.skipTo?.(at[0]), 3400);
       if (at && at.length === 2) {
         setTimeout(() => {
           const w = this.world;

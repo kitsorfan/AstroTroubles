@@ -1,7 +1,9 @@
+import { EL_CHAPTER3 } from './el/chapter3';
 import { EL_DESERT } from './el/desert';
 import { EL_JUNGLE } from './el/jungle';
 import { EL_PLAINS } from './el/plains';
 import { EL_ROBOTS } from './el/robots';
+import { EL_ROCKS } from './el/rocks';
 import { EL_ROCKIES } from './el/rockies';
 import { EL_SNOW } from './el/snow';
 import { EL_VOLCANO } from './el/volcano';
@@ -616,7 +618,6 @@ export const EL: Record<string, string> = {
   "GAIA NOVA · SHUTTLE": "ΓΑΙΑ ΝΟΒΑ · ΣΚΑΦΟΣ",
   "A GARDEN FOR EVERYONE": "ΕΝΑΣ ΚΗΠΟΣ ΓΙΑ ΟΛΟΥΣ",
   "GAIA NOVA IS FREE!": "Η ΓΑΙΑ ΝΟΒΑ ΕΙΝΑΙ ΕΛΕΥΘΕΡΗ!",
-  "END OF CHAPTER 1": "ΤΕΛΟΣ ΤΟΥ ΚΕΦΑΛΑΙΟΥ 1",
   "Chapter 2: Gaia Nova": "Κεφάλαιο 2: Γαία Νόβα",
   "TAKE OFF": "ΑΠΟΓΕΙΩΣΗ",
   "on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.": "στη Γαία Νόβα, κοίτα προς έναν κρίκο που λάμπει και πάτα το κουμπί του ΛΟΥΞ για να πεταχτείς κατευθείαν ως εκεί, πάνω από κενά και πάνω σε γκρεμούς.",
@@ -672,5 +673,7 @@ export const EL: Record<string, string> = {
   ...EL_JUNGLE,
   ...EL_VOLCANO,
   ...EL_ROBOTS,
+  ...EL_CHAPTER3,
+  ...EL_ROCKS,
   ...EL_WEAPONS,
 };

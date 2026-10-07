@@ -12,7 +12,7 @@ import { rockGeometry, rockMaterial } from './space';
 
 /** How far ahead (and behind) things are drawn. */
 const AHEAD = 330;
-const BEHIND = 16;
+const BEHIND = 5;
 
 /** First index in a list sorted by `s` whose s is >= v. */
 export function lowerBound(things: CourseThing[], v: number): number {

@@ -33,6 +33,8 @@ export interface Vehicle {
   hud(): VehicleHud;
   /** Its stats so far, as [label, value] rows for the pause menu and the results (labels already translated). */
   stats(): [string, string][];
+  /** Developer shortcut (`#deck=<id>&at=<n>`): jump ahead along the course. */
+  skipTo?(at: number): void;
   /** Frees anything the vehicle added outside the scene (its HUD elements). */
   dispose(): void;
 }

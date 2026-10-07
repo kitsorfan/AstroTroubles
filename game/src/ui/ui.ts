@@ -310,7 +310,9 @@ export class UI {
 
   /** Shard icons for the deck (memory shards on the ship, journal pages on Gaia Nova). */
   setShards(got: boolean[], pages = false) {
-    $(this.hud, '.shards').innerHTML = got.map((g) => (pages ? ICON.page(g) : ICON.shard(g))).join('');
+    const el = $(this.hud, '.shards');
+    el.innerHTML = got.map((g) => (pages ? ICON.page(g) : ICON.shard(g))).join('');
+    el.classList.toggle('hidden', !got.length);
   }
 
   setObjective(text: string) {

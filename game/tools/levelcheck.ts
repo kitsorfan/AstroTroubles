@@ -10,6 +10,13 @@ import { isCollectible, reach, refillGaps, renderReach, timedRoutes } from './re
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
 
 function check(id: DeckId, showMap: boolean) {
+  const def = LEVELS[id];
+  if (def.flight) {
+    // A flight level has no map to walk: its course is checked by game/tests/chapter3.test.ts.
+    const n = (k: string) => def.flight?.things.filter((t) => t.kind === k).length ?? 0;
+    console.log(`== ${id} (flight: ${def.vehicle}) rocks ${n('rock')} crystals ${n('crystal')} rings ${n('ring')} bolts ${n('bolt')} drone waves ${n('drones')} clashing pairs ${n('clash')} hold lines ${n('hold')} checkpoints ${n('checkpoint')}`);
+    return;
+  }
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
   const lines: string[] = [`== ${id} (${level.width}x${level.depth}) abilities: [${before.join(', ')}] -> [${after.join(', ')}]`];
