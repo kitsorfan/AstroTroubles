@@ -223,6 +223,7 @@ export interface LevelDef {
   vehicle?: VehicleKind;
   /** The Argo's flight course (for `vehicle: 'argo'`). */
   flight?: FlightCourse;
+  /**
    * Heroes the player can switch between on this level, the first one starting (default: just
    * Jason). With two or more, the HUD shows the switch button.
    */
