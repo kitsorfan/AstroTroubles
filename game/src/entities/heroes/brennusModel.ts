@@ -132,8 +132,8 @@ export function makeBrennus(): BrennusModel {
   }
   head.add(mesh(boxG(0.02, 0.14, 0.02), mat('#b06a5a'), 0.13, 0.06, 0.29, false).rotateZ(0.3));
   const visor = ownMat('#ff3a3a', { emissive: '#ff2a2a', ei: 0.6, rough: 0.1 });
-  head.add(mesh(torus(0.065, 0.014), gold, -0.1, 0.0, 0.3, false));
-  head.add(mesh(cyl(0.06, 0.06, 0.01, 14), visor, -0.1, 0.0, 0.3, false).rotateX(Math.PI / 2));
+  head.add(mesh(torus(0.08, 0.016), gold, -0.1, 0.0, 0.335, false));
+  head.add(mesh(cyl(0.075, 0.075, 0.012, 16), visor, -0.1, 0.0, 0.33, false).rotateX(Math.PI / 2));
   head.add(mesh(cyl(0.004, 0.004, 0.26, 4), gold, -0.16, -0.12, 0.24, false).rotateZ(0.4));
   // The cap: band, crown, peak, gold braid and the red gear badge.
   head.add(mesh(cyl(0.31, 0.3, 0.12, 22), dark, 0, 0.2, 0));
@@ -163,6 +163,7 @@ export function makeBrennus(): BrennusModel {
   cannon.position.set(0, -0.42, 0.02);
   // Along the forearm: it points down at rest and straight ahead when he aims.
   cannon.rotation.x = Math.PI;
+  cannon.scale.setScalar(0.78);
   const brass = mat('#c9a24a', { rough: 0.3, metal: 0.8 });
   cannon.add(mesh(cyl(0.15, 0.17, 0.42, 14), mat('#3a3a32', { rough: 0.5, metal: 0.5 }), 0, 0.12, 0));
   const heat = ownMat('#4a3a30', { emissive: C.glow, ei: 0, rough: 0.4, metal: 0.6 });
@@ -171,7 +172,7 @@ export function makeBrennus(): BrennusModel {
   cannon.add(mesh(cyl(0.07, 0.07, 0.04, 12), mat('#110c08'), 0, 0.63, 0, false));
   armR.add(cannon);
   const chargeGlow = glowSprite(C.glow, 1, 0.9);
-  chargeGlow.position.set(0, -1.1, 0);
+  chargeGlow.position.set(0, -0.95, 0);
   chargeGlow.scale.setScalar(0.001);
   armR.add(chargeGlow);
   const shield = new THREE.Group();

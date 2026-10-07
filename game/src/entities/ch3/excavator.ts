@@ -50,7 +50,7 @@ export class Excavator extends Boss implements Target, Interactable {
   private state: State = 'drive';
   private stateT = 3;
   private count = 0;
-  private yaw = Math.PI;
+  private yaw = 0;
   private dir = new THREE.Vector2();
   private orbit = 0;
   private home: THREE.Vector3;

@@ -520,14 +520,14 @@ export class UI {
 
   private lastHeat = '';
 
-  /** General Brennus's cannon heat, in a bar under CANNON: it blinks red while the cannon cools down after overheating. */
+  /** General Brennus's cannon heat, a thermometer beside CANNON: it blinks red while the cannon cools down after overheating. */
   setHeat(heat: number, over: boolean) {
     const key = `${Math.round(heat * 30)}|${over}`;
     if (key === this.lastHeat) return;
     this.lastHeat = key;
     const bar = $(this.hud, '.heat');
     bar.classList.toggle('over', over);
-    $<HTMLElement>(bar, 'i').style.width = `${Math.round(heat * 100)}%`;
+    $<HTMLElement>(bar, 'i').style.height = `${Math.round(heat * 100)}%`;
   }
 
   private threatQueue: [string, string, string, string][] = [];

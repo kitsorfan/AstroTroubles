@@ -38,11 +38,11 @@ export function ch3Brennus(): string {
       `<path d="M800 50V666" stroke="#3a4426" stroke-width="26"/><path d="M800 50V666" fill="none" ${ink(4)}/>` +
       [180, 420, 1180, 1420].map((x) => `<circle cx="${x}" cy="${x < 800 ? 96 : 96}" r="9" fill="${C.gold}" ${ink(3)}/>`).join('') +
       at(800, 64, 1, `<circle r="34" fill="${C.red}" ${ink(5)}/><circle r="13" fill="#1a1630"/>`) +
-      // The dashboard, with its buttons and a little radar.
-      `<path d="M0 700Q800 650 1600 700V900H0Z" fill="url(#${id}d)" ${ink(6)}/>` +
+      // Brennus in his seat, behind the dashboard with its buttons and a little radar.
+      brennus(470, 890, 2.1, { pose: 'hold', face: 'smile', legs: 'none' }) +
+      `<path d="M0 720Q800 670 1600 720V900H0Z" fill="url(#${id}d)" ${ink(6)}/>` +
       lights +
       `<circle cx="1420" cy="800" r="60" fill="#0e2a1a" ${ink(5)}/><path d="M1420 800L1470 770" stroke="#3dff8a" stroke-width="5"/><circle cx="1440" cy="780" r="7" fill="${C.gold}"/>` +
-      brennus(520, 960, 1.35, { pose: 'hold', face: 'smile', legs: 'none' }) +
       gascuSprout(id + 's', 820, 760, 0.85) +
       sparkle(840, 610, 12, C.pinkLight) +
       sparkle(780, 640, 8, '#fff') +
@@ -70,9 +70,9 @@ export function ch3Map(): string {
       glow(id + 'h', 1250, 300, 200, 0.5) +
       `<g opacity=".8">${aeetes(1250, 520, 0.8, { pose: 'fist', face: 'angry' })}</g>` +
       // Brennus holding the map up high, with a grin under the moustache.
-      glow(id + 'g', 520, 300, 260, 0.7) +
-      at(520, 290, 1, map, false, -6) +
-      brennus(500, 960, 1.4, { pose: 'cheer', face: 'grin' }) +
+      glow(id + 'g', 500, 380, 280, 0.7) +
+      at(500, 380, 1.05, map, false, -6) +
+      brennus(500, 900, 1.8, { pose: 'cheer', face: 'grin' }) +
       sparkle(330, 190, 14, '#fff6d0') +
       sparkle(700, 170, 10, '#fff6d0') +
       sparkle(690, 400, 8, '#fff') +
