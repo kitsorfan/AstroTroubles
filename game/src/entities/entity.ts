@@ -34,6 +34,11 @@ export interface Target {
   aimable: boolean;
   /** Returns true if the hit connected (projectiles stop on it). */
   hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean;
+  /**
+   * Hit by one of Atalanta's charged power arrows. Targets without it take the arrow as an ordinary
+   * shot; a few (AELLO) react to nothing else. Returns true if the arrow connected.
+   */
+  powerArrow?(dmg: number, from: THREE.Vector3): boolean;
 }
 
 /** Anything the LUX/action button can use. */

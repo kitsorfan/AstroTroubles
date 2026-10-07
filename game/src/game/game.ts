@@ -26,6 +26,7 @@ import { equippedWeapon, ownedWeapons } from '../entities/weapons';
 import { buyUpgrade, buyWeapon, equipWeapon } from './shop';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
+import { findKind, lootLabels } from './collectibles';
 import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
 import { takeReviewAsk } from './review';
 import { INTEL, creditsHtml, endingChapter, endingText } from './story';
@@ -453,6 +454,8 @@ export class Game {
     this.ui.pause({
       deck: d.name,
       planet: ch === 2,
+      voyage: ch === 3,
+      labels: lootLabels(ch),
       stats: w.vehicle?.stats(),
       shards: tr('{n} / {m} here · {t} / {total} total', {
         n: d.shardIds.filter((s) => this.save.shards.includes(`${d.id}.${s}`)).length,
@@ -648,7 +651,7 @@ export class Game {
       this.vehicleHud.show(this.world.vehicle?.kind ?? null);
       this.ui.setShards(
         def.shardIds.map((s) => this.save.shards.includes(`${id}.${s}`)),
-        chapterOf(id) === 2,
+        findKind(chapterOf(id)),
       );
       this.refreshHud();
       this.input.flush();
@@ -798,7 +801,7 @@ export class Game {
           const d = w.def;
           this.ui.setShards(
             d.shardIds.map((s) => this.save.shards.includes(`${d.id}.${s}`)),
-            chapterOf(d.id) === 2,
+            findKind(chapterOf(d.id)),
           );
           const key = id.split('.')[1];
           const lines = d.dialogues[`shard:${key}`];
@@ -922,6 +925,7 @@ export class Game {
         colonists: colonistsHere ? `${d.colonistIds?.filter((c) => this.save.colonists.includes(`${d.id}.${c}`)).length} / ${colonistsHere}` : '',
         next: nextId ? LEVELS[nextId].name : null,
         planet: ch === 2,
+        labels: lootLabels(ch),
         voyage: ch === 3,
         rows: w.vehicle?.stats(),
         soon,

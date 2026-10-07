@@ -24,6 +24,7 @@ import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
+import type { FindKind } from '../game/collectibles';
 import type { Helper } from '../game/companions';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
@@ -319,10 +320,10 @@ export class UI {
     $(el, 'b').textContent = String(n);
   }
 
-  /** Shard icons for the deck (memory shards on the ship, journal pages on Gaia Nova). */
-  setShards(got: boolean[], pages = false) {
+  /** Collectible icons for the deck (memory shards on the ship, journal pages on Gaia Nova, light-stones in chapter 3). */
+  setShards(got: boolean[], kind: FindKind = 'shard') {
     const el = $(this.hud, '.shards');
-    el.innerHTML = got.map((g) => (pages ? ICON.page(g) : ICON.shard(g))).join('');
+    el.innerHTML = got.map((g) => (kind === 'page' ? ICON.page(g) : kind === 'stone' ? ICON.stone(g) : ICON.shard(g))).join('');
     el.classList.toggle('hidden', !got.length);
   }
 
@@ -1053,6 +1054,10 @@ export class UI {
     shards: string;
     colonists: string;
     planet: boolean;
+    /** A chapter 3 level (the Argonauts' voyage). */
+    voyage?: boolean;
+    /** What the shard and colonist rows are called in this chapter (see `lootLabels`). */
+    labels?: { finds: string; rescues: string };
     /** Replaces the shard and colonist rows (a flight shows its rings and drones instead). */
     stats?: [string, string][];
     quests: { text: string; done: boolean; progress: string; reward: string }[];
@@ -1063,8 +1068,8 @@ export class UI {
     onQuit: () => void;
   }) {
     const stats = opts.stats ?? [
-      [opts.planet ? 'Journal pages' : 'Memory shards', opts.shards],
-      [opts.planet ? 'Scientists freed' : 'Colonists rescued', opts.colonists],
+      [opts.labels?.finds ?? (opts.planet ? 'Journal pages' : 'Memory shards'), opts.shards],
+      [opts.labels?.rescues ?? (opts.planet ? 'Scientists freed' : 'Colonists rescued'), opts.colonists],
     ];
     const el = this.open(`<div class="panel pause-panel">
       <h2>${tr('PAUSED')} · ${upper(tr(opts.deck))}</h2>
@@ -1078,7 +1083,7 @@ export class UI {
         </div>
         <div class="col-info">
           ${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
-          <div class="quests"><div class="qh">${opts.stats ? tr('SIDE QUESTS ON THIS LEVEL') : opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
+          <div class="quests"><div class="qh">${opts.stats || opts.voyage ? tr('SIDE QUESTS ON THIS LEVEL') : opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
             .map((q) => `<div class="q ${q.done ? 'done' : ''}"><i>${q.done ? '✔' : ''}</i><div><b>${q.text}</b><small>${q.progress} · ${tr('Reward')}: ${q.reward}</small></div></div>`)
             .join('')}</div>
         </div>
@@ -1251,7 +1256,7 @@ export class UI {
    * flight's rings and drones); `soon` names the next level when it isn't built yet.
    */
   results(
-    r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean; voyage?: boolean; rows?: [string, string][]; soon?: string | null },
+    r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean; voyage?: boolean; rows?: [string, string][]; soon?: string | null; labels?: { finds: string; rescues: string } },
     next: () => void,
   ) {
     const go = r.next
@@ -1266,8 +1271,8 @@ export class UI {
       <div class="deck">${kicker}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
       <div class="stat"><span>${tr('Time')}</span><b>${r.time}</b></div>
       <div class="stat"><span>${tr('Bolts collected')}</span><b>${r.bolts}</b></div>
-      ${r.shards ? `<div class="stat"><span>${r.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${r.shards}</b></div>` : ''}
-      ${r.colonists ? `<div class="stat"><span>${r.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${r.colonists}</b></div>` : ''}
+      ${r.shards ? `<div class="stat"><span>${r.labels?.finds ?? (r.planet ? tr('Journal pages') : tr('Memory shards'))}</span><b>${r.shards}</b></div>` : ''}
+      ${r.colonists ? `<div class="stat"><span>${r.labels?.rescues ?? (r.planet ? tr('Scientists freed') : tr('Colonists rescued'))}</span><b>${r.colonists}</b></div>` : ''}
       ${(r.rows ?? []).map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
       ${r.soon ? `<p class="soon-note">${tr('Next: {deck}. Coming soon!', { deck: tr(r.soon) })}</p>` : ''}
       <button class="menu-btn primary next" style="margin-top:14px">${go}</button></div>`);

@@ -140,7 +140,7 @@ export class Arrows {
     for (const t of w.targetsNear(p, 1.6)) {
       if (a.pierced.has(t) || t.aim.distanceTo(p) > t.radius + 0.4) continue;
       a.pierced.add(t);
-      if (!t.hit(a.dmg, 'shot', p.clone())) {
+      if (!(t.powerArrow ? t.powerArrow(a.dmg, p.clone()) : t.hit(a.dmg, 'shot', p.clone()))) {
         this.stick(a);
         return;
       }

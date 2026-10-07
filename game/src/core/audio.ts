@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -262,6 +262,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x...x.x.x...x.x.', s: '....x.......x...', h: 'x.xxx.xxx.xxx.xx' },
     lead: 'bell',
     padLevel: 0.7,
+  },
+  // The Harpy Isles: an airy, skipping tune that floats along on the wind.
+  isles: {
+    bpm: 112,
+    chords: [
+      [53, 'maj'],
+      [57, 'min'],
+      [58, 'maj'],
+      [55, 'sus'],
+    ],
+    bass: '0...2.0.0...3.2.',
+    arp: '3.2.1.2.0.1.2.3.',
+    drums: { k: 'x.....x...x.....', s: '....x.......x...', h: '..x.x...x.x.x..x' },
+    lead: 'bell',
+    padLevel: 0.85,
   },
   boss: {
     bpm: 144,

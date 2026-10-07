@@ -40,6 +40,11 @@ export class Follower {
     private id: HeroId,
   ) {}
 
+  /** Where the follower stands and which way it faces (for the droid that tags along with it). */
+  get spot() {
+    return { x: this.x, y: this.y, z: this.z, facing: this.facing };
+  }
+
   /** Hands the follower a different hero (after a switch). */
   swap(model: HeroModel, id: HeroId) {
     this.model = model;

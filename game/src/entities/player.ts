@@ -35,7 +35,8 @@ export class Player {
   readonly jason: JasonModel;
   /** The hero in control, and every hero this level lets the player switch to (in switch order). */
   hero: HeroId;
-  readonly roster: HeroId[];
+  /** Every hero on this level, including any who only join partway through (see `LevelDef.joins`). */
+  private readonly cast: HeroId[];
   /** Atalanta's moves and model (built only on levels where she can play). */
   readonly ata: AtalantaMoves | null;
   /** Her arrows in flight (they keep flying after a switch). */
@@ -123,9 +124,9 @@ export class Player {
     this.body.grounded = true;
     this.jason = makeJason();
     dressJason(this.jason, world.save.upgrades, this.weapon);
-    this.roster = heroRoster(world.def.heroes, heroDev);
+    this.cast = heroRoster(world.def.heroes, heroDev);
     this.hero = this.roster[0];
-    const withAtalanta = this.roster.includes('atalanta');
+    const withAtalanta = this.cast.includes('atalanta');
     this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
     this.arrows = withAtalanta ? new Arrows(world) : null;
     this.facing = facing;
@@ -142,6 +143,53 @@ export class Player {
     this.showHero();
   }
 
+  /**
+   * The heroes the player can switch between right now, in switch order: the level's heroes, minus
+   * any whose join flag isn't set yet (a developer's hero list ignores the join flags).
+   */
+  get roster(): HeroId[] {
+    const joins = this.world.def.joins ?? {};
+    if (heroDev.heroes?.length) return this.cast;
+    return this.cast.filter((h) => {
+      const flag = joins[h];
+      return !flag || this.world.hasFlag(flag);
+    });
+  }
+
+  /** Where the hero who isn't playing stands right now (null on single-hero levels). */
+  get partner(): { x: number; y: number; z: number; facing: number } | null {
+    return this.nextHero && this.follower ? this.follower.spot : null;
+  }
+
+  /**
+   * A hero joins (their join flag was just set): they appear beside the playing hero, ready to follow,
+   * or at the given spot. The HUD then shows the switch button.
+   */
+  heroJoined(at?: THREE.Vector3) {
+    this.showHero();
+    const b = this.body;
+    if (at) this.follower?.place(at.x, at.y, at.z, this.facing);
+    else this.follower?.placeNear(b.x, b.y, b.z, this.facing);
+    this.world.hooks.hud();
+  }
+
+  /** Heroes who haven't joined yet wait at the spot given for them (Atalanta by her skiff), or stay hidden. */
+  showWaiting(at: (id: HeroId) => THREE.Vector3 | undefined) {
+    const now = this.roster;
+    for (const id of this.cast) {
+      if (now.includes(id)) continue;
+      const m = this.modelOf(id);
+      const p = at(id);
+      m.root.visible = !!p;
+      if (p) m.root.position.copy(p);
+    }
+  }
+
+  /** The model of any hero on this level (for cutscenes). */
+  heroModel(id: HeroId): HeroModel {
+    return this.modelOf(id);
+  }
+
   /** The playing hero's model. */
   get model(): HeroModel {
     return this.hero === 'atalanta' && this.ata ? this.ata.model : this.jason;
@@ -153,7 +201,7 @@ export class Player {
 
   /** Shows the playing hero, and hands the other one (if any) to the follower. */
   private showHero() {
-    for (const id of this.roster) this.modelOf(id).root.visible = id === this.hero;
+    for (const id of this.cast) this.modelOf(id).root.visible = id === this.hero;
     const other = nextHero(this.roster, this.hero);
     if (!other) return;
     const m = this.modelOf(other);
@@ -223,6 +271,8 @@ export class Player {
     audio.play('charged', was === 'jason' ? 1.25 : 0.9);
     audio.play('djump', 1.4, 0.6);
     haptic('light');
+    // The playing hero's droid takes the lead (chapter 3: LUX with Jason, IRIS with Atalanta).
+    w.refreshCompanions();
     w.hooks.hud();
     return true;
   }

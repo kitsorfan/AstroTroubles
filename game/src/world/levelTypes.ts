@@ -7,7 +7,7 @@ import type { FlightCourse } from '../vehicles/course';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
@@ -21,9 +21,12 @@ export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
  * default; chapter 3 adds Atalanta, and General Brennus gets his own levels later.
  */
 export type HeroId = 'jason' | 'atalanta' | 'brennus';
-/** The last four are General Brennus's robots (chapter 2 only). */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue';
+/**
+ * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
+ * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
+ */
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -161,7 +164,7 @@ export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops'];
 
 /** Who can appear in a hologram log. */
-export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
+export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus' | 'atalanta';
 
 /** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
 export type Speaker =
@@ -184,7 +187,9 @@ export type Speaker =
   /** IRIS, the rainbow droid Jason finds in the jungle. */
   | 'iris'
   /** LUX while Brennus's control chip has hold of him. */
-  | 'rogue';
+  | 'rogue'
+  /** Phineus, the blind old astronomer of the Harpy Isles (chapter 3). */
+  | 'phineus';
 
 export interface Line {
   who: Speaker;
@@ -233,6 +238,11 @@ export interface LevelDef {
    * Jason). With two or more, the HUD shows the switch button.
    */
   heroes?: HeroId[];
+  /**
+   * Heroes from `heroes` who join partway through the level, with the flag that brings them in:
+   * until it is set they stay out of the roster (Atalanta joins on the Harpy Isles when Jason meets her).
+   */
+  joins?: Partial<Record<HeroId, string>>;
 }
 
 export interface Cell {

@@ -12,6 +12,7 @@ import type { Difficulty } from '../game/difficulty';
 import { Badge, type BadgeKind } from './badges';
 import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
+import { makeHarpy } from './isles/harpy';
 import { makeRobot } from './robots';
 
 const v3 = new THREE.Vector3();
@@ -902,6 +903,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
     case 'bulwark':
     case 'mortar':
       e = makeRobot(world, id, kind, x, h, z);
+      break;
+    case 'harpy':
+      e = makeHarpy(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

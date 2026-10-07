@@ -7,6 +7,9 @@ export const ICON = {
   /** A page of Brennus's journal (chapter 2's collectible). */
   page: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><path d="M2 1.5H11L14.5 5V18.5H2Z" fill="${got ? '#ffd166' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#fff2c2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M4.5 8H12M4.5 11H12M4.5 14H10" stroke="#a8761a" stroke-width="1"/>' : ''}</svg>`,
+  /** A Gardener light-stone (chapter 3's collectible): a smooth stone with a rainbow band. */
+  stone: (got: boolean) =>
+    `<svg viewBox="0 0 16 20"><defs><linearGradient id="istn" x1="0" x2="1"><stop offset="0" stop-color="#ff5e6a"/><stop offset=".25" stop-color="#ffd166"/><stop offset=".5" stop-color="#7dff9a"/><stop offset=".75" stop-color="#5ec8ff"/><stop offset="1" stop-color="#c37bff"/></linearGradient></defs><ellipse cx="8" cy="11" rx="6.6" ry="7.4" fill="${got ? '#f2efff' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffffff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M1.8 11.6Q8 14.4 14.2 11.6" fill="none" stroke="url(#istn)" stroke-width="2.4"/><ellipse cx="5.6" cy="7" rx="1.6" ry="1" fill="#fff" opacity=".8"/>' : ''}</svg>`,
   shard: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><polygon points="8,1 15,10 8,19 1,10" fill="${got ? '#ff6fcf' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffd6f2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.3"/></svg>`,
   pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg>`,
@@ -289,6 +292,30 @@ const ATALANTA = person({
     ${[0, 1, 2, 3, 4, 5].map((i) => `<ellipse cx="${55.5 + i * 0.9}" cy="${47 + i * 5.2}" rx="${(3.8 - i * 0.25).toFixed(2)}" ry="3.3" fill="${ATA_HAIR}" stroke="${shade(ATA_HAIR, 0.6)}" stroke-width=".7"/>`).join('')}
     <rect x="58.2" y="74" width="5" height="2.4" rx=".8" fill="#ffc94a"/>`,
 });
+/** Phineus, the blind old astronomer of the Harpy Isles: round dark glasses, a cloud of white beard, a starry robe. */
+const PHIN_WHITE = '#eef0f6';
+const PHINEUS = person({
+  id: 'pp',
+  skin: '#c4916e',
+  hair: '#d8dae2',
+  iris: '#3a2a20',
+  lips: '#9a5a48',
+  suit: '#2e2a6e',
+  back: `<path d="M22 44C18 34 20 26 25 24L27 34Z" fill="${PHIN_WHITE}"/><path d="M58 44C62 34 60 26 55 24L53 34Z" fill="${PHIN_WHITE}"/>`,
+  front: `<path d="M24.6 36C23 30 24 26 27 24.6L29.4 27C27.6 29.6 26 32.4 24.6 36Z" fill="${PHIN_WHITE}"/><path d="M55.4 36C57 30 56 26 53 24.6L50.6 27C52.4 29.6 54 32.4 55.4 36Z" fill="${PHIN_WHITE}"/>
+    ${shine('M30 21.4Q40 17.6 50 21.4', '#c4916e')}`,
+  collar: `<path d="M28 60.5Q40 66 52 60.5L56 63Q40 70 24 63Z" fill="#1e1a52"/>
+    <path d="M18 72l1.4-2.6 1.4 2.6-2.8-1.6h2.8z" fill="#ffd166"/><path d="M60 68l1.2-2.2 1.2 2.2-2.4-1.4h2.4z" fill="#ffd166"/><circle cx="66" cy="75" r="1.1" fill="#ffd166"/><circle cx="14" cy="77" r="1" fill="#ffd166"/>`,
+  extra: `<circle cx="33" cy="37.4" r="5.4" fill="#16141e" stroke="#8a7a5a" stroke-width="1"/><circle cx="47" cy="37.4" r="5.4" fill="#16141e" stroke="#8a7a5a" stroke-width="1"/>
+    <path d="M38.4 37H41.6" stroke="#8a7a5a" stroke-width="1.1"/><path d="M27.6 36.6L25 35.6M52.4 36.6L55 35.6" stroke="#8a7a5a" stroke-width="1"/>
+    <ellipse cx="31.4" cy="35.6" rx="1.6" ry=".9" fill="#fff" opacity=".45"/><ellipse cx="45.4" cy="35.6" rx="1.6" ry=".9" fill="#fff" opacity=".45"/>
+    <path d="M28.2 31.2Q32.4 28.6 37.6 30.4M42.4 30.4Q47.6 28.6 51.8 31.2" fill="none" stroke="${PHIN_WHITE}" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M26 44Q24 60 32 70Q36 76 40 78Q44 76 48 70Q56 60 54 44Q51 50 46.6 51.6Q43.6 49.4 40 49.6Q36.4 49.4 33.4 51.6Q29 50 26 44Z" fill="${PHIN_WHITE}"/>
+    <path d="M33 49.4Q36.8 46.2 40 47.6Q43.2 46.2 47 49.4Q43.2 51 40 50.2Q36.8 51 33 49.4Z" fill="#dcdee6"/>
+    <path d="M36.4 52.2Q40 54.6 43.6 52.2" fill="none" stroke="#9a5a48" stroke-width="1"/>
+    <path d="M34 58Q36 64 38 68M46 58Q44 64 42 68M40 56V72" fill="none" stroke="#c8cad4" stroke-width=".7" opacity=".8"/>`,
+});
+
 /** IRIS: a pearl teardrop with a dark visor, a rainbow eye, little fins and a golden halo. */
 const IRIS = `<svg viewBox="0 0 80 80">
     ${screen('pi', '#c9a8ff')}
@@ -340,6 +367,7 @@ const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
   aeetes: AEETES,
   atalanta: ATALANTA,
+  phineus: PHINEUS,
   brennus: BRENNUS,
   hypatia: HYPATIA,
   bolt: `<svg viewBox="0 0 80 80">
@@ -436,6 +464,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   brennus: 'General Brennus',
   hypatia: 'Dr. Hypatia',
   aeetes: 'Aeëtes',
+  phineus: 'Phineus',
 };
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
@@ -455,6 +484,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   brennus: '#ff6a5a',
   hypatia: '#9adfff',
   aeetes: '#ffd166',
+  phineus: '#c9b8ff',
 };
 
 let portraitCopies = 0;

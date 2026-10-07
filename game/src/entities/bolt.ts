@@ -93,15 +93,18 @@ export class Bolt {
     if (!this.active) return;
     const pl = w.player;
     const f = pl.facing;
-    // The lead floats at Jason's shoulder; a tag-along hangs back on the other side.
-    const back = lead ? 1.1 : 2.4;
-    const side = lead ? 1.0 : -1.5;
+    // The lead floats at Jason's shoulder; a tag-along hangs back on the other side. With two heroes
+    // (chapter 3) the tag-along floats at the other hero's shoulder instead: each hero has a droid.
+    const partner = lead ? null : pl.partner;
+    const back = lead || partner ? 1.1 : 2.4;
+    const side = lead || partner ? 1.0 : -1.5;
+    const at = partner ?? { x: pl.body.x, y: pl.body.y, z: pl.body.z, facing: f };
     const target = this.override
       ? this.override
       : new THREE.Vector3(
-          pl.body.x - Math.sin(f) * back - Math.cos(f) * side,
-          pl.body.y + (lead ? 2.0 : 2.5) + Math.sin(this.t * 2.2) * 0.12,
-          pl.body.z - Math.cos(f) * back + Math.sin(f) * side,
+          at.x - Math.sin(at.facing) * back - Math.cos(at.facing) * side,
+          at.y + (lead || partner ? 2.0 : 2.5) + Math.sin(this.t * 2.2) * 0.12,
+          at.z - Math.cos(at.facing) * back + Math.sin(at.facing) * side,
         );
     const k = lead ? 5 : 3;
     this.pos.x = damp(this.pos.x, target.x, k, dt);

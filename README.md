@@ -113,6 +113,13 @@ Chapter 2 takes place outdoors on Gaia Nova. Jason keeps every ability, finds th
 | 5. Thornwood Jungle | Wake IRIS; shut down the pollen pumps; dark root caves | The Thorn Hydra (heads first, then the heart) |
 | 6. Mount Atlantas | Everything at once, inside a volcano | Shadow LUX (blast the chip on his back when he overheats), then the Colossus, General Brennus's war machine |
 
+Chapter 3, **The Argonauts**, is the voyage of the Argo to the moon Colchis (it's being built level by level; the levels still to come show as "coming soon"):
+
+| Level | New trick | Boss |
+| --- | --- | --- |
+| 1. The Clashing Rocks | Fly the Argo through an asteroid belt; follow LUX's dove through the slamming rocks | (Aeëtes's salvage drones) |
+| 2. Harpy Isles | Atalanta joins: switch heroes. Bullseyes, wall-jumps, wall-runs and low gaps for her, red switches and grapple rings for Jason; updrafts, gusts and bolt-snatching harpy drones | AELLO, the Harpy Queen (Atalanta's power arrow knocks her down, Jason cracks her core) |
+
 - **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt. **IRIS** does all the same jobs (her zap is rainbow-coloured), and while no droid is around, Jason hacks with his wrist computer and his helmet lamp lights the dark, but there is no force pulse and no zap.
@@ -123,6 +130,8 @@ Chapter 2 takes place outdoors on Gaia Nova. Jason keeps every ability, finds th
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
 - **The Colossus**, chapter 2's final boss, is longer still: 110 health plus 20 per Blaster Power level, in three phases (shield generators, swinging arms, overheating core).
 - **Journal pages.** On Gaia Nova the collectibles are the 18 pages of General Brennus's journal, telling how a boy who named all 300 of his grandmother's tomato plants became a man who wants to own a whole planet. Like memory shards, every 6 give an extra heart.
+- **Gardener light-stones.** In Chapter 3 every level on foot hides three glowing rainbow stones left by the Gardeners, Celestia's people (21 in the whole chapter). Each one teaches LUX and IRIS another word of Celestia's light-language, and every 6 give an extra heart. Instead of cocoons, Chapter 3 has things to win back: on the Harpy Isles, gold harpy nets stuffed with old Phineus's stolen food (blast them open).
+- **Harpy drones** (Chapter 3) are Aeëtes's gold thief birds: one circles you, flashes its red eye, then swoops in and snatches a handful of bolts. Blast it (or arrow it) and it drops everything it stole; a spin or kick bats it away.
 
 ### Enemies
 
@@ -198,6 +207,12 @@ Cutscenes play in the game world with letterbox bars:
 - **IRIS.** In the jungle roots Jason switches on IRIS, a slim droid with a rainbow visor, fins and a golden halo. The Gardeners, the people who planted Celestia, built her long ago; Brennus dug her out of the desert ruins, and when she would not fight for him he threw her away. Calm, curious and a little poetic, she takes over LUX's jobs.
 - **Shadow LUX.** In Mount Atlantas, Brennus has clamped thorny armour and a control chip onto LUX and sends him against Jason. Blast the chip whenever he overheats; twice, IRIS sings him a rainbow light-word, and when the chip breaks LUX is himself again. LUX and IRIS both fly with Jason up to the Colossus (and in the secret ending LUX still talks to Celestia).
 - **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets Celestia go himself (the secret ending).
+
+**Chapter 3: The Argonauts** (more spoilers):
+
+- **The Golden Fleece.** Celestia starts to fade: she is the last of her kind. Her people, the Gardeners, left a living golden cloak of seeds on Colchis, a moon of the gas giant next door. Captain Argus rebuilds the shuttle into the **Argo**, and the crew set off, with the salvage tycoon **Aeëtes** racing them for the Fleece.
+- **The Clashing Rocks.** Jason flies the Argo through the asteroid belt and, following LUX's dove, between the slamming rocks.
+- **The Harpy Isles.** Floating sky-islands over a sea of clouds. A distress beacon leads Jason to **Atalanta**, the colony's fastest runner and best archer, who flew ahead alone in her scout skiff until Aeëtes's harpy drones stripped it for parts. IRIS is her friend from the greenhouse, and from then on flies with her while LUX stays with Jason: the hero you play has their droid in the lead, and the other droid floats beside the other hero. They meet **Phineus**, a blind old stargazer whose dinner the harpies steal every evening, beat the Harpy Queen AELLO, and learn the way to Colchis. Then a message comes in: General Brennus has gone after Aeëtes on his own.
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 

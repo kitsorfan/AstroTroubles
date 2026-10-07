@@ -33,6 +33,9 @@ export const PANEL_IDS = [
   'ch3-fading',
   'ch3-argo',
   'ch3-aeetes',
+  // The Harpy Isles: Atalanta, and old Phineus's stolen dinner.
+  'ch3-atalanta',
+  'ch3-phineus',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

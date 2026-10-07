@@ -97,8 +97,11 @@ describe('hero roster and switching', () => {
     expect(switchBlock({ ...ok, cooldown: 0.2 })).toBe('cooldown');
   });
 
-  it('leaves every existing level to Jason alone', () => {
-    for (const id of LEVEL_ORDER) expect(heroRoster(LEVELS[id].heroes)).toEqual(['jason']);
+  it('leaves the first two chapters to Jason alone, and lets Atalanta join on the Harpy Isles', () => {
+    for (const id of LEVEL_ORDER.slice(0, 13)) expect(heroRoster(LEVELS[id].heroes)).toEqual(['jason']);
+    expect(heroRoster(LEVELS.harpies.heroes)).toEqual(['jason', 'atalanta']);
+    // She only joins when Jason meets her by her skiff.
+    expect(LEVELS.harpies.joins?.atalanta).toBe('atalanta');
   });
 });
 
