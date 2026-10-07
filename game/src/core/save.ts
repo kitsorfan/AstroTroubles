@@ -2,6 +2,7 @@ import type { Ability, DeckId } from '../world/levelTypes';
 import { post } from './bridge';
 import { START_HEARTS } from './constants';
 import { detectLang, type Lang } from './i18n';
+import { equippedWeapon, ownedWeapons } from '../entities/weapons';
 
 export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart';
 export type Quality = 'low' | 'medium' | 'high';
@@ -45,6 +46,10 @@ export interface SaveData {
   playSeconds: number;
   /** True once the arrival at Gaia Nova (the start of chapter 2) has been shown. */
   gaiaIntro?: boolean;
+  /** Weapons Jason owns (see entities/weapons.ts); the Blaster is always one of them. */
+  weapons: string[];
+  /** The weapon he has equipped. */
+  weapon: string;
 }
 
 /** Named after the game's old title; kept so existing saves carry over. */
@@ -72,7 +77,20 @@ export function newSave(): SaveData {
     endings: [],
     settings: defaultSettings(),
     playSeconds: 0,
+    weapons: ['blaster'],
+    weapon: 'blaster',
   };
+}
+
+/** Brings a save from an older version of the game up to date: fields added since get their defaults. */
+export function migrateSave(s: SaveData): SaveData {
+  // LUX's old shield module became the force pulse.
+  s.abilities = s.abilities.map((a) => ((a as string) === 'shield' ? 'pulse' : a));
+  s.upgrades ??= {};
+  // Weapons came with chapter 2: older saves own just the Blaster.
+  s.weapons = ownedWeapons(Array.isArray(s.weapons) ? s.weapons : []);
+  s.weapon = equippedWeapon(s.weapons, s.weapon);
+  return s;
 }
 
 function isSave(v: unknown): v is SaveData {
@@ -100,8 +118,7 @@ export function loadSave(): SaveData | null {
   }
   if (best) {
     best.settings = { ...defaultSettings(), ...best.settings };
-    // LUX's old shield module became the force pulse.
-    best.abilities = best.abilities.map((a) => ((a as string) === 'shield' ? 'pulse' : a));
+    migrateSave(best);
   }
   return best;
 }

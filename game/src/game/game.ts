@@ -9,7 +9,7 @@ import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
 import { audio, type Track } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
-import { CELL, MAX_HEARTS, PLAYER } from '../core/constants';
+import { CELL, PLAYER } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
@@ -17,7 +17,9 @@ import { LEVELS, LEVEL_ORDER, chapterIndex, chapterOf, chapterTotals, inChapter,
 import type { DeckId, EndingKind, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { PANEL_IDS, type PanelId } from '../ui/panels';
-import { UI, type ShopItem } from '../ui/ui';
+import { UI } from '../ui/ui';
+import { equippedWeapon, ownedWeapons } from '../entities/weapons';
+import { buyUpgrade, buyWeapon, equipWeapon } from './shop';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
 import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
@@ -175,9 +177,31 @@ export class Game {
       this.save.abilities = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
       this.save.unlocked = LEVEL_ORDER.length;
     }
+    // &bolts=N sets the bolt count, &weapons=spread,frost hands over weapons (&weapon=frost equips one),
+    // &up=heart:4,armor:1 sets upgrade levels, and &shop opens PANDORA's shop once the deck is up.
+    const bolts = Number(dev.get('bolts'));
+    if (bolts > 0) this.save.bolts = bolts;
+    const arms = dev.get('weapons');
+    if (arms) this.save.weapons = ownedWeapons(arms.split(','));
+    this.save.weapon = equippedWeapon(this.save.weapons, dev.get('weapon') ?? this.save.weapon);
+    for (const pair of dev.get('up')?.split(',') ?? []) {
+      const [id, n] = pair.split(':');
+      this.save.upgrades[id as keyof SaveData['upgrades']] = Number(n) || 0;
+    }
     const deck = dev.get('deck') as DeckId | null;
     if (deck && LEVELS[deck]) {
       this.startDeck(deck, false, dev.has('still') ? 'none' : 'auto');
+      if (dev.get('shop') === 'weapons') this.ui.shopTab = 'weapons';
+      // &fire keeps tapping BLAST (&fire=charge holds it for charged shots), for looking at the weapons.
+      const fire = dev.get('fire');
+      if (fire !== null) {
+        const hold = fire === 'charge' ? 1300 : 60;
+        setInterval(() => {
+          this.input.press('shoot', true);
+          setTimeout(() => this.input.press('shoot', false), hold);
+        }, hold + 380);
+      }
+      if (dev.has('shop')) setTimeout(() => this.world && this.hooks().shop(), 3600);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
       if (at && at.length === 2) {
@@ -570,6 +594,8 @@ export class Game {
       pulse: this.save.abilities.includes('pulse') && w.boltActive,
       pulseCharge: w.pulseCharge,
       pulseLeft: w.pulseCd,
+      weapon: pl.weapon,
+      weapons: ownedWeapons(this.save.weapons).length,
     });
   }
 
@@ -649,10 +675,14 @@ export class Game {
         this.state = 'shop';
         this.input.reset();
         this.ui.showControls(false);
-        this.ui.shop(
-          this.save,
-          (item) => this.buy(item),
-          () => {
+        const deck = this.world?.def.id ?? 'cryo';
+        this.ui.shop(this.save, deck, {
+          buyUpgrade: (id) => this.bought(buyUpgrade(this.save, id, deck), id === 'heart'),
+          buyWeapon: (id) => this.bought(buyWeapon(this.save, id, deck)),
+          equip: (id) => {
+            if (equipWeapon(this.save, id)) this.world?.player.refreshGear();
+          },
+          close: () => {
             this.ui.close();
             this.state = 'play';
             this.ui.showControls(true);
@@ -660,7 +690,7 @@ export class Game {
             this.refreshHud();
             writeSave(this.save);
           },
-        );
+        });
       },
       complete: () => this.completeDeck(),
       checkpoint: () => this.persist(),
@@ -743,17 +773,10 @@ export class Game {
 
   private dashHintAt = -1e9;
 
-  private buy(item: ShopItem) {
-    const lvl = this.save.upgrades[item.id] ?? 0;
-    const price = item.prices[lvl];
-    if (price === undefined || this.save.bolts < price) return;
-    if (item.id === 'heart' && this.save.maxHearts >= MAX_HEARTS) return;
-    this.save.bolts -= price;
-    this.save.upgrades[item.id] = lvl + 1;
-    if (item.id === 'heart') {
-      this.save.maxHearts = Math.min(MAX_HEARTS, this.save.maxHearts + 1);
-      this.world?.player.heal(99);
-    }
+  /** After a shop purchase (see game/shop.ts): heal for a new heart, put the gear on, and celebrate. */
+  private bought(ok: boolean, heart = false) {
+    if (!ok) return;
+    if (heart) this.world?.player.heal(99);
     this.world?.player.refreshGear();
     audio.play('upgrade');
     haptic('success');

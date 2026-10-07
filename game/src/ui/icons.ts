@@ -22,6 +22,19 @@ export const ICON = {
   globe: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M3 12h18M12 3c3 3.4 3 14.6 0 18M12 3c-3 3.4-3 14.6 0 18" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`,
   lock: `<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2.5" fill="#9fb0d6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="#9fb0d6" stroke-width="2.4"/></svg>`,
   star: `<svg viewBox="0 0 24 24"><polygon points="12,2 14.9,8.6 22,9.3 16.6,14 18.2,21 12,17.3 5.8,21 7.4,14 2,9.3 9.1,8.6" fill="#ffd166"/></svg>`,
+  /** Armor Plating: a blue shield (dim when spent). */
+  shield: (full = true) =>
+    `<svg viewBox="0 0 24 24"><path d="M12 2.5l8 3v6c0 5-3.6 8.6-8 10-4.4-1.4-8-5-8-10v-6z" fill="${full ? '#5ec8ff' : 'rgba(0,0,0,0.45)'}" stroke="${full ? '#d6f3ff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.6" stroke-linejoin="round"/>${full ? '<path d="M8 8.5h3.2v6.5" fill="none" stroke="#fff" stroke-width="1.6" opacity=".6" stroke-linecap="round"/>' : ''}</svg>`,
+  grapple: `<svg viewBox="0 0 24 24"><circle cx="16" cy="8" r="4.2" fill="none" stroke="#7fe6ff" stroke-width="2.4"/><path d="M3 21l9.6-9.6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="2.6 2.4"/></svg>`,
+};
+
+/** A weapon's icon (shop, the weapon button). Each has its own shape and colour. */
+export const WEAPON_ICON: Record<string, string> = {
+  blaster: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="#bff4ff"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="#5ee0ff" stroke-width="2.4" stroke-linecap="round"/></svg>`,
+  spread: `<svg viewBox="0 0 24 24"><circle cx="4.5" cy="12" r="2.6" fill="#fff2b0"/><path d="M8 12h12M8 10.5L19 4.5M8 13.5L19 19.5" stroke="#ffb020" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="12" r="1.8" fill="#fff"/><circle cx="19.5" cy="4.5" r="1.8" fill="#fff"/><circle cx="19.5" cy="19.5" r="1.8" fill="#fff"/></svg>`,
+  frost: `<svg viewBox="0 0 24 24"><g stroke="#bfeeff" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.6 4.2L12 6.6l2.4-2.4M9.6 19.8L12 17.4l2.4 2.4" fill="none"/></g><circle cx="12" cy="12" r="2.4" fill="#7fd4ff"/></svg>`,
+  thunder: `<svg viewBox="0 0 24 24"><path d="M14 1.8L5 13.4h5.6L9 22.2l10-12.4h-5.8z" fill="#fff36a" stroke="#c58cff" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  seeker: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="none" stroke="#ff7aa6" stroke-width="2"/><circle cx="12" cy="12" r="3.4" fill="#ff4f8a"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" stroke="#ffd0e0" stroke-width="2" stroke-linecap="round"/></svg>`,
 };
 
 interface Person {

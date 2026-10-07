@@ -19,9 +19,11 @@ import {
   type PuzzleKind,
   type Token,
 } from '../game/puzzles';
-import type { EndingKind, Line, Speaker } from '../world/levelTypes';
+import type { DeckId, EndingKind, Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
-import { ICON, SPEAKER_COLOR, SPEAKER_NAME, portrait } from './icons';
+import { WEAPONS, type WeaponId } from '../entities/weapons';
+import { shopStock } from '../game/shop';
+import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -68,22 +70,23 @@ function h(html: string): HTMLElement {
 /** A label that follows the language setting (see `applyLang`). */
 const label = (en: string) => `<span data-t="${en}">${tr(en)}</span>`;
 
-export interface ShopItem {
-  id: UpgradeId;
-  name: string;
-  desc: string;
-  prices: number[];
-  icon: string;
-}
+/** Each shop upgrade's icon. */
+const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
+  heart: ICON.heart(true),
+  blaster: ICON.shoot,
+  clip: ICON.cell,
+  rapid: ICON.dash,
+  boltZap: ICON.star,
+  magnet: ICON.bolt,
+};
 
-export const SHOP: ShopItem[] = [
-  { id: 'heart', name: 'Heart Plating', desc: '+1 max heart', prices: [150, 300, 500], icon: ICON.heart(true) },
-  { id: 'blaster', name: 'Blaster Power', desc: '+1 damage for blasts, spins, pounds and dashes (fireballs +2)', prices: [250, 600], icon: ICON.shoot },
-  { id: 'clip', name: 'Bigger Clip', desc: '+2 shots before you need to reload', prices: [160, 380], icon: ICON.cell },
-  { id: 'rapid', name: 'Quick Reload', desc: 'Shoot and reload faster', prices: [200, 450], icon: ICON.dash },
-  { id: 'boltZap', name: 'LUX Zapper', desc: 'LUX’s zap hurts instead of just stunning, and his force pulse hits harder', prices: [180, 420], icon: ICON.star },
-  { id: 'magnet', name: 'Bolt Magnet', desc: 'Pull in bolts from farther away', prices: [120, 300], icon: ICON.bolt },
-];
+/** What the shop screen can ask the game to do. */
+export interface ShopActions {
+  buyUpgrade(id: UpgradeId): void;
+  buyWeapon(id: WeaponId): void;
+  equip(id: WeaponId): void;
+  close(): void;
+}
 
 export interface DeckInfo {
   index: number;
@@ -112,6 +115,9 @@ export interface AbilityHud {
   /** 0..1, 1 = ready. */
   pulseCharge: number;
   pulseLeft: number;
+  /** The equipped weapon, and how many Jason owns (the weapon button shows once he has two). */
+  weapon: WeaponId;
+  weapons: number;
 }
 
 /** Where to draw the objective waypoint: screen position, whether it's pinned to the edge, and how far it is. */
@@ -171,6 +177,7 @@ export class UI {
         <div class="btn spin clickable" data-b="spin">${ICON.spin}${label('SPIN')}${ring('cd-ring')}<div class="charges"></div></div>
         <div class="btn dash clickable hidden" data-b="dash">${ICON.dash}${label('DASH')}<div class="charges"></div></div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
+        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
       </div>
       <div class="action clickable hidden">${portrait('bolt')}<b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
@@ -253,6 +260,7 @@ export class UI {
     this.setObjective(this.objectiveText);
     if (this.bossName) $(this.bossEl, '.name').textContent = tr(this.bossName);
     this.lastAbility = '';
+    this.lastWeapon = '';
   }
 
   /* ---------------- HUD ---------------- */
@@ -331,12 +339,31 @@ export class UI {
   }
 
   private lastAbility = '';
+  private lastWeapon = '';
 
-  /** Spin charges, dash energy and LUX's force pulse on their buttons. */
+  /** The weapon button: the equipped weapon's icon, and its name popping up for a moment after a switch. */
+  private setWeapon(id: WeaponId, owned: number) {
+    const btn = $(this.hud, '.btn.weapon');
+    btn.classList.toggle('hidden', owned < 2);
+    $(this.hud, '.buttons').dataset.weapon = id;
+    if (id === this.lastWeapon) return;
+    const first = this.lastWeapon === '';
+    this.lastWeapon = id;
+    $(btn, '.wicon').innerHTML = WEAPON_ICON[id];
+    const name = $(btn, '.wname');
+    name.textContent = tr(WEAPONS[id].name);
+    if (first || owned < 2) return;
+    name.classList.remove('show');
+    void name.offsetWidth;
+    name.classList.add('show');
+  }
+
+  /** Spin charges, dash energy, LUX's force pulse and the weapon on their buttons. */
   setAbilities(a: AbilityHud) {
-    const key = `${a.spins}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}`;
+    const key = `${a.spins}|${a.spinMax}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.energyMax}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}|${a.weapon}|${a.weapons}`;
     if (key === this.lastAbility) return;
     this.lastAbility = key;
+    this.setWeapon(a.weapon, a.weapons);
     const pips = (el: HTMLElement, n: number, max: number) => {
       const box = $(el, '.charges');
       if (box.childElementCount !== max) box.innerHTML = '<i></i>'.repeat(max);
@@ -993,6 +1020,7 @@ export class UI {
         ${item('#b58cff', tr('DASH'), tr('ram through enemies and zoom over gaps. Each dash uses one energy cell: refill at checkpoints and with violet energy cells.'))}
         ${item('#8ab4ff', tr('PULSE'), tr('LUX’s force pulse hits every enemy around you and shorts out lasers for a few seconds. It takes a long time to recharge.'))}
         ${item('#7fe6ff', tr('GRAPPLE'), tr('on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.'))}
+        ${item('#ffb020', tr('WEAPONS'), tr('on Gaia Nova, PANDORA sells new weapons. Tap the weapon button next to BLAST (or press X) to switch.'))}
       </div>
       <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
@@ -1056,31 +1084,71 @@ export class UI {
     if (reset) this.button(el, '.reset', reset);
   }
 
-  shop(save: SaveData, buy: (item: ShopItem) => void, close: () => void) {
-    const render = (bought?: UpgradeId) => {
-      const items = SHOP.map((it) => {
-        const lvl = save.upgrades[it.id] ?? 0;
-        const maxed = lvl >= it.prices.length;
-        const price = it.prices[lvl];
-        const afford = !maxed && save.bolts >= price;
-        const stars = `<span class="stars">${'★'.repeat(lvl)}<em>${'★'.repeat(it.prices.length - lvl)}</em></span>`;
-        return `<div class="shop-item ${maxed ? 'maxed' : ''} ${bought === it.id ? 'bought' : ''}"><div class="icon">${it.icon}</div><div class="info"><b>${tr(it.name)}</b>${stars}<i>${tr(it.desc)}</i></div>
-          <button class="buy" data-id="${it.id}" ${afford ? '' : 'disabled'}>${maxed ? tr('MAX') : `${ICON.bolt}${price}`}</button></div>`;
-      }).join('');
+  /** The shop tab showing (kept while the shop is open, and between visits). */
+  shopTab: 'upgrades' | 'weapons' = 'upgrades';
+
+  /**
+   * PANDORA's shop. On the ship it sells upgrades only; on Gaia Nova it has two tabs, upgrades (with
+   * their Mk II levels) and weapons. Prices and levels come from game/shop.ts.
+   */
+  shop(save: SaveData, deck: DeckId, act: ShopActions) {
+    const render = (bought?: string) => {
+      const stock = shopStock(save, deck);
+      const tabs = stock.weapons.length > 0;
+      if (!tabs) this.shopTab = 'upgrades';
+      const card = (id: string, cls: string, icon: string, name: string, stars: string, desc: string, button: string) =>
+        `<div class="shop-item ${cls} ${bought === id ? 'bought' : ''}"><div class="icon">${icon}</div><div class="info"><b>${tr(name)}</b>${stars}<i>${tr(desc)}</i></div>${button}</div>`;
+      const price = (n: number) => `${ICON.bolt}${n}`;
+      const upgrades = stock.upgrades
+        .map((o) => {
+          const maxed = o.price === null;
+          const stars = `<span class="stars">${'★'.repeat(o.level)}<em>${'★'.repeat(o.max - o.level)}</em></span>`;
+          const btn = `<button class="buy" data-up="${o.item.id}" ${!maxed && save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${maxed ? tr('MAX') : price(o.price ?? 0)}</button>`;
+          return card(o.item.id, maxed ? 'maxed' : '', UPGRADE_ICON[o.item.id] ?? ICON.star, o.item.name, stars, o.item.desc, btn);
+        })
+        .join('');
+      const weapons = stock.weapons
+        .map((o) => {
+          const id = o.weapon.id;
+          const btn = o.equipped
+            ? `<button class="buy equipped" disabled>${tr('EQUIPPED')}</button>`
+            : o.owned
+              ? `<button class="buy equip" data-eq="${id}">${tr('EQUIP')}</button>`
+              : `<button class="buy" data-wp="${id}" ${save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${price(o.price ?? 0)}</button>`;
+          return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, '', o.weapon.desc, btn);
+        })
+        .join('');
+      const tabBar = tabs
+        ? `<div class="shop-tabs seg"><button data-tab="upgrades" class="${this.shopTab === 'upgrades' ? 'on' : ''}">${ICON.star}${tr('Upgrades')}</button><button data-tab="weapons" class="${this.shopTab === 'weapons' ? 'on' : ''}">${WEAPON_ICON.spread}${tr('Weapons')}</button></div>`
+        : '';
       const el = this.open(`<div class="panel shop-panel">
         <div class="panel-head"><div class="portrait">${portrait('vendy')}</div>
         <div class="shop-title"><h2>${tr('PANDORA’S UPGRADES')}</h2><div class="tagline">${tr('“Bolts in, awesome out!”')}</div></div>
         <div class="counter">${ICON.bolt}<b>${save.bolts}</b></div><button class="icon-btn close" aria-label="${tr('Leave shop')}">${ICON.close}</button></div>
-        <div class="shop-grid">${items}</div></div>`);
-      for (const b of el.querySelectorAll<HTMLElement>('.buy')) {
-        b.addEventListener('click', () => {
-          const it = SHOP.find((x) => x.id === b.dataset.id);
-          if (!it) return;
-          buy(it);
-          render(it.id);
-        });
-      }
-      this.button(el, '.close', close);
+        ${tabBar}<div class="shop-grid">${this.shopTab === 'weapons' ? weapons : upgrades}</div></div>`);
+      const on = (sel: string, fn: (b: HTMLElement) => void) => {
+        for (const b of el.querySelectorAll<HTMLElement>(sel)) b.addEventListener('click', () => fn(b));
+      };
+      on('[data-up]', (b) => {
+        act.buyUpgrade(b.dataset.up as UpgradeId);
+        render(b.dataset.up);
+      });
+      on('[data-wp]', (b) => {
+        act.buyWeapon(b.dataset.wp as WeaponId);
+        render(b.dataset.wp);
+      });
+      on('[data-eq]', (b) => {
+        act.equip(b.dataset.eq as WeaponId);
+        audio.play('select');
+        render(b.dataset.eq);
+      });
+      on('[data-tab]', (b) => {
+        if (this.shopTab === b.dataset.tab) return;
+        this.shopTab = b.dataset.tab as 'upgrades' | 'weapons';
+        audio.play('select');
+        render();
+      });
+      this.button(el, '.close', act.close);
     };
     render();
   }

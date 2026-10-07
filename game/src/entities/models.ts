@@ -253,9 +253,9 @@ export function makeJason(): JasonModel {
  * - Bolt Magnet: a horseshoe magnet on his backpack, which grows and glows gold.
  * Gear hangs off the body, arms and head (never the root, whose last child is the shadow).
  */
-export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>) {
+export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>, weapon = 'blaster') {
   const lv = (id: UpgradeId) => upgrades[id] ?? 0;
-  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet'] as const).map(lv).join('');
+  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet'] as const).map(lv).join('') + weapon;
   if (key === m.gearKey) return;
   m.gearKey = key;
   for (const o of m.gear) o.removeFromParent();
@@ -364,6 +364,50 @@ export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, nu
     }
     g.position.set(0, 1.08, -0.47);
     put(m.body, g);
+  }
+
+  dressWeapon(weapon, (...parts) => put(m.armR, ...parts));
+}
+
+/**
+ * The equipped weapon shows on the blaster (which points along +Z in the right arm, muzzle near z 0.4):
+ * a coloured band, plus three little barrels (Spread Shot), an ice crystal (Frost Ray), two spark
+ * prongs (Thunder Arc) or a targeting dome (Seeker).
+ */
+function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) {
+  if (weapon === 'blaster') return;
+  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'] };
+  const [c, e] = colors[weapon] ?? ['#ffffff', '#ffffff'];
+  const glowM = mat(c, { emissive: e, ei: 1.4 });
+  const band = mesh(cyl(0.118, 0.118, 0.06, 14), glowM, 0, -0.48, 0.3, false);
+  band.rotation.x = Math.PI / 2;
+  put(band);
+  if (weapon === 'spread') {
+    for (const k of [-1, 0, 1]) {
+      const b = mesh(cyl(0.032, 0.04, 0.2, 10), glowM, k * 0.06, -0.48, 0.47, false);
+      b.rotation.x = Math.PI / 2;
+      b.rotation.z = -k * 0.35;
+      put(b);
+    }
+  } else if (weapon === 'frost') {
+    const crystal = mesh(new THREE.OctahedronGeometry(0.09, 0), mat(c, { emissive: e, ei: 1, opacity: 0.85 }), 0, -0.34, 0.2, false);
+    crystal.scale.set(0.8, 1.6, 0.8);
+    const nose = mesh(cone(0.07, 0.16, 8), glowM, 0, -0.48, 0.48, false);
+    nose.rotation.x = Math.PI / 2;
+    put(crystal, nose);
+    const tip = glowSprite(e, 0.32, 0.8);
+    tip.position.set(0, -0.48, 0.56);
+    put(tip);
+  } else if (weapon === 'thunder') {
+    for (const x of [-0.06, 0.06]) put(mesh(boxG(0.025, 0.025, 0.2), glowM, x, -0.44, 0.48, false));
+    const spark = glowSprite(e, 0.34, 0.9);
+    spark.position.set(0, -0.44, 0.58);
+    put(spark);
+  } else if (weapon === 'seeker') {
+    put(mesh(sphere(0.07, 12), glowM, 0, -0.37, 0.24, false), mesh(cyl(0.05, 0.05, 0.04, 12), mat('#2a3242', { rough: 0.6 }), 0, -0.48, 0.41, false));
+    const lens = glowSprite(e, 0.26, 0.9);
+    lens.position.set(0, -0.37, 0.3);
+    put(lens);
   }
 }
 
