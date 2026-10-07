@@ -7,7 +7,7 @@ import type { Entity } from '../src/entities/entity';
 import { ROBOT_KINDS, ROBOT_TUNING } from '../src/entities/robots';
 import { INTEL } from '../src/game/story';
 import type { World } from '../src/game/world';
-import { LEVELS, LEVEL_ORDER } from '../src/levels';
+import { CHAPTER_DECKS, LEVELS } from '../src/levels';
 import { Grid, parseLevel } from '../src/world/grid';
 import type { EnemyKind, LevelDef } from '../src/world/levelTypes';
 import { makeBody } from '../src/world/physics';
@@ -164,9 +164,10 @@ describe('robots on Gaia Nova', () => {
       .filter((s) => s.type === 'enemy' && (ROBOT_KINDS as readonly string[]).includes(s.enemy))
       .map((s) => (s.type === 'enemy' ? s.enemy : ''));
 
-  it('appear in every chapter 2 region and never on the ship', () => {
+  it('appear in every chapter 2 region and never on the ship (in chapter 3, Aeëtes runs the ones he bought as scrap)', () => {
     for (const id of CHAPTER2) expect(robotsIn(id).length).toBeGreaterThan(0);
-    for (const id of LEVEL_ORDER.filter((x) => !(CHAPTER2 as readonly string[]).includes(x))) expect(robotsIn(id)).toEqual([]);
+    for (const id of CHAPTER_DECKS[1]) expect(robotsIn(id)).toEqual([]);
+    expect(robotsIn('harpies').length).toBeGreaterThan(0);
   });
 
   it('are introduced gradually: troopers and mines first, mortars in the desert, bulwarks in the snow', () => {
