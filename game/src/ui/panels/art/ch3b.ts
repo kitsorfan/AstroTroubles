@@ -70,8 +70,8 @@ export function ch3Map(): string {
       glow(id + 'h', 1250, 300, 200, 0.5) +
       `<g opacity=".8">${aeetes(1250, 520, 0.8, { pose: 'fist', face: 'angry' })}</g>` +
       // Brennus holding the map up high, with a grin under the moustache.
-      glow(id + 'g', 500, 380, 280, 0.7) +
-      at(500, 380, 1.05, map, false, -6) +
+      glow(id + 'g', 500, 320, 280, 0.7) +
+      at(500, 320, 1, map, false, -6) +
       brennus(500, 900, 1.8, { pose: 'cheer', face: 'grin' }) +
       sparkle(330, 190, 14, '#fff6d0') +
       sparkle(700, 170, 10, '#fff6d0') +
