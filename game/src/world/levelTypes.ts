@@ -141,7 +141,7 @@ export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', '
 export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
 
 /** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
+export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
 
 export interface Line {
   who: Speaker;

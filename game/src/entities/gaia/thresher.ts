@@ -18,7 +18,7 @@ const CHARGE_SPEED = 13;
 const REACH = 2.5;
 
 /**
- * THE THRESHER, region 1's boss: Brennus's giant harvester, gone wild with GaScu's vines. It drives
+ * THE THRESHER, region 1's boss: Brennus's giant harvester, gone wild with Celestia's vines. It drives
  * around the field with its blade reel spinning, then revs up and charges at Jason. If it rams a
  * rock pillar or the arena wall it gets stuck, and the glowing engine on its back is open to attack.
  * In between it tosses hay bales. Below half health it charges twice in a row.
@@ -86,7 +86,7 @@ export class Thresher extends Boss implements Target {
     this.engineGlow = glowSprite('#ffb04a', 2.6, 0);
     this.engineGlow.position.set(0, 2.3, -2.4);
     m.add(this.engineGlow);
-    // GaScu's vines, wrapped all over it.
+    // Celestia's vines, wrapped all over it.
     const vine = mat('#3fae4a', { rough: 0.6 });
     for (let i = 0; i < 4; i++) {
       const v = mesh(torus(1.4 + i * 0.1, 0.07), vine, 0, 1.4 + i * 0.25, -0.6 + i * 0.5, false);

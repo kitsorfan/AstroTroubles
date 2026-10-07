@@ -242,8 +242,8 @@ export const snow: LevelDef = {
       { who: 'jason', text: 'He thinks hurting something is the same as protecting people.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“They said NO. All twelve of them. They put GaScu in an escape pod and sent it into the stars, where I could never reach it.”' },
-      { who: 'bolt', text: 'So GaScu was all alone up there... for forty years?' },
+      { who: 'bolt', text: '“They said NO. All twelve of them. They put Celestia in an escape pod and sent it into the stars, where I could never reach it.”' },
+      { who: 'bolt', text: 'So Celestia was all alone up there... for forty years?' },
     ],
     'shard:s3': [
       { who: 'bolt', text: '“Forty winters on my own. The robots are my only crew. They never argue. They never laugh, either.”' },
@@ -265,7 +265,7 @@ export const snow: LevelDef = {
       {
         panel: 'past-order',
         lines: [
-          { who: 'colonist', name: 'Dr. Galen', text: 'But the planet fought us at every step. So Brennus decided to destroy its heart: the great plant we called GaScu.' },
+          { who: 'colonist', name: 'Dr. Galen', text: 'But the planet fought us at every step. So Brennus decided to destroy its heart: the great plant we called Celestia.' },
         ],
       },
       {
@@ -277,8 +277,8 @@ export const snow: LevelDef = {
       {
         panel: 'past-launch',
         lines: [
-          { who: 'colonist', name: 'Dr. Galen', text: 'So we put GaScu in an escape pod and launched it into the stars, far away from him. He has kept us asleep ever since.' },
-          { who: 'bolt', text: 'So THAT is why GaScu steered our ship away! It was not lost. It was running from Brennus!' },
+          { who: 'colonist', name: 'Dr. Galen', text: 'So we put Celestia in an escape pod and launched it into the stars, far away from him. He has kept us asleep ever since.' },
+          { who: 'bolt', text: 'So THAT is why Celestia steered our ship away! It was not lost. It was running from Brennus!' },
           { who: 'colonist', name: 'Dr. Galen', text: 'And now it has come back... and he has it. Hurry, young man. Please.' },
         ],
       },

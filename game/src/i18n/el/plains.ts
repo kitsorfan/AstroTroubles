@@ -22,7 +22,7 @@ export const EL_PLAINS: Record<string, string> = {
   "That’s just the wind, LUX.": "Ο αέρας είναι, ΛΟΥΞ.",
   "Dr. Hypatia’s camp is to the north, across the river. And Jason... I am picking up machines. Lots of them.": "Ο καταυλισμός της Δρ. Υπατίας είναι βόρεια, πέρα από το ποτάμι. Και Ιάσονα... πιάνω σήματα από μηχανές. Πολλές μηχανές.",
   "The camp is empty. The tents are torn... and look, thorny cocoons!": "Ο καταυλισμός είναι άδειος. Οι σκηνές είναι σκισμένες... και κοίτα, αγκαθωτά κουκούλια!",
-  "Brennus wrapped the scientists up, the way GaScu wrapped up the colonists. Let’s blast them free!": "Ο Βρέννος τύλιξε τους επιστήμονες, όπως η Γάκου τύλιγε τους αποίκους. Πάμε να τους ελευθερώσουμε!",
+  "Brennus wrapped the scientists up, the way Celestia wrapped up the colonists. Let’s blast them free!": "Ο Βρέννος τύλιξε τους επιστήμονες, όπως η Σελέστια τύλιγε τους αποίκους. Πάμε να τους ελευθερώσουμε!",
   "Field log, day one. Dr. Hypatia here. Gaia Nova is perfect: fresh water, rich soil, and grass that hums in the wind.": "Ημερολόγιο αποστολής, πρώτη μέρα. Εδώ Δρ. Υπατία. Η Γαία Νόβα είναι τέλεια: καθαρό νερό, γόνιμο χώμα και χορτάρι που σιγοτραγουδάει στον αέρα.",
   "Day three. We found metal footprints as big as a house. Something is harvesting the plains... and it is coming this way.": "Τρίτη μέρα. Βρήκαμε μεταλλικές πατημασιές μεγάλες σαν σπίτι. Κάτι θερίζει τις πεδιάδες... κι έρχεται προς τα εδώ.",
   "If this is my last log: the machines all have the same symbol. A red gear wrapped in thorns. Whoever made them is still here.": "Αν αυτό είναι το τελευταίο μου μήνυμα: όλες οι μηχανές έχουν το ίδιο σύμβολο. Ένα κόκκινο γρανάζι τυλιγμένο σε αγκάθια. Όποιος τις έφτιαξε είναι ακόμα εδώ.",

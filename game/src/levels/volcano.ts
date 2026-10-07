@@ -5,7 +5,7 @@ import type { LevelDef } from '../world/levelTypes';
  * volcano's flank, cross the lava river on floating rocks and grapple rings, climb both guard towers
  * (steam vent and grapple) and hack their terminals to open Brennus's fortress, run up the forge belt
  * past the blinking lasers, beat the guards, free Dr. Hypatia from the prison block, brave the ash
- * gusts and the lava-bomb lane on the crater rim, and face the Colossus with GaScu caged in its chest.
+ * gusts and the lava-bomb lane on the crater rim, and face the Colossus with Celestia caged in its chest.
  * With all 18 journal pages, Jason can TALK General Brennus down instead.
  */
 export const volcano: LevelDef = {
@@ -210,14 +210,14 @@ export const volcano: LevelDef = {
     { until: { all: [{ flag: 't1' }, { flag: 't2' }] }, text: 'Open the fortress gate: hack the terminals on both guard towers' },
     { until: { flag: 'pastcell' }, text: 'Cross the forge and free Dr. Hypatia from her cell', at: 'hypatia' },
     { until: { flag: 'crater' }, text: 'Climb out onto the crater rim and reach the crater', at: 'crater' },
-    { until: { boss: true }, text: 'Stop the Colossus and free GaScu!', at: 'boss' },
+    { until: { boss: true }, text: 'Stop the Colossus and free Celestia!', at: 'boss' },
     { until: { flag: 'never' }, text: 'Save Gaia Nova!' },
   ],
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'Mount Atlantas. The fortress is built right into the crater wall.' },
       { who: 'bolt', text: 'It is SO hot. My paint is sweating.' },
-      { who: 'jason', text: 'Dr. Hypatia and GaScu are up there somewhere. And so is Brennus.' },
+      { who: 'jason', text: 'Dr. Hypatia and Celestia are up there somewhere. And so is Brennus.' },
       { who: 'brennus', text: 'You came all this way, boy. Very well. Come up and see what forty years of work looks like.' },
     ],
     log: [
@@ -230,31 +230,31 @@ export const volcano: LevelDef = {
       { who: 'halcyon', text: 'The towers are too tall to climb. Ride the steam vent on the left, and use your grapple on the right.' },
     ],
     crater: [
-      { who: 'halcyon', text: 'Jason, I am picking up a HUGE machine in the crater. And GaScu’s signal, right inside it.' },
+      { who: 'halcyon', text: 'Jason, I am picking up a HUGE machine in the crater. And Celestia’s signal, right inside it.' },
       { who: 'bolt', text: 'PANDORA’s shop is here too! Let’s get ready first. Very, very ready.' },
     ],
     'colonist:c1': [
       { who: 'hypatia', text: 'Jason! LUX! I knew the {ship} would send someone. I didn’t know it would be someone so SHORT.' },
-      { who: 'jason', text: 'Dr. Hypatia! Are you okay? Where is GaScu?' },
+      { who: 'jason', text: 'Dr. Hypatia! Are you okay? Where is Celestia?' },
       { who: 'hypatia', text: 'Inside the Colossus, right at the top. Brennus put it in the machine’s chest, like a battery.' },
       { who: 'hypatia', text: 'Listen. Brennus is not a monster. He is a lonely old man who forgot how to share. If you have read his journal... maybe you can remind him.' },
     ],
     boss: [
-      { who: 'brennus', text: 'Behold, the COLOSSUS! With GaScu as its heart, nothing on this world will ever be taken from me again.' },
-      { who: 'gascu', text: '...help...' },
-      { who: 'jason', text: 'Let GaScu go, Brennus!' },
+      { who: 'brennus', text: 'Behold, the COLOSSUS! With Celestia as its heart, nothing on this world will ever be taken from me again.' },
+      { who: 'celestia', text: '...help...' },
+      { who: 'jason', text: 'Let Celestia go, Brennus!' },
       { who: 'brennus', text: 'Come and make me, boy.' },
     ],
     bossDown: [
       { who: 'brennus', text: 'No... no! Forty years... my Colossus...' },
-      { who: 'bolt', text: 'The cage is open! GaScu, you are free!' },
-      { who: 'gascu', text: '...free... ...together...' },
+      { who: 'bolt', text: 'The cage is open! Celestia, you are free!' },
+      { who: 'celestia', text: '...free... ...together...' },
       { who: 'jason', text: 'It’s over, Brennus. Come home with us. There’s room for everyone on Gaia Nova.' },
       { who: 'brennus', text: '...Everyone? Even me?' },
     ],
     talk: [
       { who: 'jason', text: 'Brennus, wait! Can we talk?' },
-      { who: 'brennus', text: 'TALK? Nobody has talked to me in forty years. ...Fine. Help your little robot calm GaScu down, and I will listen.' },
+      { who: 'brennus', text: 'TALK? Nobody has talked to me in forty years. ...Fine. Help your little robot calm Celestia down, and I will listen.' },
     ],
     redeem: [
       { who: 'jason', text: 'Brennus! I read your journal. All of it.' },
@@ -265,13 +265,13 @@ export const volcano: LevelDef = {
     ],
     redeemed: [
       { who: 'brennus', text: 'Forty years... and a boy and his little robot remind me what Grandma taught me.' },
-      { who: 'brennus', text: 'Colossus, power down. Let GaScu go.' },
-      { who: 'gascu', text: '...hello... ...safe... ...together...' },
+      { who: 'brennus', text: 'Colossus, power down. Let Celestia go.' },
+      { who: 'celestia', text: '...hello... ...safe... ...together...' },
       { who: 'brennus', text: 'Together. Yes. I think I would like that.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “The Colossus is finished. With GaScu as its heart, no one will ever take anything from me again.”' },
-      { who: 'jason', text: 'But GaScu was never his to take.' },
+      { who: 'bolt', text: 'A journal page! “The Colossus is finished. With Celestia as its heart, no one will ever take anything from me again.”' },
+      { who: 'jason', text: 'But Celestia was never his to take.' },
     ],
     'shard:s2': [
       { who: 'bolt', text: '“The boy with the robot keeps coming. He is not angry at me. He keeps saying he wants to HELP. Why?”' },

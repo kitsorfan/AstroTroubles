@@ -18,11 +18,12 @@ import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
  *
  * Chapter 2, GAIA NOVA. Forty years ago General Brennus led the first expedition, in the warship
  * Gorgon, to make Gaia Nova ready for the colony ship. The planet fought back, so he decided to
- * destroy GaScu, the heart of all its plants; his twelve scientists mutinied and launched GaScu into
- * space (which is why, when it met the colony ship flying to Gaia Nova, it turned the ship away).
- * Now the ship has arrived: Brennus captures Dr. Hypatia's science team, and his drones steal GaScu
- * so he can force its pollen into a Thorn Legion of machines and build the Colossus inside the
- * volcano Mount Atlantas. Jason and LUX cross six regions to free the scientists and GaScu. The
+ * destroy the heart of all its plants, the great flower the scientists named Celestia; they mutinied
+ * and launched it into space. Celestia IS GaScu (which is why, when it met the colony ship flying to
+ * Gaia Nova, it turned the ship away), and chapter 2 calls it by that real name: Brennus reveals it
+ * in his broadcast. Brennus captures Dr. Hypatia's science team, and his drones steal Celestia so he
+ * can force its pollen into a Thorn Legion of machines and build the Colossus inside the volcano
+ * Mount Atlantas. Jason and LUX cross six regions to free the scientists and Celestia. The
  * 18 pages of Brennus's journal tell how a boy who loved his grandmother's greenhouse became a man
  * who tries to own everything; with all of them, Jason can talk him down instead of beating him.
  */
@@ -50,8 +51,8 @@ export const FLYOVER: Record<DeckId, string> = {
   desert: 'The <b>Glass Desert</b>. Sand that sparkles like sugar, ruins older than anyone remembers, and Brennus’s drills chewing through it all.',
   snow: 'The <b>Frostpeak Tundra</b>. Somewhere in this blizzard is Brennus’s prison camp, and the scientists he captured.',
   rockies: 'The <b>Titan Rockies</b>. Cliffs taller than the {ship}, rickety bridges, and up at the very top... the wreck of the Gorgon.',
-  jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and GaScu’s pollen hangs in the air like fog.',
-  volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. GaScu is in there. So is the end of this.',
+  jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
+  volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -94,9 +95,9 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'halcyon', text: 'Grumpy AND dangerous. His drills are all over the desert. Please land somewhere soft.' },
   ],
   desert: [
-    { who: 'bolt', text: 'Jason, those ruins! The lights on the walls were GaScu’s light-words. Hello, safe, together!' },
-    { who: 'jason', text: 'So GaScu’s people were here once? A long, long time ago?' },
-    { who: 'halcyon', text: 'That would explain why GaScu dreamed of a warm blue world. It was not a dream. It was a memory.' },
+    { who: 'bolt', text: 'Jason, those ruins! The lights on the walls were Celestia’s light-words. Hello, safe, together!' },
+    { who: 'jason', text: 'So Celestia’s people were here once? A long, long time ago?' },
+    { who: 'halcyon', text: 'That would explain why Celestia dreamed of a warm blue world. It was not a dream. It was a memory.' },
     { who: 'jason', text: 'And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!' },
   ],
   snow: [
@@ -108,12 +109,12 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
   rockies: [
     { who: 'jason', text: 'The Gorgon crashed up there forty years ago. Brennus has been alone on this planet ever since.' },
     { who: 'bolt', text: 'Forty years alone. I was alone in a dark storeroom for ONE day, and I did not like it at all.' },
-    { who: 'halcyon', text: 'Warning: the jungle ahead is thick with GaScu pollen. Something has gone very wrong down there.' },
-    { who: 'jason', text: 'Then we fix it. Hang on, GaScu. We’re coming.' },
+    { who: 'halcyon', text: 'Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.' },
+    { who: 'jason', text: 'Then we fix it. Hang on, Celestia. We’re coming.' },
   ],
   jungle: [
-    { who: 'gascu', text: '...Jason... ...LUX... ...hot... ...trapped... ...please...' },
-    { who: 'bolt', text: 'That was GaScu! It flashed to me through the pollen. It is inside the volcano!' },
+    { who: 'celestia', text: '...Jason... ...LUX... ...hot... ...trapped... ...please...' },
+    { who: 'bolt', text: 'That was Celestia! It flashed to me through the pollen. It is inside the volcano!' },
     { who: 'halcyon', text: 'Mount Atlantas. Brennus’s fortress. The Colossus will be waiting for you.' },
     { who: 'jason', text: 'So will we. One last climb, LUX.' },
     { who: 'bolt', text: 'One last climb. I will be brave if you are brave.' },
@@ -127,7 +128,7 @@ export const PROLOGUE2 = {
   team: 'Captain Atalanta sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
   quiet: 'Three days later, their radio went quiet...',
   signal: '...and then a message came up from the planet.',
-  snatch: 'That night, little black drones swooped onto the {ship}, grabbed GaScu and flew it down to the planet.',
+  snatch: 'That night, little black drones swooped onto the {ship}, grabbed Celestia and flew it down to the planet.',
   down: 'So Jason and LUX climbed into the shuttle and flew down to Gaia Nova.',
 };
 
@@ -136,14 +137,15 @@ export const BROADCAST: Line[] = [
   { who: 'brennus', text: 'Attention, colony ship. This is General Brennus, of the warship Gorgon.' },
   { who: 'brennus', text: 'I reached Gaia Nova forty years before you. This world is MINE. Every tree, every river, every rock.' },
   { who: 'brennus', text: 'Your scientists came poking around my planet. They will be my guests for a while.' },
+  { who: 'brennus', text: 'And you have brought back something of mine. That little plant you call GaScu. Its real name is CELESTIA.' },
   { who: 'captain', text: 'Brennus... my first commander. He led the first expedition here, forty years ago. We all thought he was lost.' },
   { who: 'brennus', text: 'Hello, Atalanta. Turn your ship around and fly away, or meet my THORN LEGION.' },
 ];
 
-/** After the drones steal GaScu. */
+/** After the drones steal Celestia. */
 export const STOLEN: Line[] = [
-  { who: 'bolt', text: 'GaScu! They took GaScu! Jason, they TOOK it!' },
-  { who: 'captain', text: 'He wants GaScu’s pollen for his army. Jason, LUX: take the shuttle down. Find the scientists, and bring GaScu home.' },
+  { who: 'bolt', text: 'GaScu! I mean... Celestia! They took it! Jason, they TOOK it!' },
+  { who: 'captain', text: 'Celestia: the name the first expedition gave it. He wants its pollen for his army. Jason, LUX: take the shuttle down. Find the scientists, and bring Celestia back.' },
   { who: 'jason', text: 'We will, Captain. Come on, LUX. Gaia Nova needs us.' },
 ];
 
@@ -161,7 +163,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   boreas: { sub: 'Warden of the prison camp · colder than the tundra', color: '#7fe6ff' },
   stheno: { sub: 'Last gunship of the Gorgon · guards the mountain pass', color: '#ffb347' },
   hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
-  colossus: { sub: 'General Brennus’s war machine · with GaScu caged inside', color: '#ff3a4c' },
+  colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
 };
 
 /**
@@ -200,15 +202,15 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
   ],
   freed: [
     'The Colossus crashed down into the crater, and Mount Atlantas let out one last, tired puff of smoke.',
-    'GaScu’s vines slipped free of the machines. All over Gaia Nova, the Thorn Legion switched off and went quiet.',
+    'Celestia’s vines slipped free of the machines. All over Gaia Nova, the Thorn Legion switched off and went quiet.',
     'General Brennus was taken up to the {ship} to explain himself to Captain Atalanta. It was going to be a VERY long talk.',
     'And at last, the colonists stepped out onto <b>Gaia Nova</b>: a brand new home that belonged to everyone.',
   ],
   redeemed: [
     'Brennus read the very first page of his journal, the one he wrote when he was twelve... and lowered his hands.',
     '“I came here to make this world obey me,” he said. “I forgot that the best gardens are the ones you share.”',
-    'Together, Brennus, the scientists and GaScu turned the Thorn Legion into the <b>Green Legion</b>: robots that plant forests instead of fighting.',
-    'On the colony’s first morning, GaScu bloomed across the whole valley. Gaia Nova was home at last, for everyone.',
+    'Together, Brennus, the scientists and Celestia turned the Thorn Legion into the <b>Green Legion</b>: robots that plant forests instead of fighting.',
+    'On the colony’s first morning, Celestia bloomed across the whole valley. Gaia Nova was home at last, for everyone.',
   ],
 };
 
@@ -241,7 +243,7 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
   out.push(
     kind === 'redeemed'
       ? tr('Brennus planted his grandmother’s tomato seeds in the colony’s very first garden. He gave every single plant a name.')
-      : tr('GaScu planted itself in the middle of the Whispering Plains. By spring, the whole valley was in flower.'),
+      : tr('Celestia planted itself in the middle of the Whispering Plains. By spring, the whole valley was in flower.'),
   );
   if (hypatia) out.push(tr('Dr. Hypatia named a brand new flower after LUX. It glows in the dark, of course.'));
   out.push(tr('Captain Atalanta made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
@@ -276,7 +278,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
       p('Captain Atalanta'),
       p('Dr. Hypatia, chief scientist'),
       p('PANDORA, the travelling shop'),
-      p('GaScu, home at last'),
+      p('Celestia, home at last'),
       kind === 'redeemed' ? p('General Brennus, a gardener at last') : p('General Brennus, a very grumpy old general'),
       head('THE THORN LEGION'),
       p('Thresher · Dune Driller · Boreas'),

@@ -2,7 +2,7 @@ import type { LevelDef } from '../world/levelTypes';
 
 /**
  * Region 2 of Gaia Nova — the Glass Desert. Sparkling dunes, Brennus's mining rigs and the glowing
- * ruins of GaScu's long-gone people. Wade through the quicksand field by the dig camp, lean into the
+ * ruins of Celestia's long-gone people. Wade through the quicksand field by the dig camp, lean into the
  * sandstorm gusts on the ridge and beat the drill-rig guards to open the crashed science shuttle,
  * whose cargo bay holds the GRAPPLE HOOK. Dodge the rolling rocks, zip from ring to ring over the tar
  * canyon, solve the light-lock in the ruins court, zip up to the glyph terrace and face the Dune
@@ -188,12 +188,12 @@ export const desert: LevelDef = {
     ],
     log: [
       { who: 'hypatia', text: 'Field log, Dr. Hypatia. The ruins under the sand are ancient... and the glyphs on the walls GLOW.' },
-      { who: 'hypatia', text: 'Blue, pink, gold. The same colours as GaScu’s light-words. Someone lived here who spoke in light.' },
+      { who: 'hypatia', text: 'Blue, pink, gold. The same colours as Celestia’s light-words. Someone lived here who spoke in light.' },
       { who: 'hypatia', text: 'Brennus’s drills are getting closer. If anyone finds this: the GRAPPLE HOOK is in our shuttle’s cargo bay. Use it.' },
     ],
     boss: [
       { who: 'brennus', text: 'So, the boy from the colony ship. My Dune Driller will bury you in sand, like everything else here.' },
-      { who: 'bolt', text: 'It is a drilling machine as long as a river! And it is wrapped in GaScu vines!' },
+      { who: 'bolt', text: 'It is a drilling machine as long as a river! And it is wrapped in Celestia vines!' },
       { who: 'jason', text: 'Then we unwrap it. Ready, LUX?' },
     ],
     bossDown: [
@@ -210,8 +210,8 @@ export const desert: LevelDef = {
       { who: 'bolt', text: 'One great plant... Jason, do you think he means...?' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“The scientists call it GaScu: the heart of every plant on Gaia Nova. If the heart were gone, this planet would stop fighting us.”' },
-      { who: 'jason', text: 'He wanted to hurt GaScu? Even back then?' },
+      { who: 'bolt', text: '“The scientists call it Celestia: the heart of every plant on Gaia Nova. If the heart were gone, this planet would stop fighting us.”' },
+      { who: 'jason', text: 'He wanted to hurt Celestia? Even back then?' },
     ],
   },
 };

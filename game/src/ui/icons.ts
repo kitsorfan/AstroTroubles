@@ -238,7 +238,7 @@ const HYPATIA = person({
     <path d="M29.6 34.6Q31 33.4 32.6 33.6M43.6 34.6Q45 33.4 46.6 33.6" fill="none" stroke="#ffffff" stroke-width=".7" opacity=".5"/>`,
 });
 
-export const PORTRAIT: Record<Speaker, string> = {
+const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
   brennus: BRENNUS,
   hypatia: HYPATIA,
@@ -314,6 +314,9 @@ export const PORTRAIT: Record<Speaker, string> = {
   </svg>`,
 };
 
+/** On Gaia Nova, GaScu goes by its real name, Celestia. */
+export const PORTRAIT: Record<Speaker, string> = { ...FACES, celestia: FACES.gascu };
+
 export const SPEAKER_NAME: Record<Speaker, string> = {
   jason: 'Jason',
   bolt: 'LUX',
@@ -324,6 +327,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   rosa: 'Aunt Rosa',
   vendy: 'Pandora',
   gascu: 'GaScu',
+  celestia: 'Celestia',
   brennus: 'General Brennus',
   hypatia: 'Dr. Hypatia',
 };
@@ -338,6 +342,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   rosa: '#ff8a8a',
   vendy: '#ff9ae0',
   gascu: '#ff6fcf',
+  celestia: '#ff6fcf',
   brennus: '#ff6a5a',
   hypatia: '#9adfff',
 };

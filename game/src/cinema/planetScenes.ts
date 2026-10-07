@@ -10,7 +10,7 @@ import { PlanetScene } from './planetScene';
 import type { ShipScene } from './shipScene';
 
 /**
- * Chapter 2 cinematics: the {ship} arrives at Gaia Nova and GaScu is stolen (out in space), the
+ * Chapter 2 cinematics: the {ship} arrives at Gaia Nova and Celestia is stolen (out in space), the
  * shuttle's descent and its hops between regions (over the planet), and the chapter's ending.
  */
 
@@ -56,7 +56,7 @@ export async function arrival(d: Director, s: ShipScene) {
   audio.play('zap', 0.5);
   d.glitch(1);
   await d.panel('ch2-broadcast', { lines: BROADCAST });
-  // That night, the drones come for GaScu.
+  // That night, the drones come for Celestia.
   await d.cam(V(-20, 18, 46), V(0, 2, 0), 2, ease.inOut);
   const drone = s.comet;
   drone.visible = true;

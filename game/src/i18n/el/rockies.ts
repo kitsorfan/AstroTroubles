@@ -19,7 +19,7 @@ export const EL_ROCKIES: Record<string, string> = {
 
   // Dr. Hypatia's log.
   "Field log, Dr. Hypatia, written in secret. Brennus is taking me to his fortress in the volcano.": "Ημερολόγιο αποστολής, Δρ. Υπατία, γραμμένο κρυφά. Ο Βρέννος με πηγαίνει στο φρούριό του μέσα στο ηφαίστειο.",
-  "He asked me to help him put GaScu inside his machine. I said no. He did not shout. He just looked... tired.": "Μου ζήτησε να τον βοηθήσω να βάλει τη Γάκου μέσα στη μηχανή του. Του είπα όχι. Δεν φώναξε. Απλώς φαινόταν... κουρασμένος.",
+  "He asked me to help him put Celestia inside his machine. I said no. He did not shout. He just looked... tired.": "Μου ζήτησε να τον βοηθήσω να βάλει τη Σελέστια μέσα στη μηχανή του. Του είπα όχι. Δεν φώναξε. Απλώς φαινόταν... κουρασμένος.",
   "If anyone finds the Gorgon: his journal pages are scattered all over these mountains. Read them. There is a person in there.": "Αν βρει κανείς τη Γοργώ: οι σελίδες του ημερολογίου του είναι σκορπισμένες σε όλα αυτά τα βουνά. Διαβάστε τες. Υπάρχει ένας άνθρωπος εκεί μέσα.",
 
   // The boss.
@@ -29,7 +29,7 @@ export const EL_ROCKIES: Record<string, string> = {
   "Stheno is going down... into the clouds!": "Η Σθενώ πέφτει... μέσα στα σύννεφα!",
   "Look, LUX. Brennus planted a little garden in the wreck.": "Κοίτα, ΛΟΥΞ. Ο Βρέννος είχε φυτέψει έναν μικρό κήπο μέσα στο ναυάγιο.",
   "Dead flowers. Forty years of dead flowers.": "Μαραμένα λουλούδια. Σαράντα χρόνια μαραμένα λουλούδια.",
-  "GaScu’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.": "Το σήμα της Γάκου δυναμώνει. Έρχεται από την ανατολή: μέσα από τη ζούγκλα, και πέρα ως το ηφαίστειο.",
+  "Celestia’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.": "Το σήμα της Σελέστιας δυναμώνει. Έρχεται από την ανατολή: μέσα από τη ζούγκλα, και πέρα ως το ηφαίστειο.",
   "Shoot its three glowing engines!": "Χτύπα τις τρεις μηχανές της που λάμπουν!",
   "Engine down! {n} to go.": "Μια μηχανή έπεσε! Μένουν {n}.",
   "All engines down! Its core is open. BLAST it!": "Έπεσαν όλες οι μηχανές! Ο πυρήνας της άνοιξε. Ρίξε ΒΟΛΗ!",

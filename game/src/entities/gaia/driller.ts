@@ -36,7 +36,7 @@ type State = 'roam' | 'track' | 'warn' | 'burst' | 'stuck' | 'swim' | 'rise' | '
 type Attack = 'burst' | 'spray' | 'spin';
 
 /**
- * DUNE DRILLER: Brennus's mining machine, a sand-worm train of armoured segments wrapped in GaScu
+ * DUNE DRILLER: Brennus's mining machine, a sand-worm train of armoured segments wrapped in Celestia
  * vines. It swims under the sand (only a moving mound and a trail of dust give it away), then bursts
  * up under Jason after a red warning circle, arcs over and plunges its drill back into the sand. The
  * drill gets stuck for a few seconds and its head glows: that's the moment to BLAST it. Between
@@ -348,7 +348,7 @@ export class Driller extends Boss implements Target {
     return true;
   }
 
-  /** Hits tear the GaScu vines off, one wrap at a time. */
+  /** Hits tear the Celestia vines off, one wrap at a time. */
   private unwrap() {
     const keep = Math.ceil((this.vines.length * this.hp) / this.maxHp);
     this.vines.forEach((v, i) => {
