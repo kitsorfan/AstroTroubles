@@ -162,7 +162,7 @@ export class Player {
     else {
       this.follower = new Follower(this.world, m, other);
       const b = this.body;
-      this.follower.place(b.x - Math.sin(this.facing) * 1.4, b.y, b.z - Math.cos(this.facing) * 1.4, this.facing);
+      this.follower.placeNear(b.x, b.y, b.z, this.facing);
     }
   }
 
@@ -209,7 +209,7 @@ export class Player {
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
     this.showHero();
-    this.follower?.place(b.x - Math.sin(this.facing) * 1.4, b.y, b.z - Math.cos(this.facing) * 1.4, this.facing);
+    this.follower?.placeNear(b.x, b.y, b.z, this.facing);
     this.refreshGear();
     const color = HEROES[next].color;
     w.particles.emit(b.x, b.y + 1, b.z, { count: 40, color: '#ffffff', speed: 6, life: 0.55, size: 0.55, up: 1.5 });
@@ -584,7 +584,7 @@ export class Player {
     this.pounding = false;
     this.dashT = 0;
     this.ata?.reset();
-    this.follower?.place(x - Math.sin(this.facing) * 1.4, y, z - Math.cos(this.facing) * 1.4, this.facing);
+    this.follower?.placeNear(x, y, z, this.facing);
   }
 
   /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */

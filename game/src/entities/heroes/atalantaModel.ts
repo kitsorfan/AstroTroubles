@@ -100,7 +100,7 @@ export function makeAtalanta(): AtalantaModel {
   const torso = mesh(capsule(0.29, 0.3), suit, 0, 0.98, 0);
   torso.scale.set(1, 1, 0.84);
   body.add(torso);
-  body.add(mesh(boxG(0.26, 0.34, 0.08), white, 0, 1.02, 0.22));
+  body.add(mesh(boxG(0.2, 0.26, 0.08), white, 0, 1.05, 0.22));
   body.add(mesh(boxG(0.06, 0.06, 0.04), mat(C.glow, { emissive: C.glow, ei: 1 }), 0.06, 1.1, 0.27, false));
   body.add(mesh(cyl(0.31, 0.31, 0.08, 18), gold, 0, 0.78, 0));
   body.add(mesh(boxG(0.1, 0.09, 0.05), mat(C.white, { metal: 0.3 }), 0, 0.78, 0.29, false));
@@ -115,9 +115,13 @@ export function makeAtalanta(): AtalantaModel {
 
   // The bow across her back, and a little quiver.
   const string = ownMat(C.glow, { emissive: C.glow, ei: 1.2 });
-  const bowBack = makeBow(string);
-  bowBack.position.set(0, 1.0, -0.42);
-  bowBack.rotation.set(0, Math.PI, 0.7);
+  // Slung flat across her back, limbs from shoulder to hip.
+  const bowBack = new THREE.Group();
+  const slung = makeBow(string);
+  slung.rotation.y = Math.PI / 2;
+  bowBack.add(slung);
+  bowBack.position.set(0, 1.0, -0.4);
+  bowBack.rotation.z = 0.75;
   body.add(bowBack);
   const quiver = new THREE.Group();
   quiver.position.set(0.2, 1.05, -0.36);
@@ -154,11 +158,11 @@ export function makeAtalanta(): AtalantaModel {
   tuft.scale.set(1, 1.5, 1);
   braid.add(tuft);
   head.add(braid);
-  head.add(mesh(new THREE.TorusGeometry(0.336, 0.03, 6, 32).rotateX(Math.PI / 2), white, 0, 0.13, 0.02, false));
+  head.add(mesh(new THREE.TorusGeometry(0.338, 0.026, 6, 32).rotateX(Math.PI / 2), white, 0, 0.17, 0.02, false));
   const visor = ownMat(C.glow, { emissive: C.glow, ei: 0.5 });
   visor.transparent = true;
   visor.opacity = 0.75;
-  head.add(mesh(new THREE.SphereGeometry(0.345, 20, 4, front - 0.75, 1.5, 1.08, 0.2), visor, 0, 0.02, 0.02, false));
+  head.add(mesh(new THREE.SphereGeometry(0.348, 20, 4, front - 0.7, 1.4, 0.98, 0.16), visor, 0, 0.02, 0.02, false));
   body.add(head);
 
   // Arms: teal sleeves, white gloves; the left hand holds the bow while she shoots.
@@ -173,7 +177,8 @@ export function makeAtalanta(): AtalantaModel {
   }
   const bowHand = makeBow(string);
   bowHand.position.set(0, -0.46, 0.02);
-  bowHand.rotation.x = Math.PI / 2;
+  // Upright when the arm is raised, canted a little like an archer's.
+  bowHand.rotation.set(Math.PI / 2, 0, 0.3);
   bowHand.visible = false;
   armL.add(bowHand);
   const nocked = makeArrowMesh();

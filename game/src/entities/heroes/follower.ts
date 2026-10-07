@@ -1,5 +1,6 @@
 import { audio } from '../../core/audio';
 import { HERO_SWITCH } from '../../core/constants';
+import { Grid } from '../../world/grid';
 import { clamp, damp, dampAngle } from '../../core/math';
 import type { World } from '../../game/world';
 import type { HeroId } from '../../world/levelTypes';
@@ -54,6 +55,23 @@ export class Follower {
     this.trail = [];
     this.stuck = 0;
     this.model.root.position.set(x, y, z);
+  }
+
+  /**
+   * Puts the follower beside a hero standing at (x, y, z): to their right, else their left, else just
+   * behind, wherever the floor is at about the same height (so the camera sees both of them).
+   */
+  placeNear(x: number, y: number, z: number, facing: number) {
+    const g = this.world.grid;
+    for (const a of [-Math.PI / 2 - 0.5, Math.PI / 2 + 0.5, Math.PI]) {
+      const px = x + Math.sin(facing + a) * 1.5;
+      const pz = z + Math.cos(facing + a) * 1.5;
+      const c = g.cell(Grid.toCell(px), Grid.toCell(pz));
+      if (c.kind === 'wall' || c.kind === 'void' || c.kind === 'hazard' || Math.abs(c.h - y) > 0.6) continue;
+      this.place(px, c.h, pz, facing);
+      return;
+    }
+    this.place(x, y, z, facing);
   }
 
   /** Lays a breadcrumb where the playing hero stands on solid ground. */
@@ -146,7 +164,7 @@ export class Follower {
     const w = this.world;
     w.particles.emit(this.x, this.y + 1, this.z, { count: 14, color: HEROES[this.id].color, speed: 3, life: 0.4, size: 0.4 });
     const back = this.trail.length ? this.trail[this.trail.length - 1] : { x: b.x, y: b.y, z: b.z };
-    this.place(back.x - Math.sin(p.facing) * 0.6, back.y, back.z - Math.cos(p.facing) * 0.6, p.facing);
+    this.placeNear(back.x, back.y, back.z, p.facing);
     w.particles.emit(this.x, this.y + 1, this.z, { count: 18, color: '#ffffff', speed: 3.5, life: 0.45, size: 0.45, up: 1 });
     audio.play('djump', 1.6, 0.4);
   }
