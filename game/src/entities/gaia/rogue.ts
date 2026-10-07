@@ -18,8 +18,8 @@ type State = 'hover' | 'zip' | 'aim' | 'volley' | 'summon' | 'dizzy' | 'sing';
 export const ROGUE_SCALE = 1.6;
 const HP = 24;
 /** The arena is an oval: LUX zips between points on it. */
-const RX = 8;
-const RZ = 4;
+const RX = 11;
+const RZ = 6;
 /** Hover height, and how low he sinks while he's overheated. */
 const HIGH = 2.6;
 const LOW = 1.1;
@@ -154,7 +154,7 @@ export class RogueLux extends Boss implements Target {
       return;
     }
     if (!this.started || this.defeated) {
-      if (!this.started && !this.defeated && this.playerDist() < 9) this.begin();
+      if (!this.started && !this.defeated && this.playerDist() < 9.5) this.begin();
       if (this.defeated) {
         // Sparking and wobbling, waiting for IRIS's song in the cutscene.
         this.pos.y = damp(this.pos.y, this.center.y + LOW, 2, dt);
@@ -320,7 +320,8 @@ export class RogueLux extends Boss implements Target {
     this.beat = 0;
     const p = this.player.body;
     this.world.iris.override = tmp.set(p.x, p.y, p.z).lerp(this.pos, 0.55).setY(this.center.y + 2.4).clone();
-    this.world.hooks.toast(this.songs === 1 ? 'LUX, it’s me, IRIS! Remember: hello... safe... together!' : 'Come back to us, LUX! Jason needs you!', 'iris');
+    if (this.songs === 1) this.world.hooks.toast('LUX, it’s me, IRIS! Remember: hello... safe... together!', 'iris');
+    else this.world.hooks.toast('Come back to us, LUX! Jason needs you!', 'iris');
   }
 
   /** The song, `k` seconds in: three light-words (blue, pink, gold), then the chip fights back. */
@@ -340,7 +341,8 @@ export class RogueLux extends Boss implements Target {
       this.beat += 1;
     } else if (this.beat === words.length && k >= 2.2) {
       this.beat += 1;
-      this.world.hooks.toast(this.songs === 1 ? 'J-Jason...? ...ERROR. OBEY. OBEY!' : 'I... I want to... NO. OBEY!', 'rogue');
+      if (this.songs === 1) this.world.hooks.toast('J-Jason...? ...ERROR. OBEY. OBEY!', 'rogue');
+      else this.world.hooks.toast('I... I want to... NO. OBEY!', 'rogue');
     }
   }
 

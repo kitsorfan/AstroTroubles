@@ -13,8 +13,6 @@ export const EL_ROCKIES: Record<string, string> = {
 
   // Intro.
   "The Titan Rockies. The Gorgon’s wreck is at the very top of the pass.": "Τα Όρη των Τιτάνων. Το ναυάγιο της Γοργούς είναι στην κορυφή του περάσματος.",
-  "Up? We have to go UP? Okay. Okay okay okay.": "Πάνω; Πρέπει να πάμε ΠΑΝΩ; Εντάξει. Εντάξει εντάξει εντάξει.",
-  "We have the grapple. We can climb anything.": "Έχουμε τον γάντζο. Μπορούμε να σκαρφαλώσουμε παντού.",
   "Careful: Brennus’s last gunship, STHENO, guards the pass. And the rocks up here like to roll.": "Προσοχή: το τελευταίο πολεμικό σκάφος του Βρέννου, η ΣΘΕΝΩ, φυλάει το πέρασμα. Και στους βράχους εδώ πάνω αρέσει να κατρακυλάνε.",
 
   // Dr. Hypatia's log.
@@ -23,13 +21,7 @@ export const EL_ROCKIES: Record<string, string> = {
   "If anyone finds the Gorgon: his journal pages are scattered all over these mountains. Read them. There is a person in there.": "Αν βρει κανείς τη Γοργώ: οι σελίδες του ημερολογίου του είναι σκορπισμένες σε όλα αυτά τα βουνά. Διαβάστε τες. Υπάρχει ένας άνθρωπος εκεί μέσα.",
 
   // The boss.
-  "STHENO, sister of the Gorgon! Blow them off my mountain!": "ΣΘΕΝΩ, αδελφή της Γοργούς! Πέτα τους έξω από το βουνό μου!",
-  "A flying gunship! Jason, it is shooting MISSILES!": "Ένα ιπτάμενο πολεμικό σκάφος! Ιάσονα, ρίχνει ΠΥΡΑΥΛΟΥΣ!",
-  "Then we go up and meet it. Grapple, LUX!": "Τότε ανεβαίνουμε να το συναντήσουμε. Γάντζο, ΛΟΥΞ!",
   "Stheno is going down... into the clouds!": "Η Σθενώ πέφτει... μέσα στα σύννεφα!",
-  "Look, LUX. Brennus planted a little garden in the wreck.": "Κοίτα, ΛΟΥΞ. Ο Βρέννος είχε φυτέψει έναν μικρό κήπο μέσα στο ναυάγιο.",
-  "Dead flowers. Forty years of dead flowers.": "Μαραμένα λουλούδια. Σαράντα χρόνια μαραμένα λουλούδια.",
-  "Celestia’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.": "Το σήμα της Σελέστιας δυναμώνει. Έρχεται από την ανατολή: μέσα από τη ζούγκλα, και πέρα ως το ηφαίστειο.",
   "Shoot its three glowing engines!": "Χτύπα τις τρεις μηχανές της που λάμπουν!",
   "Engine down! {n} to go.": "Μια μηχανή έπεσε! Μένουν {n}.",
   "All engines down! Its core is open. BLAST it!": "Έπεσαν όλες οι μηχανές! Ο πυρήνας της άνοιξε. Ρίξε ΒΟΛΗ!",
@@ -37,7 +29,6 @@ export const EL_ROCKIES: Record<string, string> = {
   "Missiles! Run out of the red circles!": "Πύραυλοι! Τρέξε έξω από τους κόκκινους κύκλους!",
 
   // Journal pages.
-  "He keeps saying MINE. Like a little kid with a toy.": "Όλο λέει ΔΙΚΟ ΜΟΥ. Σαν μικρό παιδί με ένα παιχνίδι.",
 
   // Scientists.
   "Astronomer Hipparchus": "Αστρονόμος Ίππαρχος",
@@ -53,6 +44,5 @@ export const EL_ROCKIES: Record<string, string> = {
   "The rapids are fast and freezing! Cross the plank bridge to the big rock, then GRAPPLE from rock to rock.": "Τα νερά είναι ορμητικά και παγωμένα! Πέρνα την ξύλινη γέφυρα ως τον μεγάλο βράχο και μετά πήγαινε με τον ΓΑΝΤΖΟ από βράχο σε βράχο.",
   "Windy ledge! When dust streaks blow past, a gust is coming: walk into the wind, or SPIN to dig in. The loose stones fall when you step on them, so keep moving!": "Ανεμοδαρμένη προεξοχή! Όταν περνούν γραμμές σκόνης, έρχεται ριπή ανέμου: περπάτα κόντρα στον αέρα ή κάνε ΣΒΟΥΡΑ για να κρατηθείς. Οι χαλαρές πέτρες πέφτουν όταν τις πατάς, οπότε μη σταματάς!",
   "All aboard the cable car! Hop on and ride it across the gap.": "Όλοι στο τελεφερίκ! Ανέβα και πέρνα απέναντι από το κενό.",
-  "The Gorgon’s old cargo hold is still locked. HACK the terminal to open it!": "Το παλιό αμπάρι της Γοργούς είναι ακόμα κλειδωμένο. ΧΑΚΑΡΕ το τερματικό για να το ανοίξεις!",
   "STHENO flies on three glowing ENGINES. Zip up to the rings at the edge of the pass, get close, and BLAST the engines!": "Η ΣΘΕΝΩ πετάει με τρεις ΜΗΧΑΝΕΣ που λάμπουν. Πετάξου με τον γάντζο στους κρίκους στην άκρη του περάσματος, πλησίασε και ρίξε ΒΟΛΗ στις μηχανές!",
 };

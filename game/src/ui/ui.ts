@@ -23,7 +23,7 @@ import type { DeckId, EndingKind, Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
-import { HACK_TITLE, type Helper } from '../game/companions';
+import type { Helper } from '../game/companions';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
@@ -345,12 +345,17 @@ export class UI {
    * LUX is away). The game sets it for each deck; `toast` is true for the little pop-up messages.
    */
   voice: (who: Speaker, toast: boolean) => Speaker = (who) => who;
-  private hackTitle = HACK_TITLE.lux;
+  private helperNow: Helper | null = 'lux';
+
+  /** The title on the terminal puzzle panel: whoever is doing the hacking. */
+  private hackTitle() {
+    return this.helperNow === 'iris' ? tr('IRIS HACK') : this.helperNow === 'wrist' ? tr('WRIST HACK') : tr('LUX HACK');
+  }
 
   /** The action button wears the helper's face (LUX, IRIS or Jason's wrist computer), and so does the hacking panel. */
   setHelper(who: Helper | null) {
     $(this.actionEl, '.face').innerHTML = who === 'wrist' ? WRIST_FACE : portrait(who === 'iris' ? 'iris' : 'bolt');
-    this.hackTitle = HACK_TITLE[who ?? 'lux'];
+    this.helperNow = who;
   }
 
   /** The action button next to things the helper can use (terminals, pylons, the shop, lifts). */
@@ -709,7 +714,7 @@ export class UI {
   /** The panel the logic puzzles share: instructions (already translated), the puzzle, progress dots, and the buttons. */
   private puzzlePanel(intro: string, body: string, dots: number, done: (ok: boolean) => void, extra = '') {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr(this.hackTitle)}</h2>
+      <h2>${this.hackTitle()}</h2>
       <div class="msg small">${intro}</div>
       ${body}
       <div class="dots">${'<i></i>'.repeat(dots)}</div>
@@ -852,7 +857,7 @@ export class UI {
   /** Simon-says light puzzle: watch LUX's pattern, then repeat it. */
   private memoryHack(length: number, done: (ok: boolean) => void) {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr(this.hackTitle)}</h2>
+      <h2>${this.hackTitle()}</h2>
       <div class="msg">${tr('Watch the lights...')}</div>
       <div class="pads"><div class="pad"></div><div class="pad"></div><div class="pad"></div><div class="pad"></div></div>
       <div class="dots">${'<i></i>'.repeat(length)}</div>

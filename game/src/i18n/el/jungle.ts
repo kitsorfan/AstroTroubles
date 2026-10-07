@@ -14,7 +14,6 @@ export const EL_JUNGLE: Record<string, string> = {
   "POLLEN PUMP! Brennus is pumping Celestia’s pollen into the swamp. Walk up to the terminal and HACK it to switch the pump off.": "ΑΝΤΛΙΑ ΓΥΡΗΣ! Ο Βρέννος ρίχνει τη γύρη της Σελέστιας μέσα στον βάλτο. Πήγαινε στο τερματικό και ΧΑΚΑΡΕ το για να σβήσεις την αντλία.",
   "Bog ahead! The mud slows you down, and if you stand still too long you start to sink. Keep moving!": "Προσοχή, έλος! Η λάσπη σε καθυστερεί, κι αν μείνεις ακίνητος πολλή ώρα, αρχίζεις να βουλιάζεις. Συνέχισε να κινείσαι!",
   "Giant mushrooms are super bouncy. Jump on one to fly up onto the high ridge!": "Τα γιγάντια μανιτάρια είναι σούπερ ελαστικά. Πήδα πάνω σε ένα για να πεταχτείς ψηλά στην κορυφογραμμή!",
-  "The root caves are pitch dark. Stay close to LUX: his light shows the way to the second pump.": "Οι σπηλιές με τις ρίζες είναι κατασκότεινες. Μείνε κοντά στον ΛΟΥΞ: το φως του δείχνει τον δρόμο ως τη δεύτερη αντλία.",
   "Glowing rings hang from the treetops. Face one and press GRAPPLE to zip across, like swinging on a vine!": "Από τις κορυφές των δέντρων κρέμονται φωτεινοί κρίκοι. Γύρνα προς έναν και πάτα ΓΑΝΤΖΟΣ για να πεταχτείς απέναντι, σαν να κάνεις κούνια σε κλήμα!",
   "The last pump is up on the tallest tree. Zip up with the GRAPPLE, or bounce up on the mushroom!": "Η τελευταία αντλία είναι πάνω στο πιο ψηλό δέντρο. Ανέβα με τον ΓΑΝΤΖΟ ή αναπήδησε πάνω στο μανιτάρι!",
   "VAULT RIDDLE: Step on the flower pads in the order the jungle wakes up. First the sun, then the sky, then Celestia’s favourite colour. The leaves wake up last.": "ΓΡΙΦΟΣ ΘΗΣΑΥΡΟΦΥΛΑΚΙΟΥ: Πάτα τις πλάκες-λουλούδια με τη σειρά που ξυπνάει η ζούγκλα. Πρώτα ο ήλιος, μετά ο ουρανός, μετά το αγαπημένο χρώμα της Σελέστιας. Τα φύλλα ξυπνάνε τελευταία.",
@@ -26,30 +25,22 @@ export const EL_JUNGLE: Record<string, string> = {
   // Intro.
   "The Thornwood Jungle. Pollen levels: off the charts.": "Η Ζούγκλα των Αγκαθιών. Επίπεδα γύρης: στα ύψη.",
   "The trees look sick. Grey and droopy. Celestia’s pollen should make things GROW, not wilt.": "Τα δέντρα φαίνονται άρρωστα. Γκρίζα και πεσμένα. Η γύρη της Σελέστιας κανονικά κάνει τα φυτά να ΜΕΓΑΛΩΝΟΥΝ, όχι να μαραίνονται.",
-  "Brennus is pumping too much of it. He’s hurting the whole jungle.": "Ο Βρέννος ρίχνει πάρα πολλή. Κάνει κακό σε όλη τη ζούγκλα.",
-  "Find the pollen pumps and shut them down. Something big is drinking that pollen... and growing.": "Βρείτε τις αντλίες γύρης και σβήστε τις. Κάτι μεγάλο πίνει αυτή τη γύρη... και μεγαλώνει.",
   // Brennus's personal log.
   "Personal log. The jungle is dying. The pollen was supposed to make my Legion strong. It is making everything sick.": "Προσωπικό ημερολόγιο. Η ζούγκλα πεθαίνει. Η γύρη θα έκανε τη Λεγεώνα μου δυνατή. Αντί γι’ αυτό, αρρωσταίνει τα πάντα.",
   "Hypatia says Celestia cries in its cage at night. I told her plants do not cry.": "Η Υπατία λέει ότι η Σελέστια κλαίει τα βράδια μέσα στο κλουβί της. Της είπα ότι τα φυτά δεν κλαίνε.",
   "...I can hear it too.": "...Την ακούω κι εγώ.",
   // The Thorn Hydra.
-  "Something is moving in the swamp... three somethings!": "Κάτι κινείται στον βάλτο... τρία κάτι!",
   "A hydra made of thorns. The pollen made it.": "Μια ύδρα από αγκάθια. Τη γέννησε η γύρη.",
-  "Cut off one head and two grow back! That happens in the old stories!": "Κόβεις ένα κεφάλι και φυτρώνουν δύο! Έτσι γίνεται στους παλιούς μύθους!",
   "Then we go for the heart, not the heads.": "Τότε στοχεύουμε την καρδιά, όχι τα κεφάλια.",
   "Blast its heads! When all three are down, its heart opens up.": "Ρίξε στα κεφάλια της! Όταν πέσουν και τα τρία, η καρδιά της θα ανοίξει.",
   "All three heads are down! Its heart is open: blast it now!": "Έπεσαν και τα τρία κεφάλια! Η καρδιά της άνοιξε: ρίξε της τώρα!",
   "The heads are growing back! Knock them down again!": "Τα κεφάλια ξαναφυτρώνουν! Ρίξ’ τα ξανά!",
   "Roots are bursting out of the ground! Keep moving!": "Ρίζες πετάγονται από το έδαφος! Μη σταματάς!",
-  "The Hydra is crumbling... into flowers!": "Η Ύδρα θρυμματίζεται... και γίνεται λουλούδια!",
   "...thank... you...": "...ευχα... ριστώ...",
-  "Celestia! Hang on. We’re coming to get you.": "Σελέστια! Κράτα γερά. Ερχόμαστε να σε πάρουμε.",
   "The volcano is just past the jungle. This is it, Jason.": "Το ηφαίστειο είναι αμέσως μετά τη ζούγκλα. Ήρθε η ώρα, Ιάσονα.",
   // Journal pages 13-15.
-  "A journal page! “Celestia’s pollen makes my machines unstoppable. But the jungle is getting sick. Was that... me?”": "Μια σελίδα ημερολογίου! «Η γύρη της Σελέστιας κάνει τις μηχανές μου ασταμάτητες. Όμως η ζούγκλα αρρωσταίνει. Μήπως φταίω... εγώ;»",
   "Yes. But it’s not too late to stop.": "Ναι. Αλλά δεν είναι αργά να σταματήσει.",
   "“Hypatia says Celestia cries in its cage. Plants do not cry. ...Do they?”": "«Η Υπατία λέει ότι η Σελέστια κλαίει στο κλουβί της. Τα φυτά δεν κλαίνε. ...Ή μήπως κλαίνε;»",
-  "Celestia cries in light. I have seen it. It is pink and very, very sad.": "Η Σελέστια κλαίει με φως. Το έχω δει. Είναι ροζ και πολύ, πολύ λυπημένο.",
   "“Today I found Grandma’s old seed packet in my coat pocket. Tomatoes. Forty years, and I never planted them.”": "«Σήμερα βρήκα στην τσέπη του παλτού μου το παλιό φακελάκι με σπόρους της γιαγιάς. Ντομάτες. Σαράντα χρόνια, και δεν τις φύτεψα ποτέ.»",
   "He still has them. After all this time.": "Τους έχει ακόμα. Μετά από τόσο καιρό.",
 };

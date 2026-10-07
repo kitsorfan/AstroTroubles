@@ -1597,7 +1597,12 @@ export class BoltFind extends Entity implements Interactable {
   }
 
   label() {
-    return this.busy ? null : this.who === 'iris' ? 'WAKE UP' : 'FIX DRONE';
+    if (this.busy) return null;
+    return this.isLux ? 'FIX DRONE' : 'WAKE UP';
+  }
+
+  private get isLux() {
+    return this.who === 'lux';
   }
 
   interact() {

@@ -23,7 +23,10 @@ import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
  * Gaia Nova, it turned the ship away), and chapter 2 calls it by that real name: Brennus reveals it
  * in his broadcast. Brennus captures Dr. Hypatia's science team, and his drones steal Celestia so he
  * can force its pollen into a Thorn Legion of machines and build the Colossus inside the volcano
- * Mount Atlantas. Jason and LUX cross six regions to free the scientists and Celestia. The
+ * Mount Atlantas. Jason and LUX cross six regions to free the scientists and Celestia. In the
+ * tundra Brennus's snare drone carries LUX off, so Jason climbs the Rockies alone; in the jungle he
+ * wakes IRIS, a rainbow droid of the Gardeners that Brennus threw away; and in the volcano Brennus
+ * sets the reprogrammed LUX on him, until IRIS sings the control chip off and LUX comes home. The
  * 18 pages of Brennus's journal tell how a boy who loved his grandmother's greenhouse became a man
  * who tries to own everything; with all of them, Jason can talk him down instead of beating him.
  */
@@ -100,24 +103,26 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'halcyon', text: 'That would explain why Celestia dreamed of a warm blue world. It was not a dream. It was a memory.' },
     { who: 'jason', text: 'And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!' },
   ],
+  // LUX was carried off at the end of the tundra: Jason flies on alone, with HALCYON on the radio.
   snow: [
     { who: 'halcyon', text: 'Dr. Galen is safe on board the {ship}. He slept for forty years and woke up very hungry. He has eaten eleven pancakes.' },
-    { who: 'jason', text: 'Did the others hear anything about Brennus’s plans?' },
-    { who: 'halcyon', text: 'Engineer Ariadne did: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”' },
-    { who: 'bolt', text: 'A journal? Brennus has FEELINGS? ...Should I be more scared or less scared?' },
+    { who: 'jason', text: 'That’s good. ...HALCYON, any sign of LUX?' },
+    { who: 'halcyon', text: 'Not yet. But Engineer Ariadne heard something: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”' },
+    { who: 'jason', text: 'Then I’ll find every page. And I’ll find LUX.' },
   ],
   rockies: [
     { who: 'jason', text: 'The Gorgon crashed up there forty years ago. Brennus has been alone on this planet ever since.' },
-    { who: 'bolt', text: 'Forty years alone. I was alone in a dark storeroom for ONE day, and I did not like it at all.' },
-    { who: 'halcyon', text: 'Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.' },
-    { who: 'jason', text: 'Then we fix it. Hang on, Celestia. We’re coming.' },
+    { who: 'jason', text: 'Forty years alone. One day without LUX and I’m already talking to myself.' },
+    { who: 'halcyon', text: 'You are talking to me, Jason. That counts. Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.' },
+    { who: 'jason', text: 'Then we fix it. Hang on, Celestia. Hang on, LUX. I’m coming.' },
   ],
+  // IRIS joined in the jungle.
   jungle: [
     { who: 'celestia', text: '...Jason... ...LUX... ...hot... ...trapped... ...please...' },
-    { who: 'bolt', text: 'That was Celestia! It flashed to me through the pollen. It is inside the volcano!' },
+    { who: 'iris', text: 'That was Celestia, speaking in pink light through the pollen. It is inside the volcano... and so is your friend.' },
     { who: 'halcyon', text: 'Mount Atlantas. Brennus’s fortress. The Colossus will be waiting for you.' },
-    { who: 'jason', text: 'So will we. One last climb, LUX.' },
-    { who: 'bolt', text: 'One last climb. I will be brave if you are brave.' },
+    { who: 'jason', text: 'So will we. One last climb, IRIS. We’re bringing LUX home.' },
+    { who: 'iris', text: 'One last climb. I will light the way.' },
   ],
   volcano: [],
 };
@@ -248,6 +253,7 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
   );
   if (hypatia) out.push(tr('Dr. Hypatia named a brand new flower after LUX. It glows in the dark, of course.'));
   out.push(tr('Captain Argus made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
+  out.push(tr('IRIS paints rainbows on the greenhouse windows every morning. She has made a new friend: Atalanta, the fastest runner in the colony.'));
   out.push(n ? tr('You freed {n} of {total} scientists from Brennus’s camps.', { n, total: chapterTotals(2).colonists }) : tr('The scientists found their own way home, and told everyone about the boy and his robot.'));
   if (kind === 'freed' && inChapter(save.shards, 2) < chapterTotals(2).shards) out.push(tr('Psst... Brennus’s journal still has missing pages. Find all 18 and you might reach the man inside the machine.'));
   return out;
@@ -274,6 +280,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
       head('STARRING'),
       p('Jason, junior engineer'),
       p('LUX, a very brave little drone'),
+      p('IRIS, a droid who speaks in rainbows'),
       head('WITH'),
       p('HALCYON, the ship computer'),
       p('Captain Argus'),
@@ -282,7 +289,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
       p('Celestia, home at last'),
       kind === 'redeemed' ? p('General Brennus, a gardener at last') : p('General Brennus, a very grumpy old general'),
       head('THE THORN LEGION'),
-      p('Thresher · Dune Driller · Boreas'),
+      p('Thresher · Dune Driller · Boreas · Shadow LUX (not really)'),
       p('Stheno · the Thorn Hydra · the Colossus'),
       head('SCIENTISTS YOU FREED'),
       ...(rescued.length ? rescued.map(p) : [p('Everyone made it home safe and sound!')]),

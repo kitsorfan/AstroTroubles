@@ -63,10 +63,3 @@ export function voiceOf(who: Speaker, plan: CompanionPlan, toast: boolean): Spea
   if (plan.lead === 'iris') return 'iris';
   return toast ? 'halcyon' : 'jason';
 }
-
-/** The title on the terminal puzzle panel. */
-export const HACK_TITLE: Record<Helper, string> = {
-  lux: 'LUX HACK',
-  iris: 'IRIS HACK',
-  wrist: 'WRIST HACK',
-};
