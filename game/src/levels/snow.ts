@@ -5,6 +5,8 @@ import type { LevelDef } from '../world/levelTypes';
  * wade through deep snow, GRAPPLE up an icy cliff, brave the gusts on the blizzard ridge, hop the
  * frozen river, hack the laser fence and the gate of Brennus's prison camp, beat the camp guards and
  * face BOREAS, the yeti-shaped warden, in its ice rink. The dark ice cave hides a captured scientist.
+ * When BOREAS falls, Brennus springs his trap: a snare drone cages LUX and carries him off to the
+ * volcano (`cinema/luxScenes.ts`), and Jason goes on alone.
  */
 export const snow: LevelDef = {
   id: 'snow',
@@ -236,6 +238,17 @@ export const snow: LevelDef = {
       { who: 'bolt', text: 'BOREAS is down! The cell doors are opening!' },
       { who: 'halcyon', text: 'Every prisoner from the tundra camp is safe. But Dr. Hypatia was not among them.' },
       { who: 'jason', text: 'Then Brennus kept her for himself. We keep going.' },
+    ],
+    // Brennus's trap snaps shut on LUX (the cutscene right after BOREAS falls).
+    trap: [
+      { who: 'bolt', text: 'Jason! It’s a CAGE! I’m in a CAGE! HELP!' },
+      { who: 'jason', text: 'LUX! Hold on, I’ve got you!' },
+    ],
+    taken: [
+      { who: 'brennus', text: 'Thank you for the robot, boy. A clever little drone like that will make a fine soldier for my Legion.' },
+      { who: 'jason', text: 'He’s not a soldier, he’s my FRIEND! Bring him back, Brennus!' },
+      { who: 'halcyon', text: 'Jason, the drone is flying east, toward the volcano. I have lost its signal. I am so sorry.' },
+      { who: 'jason', text: 'Then I’ll go to the volcano. Hang on, LUX. I’m coming to get you.' },
     ],
     'shard:s1': [
       { who: 'bolt', text: 'A journal page! “Tomorrow I will end the heart. One blast. The scientists say it is wrong. They do not understand: I am protecting the colony.”' },

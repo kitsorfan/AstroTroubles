@@ -23,7 +23,7 @@ export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 export type HeroId = 'jason' | 'atalanta' | 'brennus';
 /** The last four are General Brennus's robots (chapter 2 only). */
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -89,7 +89,8 @@ export type Spec = Base &
     | { type: 'dark' }
     | { type: 'exit' }
     | { type: 'breakwall' }
-    | { type: 'boltfind' }
+    /** A droid switched off in a dark corner, waiting for Jason to wake it: LUX (default) or IRIS. */
+    | { type: 'boltfind'; who?: 'lux' | 'iris' }
     /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */
     | { type: 'holo'; log: string; who?: HoloSpeaker }
     /** A glowing grapple ring: with the GRAPPLE hook, Jason can zip to it from far away (and land on the cell it sits on). */
@@ -179,7 +180,11 @@ export type Speaker =
   /** Aeëtes, the salvage tycoon who wants the Golden Fleece (chapter 3's villain). */
   | 'aeetes'
   /** Atalanta, the scout who joins the Argonauts in chapter 3 (a playable hero). */
-  | 'atalanta';
+  | 'atalanta'
+  /** IRIS, the rainbow droid Jason finds in the jungle. */
+  | 'iris'
+  /** LUX while Brennus's control chip has hold of him. */
+  | 'rogue';
 
 export interface Line {
   who: Speaker;

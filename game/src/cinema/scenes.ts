@@ -11,6 +11,9 @@ import { BOSS_CARD, FLYOVER } from '../game/story';
 import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
+import { luxTaken, rogueIntro } from './luxScenes';
+
+export { irisFound, luxReunion, luxTaken } from './luxScenes';
 
 /**
  * Cutscenes that play inside a deck. Each script poses the camera through the director's rig,
@@ -249,6 +252,8 @@ function bossLines(w: World, b: Boss): Line[] {
 }
 
 export async function bossIntro(d: Director, w: World, b: Boss) {
+  // Brennus's reprogrammed LUX gets an entrance of his own.
+  if (b.kind === 'rogue') return rogueIntro(d, w, b);
   const c = b.where.clone();
   const f = b.focus.clone();
   const k = jason(w);
@@ -321,6 +326,11 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
     await d.wait(1.2);
   }
   await d.say(w.dialogue('bossDown'));
+  // In the tundra, Brennus has one more trick: a snare drone for LUX.
+  if (w.def.id === 'snow') {
+    await luxTaken(d, w);
+    w.hooks.checkpoint();
+  }
   if (isFinale(w.def.id)) {
     await d.fade('#ffffff', 1, 1.4);
     return;

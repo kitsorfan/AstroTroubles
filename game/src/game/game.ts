@@ -228,6 +228,14 @@ export class Game {
         }, hold + 380);
       }
       if (dev.has('shop')) setTimeout(() => this.world && this.hooks().shop(), 3600);
+      // &flags=iris,luxback starts with story flags set, &play=taken|iris|rogue|reunion plays one of
+      // LUX's chapter 2 scenes, and &talk clicks through dialogue by itself (for checking cutscenes).
+      const flags = dev.get('flags')?.split(',') ?? [];
+      const play = dev.get('play');
+      if (flags.length || play) setTimeout(() => this.world?.devStory(flags, play), 3600);
+      if (dev.has('talk')) setInterval(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' })), 900);
+      // &tick also drives the game from a timer: headless browsers barely run animation frames.
+      if (dev.has('tick')) setInterval(() => this.step(performance.now()), 33);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
       // On a vehicle level, &at=<distance> flies ahead along the course instead.
@@ -510,6 +518,7 @@ export class Game {
     // Shared helpers (cached geometry, glow textures) are simply uploaded again when the next deck uses them.
     disposeScene(this.world.scene);
     this.world = null;
+    this.ui.voice = (who) => who;
     this.queue = [];
     this.renderer.renderLists.dispose();
   }
@@ -612,6 +621,8 @@ export class Game {
       const w = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
       w.scene.environment = this.envMap;
       w.resize(window.innerWidth, window.innerHeight);
+      // LUX's lines go to whoever is with Jason on this deck (IRIS, HALCYON's radio, or Jason himself).
+      this.ui.voice = (who, toast) => w.voice(who, toast);
       // Compile every shader now so the first frames of play don't stutter.
       this.renderer.compile(w.scene, w.camera);
       return w;
@@ -672,6 +683,7 @@ export class Game {
       dash: this.save.abilities.includes('dash'),
       energy: pl.energy,
       energyMax: pl.energyMax,
+      // The force pulse is a droid's: Jason can't fire it while he is on his own.
       pulse: this.save.abilities.includes('pulse') && w.boltActive,
       pulseCharge: w.pulseCharge,
       pulseLeft: w.pulseCd,
@@ -740,6 +752,7 @@ export class Game {
         });
       },
       toast: (text, who) => this.ui.toast(text, who ?? 'bolt'),
+      helper: (who) => this.ui.setHelper(who),
       hack: (length, done, kind) => {
         this.state = 'hack';
         this.input.reset();
@@ -984,6 +997,10 @@ export class Game {
 
   private frame(t: number) {
     requestAnimationFrame((n) => this.frame(n));
+    this.step(t);
+  }
+
+  private step(t: number) {
     const dt = Math.min(0.05, Math.max(0, (t - this.last) / 1000));
     this.last = t;
     this.frames += 1;

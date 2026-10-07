@@ -12,7 +12,9 @@ import type { Cond, HoloSpeaker, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
-import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus } from './models';
+import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
+import { makeIris } from './companionModels';
+import type { CompanionSkin } from '../game/companions';
 import type { Player } from './player';
 
 export interface FloorFx {
@@ -313,7 +315,7 @@ export class Terminal extends Entity implements Interactable {
 
   label() {
     if (this.done) return null;
-    return this.world.boltActive ? 'HACK' : null;
+    return this.world.canHack ? 'HACK' : null;
   }
 
   interact() {
@@ -1565,18 +1567,26 @@ export class Holo extends Entity implements Interactable {
   }
 }
 
-/** LUX, switched off and hiding in the dark, waiting for someone to fix him. */
+/** A droid switched off in the dark, waiting for someone to fix it: LUX on the ship, IRIS in the jungle. */
 export class BoltFind extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
-  readonly model = makeBolt();
-  /** Set while the wake-up cutscene animates LUX; stops the idle sputtering. */
+  readonly model: BoltModel;
+  /** Set while the wake-up cutscene animates the droid; stops the idle sputtering. */
   waking = false;
   private t = 0;
   private busy = false;
 
-  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    readonly who: CompanionSkin = 'lux',
+  ) {
     super(world, id);
+    this.model = who === 'iris' ? makeIris() : makeBolt();
     this.spot = new THREE.Vector3(cx2x(cx), h, cx2x(cz));
     this.model.root.position.set(this.spot.x, h + 0.35, this.spot.z);
     this.model.root.rotation.z = 0.9;
@@ -1587,7 +1597,12 @@ export class BoltFind extends Entity implements Interactable {
   }
 
   label() {
-    return this.busy ? null : 'FIX DRONE';
+    if (this.busy) return null;
+    return this.isLux ? 'FIX DRONE' : 'WAKE UP';
+  }
+
+  private get isLux() {
+    return this.who === 'lux';
   }
 
   interact() {

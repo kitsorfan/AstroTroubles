@@ -5,7 +5,9 @@ import type { LevelDef } from '../world/levelTypes';
  * jungle is getting sick. Hop along the boardwalks and sinking logs over the toxic swamp to the
  * first pollen pump, wade through the bog and bounce up the giant mushrooms, find the second pump
  * in the dark root caves, zip across the treetops on grapple rings to the third, and then face the
- * Thorn Hydra in its swamp pool.
+ * Thorn Hydra in its swamp pool. Right by the landing site, tangled in the roots, Jason finds IRIS: an
+ * old droid of the Gardeners that Brennus dug up and threw away. She sings the Legion gate open and
+ * takes over LUX's jobs (light, hacking, zaps, the force pulse).
  */
 export const jungle: LevelDef = {
   id: 'jungle',
@@ -102,10 +104,10 @@ export const jungle: LevelDef = {
 #~~~~~~~~~~~~~~v~~~~f~~~~~~~~~~~~~~~~~~~~~f~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~,~~~~~~~~.p.o~~~~~~~~~f~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~,~~~~~~~~..o.~~~~~~~~~,~~~~~~~~#
-#...........~~~~~~.(...~~~~~~io..~~~~~~~~~,~~~~~~~~#
-#.p....x.e..~~~~~~..n..~~~~~~~~~~~~~~~~~~~,~~~~~~~~#
-#...........~~~~~~.....~~~~~~~v~~~~~~~~~.p.....o~~~#
-#.......oo..,,o,o,.....~~~~~~~~~~~~~~~~~........~~~#
+#..$........~~~~~~.(...~~~~~~io..~~~~~~~~~,~~~~~~~~#
+#.p.{..x.e..~~~~~~..n..~~~~~~~~~~~~~~~~~~~,~~~~~~~~#
+#.........'.~~~~~~.....~~~~~~~v~~~~~~~~~.p.....o~~~#
+#.......oo..},o,o,.....~~~~~~~~~~~~~~~~~........~~~#
 #...>.......~~~~~~...p.~~~~~~~~~~~~~~~~~....n...~~~#
 #...........~~~~~~e...x~~~~~~~~~~~~~~~~~......!.~~~#
 #.....@.....~~~~~~~~~~~~~~~~~~~~~~~~~~~~o.......~~~#
@@ -154,13 +156,18 @@ export const jungle: LevelDef = {
     ':': { type: 'enemy', enemy: 'minebot' },
     '|': { type: 'enemy', enemy: 'bulwark' },
     '^': { type: 'enemy', enemy: 'mortar' },
+    // IRIS, switched off in the roots, and the Legion gate only a droid can sing open.
+    $: { type: 'boltfind', who: 'iris' },
+    '{': { type: 'marker', id: 'iris' },
+    '}': { type: 'door', id: 'legiongate', open: { flag: 'iris' } },
+    "'": { type: 'sign', text: 'THORN LEGION GATE. It is locked with a light-code. Only a droid that speaks in light can open it.' },
     // Signs.
     '>': { type: 'sign', text: 'Welcome to the Thornwood Jungle! The green swamp is toxic, so stay on the wooden planks and the mossy islands.' },
     '(': { type: 'sign', text: 'Mossy logs sink as soon as you step on them. Don’t stop: hop, hop, hop!' },
     '[': { type: 'sign', text: 'POLLEN PUMP! Brennus is pumping Celestia’s pollen into the swamp. Walk up to the terminal and HACK it to switch the pump off.' },
     '&': { type: 'sign', text: 'Bog ahead! The mud slows you down, and if you stand still too long you start to sink. Keep moving!' },
     ')': { type: 'sign', text: 'Giant mushrooms are super bouncy. Jump on one to fly up onto the high ridge!' },
-    E: { type: 'sign', text: 'The root caves are pitch dark. Stay close to LUX: his light shows the way to the second pump.' },
+    E: { type: 'sign', text: 'The root caves are pitch dark. Stay close to IRIS: her light shows the way to the second pump.' },
     J: { type: 'sign', text: 'Glowing rings hang from the treetops. Face one and press GRAPPLE to zip across, like swinging on a vine!' },
     S: { type: 'sign', text: 'The last pump is up on the tallest tree. Zip up with the GRAPPLE, or bounce up on the mushroom!' },
     '<': { type: 'sign', text: 'VAULT RIDDLE: Step on the flower pads in the order the jungle wakes up. First the sun, then the sky, then Celestia’s favourite colour. The leaves wake up last.' },
@@ -185,6 +192,7 @@ export const jungle: LevelDef = {
     c: { type: 'decor', kind: 'tank' },
   },
   objectives: [
+    { until: { flag: 'iris' }, text: 'Find the little power signal in the roots', at: 'iris' },
     { until: { flag: 'pump1' }, text: 'Cross the swamp and shut down pollen pump 1', at: 'pump1' },
     { until: { flag: 'pump2' }, text: 'Shut down pollen pump 2 in the dark root caves', at: 'pump2' },
     { until: { flag: 'pump3' }, text: 'Swing across the treetops and shut down pollen pump 3', at: 'pump3' },
@@ -194,9 +202,22 @@ export const jungle: LevelDef = {
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'The Thornwood Jungle. Pollen levels: off the charts.' },
-      { who: 'bolt', text: 'The trees look sick. Grey and droopy. Celestia’s pollen should make things GROW, not wilt.' },
-      { who: 'jason', text: 'Brennus is pumping too much of it. He’s hurting the whole jungle.' },
-      { who: 'halcyon', text: 'Find the pollen pumps and shut them down. Something big is drinking that pollen... and growing.' },
+      { who: 'jason', text: 'The trees look sick. Grey and droopy. Celestia’s pollen should make things GROW, not wilt.' },
+      { who: 'halcyon', text: 'Brennus is pumping too much of it into the swamp. Find the pumps and shut them down.' },
+      { who: 'halcyon', text: 'And Jason: my scanner picks up a tiny power signal in the roots, right by the landing site. It looks like... a droid.' },
+      { who: 'jason', text: 'A droid? Out here? Let’s take a look.' },
+    ],
+    // Jason switches IRIS on (the cutscene in cinema/luxScenes.ts).
+    irisWake: [
+      { who: 'iris', text: '...Light. Warm, golden light. Hello, small human. You woke me up.' },
+      { who: 'jason', text: 'You can TALK! Who are you?' },
+    ],
+    irisJoin: [
+      { who: 'iris', text: 'I am IRIS. I carry messages in colours, the way a rainbow carries the rain.' },
+      { who: 'iris', text: 'The Gardeners made me long ago: the people who planted Celestia. My memory is full of holes now. I remember golden light... and then the dark.' },
+      { who: 'iris', text: 'A man in a red coat dug me out of the desert ruins. He wanted me to fight in his Legion. I only speak in colours, so he switched me off and left me in the roots.' },
+      { who: 'jason', text: 'Brennus. He took my friend LUX too. He’s a little droid with a big blue eye. He’s scared of everything, and he’s the bravest robot I know.' },
+      { who: 'iris', text: 'Then we will find him together. I can light the dark, open locks and sing to machines. Lead the way, Jason.' },
     ],
     log: [
       { who: 'brennus', text: 'Personal log. The jungle is dying. The pollen was supposed to make my Legion strong. It is making everything sick.' },
@@ -204,27 +225,27 @@ export const jungle: LevelDef = {
       { who: 'brennus', text: '...I can hear it too.' },
     ],
     boss: [
-      { who: 'bolt', text: 'Something is moving in the swamp... three somethings!' },
+      { who: 'iris', text: 'Something is moving in the swamp... three somethings. They are singing a very angry song.' },
       { who: 'jason', text: 'A hydra made of thorns. The pollen made it.' },
-      { who: 'bolt', text: 'Cut off one head and two grow back! That happens in the old stories!' },
+      { who: 'iris', text: 'In the old stories, you cut off one head and two grow back.' },
       { who: 'jason', text: 'Then we go for the heart, not the heads.' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'The Hydra is crumbling... into flowers!' },
+      { who: 'iris', text: 'The Hydra is crumbling... into flowers. Pink ones. My favourite colour today.' },
       { who: 'celestia', text: '...thank... you...' },
-      { who: 'jason', text: 'Celestia! Hang on. We’re coming to get you.' },
+      { who: 'jason', text: 'Celestia! Hang on. We’re coming to get you. And LUX too.' },
       { who: 'halcyon', text: 'The volcano is just past the jungle. This is it, Jason.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “Celestia’s pollen makes my machines unstoppable. But the jungle is getting sick. Was that... me?”' },
+      { who: 'iris', text: 'A page from the red-coat man’s journal! “Celestia’s pollen makes my machines unstoppable. But the jungle is getting sick. Was that... me?”' },
       { who: 'jason', text: 'Yes. But it’s not too late to stop.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“Hypatia says Celestia cries in its cage. Plants do not cry. ...Do they?”' },
-      { who: 'bolt', text: 'Celestia cries in light. I have seen it. It is pink and very, very sad.' },
+      { who: 'iris', text: '“Hypatia says Celestia cries in its cage. Plants do not cry. ...Do they?”' },
+      { who: 'iris', text: 'Celestia cries in light. I can see it from here: pink, and very, very sad.' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“Today I found Grandma’s old seed packet in my coat pocket. Tomatoes. Forty years, and I never planted them.”' },
+      { who: 'iris', text: '“Today I found Grandma’s old seed packet in my coat pocket. Tomatoes. Forty years, and I never planted them.”' },
       { who: 'jason', text: 'He still has them. After all this time.' },
     ],
   },

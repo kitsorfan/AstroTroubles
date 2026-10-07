@@ -289,6 +289,52 @@ const ATALANTA = person({
     ${[0, 1, 2, 3, 4, 5].map((i) => `<ellipse cx="${55.5 + i * 0.9}" cy="${47 + i * 5.2}" rx="${(3.8 - i * 0.25).toFixed(2)}" ry="3.3" fill="${ATA_HAIR}" stroke="${shade(ATA_HAIR, 0.6)}" stroke-width=".7"/>`).join('')}
     <rect x="58.2" y="74" width="5" height="2.4" rx=".8" fill="#ffc94a"/>`,
 });
+/** IRIS: a pearl teardrop with a dark visor, a rainbow eye, little fins and a golden halo. */
+const IRIS = `<svg viewBox="0 0 80 80">
+    ${screen('pi', '#c9a8ff')}
+    <defs>
+      <radialGradient id="piS" cx="38%" cy="28%" r="80%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e6e4f6"/><stop offset="1" stop-color="#9c92c4"/></radialGradient>
+      <linearGradient id="piR" x1="0" x2="1"><stop offset="0" stop-color="#ff5e6a"/><stop offset=".2" stop-color="#ffb347"/><stop offset=".4" stop-color="#ffe066"/><stop offset=".6" stop-color="#7dff9a"/><stop offset=".8" stop-color="#5ec8ff"/><stop offset="1" stop-color="#c37bff"/></linearGradient>
+    </defs>
+    <ellipse cx="40" cy="12" rx="9" ry="3" fill="none" stroke="#ffd166" stroke-width="2.2"/><ellipse cx="40" cy="12" rx="12" ry="5" fill="#ffd166" opacity=".18"/>
+    <path d="M40 15V22" stroke="#b9a8e8" stroke-width="1.6"/>
+    <path d="M17 44Q6 40 4 50Q12 52 19 50Z" fill="#b9a8e8" stroke="#8a7cc0" stroke-width=".8"/><path d="M63 44Q74 40 76 50Q68 52 61 50Z" fill="#b9a8e8" stroke="#8a7cc0" stroke-width=".8"/>
+    <path d="M40 21C55 21 63 32 63 45C63 58 52 68 40 77C28 68 17 58 17 45C17 32 25 21 40 21Z" fill="url(#piS)"/>
+    <path d="M18 52Q40 60 62 52" fill="none" stroke="#b9a8e8" stroke-width="2"/>
+    <rect x="20" y="34" width="40" height="14" rx="7" fill="#141428"/>
+    <rect x="25" y="38" width="30" height="6" rx="3" fill="url(#piR)"/><rect x="25" y="38" width="30" height="6" rx="3" fill="#fff" opacity=".18"/>
+    <circle cx="29" cy="39.4" r="1.2" fill="#fff" opacity=".9"/>
+    <ellipse cx="31" cy="27" rx="5" ry="2.4" fill="#fff" opacity=".7" transform="rotate(-20 31 27)"/>
+    ${glass('pi', '#c9a8ff')}
+  </svg>`;
+
+/** LUX with Brennus's control chip on: red eye, dark spiky armour, glitchy scanlines. */
+const ROGUE = `<svg viewBox="0 0 80 80">
+    ${screen('pr', '#ff3a4c')}
+    <defs>
+      <radialGradient id="prS" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#e8e8ee"/><stop offset=".55" stop-color="#b4b4c2"/><stop offset="1" stop-color="#5e5a6c"/></radialGradient>
+      <radialGradient id="prI" cx="42%" cy="40%" r="62%"><stop offset="0" stop-color="#fff0f0"/><stop offset=".35" stop-color="#ff7a86"/><stop offset=".8" stop-color="#d61a2e"/><stop offset="1" stop-color="#5a0610"/></radialGradient>
+    </defs>
+    <path d="M48 22L53 8" stroke="#6a6478" stroke-width="2" stroke-linecap="round"/><circle cx="53.4" cy="7.6" r="3.2" fill="#ff2a3a"/>
+    <path d="M14 47L2 40L10 52ZM66 47L78 40L70 52ZM24 26L16 12L30 22ZM56 26L64 12L50 22Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <circle cx="40" cy="44" r="24.5" fill="url(#prS)"/>
+    <path d="M17 49Q40 58 63 49L63 55Q40 64 17 55Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <path d="M24 24Q40 15 56 24L54 29Q40 22 26 29Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <circle cx="40" cy="41" r="13" fill="#140608"/>
+    <circle cx="40" cy="41" r="8.6" fill="url(#prI)"/>
+    <path d="M33 37L47 37" stroke="#140608" stroke-width="2.4"/>
+    <circle cx="40" cy="42" r="2.6" fill="#ffe0e4"/>
+    <path d="M6 30h22v2.4H6zM50 60h24v2H50z" fill="#ff3a4c" opacity=".45"/>
+    ${glass('pr', '#ff3a4c')}
+  </svg>`;
+
+/** Jason's wrist computer, the face on the action button while no droid is around. */
+export const WRIST_FACE = `<svg viewBox="0 0 80 80">
+    <rect x="8" y="22" width="64" height="36" rx="10" fill="#3a4458" stroke="#cfd6e2" stroke-width="2.4"/>
+    <rect x="16" y="28" width="48" height="24" rx="5" fill="#0c131e"/>
+    <path d="M20 40h8l4 -8 6 16 5 -12 3 4h14" fill="none" stroke="#7dff9a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="2" y="30" width="8" height="20" rx="3" fill="#5a6274"/><rect x="70" y="30" width="8" height="20" rx="3" fill="#5a6274"/>
+  </svg>`;
 
 const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
@@ -339,6 +385,8 @@ const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
     <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="1.6" fill="none"/>
     ${glass('pg', '#ff4fd8')}
   </svg>`,
+  iris: IRIS,
+  rogue: ROGUE,
   colonist: COLONIST,
   captain: CAPTAIN,
   rosa: ROSA,
@@ -377,6 +425,8 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   bolt: 'LUX',
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
+  iris: 'IRIS',
+  rogue: 'LUX?!',
   colonist: 'Colonist',
   captain: 'Captain Argus',
   rosa: 'Aunt Rosa',
@@ -394,6 +444,8 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   bolt: '#7fe6ff',
   halcyon: '#ff8a6a',
   glitch: '#ff4fd8',
+  iris: '#c9a8ff',
+  rogue: '#ff3a4c',
   colonist: '#ffd166',
   captain: '#ffd166',
   rosa: '#ff8a8a',

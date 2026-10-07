@@ -1,4 +1,5 @@
 import { EL_CHAPTER3 } from './el/chapter3';
+import { EL_COMPANIONS } from './el/companions';
 import { EL_DESERT } from './el/desert';
 import { EL_HEROES } from './el/heroes';
 import { EL_JUNGLE } from './el/jungle';
@@ -538,16 +539,9 @@ export const EL: Record<string, string> = {
   "So Celestia’s people were here once? A long, long time ago?": "Δηλαδή ο λαός της Σελέστιας ήταν κάποτε εδώ; Πριν από πάρα πολλά χρόνια;",
   "That would explain why Celestia dreamed of a warm blue world. It was not a dream. It was a memory.": "Αυτό εξηγεί γιατί η Σελέστια ονειρευόταν έναν ζεστό γαλάζιο κόσμο. Δεν ήταν όνειρο. Ήταν ανάμνηση.",
   "And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!": "Και τώρα ο Βρέννος θέλει να την κάνει όπλο. Όχι αν μπορούμε να το εμποδίσουμε. Βόρεια, στην τούνδρα!",
-  "A journal? Brennus has FEELINGS? ...Should I be more scared or less scared?": "Ημερολόγιο; Ο Βρέννος έχει ΣΥΝΑΙΣΘΗΜΑΤΑ; ...Να φοβάμαι περισσότερο ή λιγότερο;",
   "The Gorgon crashed up there forty years ago. Brennus has been alone on this planet ever since.": "Η Γοργώ συνετρίβη εκεί πάνω πριν από σαράντα χρόνια. Από τότε ο Βρέννος ζει ολομόναχος σε αυτόν τον πλανήτη.",
-  "Forty years alone. I was alone in a dark storeroom for ONE day, and I did not like it at all.": "Σαράντα χρόνια μόνος. Εγώ έμεινα μόνος σε μια σκοτεινή αποθήκη για ΜΙΑ μέρα, και δεν μου άρεσε καθόλου.",
-  "Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.": "Προσοχή: η ζούγκλα μπροστά είναι γεμάτη γύρη της Σελέστιας. Κάτι πήγε πολύ στραβά εκεί κάτω.",
-  "Then we fix it. Hang on, Celestia. We’re coming.": "Τότε θα το διορθώσουμε. Κράτα γερά, Σελέστια. Ερχόμαστε.",
   "...Jason... ...LUX... ...hot... ...trapped... ...please...": "...Ιάσονα... ...ΛΟΥΞ... ...ζέστη... ...παγιδευμένη... ...σας παρακαλώ...",
-  "That was Celestia! It flashed to me through the pollen. It is inside the volcano!": "Αυτή ήταν η Σελέστια! Μου έστειλε φως μέσα από τη γύρη. Είναι μέσα στο ηφαίστειο!",
   "Mount Atlantas. Brennus’s fortress. The Colossus will be waiting for you.": "Το Όρος Ατλάντας. Το φρούριο του Βρέννου. Ο Κολοσσός θα σε περιμένει.",
-  "So will we. One last climb, LUX.": "Κι εμείς θα τον περιμένουμε. Μια τελευταία ανάβαση, ΛΟΥΞ.",
-  "One last climb. I will be brave if you are brave.": "Μια τελευταία ανάβαση. Θα είμαι γενναίος αν είσαι κι εσύ.",
   "Brennus’s giant harvester · it mows down everything": "Η γιγάντια θεριστική μηχανή του Βρέννου · κουρεύει τα πάντα",
   "A mining machine as long as a river · and twice as loud": "Μια μηχανή εξόρυξης μακριά σαν ποτάμι · και διπλάσια θορυβώδης",
   "Warden of the prison camp · colder than the tundra": "Ο φύλακας του στρατοπέδου · πιο κρύος κι από την τούνδρα",
@@ -583,7 +577,6 @@ export const EL: Record<string, string> = {
   "General Brennus, a gardener at last": "Στρατηγός Βρέννος, επιτέλους κηπουρός",
   "General Brennus, a very grumpy old general": "Στρατηγός Βρέννος, ένας πολύ γκρινιάρης γέρος στρατηγός",
   "THE THORN LEGION": "Η ΛΕΓΕΩΝΑ ΤΩΝ ΑΓΚΑΘΙΩΝ",
-  "Thresher · Dune Driller · Boreas": "Θεριστής · Τρυπάνι των Αμμόλοφων · Βοριάς",
   "Stheno · the Thorn Hydra · the Colossus": "Σθενώ · η Αγκαθωτή Ύδρα · ο Κολοσσός",
   "SCIENTISTS YOU FREED": "ΕΠΙΣΤΗΜΟΝΕΣ ΠΟΥ ΕΛΕΥΘΕΡΩΣΕΣ",
   "Everyone made it home safe and sound!": "Όλοι γύρισαν σπίτι σώοι και αβλαβείς!",
@@ -657,15 +650,11 @@ export const EL: Record<string, string> = {
   "Forty years... I have been asleep for FORTY years?": "Σαράντα χρόνια... Κοιμόμουν για ΣΑΡΑΝΤΑ χρόνια;",
   "A journal page! “The Gorgon fell on the mountains in the storm that night. I built a fortress inside the volcano. Warm. Safe. MINE.”": "Μια σελίδα ημερολογίου! «Η Γοργώ έπεσε στα βουνά μέσα στην καταιγίδα εκείνη τη νύχτα. Έχτισα ένα φρούριο μέσα στο ηφαίστειο. Ζεστό. Ασφαλές. ΔΙΚΟ ΜΟΥ.»",
   "“The colony ship is coming at last. And Celestia is riding on it. After forty years, it came BACK.”": "«Το αποικιακό σκάφος έρχεται επιτέλους. Και η Σελέστια ταξιδεύει πάνω του. Ύστερα από σαράντα χρόνια, ΓΥΡΙΣΕ.»",
-  "Celestia did not come back on purpose! It tried as hard as it could to steer us AWAY!": "Η Σελέστια δεν γύρισε επίτηδες! Προσπάθησε με όλη της τη δύναμη να μας στρίψει ΜΑΚΡΙΑ!",
   "“I will not destroy it this time. I will cage it, and its power will make my Legion unstoppable. ...So why do I feel worse?”": "«Αυτή τη φορά δεν θα την καταστρέψω. Θα την κλείσω σε κλουβί, και η δύναμή της θα κάνει τη Λεγεώνα μου ακατανίκητη. ...Τότε γιατί νιώθω χειρότερα;»",
-  "Maybe because deep down, he knows it’s wrong.": "Ίσως επειδή, βαθιά μέσα του, ξέρει ότι είναι λάθος.",
   "And you have brought back something of mine. That little plant you call GaScu. Its real name is CELESTIA.": "Και μου φέρατε πίσω κάτι δικό μου. Εκείνο το φυτάκι που το λέτε Γάκου. Το αληθινό του όνομα είναι ΣΕΛΕΣΤΙΑ.",
   "Brennus... my first commander. He led the first expedition here, forty years ago. We all thought he was lost.": "Ο Βρέννος... ο πρώτος μου διοικητής. Αυτός ηγήθηκε της πρώτης αποστολής εδώ, πριν από σαράντα χρόνια. Όλοι νομίζαμε ότι είχε χαθεί.",
   "Dr. Galen is safe on board the {ship}. He slept for forty years and woke up very hungry. He has eaten eleven pancakes.": "Ο Δρ. Γαληνός είναι ασφαλής πάνω στη {ship}. Κοιμόταν σαράντα χρόνια και ξύπνησε πεινασμένος. Έχει φάει ήδη έντεκα τηγανίτες.",
-  "Did the others hear anything about Brennus’s plans?": "Άκουσαν οι άλλοι τίποτα για τα σχέδια του Βρέννου;",
   "Gently, it turned the {ship} away from the star and back toward the warm blue world it had run from. It was not scared anymore: now it had friends.": "Απαλά, έστρεψε τη {ship} μακριά από το αστέρι και πίσω προς τον ζεστό γαλάζιο κόσμο από τον οποίο είχε φύγει. Δεν φοβόταν πια: τώρα είχε φίλους.",
-  "Engineer Ariadne did: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”": "Η Μηχανικός Αριάδνη άκουσε: «Ο Βρέννος φτιάχνει κάτι που το λέει ΚΟΛΟΣΣΟ. Και γράφει τα πάντα στο ημερολόγιό του. Βρες τις σελίδες και θα τον καταλάβεις.»",
   // Gaia Nova: each region keeps its own Greek in ./el/<region>.ts.
   ...EL_PLAINS,
   ...EL_DESERT,
@@ -676,6 +665,7 @@ export const EL: Record<string, string> = {
   ...EL_ROBOTS,
   ...EL_CHAPTER3,
   ...EL_ROCKS,
+  ...EL_COMPANIONS,
   ...EL_WEAPONS,
   ...EL_HEROES,
 };
