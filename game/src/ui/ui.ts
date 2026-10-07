@@ -188,10 +188,11 @@ export class UI {
       <div class="stick-hint">${label('MOVE')}</div>
       <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${ring('charge-ring')}</div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${ring('charge-ring')}</div>
         <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
-        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${ring('cd-ring')}<div class="charges"></div></div>
-        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}<div class="charges"></div></div>
+        <div class="heat hb"><i></i></div>
+        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${ring('cd-ring')}<div class="charges"></div></div>
+        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}<div class="charges"></div></div>
         <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
         <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
@@ -515,6 +516,18 @@ export class UI {
       ring.style.strokeDashoffset = String(100 - charge * 100);
       ring.classList.toggle('full', charge >= 1);
     }
+  }
+
+  private lastHeat = '';
+
+  /** General Brennus's cannon heat, in a bar under CANNON: it blinks red while the cannon cools down after overheating. */
+  setHeat(heat: number, over: boolean) {
+    const key = `${Math.round(heat * 30)}|${over}`;
+    if (key === this.lastHeat) return;
+    this.lastHeat = key;
+    const bar = $(this.hud, '.heat');
+    bar.classList.toggle('over', over);
+    $<HTMLElement>(bar, 'i').style.width = `${Math.round(heat * 100)}%`;
   }
 
   private threatQueue: [string, string, string, string][] = [];
@@ -1112,7 +1125,14 @@ export class UI {
         ${item('#ffd166', tr('KICK'), tr('a spinning kick that blocks shots, on the ground or in the air.'))}
         ${item('#b58cff', tr('SLIDE'), tr('slide under low gaps with yellow stripes and trip enemies. Jump out of a slide for a long jump.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}</p>
+      <h3 class="help-sub">${tr('GENERAL BRENNUS')}</h3>
+      <div class="help-grid">
+        ${item('#ffb04a', tr('CANNON'), tr('tap for a heavy shell that splashes. HOLD for a BIG BLAST that smashes cracked rock. Too many shots and it overheats.'))}
+        ${item('#c9d870', tr('SHIELD'), tr('hold it up to block everything from the front (shots bounce back). Let go to bash.'))}
+        ${item('#ffd166', tr('CHARGE'), tr('a shoulder charge through crates, cracked walls and robots. Jump while charging for a CHARGE-LEAP over wide gaps.'))}
+        ${item('#ff6a5a', tr('COMMAND'), tr('at a Legion command post, give your old robots an order: hold a plate, carry you, or fight on your side.'))}
+      </div>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }

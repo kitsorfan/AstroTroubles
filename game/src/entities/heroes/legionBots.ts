@@ -89,7 +89,10 @@ export class LegionBot extends Entity {
     let bd = Infinity;
     for (const p of plates) {
       const d = p.spot.distanceTo(this.pos);
-      if (d < bd) (bd = d), (best = p);
+      if (d < bd) {
+        bd = d;
+        best = p;
+      }
     }
     return best;
   }

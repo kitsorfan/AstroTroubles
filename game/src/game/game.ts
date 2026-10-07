@@ -1037,6 +1037,7 @@ export class Game {
           if (w.vehicle) this.vehicleHud.update(w.vehicle.hud());
           else {
             this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
+            if (pl.bren && pl.hero === 'brennus') this.ui.setHeat(pl.bren.heat, pl.bren.overheated);
             this.refreshAbilities(w);
           }
           this.ui.setCountdown(w.countdown());

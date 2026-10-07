@@ -2417,10 +2417,54 @@ canvas#game {
 
 /* ---------------- heroes: Atalanta's buttons and the switch-hero button ---------------- */
 
-/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta. */
+/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta, `hb` General Brennus. */
 .buttons:not([data-hero='jason']) .hj,
-.buttons:not([data-hero='atalanta']) .ha {
+.buttons:not([data-hero='atalanta']) .ha,
+.buttons:not([data-hero='brennus']) .hb {
   display: none;
+}
+
+/* General Brennus: brass CANNON, olive SHIELD, orange CHARGE; no spin charges (his shield is held, not counted). */
+.buttons[data-hero='brennus'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #ffe0a0, #b8781a);
+}
+
+.buttons[data-hero='brennus'] .btn.spin {
+  background: radial-gradient(circle at 35% 30%, #c9d870, #4a5632);
+}
+
+.buttons[data-hero='brennus'] .btn.dash {
+  background: radial-gradient(circle at 35% 30%, #ffc890, #c8501a);
+}
+
+.buttons[data-hero='brennus'] .btn.spin .charges,
+.buttons[data-hero='brennus'] .btn.spin .cd-ring {
+  display: none;
+}
+
+/* His cannon's heat under CANNON: it fills as he fires and blinks red while it cools after overheating. */
+.heat {
+  position: absolute;
+  right: 196px;
+  bottom: 30px;
+  width: 76px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+
+.heat i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ffd166, #ff8a3d, #ff3a3a);
+}
+
+.heat.over i {
+  background: #ff3a3a;
+  animation: blink 0.3s infinite;
 }
 
 .buttons[data-hero='atalanta'] .btn.shoot {
