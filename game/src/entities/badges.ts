@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -15,6 +15,10 @@ const COLORS: Record<BadgeKind, string> = {
   turret: '#c6ff3a',
   brute: '#ff7a1a',
   blob: '#ff5fa8',
+  trooper: '#ff2a2a',
+  minebot: '#ff8a3a',
+  bulwark: '#c9a24a',
+  mortar: '#ff6fcf',
 };
 
 type G = CanvasRenderingContext2D;
@@ -158,6 +162,96 @@ function glyph(g: G, kind: BadgeKind) {
       g.fill();
       g.fillStyle = COLORS.blob;
       g.fillRect(48, 76, 32, 6);
+      break;
+    }
+    case 'trooper': {
+      // A round helmet with one big red lens and an antenna.
+      g.beginPath();
+      g.arc(64, 66, 34, Math.PI, 0);
+      g.lineTo(98, 84);
+      g.quadraticCurveTo(64, 100, 30, 84);
+      g.closePath();
+      g.fill();
+      g.fillRect(84, 14, 6, 22);
+      g.beginPath();
+      g.arc(87, 14, 7, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 66, 15, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#fff';
+      g.beginPath();
+      g.arc(59, 61, 4, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'minebot': {
+      // A round bomb with a little head and a sparking antenna.
+      g.beginPath();
+      g.arc(64, 78, 30, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.arc(64, 46, 16, Math.PI, 0);
+      g.fill();
+      g.fillRect(62, 14, 5, 20);
+      g.fillStyle = COLORS.minebot;
+      g.beginPath();
+      g.arc(64, 14, 7, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 42, 6, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'bulwark': {
+      // A tower shield with Brennus's gear in the middle.
+      g.beginPath();
+      g.moveTo(30, 22);
+      g.lineTo(98, 22);
+      g.lineTo(98, 70);
+      g.quadraticCurveTo(98, 98, 64, 112);
+      g.quadraticCurveTo(30, 98, 30, 70);
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 62, 14, 0, Math.PI * 2);
+      g.fill();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        g.fillRect(64 + Math.cos(a) * 17 - 4, 62 + Math.sin(a) * 17 - 4, 8, 8);
+      }
+      g.fillStyle = '#fff';
+      g.beginPath();
+      g.arc(64, 62, 5, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'mortar': {
+      // A dome with a fat barrel, and the dotted arc of its shell.
+      g.beginPath();
+      g.arc(46, 96, 26, Math.PI, 0);
+      g.closePath();
+      g.fill();
+      g.save();
+      g.translate(50, 80);
+      g.rotate(0.6);
+      g.fillRect(-10, -40, 20, 40);
+      g.restore();
+      g.fillStyle = COLORS.mortar;
+      for (let i = 0; i < 5; i++) {
+        const t = 0.15 + i * 0.2;
+        g.beginPath();
+        g.arc(70 + t * 40, 46 - Math.sin(t * Math.PI) * 30, 4, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.strokeStyle = '#e0142a';
+      g.lineWidth = 5;
+      g.beginPath();
+      g.ellipse(108, 100, 12, 5, 0, 0, Math.PI * 2);
+      g.stroke();
       break;
     }
   }

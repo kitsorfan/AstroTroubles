@@ -6,7 +6,8 @@ export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bri
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute';
+/** The last four are General Brennus's robots (chapter 2 only). */
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
 export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
 
 /** Conditions that open doors or arm triggers. */

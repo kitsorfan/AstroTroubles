@@ -177,6 +177,10 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   turret: { name: 'Spitter Pod', tip: 'Lobs acid where you are going. Change direction to dodge.' },
   brute: { name: 'Horned Brute', tip: 'Charges in straight lines. Dodge, then hit it while it’s dizzy.' },
   blob: { name: 'Bloblin', tip: 'Splits when popped. Pop the big ones, then the little ones.' },
+  trooper: { name: 'Legion Trooper', tip: 'Its red eye glows, then it fires three slow shots. Run sideways!' },
+  minebot: { name: 'Roller Mine', tip: 'It beeps and flashes before it pops. Blast it early, or run out of the red circle!' },
+  bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
+  mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
