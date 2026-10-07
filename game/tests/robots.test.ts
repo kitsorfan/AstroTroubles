@@ -166,7 +166,13 @@ describe('robots on Gaia Nova', () => {
 
   it('appear in every chapter 2 region and never on the ship', () => {
     for (const id of CHAPTER2) expect(robotsIn(id).length).toBeGreaterThan(0);
-    for (const id of LEVEL_ORDER.filter((x) => !(CHAPTER2 as readonly string[]).includes(x))) expect(robotsIn(id)).toEqual([]);
+    // In chapter 3 they only come back on General Brennus's own levels, painted gold by Aeëtes.
+    const brennus = (x: string) => LEVELS[x as keyof typeof LEVELS].heroes?.includes('brennus');
+    for (const id of LEVEL_ORDER.filter((x) => !(CHAPTER2 as readonly string[]).includes(x) && !brennus(x))) expect(robotsIn(id)).toEqual([]);
+    for (const id of LEVEL_ORDER.filter(brennus)) {
+      const legend = Object.values(LEVELS[id].legend);
+      expect(legend.filter((s) => s.type === 'enemy' && (ROBOT_KINDS as readonly string[]).includes(s.enemy)).every((s) => s.type === 'enemy' && s.variant === 'gold')).toBe(true);
+    }
   });
 
   it('are introduced gradually: troopers and mines first, mortars in the desert, bulwarks in the snow', () => {

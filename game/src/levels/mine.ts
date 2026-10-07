@@ -123,7 +123,7 @@ export const mine: LevelDef = {
   legend: {
     // The way through.
     L: { type: 'exit' },
-    B: { type: 'door', id: 'office', open: { boss: true } },
+    B: { type: 'door', id: 'officedoor', open: { boss: true } },
     G: { type: 'door', id: 'arenagate', open: { clear: 'yard' } },
     g: { type: 'door', id: 'plategate', open: { flag: 'plate' } },
     W: { type: 'boss', boss: 'excavator', room: 'arena' },
@@ -141,6 +141,7 @@ export const mine: LevelDef = {
     '-': { type: 'marker', id: 'office' },
     '/': { type: 'trigger', id: 'inhall', event: 'flag:hall', w: 5, d: 2 },
     ')': { type: 'trigger', id: 'upper', event: 'flag:upper', w: 5, d: 2 },
+    s: { type: 'trigger', id: 'ingallery', dialogue: 'gallery', w: 3, d: 2 },
     '(': { type: 'trigger', id: 'atpit', event: 'flag:pit', w: 9, d: 3, dialogue: 'pit' },
     ':': { type: 'trigger', id: 'inyard', event: 'flag:yard', w: 6, d: 2, dialogue: 'yard' },
     M: { type: 'trigger', id: 'mapstory', event: 'story:map', w: 5, d: 4, when: { boss: true } },
@@ -152,8 +153,8 @@ export const mine: LevelDef = {
     n: { type: 'post', flag: 'march', order: 'plate' },
     p: { type: 'post', flag: 'haul', order: 'carry' },
     q: { type: 'post', flag: 'turn', order: 'fight', room: 'yard' },
-    c: { type: 'platform', path: [[0, -10]], size: 2, speed: 3, wait: 1.6, look: 'cart' },
-    H: { type: 'platform', path: [[0, -2]], size: 2, speed: 2.2, wait: 1.6, look: 'hauler', needs: { flag: 'haul' } },
+    c: { type: 'platform', path: [[0, -10]], size: 2, speed: 3, wait: 1.6, look: 'cart', h: 2 },
+    H: { type: 'platform', path: [[0, -2]], size: 2, speed: 2.2, wait: 1.6, look: 'hauler', needs: { flag: 'haul' }, h: 2 },
     '<': { type: 'conveyor', dx: -1, dz: 0, speed: 3 },
     // The vault on the island: Brennus's old Legion wrist computer cracks the lock.
     t: { type: 'terminal', flag: 'vault', length: 5, puzzle: 'pattern' },
@@ -247,6 +248,10 @@ export const mine: LevelDef = {
       { who: 'brennus', text: 'Legion log, day one. These robots will be the finest machines in the Fleet. Strong, loyal, and they will always know my voice.' },
       { who: 'brennus', text: '...I was so proud of them back then. Now Aeëtes uses them to tear a whole moon apart. That is my fault too.' },
       { who: 'brennus', text: 'Time to fix it. One robot at a time.' },
+    ],
+    gallery: [
+      { who: 'aeetes', text: 'Guards! An old man on my walkway. Target practice!' },
+      { who: 'brennus', text: 'Shield up, Brennus. Just like the old days. Slow and steady.' },
     ],
     pit: [
       { who: 'aeetes', text: 'Clever trick with the plate, General. But my pit is deep, and my carts don’t take passengers.' },

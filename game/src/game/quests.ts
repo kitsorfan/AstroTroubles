@@ -59,21 +59,26 @@ export function deckQuests(id: DeckId, save: SaveData): Quest[] {
   const out: Quest[] = [];
   const cols = def.colonistIds ?? [];
   const freed = cols.filter((c) => save.colonists.includes(`${id}.${c}`)).length;
-  out.push({
-    id: `${id}:colonists`,
-    text: planet ? tr('Free the captured scientists (blast their thorn cocoons)') : tr('Free the trapped colonists (blast their pink cocoons)'),
-    done: freed === cols.length,
-    progress: `${freed} / ${cols.length}`,
-    reward: tr('+{each} bolts each, +{bonus} bonus', { each: COLONIST_BOLTS, bonus: QUEST_BOLTS }),
-  });
+  // A level with nobody to rescue, or nothing of the kind to find, skips that quest (General Brennus's mine).
+  if (cols.length) {
+    out.push({
+      id: `${id}:colonists`,
+      text: planet ? tr('Free the captured scientists (blast their thorn cocoons)') : tr('Free the trapped colonists (blast their pink cocoons)'),
+      done: freed === cols.length,
+      progress: `${freed} / ${cols.length}`,
+      reward: tr('+{each} bolts each, +{bonus} bonus', { each: COLONIST_BOLTS, bonus: QUEST_BOLTS }),
+    });
+  }
   const found = def.shardIds.filter((s) => save.shards.includes(`${id}.${s}`)).length;
-  out.push({
-    id: `${id}:shards`,
-    text: planet ? tr('Find the pages of Brennus’s journal (glowing gold pages)') : tr('Find the memory shards (glowing pink crystals)'),
-    done: found === def.shardIds.length,
-    progress: `${found} / ${def.shardIds.length}`,
-    reward: tr('+{bonus} bolts · every {n} give a heart', { bonus: QUEST_BOLTS, n: SHARDS_PER_HEART }),
-  });
+  if (def.shardIds.length) {
+    out.push({
+      id: `${id}:shards`,
+      text: planet ? tr('Find the pages of Brennus’s journal (glowing gold pages)') : tr('Find the memory shards (glowing pink crystals)'),
+      done: found === def.shardIds.length,
+      progress: `${found} / ${def.shardIds.length}`,
+      reward: tr('+{bonus} bolts · every {n} give a heart', { bonus: QUEST_BOLTS, n: SHARDS_PER_HEART }),
+    });
+  }
   if (entities(def, 'canister').length) {
     const got = save.canisters.some((c) => c.startsWith(`${id}.`));
     out.push({ id: `${id}:canister`, text: tr('Find the hidden heart canister'), done: got, progress: got ? '1 / 1' : '0 / 1', reward: tr('+1 max heart') });

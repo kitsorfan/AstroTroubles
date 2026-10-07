@@ -35,7 +35,10 @@ describe('side quests and rewards', () => {
     const save = newSave();
     for (const id of FOOT_LEVELS) {
       const qs = deckQuests(id, save);
-      expect(qs.map((q) => q.id.split(':')[1])).toEqual(['colonists', 'shards', 'canister', 'vault']);
+      // A level with nobody to rescue and nothing to collect (General Brennus's mine) keeps the canister and the vault.
+      const def = LEVELS[id];
+      const kinds = [...(def.colonistIds?.length ? ['colonists'] : []), ...(def.shardIds.length ? ['shards'] : []), 'canister', 'vault'];
+      expect(qs.map((q) => q.id.split(':')[1])).toEqual(kinds);
       expect(qs.every((q) => !q.done)).toBe(true);
     }
   });
