@@ -745,9 +745,20 @@ export class Vent extends Entity implements FloorFx {
     this.x = cx2x(cx);
     this.z = cx2x(cz);
     this.h = h;
-    this.obj.add(mesh(cyl(0.85, 0.95, 0.14, 20), mat('#2a2f3a', { metal: 0.6 }), this.x, h + 0.07, this.z));
-    for (let i = 0; i < 4; i++) {
-      this.obj.add(mesh(boxG(1.2, 0.05, 0.12), mat('#ffb347', { emissive: '#ff8a1a', ei: 0.6 }), this.x, h + 0.15, this.z - 0.45 + i * 0.3, false));
+    if (world.theme.outdoor?.cloudSea) {
+      // On the sky-islands an updraft is a ring of pale stones around a swirl of warm air.
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        this.obj.add(mesh(sphere(0.22, 8), mat('#d8d0c4', { rough: 0.9 }), this.x + Math.cos(a) * 0.9, h + 0.1, this.z + Math.sin(a) * 0.9));
+      }
+      const swirl = mesh(torus(0.55, 0.05), mat('#ffffff', { emissive: '#bff4ff', ei: 0.8 }), this.x, h + 0.12, this.z, false);
+      swirl.rotation.x = Math.PI / 2;
+      this.obj.add(swirl);
+    } else {
+      this.obj.add(mesh(cyl(0.85, 0.95, 0.14, 20), mat('#2a2f3a', { metal: 0.6 }), this.x, h + 0.07, this.z));
+      for (let i = 0; i < 4; i++) {
+        this.obj.add(mesh(boxG(1.2, 0.05, 0.12), mat('#ffb347', { emissive: '#ff8a1a', ei: 0.6 }), this.x, h + 0.15, this.z - 0.45 + i * 0.3, false));
+      }
     }
     this.glow = glowSprite('#ffe0b0', 3, 0);
     this.glow.position.set(this.x, h + 1.5, this.z);
@@ -1428,8 +1439,9 @@ export class Exit extends Entity implements Interactable {
     this.ring.rotation.x = Math.PI / 2;
     this.pad.add(this.ring);
     this.obj.add(this.pad);
-    if (chapterOf(world.def.id) === 2) {
-      // On Gaia Nova the way out is a hover skiff from the shuttle: Jason stands in it and it flies up and away.
+    if (chapterOf(world.def.id) >= 2) {
+      // Outdoors (Gaia Nova, and the Argonauts' moons) the way out is a hover skiff from the shuttle or the
+      // Argo: Jason stands in it and it flies up and away.
       this.planet = true;
       const hull = mat('#e6edf7', { metal: 0.3, rough: 0.4 });
       const trim = mat('#ff8a3d', { rough: 0.5 });
