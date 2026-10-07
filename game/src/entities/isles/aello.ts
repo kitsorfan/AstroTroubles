@@ -188,7 +188,8 @@ export class Aello extends Boss implements Target {
       // Gold armour: everything pings off while she flies.
       audio.play('zap', 1.7);
       w.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 6, color: '#ffe08a', speed: 3, life: 0.25, size: 0.35 });
-      if (!this.hinted.fly && this.flying) {
+      // (Only the hero's own hits explain it, not the droid's zaps.)
+      if (!this.hinted.fly && this.flying && kind !== 'zap') {
         this.hinted.fly = true;
         w.hooks.toast('Her gold armour is too tough while she flies! Switch to Atalanta and knock her down with a POWER ARROW: hold BOW.', 'bolt');
       }

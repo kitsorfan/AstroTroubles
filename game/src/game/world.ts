@@ -638,6 +638,8 @@ export class World {
   /** Dev helper (`#deck=...&flags=...&play=...`): sets story flags and plays one of LUX's chapter 2 scenes. */
   devStory(flags: string[], play: string | null) {
     for (const f of flags) this.flags.add(f);
+    // A join flag (`&flags=atalanta`) brings that hero in at once.
+    if (Object.values(this.def.joins ?? {}).some((f) => flags.includes(f))) this.player.heroJoined();
     this.refreshCompanions();
     const find = this.entities.find((e): e is BoltFind => e instanceof BoltFind);
     const rogue = this.entities.find((e) => (e as Boss).bossKind === 'rogue') as Boss | undefined;

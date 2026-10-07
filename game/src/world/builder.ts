@@ -160,8 +160,9 @@ function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: numb
   const stone = new THREE.DodecahedronGeometry(1, 0);
   if (o.cloudSea) {
     // A sea of clouds: soft, flattened puffs in white and a blush of sunset.
-    kinds.push({ geo: ball, colors: ['#ffffff', '#f4f6fb', '#e8eef8', '#fff0e2'], sy: [0.4, 0.65] });
-    kinds.push({ geo: ball, colors: ['#ffffff', '#f6f8fc'], sy: [0.5, 0.8] });
+    const puff = new THREE.SphereGeometry(1, 18, 12);
+    kinds.push({ geo: puff, colors: ['#ffffff', '#f4f6fb', '#e8eef8', '#fff0e2'], sy: [0.4, 0.65] });
+    kinds.push({ geo: puff, colors: ['#ffffff', '#f6f8fc'], sy: [0.5, 0.8] });
   } else switch (o.ground) {
     case 'grass':
     case 'jungle':
@@ -188,7 +189,7 @@ function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: numb
   const col = new THREE.Color();
   for (const k of kinds) {
     const n = 220;
-    const inst = new THREE.InstancedMesh(k.geo, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true }), n);
+    const inst = new THREE.InstancedMesh(k.geo, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: !o.cloudSea }), n);
     for (let i = 0; i < n; i++) {
       const x = cx + (rng.next() - 0.5) * span;
       const z = cz + (rng.next() - 0.5) * span;

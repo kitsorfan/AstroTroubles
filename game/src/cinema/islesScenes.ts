@@ -27,17 +27,30 @@ export async function heroJoins(d: Director, w: World, hero: HeroId) {
   const m = pl.heroModel(hero);
   const s = m.root.position.clone();
   const b = pl.body;
-  const k = V(b.x, b.y, b.z);
-  pl.facing = Math.atan2(s.x - k.x, s.z - k.z);
-  m.root.visible = true;
-  m.root.rotation.y = Math.atan2(k.x - s.x, k.z - s.z);
-  const mid = k.clone().lerp(s, 0.5);
-  const dir = V(s.x - k.x, 0, s.z - k.z).normalize();
+  const start = V(b.x, b.y, b.z);
+  const dir = V(s.x - start.x, 0, s.z - start.z).normalize();
   const side = V(dir.z, 0, -dir.x);
+  // Jason walks up to her (to a few steps away), then they talk.
+  const walk = Math.max(0, start.distanceTo(V(s.x, start.y, s.z)) - 3.4);
+  const k = start.clone().addScaledVector(dir, walk);
+  pl.facing = Math.atan2(dir.x, dir.z);
+  m.root.visible = true;
+  m.root.rotation.y = Math.atan2(-dir.x, -dir.z);
+  const mid = k.clone().lerp(s, 0.5);
   const iris = w.iris;
   try {
     // A two-shot from the side: Jason on one side, the new hero on the other.
-    await d.cam(mid.clone().addScaledVector(side, 7.5).add(V(0, 3, 0)), mid.clone().add(V(0, 1.2, 0)), 1.4, ease.inOut, 44);
+    await Promise.all([
+      d.tween(
+        Math.min(1.6, 0.3 + walk / 6),
+        (x) => {
+          b.x = start.x + dir.x * walk * x;
+          b.z = start.z + dir.z * walk * x;
+        },
+        ease.inOut,
+      ),
+      d.cam(mid.clone().addScaledVector(side, 7.5).add(V(0, 2.6, 0)), mid.clone().add(V(0, 1.2, 0)), 1.6, ease.inOut, 44),
+    ]);
     await d.say(w.dialogue(`meet:${hero}`));
     const beats = w.def.stories?.[`meet:${hero}`];
     if (beats?.length) await d.story(beats);

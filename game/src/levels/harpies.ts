@@ -195,7 +195,7 @@ export const harpies: LevelDef = {
     // Decor.
     Y: { type: 'decor', kind: 'wreck', scale: 1.3, rot: 0.5 },
     '-': { type: 'decor', kind: 'wreck', scale: 0.7, rot: 1.2, solid: false },
-    '/': { type: 'decor', kind: 'banner' },
+    '/': { type: 'decor', kind: 'pillar', scale: 1.2 },
     Q: { type: 'decor', kind: 'pillar' },
     e: { type: 'decor', kind: 'tent', rot: 3.6 },
     '^': { type: 'decor', kind: 'tree' },
