@@ -2,7 +2,7 @@
  * Grown-ups (and one small boy): a chibi person with a big head, a coat or uniform, arm and leg
  * poses, hair styles and hats. Feet at (0, 0); about 270 units tall at scale 1.
  */
-import { at, C, ink, limb, r1 } from './base';
+import { at, C, ink, limb, limbs, r1 } from './base';
 import { face, type Expr } from './face';
 
 export type ArmPose =
@@ -52,6 +52,8 @@ export interface PersonOpts {
   shoes?: string;
   hands?: string;
   pose?: ArmPose;
+  /** Custom [elbow, hand] points for the back and front arm (overrides `pose`'s arms). */
+  arms?: [number[][], number[][]];
   legs?: 'stand' | 'kneel' | 'none';
   face?: Expr;
   glasses?: boolean;
@@ -64,6 +66,8 @@ export interface PersonOpts {
   /** Extra markup in head coordinates (moustaches, monocles) and body coordinates (medals). */
   headExtra?: string;
   bodyExtra?: string;
+  /** A simpler drawing for small, far-away figures in crowds (dot eyes, no shading). */
+  lite?: boolean;
   /** Extra markup drawn behind the head (a bun), in head coordinates. */
   headBack?: string;
 }
@@ -109,7 +113,7 @@ function hat(kind: Hat): string {
 /** A person, feet at (x, y). */
 export function person(x: number, y: number, s: number, o: PersonOpts): string {
   const pose = o.pose ?? 'stand';
-  const [back, front] = ARMS[pose];
+  const [back, front] = o.arms ?? ARMS[pose];
   const dy = o.legs === 'kneel' ? 44 : 0;
   const sh = (p: number[]) => [p[0], p[1] + dy];
   const hands = o.hands ?? o.skin;
@@ -117,18 +121,18 @@ export function person(x: number, y: number, s: number, o: PersonOpts): string {
   const shoes = o.shoes ?? '#2a2430';
   const arm = (side: number, pts: number[][]) =>
     limb([[side * 40, -158 + dy], sh(pts[0]), sh(pts[1])], o.coat, 22) + `<circle cx="${r1(sh(pts[1])[0])}" cy="${r1(sh(pts[1])[1])}" r="12" fill="${hands}" ${ink(4)}/>`;
-  const shoe = (fx: number, fy: number, dir = 1) =>
-    `<path d="M${fx - 16 * dir} ${fy}Q${fx - 16 * dir} ${fy - 18} ${fx + 4 * dir} ${fy - 18}Q${fx + 26 * dir} ${fy - 14} ${fx + 26 * dir} ${fy}Z" fill="${shoes}" ${ink(4)}/>`;
+  const shoe = (fx: number, fy: number, dir = 1) => `M${fx - 16 * dir} ${fy}Q${fx - 16 * dir} ${fy - 18} ${fx + 4 * dir} ${fy - 18}Q${fx + 26 * dir} ${fy - 14} ${fx + 26 * dir} ${fy}Z`;
+  const shoesSvg = (d: string) => `<path d="${d}" fill="${shoes}" ${ink(4)}/>`;
   let legs = '';
   if (o.legs === 'kneel') {
-    legs = limb([[-18, -40], [-30, -8], [-64, -10]], pants, 26) + limb([[20, -40], [58, -46], [62, -16]], pants, 26) + shoe(-76, 0, -1) + shoe(62, 0);
+    legs = limbs([[[-18, -40], [-30, -8], [-64, -10]], [[20, -40], [58, -46], [62, -16]]], pants, 26) + shoesSvg(shoe(-76, 0, -1) + shoe(62, 0));
   } else if (o.legs !== 'none') {
-    legs = limb([[-18, -84], [-22, -16]], pants, 26) + limb([[18, -84], [22, -16]], pants, 26) + shoe(-24, 0) + shoe(22, 0);
+    legs = limbs([[[-18, -84], [-22, -16]], [[18, -84], [22, -16]]], pants, 26) + shoesSvg(shoe(-24, 0) + shoe(22, 0));
   }
   const bottom = o.long ? -42 : -74;
   const b = (v: number) => v + dy;
   let torso = `<path d="M-44 ${b(bottom - 10)}Q-50 ${b(-168)} 0 ${b(-172)}Q50 ${b(-168)} 44 ${b(bottom - 10)}Q42 ${b(bottom)} 0 ${b(bottom)}Q-42 ${b(bottom)} -44 ${b(bottom - 10)}Z" fill="${o.coat}" ${ink(6)}/>`;
-  torso += `<path d="M30 ${b(-160)}Q50 ${b(-120)} 40 ${b(bottom - 6)}Q20 ${b(bottom)} -4 ${b(bottom)}Q30 ${b(-110)} 30 ${b(-160)}Z" fill="#000" opacity=".14"/>`;
+  if (!o.lite) torso += `<path d="M30 ${b(-160)}Q50 ${b(-120)} 40 ${b(bottom - 6)}Q20 ${b(bottom)} -4 ${b(bottom)}Q30 ${b(-110)} 30 ${b(-160)}Z" fill="#000" opacity=".14"/>`;
   if (o.shirt) {
     torso += `<path d="M-16 ${b(-170)}L0 ${b(-118)}L16 ${b(-170)}Z" fill="${o.shirt}"/><path d="M-16 ${b(-170)}L-2 ${b(-112)}V${b(bottom)}M16 ${b(-170)}L2 ${b(-112)}" fill="none" ${ink(3)}/>`;
   }
@@ -140,13 +144,14 @@ export function person(x: number, y: number, s: number, o: PersonOpts): string {
   const behind = (o.headBack ?? '') + hairBack(style, o.hair);
   let head = `<ellipse cx="-42" cy="4" rx="8" ry="11" fill="${o.skin}" ${ink(4)}/>`;
   head += `<ellipse cx="0" cy="0" rx="43" ry="45" fill="${o.skin}" ${ink(6)}/>`;
-  head += `<path d="M30 -30Q50 10 22 40Q4 50 -18 42Q14 34 28 8Q36 -10 30 -30Z" fill="#000" opacity=".1"/>`;
+  if (!o.lite) head += `<path d="M30 -30Q50 10 22 40Q4 50 -18 42Q14 34 28 8Q36 -10 30 -30Z" fill="#000" opacity=".1"/>`;
   head += hairFront(style, o.hair);
-  head += face(o.face ?? 'smile', k, 5, style === 'bald' ? o.hair : o.hair === '#e8e8ee' || o.hair === '#d8d8e0' ? '#8a8a96' : o.hair);
-  head += `<path d="M6 6Q10 12 6 14" fill="none" ${ink(3)}/>`;
+  const browC = style === 'bald' ? o.hair : o.hair === '#e8e8ee' || o.hair === '#d8d8e0' ? '#8a8a96' : o.hair;
+  head += face(o.face ?? 'smile', k, 5, browC, !o.lite, o.lite);
+  if (!o.lite) head += `<path d="M6 6Q10 12 6 14" fill="none" ${ink(3)}/>`;
   if (o.glasses) head += `<g fill="${C.cyan}" fill-opacity=".18" ${ink(3)}><circle cx="-8.6" cy="-2" r="12"/><circle cx="19.5" cy="-2" r="12"/></g><path d="M3 -3H8" ${ink(3)}/>`;
   head += o.headExtra ?? '';
-  head += at(0, -8, 1, hat(o.hat ?? 'none'));
+  if (o.hat && o.hat !== 'none') head += at(0, -8, 1, hat(o.hat));
   const hs = o.head ?? 1;
   const hy = b(-216) + (hs - 1) * 30;
   const neck = at(0, hy, hs, behind) + `<rect x="-10" y="${b(-186)}" width="20" height="20" fill="${o.skin}" ${ink(4)}/>`;

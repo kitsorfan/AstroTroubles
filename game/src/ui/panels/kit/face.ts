@@ -24,30 +24,34 @@ const MOUTH_DARK = '#7a2630';
  * A face. `k` scales the features (Jason 1, grown-ups ~0.85), `o` shifts them toward where the
  * head is turned, `brow` is the brow colour.
  */
-export function face(e: Expr, k = 1, o = 4, brow = '#3b2416', blush = true): string {
+export function face(e: Expr, k = 1, o = 4, brow = '#3b2416', blush = true, lite = false): string {
   const ex = [o - 16 * k, o + 17 * k];
   const ey = -2 * k;
   const my = 22 * k;
   const mx = o + 1;
   const n = (v: number) => Math.round(v * 10) / 10;
   let out = '';
-  // Eyes.
-  for (const x of ex) {
-    if (e === 'happy' || e === 'sleep' || e === 'yawn') {
-      const d = e === 'happy' ? `M${n(x - 8 * k)} ${n(ey + 3 * k)}Q${n(x)} ${n(ey - 9 * k)} ${n(x + 8 * k)} ${n(ey + 3 * k)}` : `M${n(x - 8 * k)} ${n(ey)}Q${n(x)} ${n(ey + 7 * k)} ${n(x + 8 * k)} ${n(ey)}`;
-      out += `<path d="${d}" fill="none" ${ink(4 * k)}/>`;
-      continue;
-    }
+  // Eyes: both drawn with one path per layer (whites, pupils, glints) to keep the markup small.
+  const ell = (cx: number, cy: number, rx: number, ry: number) =>
+    `M${n(cx - rx)} ${n(cy)}a${n(rx)} ${n(ry)} 0 1 0 ${n(2 * rx)} 0a${n(rx)} ${n(ry)} 0 1 0 ${n(-2 * rx)} 0`;
+  if (e === 'happy' || e === 'sleep' || e === 'yawn') {
+    const d = ex
+      .map((x) => (e === 'happy' ? `M${n(x - 8 * k)} ${n(ey + 3 * k)}Q${n(x)} ${n(ey - 9 * k)} ${n(x + 8 * k)} ${n(ey + 3 * k)}` : `M${n(x - 8 * k)} ${n(ey)}Q${n(x)} ${n(ey + 7 * k)} ${n(x + 8 * k)} ${n(ey)}`))
+      .join('');
+    out += `<path d="${d}" fill="none" ${ink(4 * k)}/>`;
+  } else {
     const big = e === 'shock' || e === 'worried';
     const ry = (big ? 13 : 11) * k;
     const rx = (big ? 9.5 : 8.5) * k;
     const pr = big ? 3.8 * k : 5.2 * k;
-    out += `<ellipse cx="${n(x)}" cy="${n(ey)}" rx="${n(rx)}" ry="${n(ry)}" fill="#fff" ${ink(3 * k)}/>`;
-    out += `<ellipse cx="${n(x + 1.8 * k)}" cy="${n(ey + 1.5 * k)}" rx="${n(pr)}" ry="${n(pr * 1.3)}" fill="#1c1420"/>`;
-    out += `<circle cx="${n(x - 0.5 * k)}" cy="${n(ey - 2.5 * k)}" r="${n(2.2 * k)}" fill="#fff"/>`;
+    // Lite (small, far-away faces): simple dark dot eyes with a glint.
+    if (!lite) out += `<path d="${ex.map((x) => ell(x, ey, rx, ry)).join('')}" fill="#fff" ${ink(3 * k)}/>`;
+    const pk = lite ? 1.35 : 1;
+    out += `<path d="${ex.map((x) => ell(x + 1.8 * k, ey + 1.5 * k, pr * pk, pr * 1.3 * pk)).join('')}" fill="#1c1420"/>`;
+    out += `<path d="${ex.map((x) => ell(x - 0.5 * k, ey - 2.5 * k, 2.2 * k, 2.2 * k)).join('')}" fill="#fff"/>`;
     if (e === 'stern' || e === 'angry') {
       // Heavy lids.
-      out += `<path d="M${n(x - 10 * k)} ${n(ey - 4 * k)}Q${n(x)} ${n(ey - 15 * k)} ${n(x + 10 * k)} ${n(ey - 4 * k)}Z" fill="#000" opacity=".22"/>`;
+      out += `<path d="${ex.map((x) => `M${n(x - 10 * k)} ${n(ey - 4 * k)}Q${n(x)} ${n(ey - 15 * k)} ${n(x + 10 * k)} ${n(ey - 4 * k)}Z`).join('')}" fill="#000" opacity=".22"/>`;
     }
   }
   // Brows.

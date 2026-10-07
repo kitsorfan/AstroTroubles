@@ -65,7 +65,7 @@ export function ch1Friends(): string {
       vine([[-20, 620], [140, 480], [80, 300], [180, 200]], 22) +
       vine([[1620, 820], [1450, 700], [1560, 480], [1420, 300]], 22) +
       vine([[500, 920], [640, 780], [880, 840], [1200, 760], [1400, 920]], 22) +
-      blooms.map(([x, y, r, c]) => flower(x, y, r, c, c === C.gold ? '#ff8a3d' : C.gold, 4)).join('') +
+      blooms.map(([x, y, r, c]) => flower(x, y, r, c, c === C.gold ? '#ff8a3d' : C.gold)).join('') +
       gascuHeart(id + 'h', 1080, 400, 0.78, C.gold, false) +
       arcs(1080, 400, [[190, C.gold], [250, C.gold]], 26, 180) +
       glow(id + 'l', 560, 360, 150) +

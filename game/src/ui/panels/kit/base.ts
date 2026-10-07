@@ -37,11 +37,35 @@ export const C = {
 /** Rounds to one decimal so the markup stays small. */
 export const r1 = (n: number) => Math.round(n * 10) / 10;
 
-/** The bold ink outline used on characters and props (`w` = stroke width). */
-export const ink = (w = 6) => `class="sbI" stroke-width="${r1(w)}"`;
+/**
+ * The bold ink outline used on characters and props (`w` = stroke width). Whole widths use short
+ * shared classes to keep the markup small.
+ */
+export const ink = (w = 6) => (Number.isInteger(w) && w >= 2 && w <= 8 ? `class="sb${w}"` : `class="sbI" stroke-width="${r1(w)}"`);
 
-/** Shared styles (class names are prefixed so they can't clash with the page). */
-const STYLE = `<style>.sbI{stroke:${C.ink};stroke-linejoin:round;stroke-linecap:round}.sbL{fill:none;stroke-linecap:round;stroke-linejoin:round}</style>`;
+const WIDTHS = [2, 3, 4, 5, 6, 7, 8];
+
+/**
+ * Shared styles and shapes, the same in every panel (prefixed so they can't clash with the page):
+ * the ink classes, a leaf (`#sbLf`, coloured by the `fill` of its `<use>`), a five-petal flower
+ * (`#sbFl`, petals from `fill`, centre from `color`), a big jungle leaf (`#sbBl`, `fill`), a dark
+ * Heart petal (`#sbPt`, edge glow from `color`) and a bloom petal (`#sbBp`, `fill`). A panel only
+ * carries the shapes it uses.
+ */
+const STYLE = `<style>.sbI,${WIDTHS.map((w) => `.sb${w}`).join(',')}{stroke:${C.ink};stroke-linejoin:round;stroke-linecap:round}${WIDTHS.map((w) => `.sb${w}{stroke-width:${w}px}`).join('')}.sbL{fill:none;stroke-linecap:round;stroke-linejoin:round}</style>`;
+const SHAPES: Record<string, string> = {
+  sbLf: `<path d="M0 0Q30 -28 76 0Q30 28 0 0Z" class="sb4"/><path d="M6 0Q36 -4 64 0" fill="none" stroke="#fff" stroke-width="3" opacity=".3" stroke-linecap="round"/>`,
+  sbFl: `<g class="sb3"><circle cy="-12.4" r="9.6"/><circle cx="11.8" cy="-3.8" r="9.6"/><circle cx="7.3" cy="10" r="9.6"/><circle cx="-7.3" cy="10" r="9.6"/><circle cx="-11.8" cy="-3.8" r="9.6"/></g><circle r="7.2" fill="currentColor" class="sb3"/>`,
+  sbBl: `<path d="M0 0Q60 -70 170 -40Q240 -10 250 0Q240 10 170 40Q60 70 0 0Z" class="sb5"/><path d="M10 0Q120 -6 236 0M90 -2L120 -40M150 -2L180 -32M90 2L120 40M150 2L180 32" fill="none" stroke="#000" stroke-width="4" opacity=".18"/>`,
+  sbPt: `<path d="M-46 -60Q-70 -170 0 -210Q70 -170 46 -60Z" fill="#3a1838" class="sb5"/><path d="M-30 -80Q-40 -160 0 -190" fill="none" stroke="currentColor" stroke-width="5" opacity=".6" stroke-linecap="round"/>`,
+  sbBp: `<path d="M0 -36Q-44 -90 0 -140Q44 -90 0 -36Z" class="sb5"/><path d="M0 -50Q-10 -90 0 -122" fill="none" stroke="#fff" stroke-width="4" opacity=".5" stroke-linecap="round"/>`,
+};
+const shared = (body: string) =>
+  STYLE +
+  `<defs>${Object.entries(SHAPES)
+    .filter(([k]) => body.includes(`#${k}"`))
+    .map(([k, v]) => `<g id="${k}">${v}</g>`)
+    .join('')}</defs>`;
 
 /** A group placed at (x, y), scaled, optionally mirrored (facing left) and rotated. */
 export function at(x: number, y: number, s: number, body: string, flip = false, rot = 0): string {
@@ -80,6 +104,12 @@ export function smooth(pts: number[][], close = false): string {
  */
 export function limb(pts: number[][], color: string, w: number, outline = 6, curved = false): string {
   const d = curved ? smooth(pts) : poly(pts);
+  return `<path d="${d}" class="sbL sbI" stroke-width="${w + outline * 2}"/><path d="${d}" class="sbL" stroke="${color}" stroke-width="${w}"/>`;
+}
+
+/** Several outlined limbs of the same colour in one go (e.g. both legs). */
+export function limbs(list: number[][][], color: string, w: number, outline = 6): string {
+  const d = list.map(poly).join('');
   return `<path d="${d}" class="sbL sbI" stroke-width="${w + outline * 2}"/><path d="${d}" class="sbL" stroke="${color}" stroke-width="${w}"/>`;
 }
 
@@ -132,16 +162,17 @@ export function rng(seed: number): () => number {
 /** A field of stars in a box, a few of them twinkling crosses. */
 export function stars(seed: number, n: number, x = 0, y = 0, w = W, h = H, color: string = C.star): string {
   const rand = rng(seed);
-  let dots = '';
+  // Each star is a zero-length round-capped stroke: three sizes, three paths.
+  const dots = ['', '', ''];
   let sparks = '';
   for (let i = 0; i < n; i++) {
-    const sx = r1(x + rand() * w);
-    const sy = r1(y + rand() * h);
+    const sx = Math.round(x + rand() * w);
+    const sy = Math.round(y + rand() * h);
     const s = rand();
     if (s > 0.94) sparks += `M${sx - 9} ${sy}H${sx + 9}M${sx} ${sy - 9}V${sy + 9}`;
-    dots += `<circle cx="${sx}" cy="${sy}" r="${r1(0.8 + s * 2.2)}"${s < 0.5 ? ' opacity=".55"' : ''}/>`;
+    dots[s < 0.5 ? 0 : s < 0.85 ? 1 : 2] += `M${sx} ${sy}h0`;
   }
-  return `<g fill="${color}">${dots}</g>${sparks ? `<path d="${sparks}" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity=".8"/>` : ''}`;
+  return `<g stroke="${color}" stroke-linecap="round"><path d="${dots[0]}" stroke-width="2.4" opacity=".55"/><path d="${dots[1]}" stroke-width="3.6"/><path d="${dots[2]}" stroke-width="5.4"/>${sparks ? `<path d="${sparks}" stroke-width="2" opacity=".8"/>` : ''}</g>`;
 }
 
 /** A puffy cloud made of overlapping bumps (centre-bottom at x, y). */
@@ -159,7 +190,7 @@ export function ridge(seed: number, y: number, amp: number, color: string, bumps
 }
 
 /** The whole panel's svg wrapper. */
-export const panel = (body: string) => `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${STYLE}${body}</svg>`;
+export const panel = (body: string) => `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${shared(body)}${body}</svg>`;
 
 /** A colour mixed toward another (t = 0 keeps a, 1 gives b). Both as #rrggbb. */
 export function mix(a: string, b: string, t: number): string {

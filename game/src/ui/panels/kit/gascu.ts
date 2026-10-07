@@ -8,7 +8,6 @@ import { at, C, glow, glowDef, ink, limb, lin, r1, rad, smooth } from './base';
 export const VINE = '#3f7a3a';
 export const LEAF = '#5f9a3a';
 export const LEAF_LIGHT = '#86b84e';
-const PETAL_DARK = '#3a1838';
 
 /** A four-pointed twinkle. */
 export const sparkle = (x: number, y: number, r: number, color: string = '#fff', op = 1) =>
@@ -16,10 +15,13 @@ export const sparkle = (x: number, y: number, r: number, color: string = '#fff',
 
 /** A leaf pointing along `rot` degrees, base at (x, y). */
 export const leaf = (x: number, y: number, s: number, rot: number, color: string = LEAF, outline = 4) =>
-  at(x, y, s, `<path d="M0 0Q30 -28 76 0Q30 28 0 0Z" fill="${color}" ${ink(outline)}/><path d="M6 0Q36 -4 64 0" fill="none" stroke="#fff" stroke-width="3" opacity=".3" stroke-linecap="round"/>`, false, rot);
+  outline === 4
+    ? `<use href="#sbLf" transform="translate(${r1(x)} ${r1(y)}) scale(${r1(s * 100) / 100}) rotate(${Math.round(rot)})" fill="${color}"/>`
+    : at(x, y, s, `<path d="M0 0Q30 -28 76 0Q30 28 0 0Z" fill="${color}" ${ink(outline)}/><path d="M6 0Q36 -4 64 0" fill="none" stroke="#fff" stroke-width="3" opacity=".3" stroke-linecap="round"/>`, false, rot);
 
 /** A simple five-petal flower. */
 export function flower(x: number, y: number, r: number, color: string, center: string = C.gold, outline = 3): string {
+  if (outline === 3) return `<use href="#sbFl" transform="translate(${r1(x)} ${r1(y)}) scale(${r1((r / 20) * 100) / 100})" fill="${color}" color="${center}"/>`;
   let p = '';
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
@@ -74,11 +76,12 @@ export function gascuHeart(id: string, x: number, y: number, s: number, tint: st
     v += vine([[-30, 120], [-120, 260], [-60, 340]], 26);
     v += vine([[30, 120], [140, 250], [90, 340]], 26);
   }
-  let petals = '';
+  let petals = `<g color="${tint}">`;
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * 360 + 22.5;
-    petals += at(0, 0, 1, `<path d="M-46 -60Q-70 -170 0 -210Q70 -170 46 -60Z" fill="${PETAL_DARK}" ${ink(5)}/><path d="M-30 -80Q-40 -160 0 -190" fill="none" stroke="${tint}" stroke-width="5" opacity=".6" stroke-linecap="round"/>`, false, a);
+    petals += `<use href="#sbPt" transform="rotate(${a})"/>`;
   }
+  petals += '</g>';
   const bulb = `<ellipse cx="0" cy="0" rx="118" ry="134" fill="url(#${id}b)" ${ink(6)}/>
     <path d="M-60 -70Q-20 -110 30 -96M-80 10Q-70 -40 -40 -60" fill="none" stroke="#fff" stroke-width="8" opacity=".7" stroke-linecap="round"/>
     <path d="M-40 60Q0 90 50 50" fill="none" stroke="${deep}" stroke-width="6" opacity=".5" stroke-linecap="round"/>`;
@@ -91,7 +94,7 @@ export function gascuBloom(id: string, x: number, y: number, s: number, stem = 2
   const cols = [C.hello, C.gold, C.pink, '#7dff9a'];
   let petals = '';
   for (let i = 0; i < 8; i++) {
-    petals += at(0, 0, 1, `<path d="M0 -36Q-44 -90 0 -140Q44 -90 0 -36Z" fill="${cols[i % 4]}" ${ink(5)}/><path d="M0 -50Q-10 -90 0 -122" fill="none" stroke="#fff" stroke-width="4" opacity=".5" stroke-linecap="round"/>`, false, i * 45);
+    petals += `<use href="#sbBp" transform="rotate(${i * 45})" fill="${cols[i % 4]}"/>`;
   }
   const body = `${glow(id + 'g', 0, 0, 320)}${limb([[0, stem], [-20, stem * 0.5], [0, 40]], VINE, 26, 5, true)}
     ${leaf(-12, stem * 0.6, 1.6, 200)}${leaf(-6, stem * 0.75, 1.4, -20, LEAF_LIGHT)}

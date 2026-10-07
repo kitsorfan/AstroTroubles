@@ -11,6 +11,8 @@ export interface CastOpts {
   face?: Expr;
   legs?: 'stand' | 'kneel' | 'none';
   flip?: boolean;
+  /** Simpler drawing for small figures in the background. */
+  lite?: boolean;
 }
 
 const OLIVE_DARK = '#262e16';
@@ -31,16 +33,34 @@ const OLD_FACE = `<path d="M-30 -6L-14 30" stroke="#9a5848" stroke-width="3.5" s
   <path d="M32 2Q40 24 30 44" fill="none" stroke="#d8b050" stroke-width="2"/>
   <path d="M-44 4Q-46 -14 -40 -22L-36 2ZM44 4Q46 -14 40 -22L36 2Z" fill="#c8c8d2"/>`;
 
-/** General Brennus. `young`: forty years ago (dark hair, no moustache); `capOff`: holding his cap. */
-export function brennus(x: number, y: number, s: number, o: CastOpts & { young?: boolean; capOff?: boolean; rifle?: boolean } = {}): string {
+/**
+ * General Brennus. `young`: forty years ago (dark hair, no moustache); `capOff`: no cap; `rifle`:
+ * holding his big blaster rifle, aimed `aim` degrees (negative = up) in the 'rifle' pose.
+ */
+export function brennus(
+  x: number,
+  y: number,
+  s: number,
+  o: CastOpts & { young?: boolean; capOff?: boolean; rifle?: boolean; aim?: number } = {},
+): string {
   const young = !!o.young;
   const pose = o.pose ?? 'stand';
+  const aim = o.aim ?? -8;
   let rifle = '';
+  let arms: [number[][], number[][]] | undefined;
+  if (o.rifle && pose === 'rifle') {
+    // Both hands on the rifle, wherever it points.
+    const a = (aim * Math.PI) / 180;
+    const along = (d: number, off: number) => [40 + Math.cos(a) * d - Math.sin(a) * off, -148 + Math.sin(a) * d + Math.cos(a) * off];
+    const bh = along(4, 10);
+    const fh = along(74, 10);
+    arms = [[[bh[0] - 26, bh[1] + 36], bh], [[fh[0] - 30, fh[1] + 34], fh]];
+  }
   if (o.rifle) {
     // A big chunky cartoon blaster rifle (no muzzle flash, nobody hurt).
     const r = `<rect x="-40" y="-14" width="150" height="28" rx="10" fill="#4a4f3a" ${ink(5)}/><rect x="104" y="-9" width="34" height="18" rx="5" fill="#2a2c24" ${ink(4)}/>
       <rect x="-70" y="-8" width="40" height="30" rx="8" fill="#5a3a22" ${ink(5)}/><rect x="10" y="-26" width="44" height="14" rx="5" fill="#2a2c24" ${ink(4)}/><circle cx="80" cy="0" r="5" fill="#ff3a4c"/>`;
-    rifle = pose === 'rifleDown' ? at(10, -98, 1, r, false, 30) : at(40, -148, 1, r, false, -8);
+    rifle = pose === 'rifleDown' ? at(10, -98, 1, r, false, 30) : at(40, -148, 1, r, false, aim);
   }
   const body = person(0, 0, 1, {
     skin: '#d4a284',
@@ -50,12 +70,14 @@ export function brennus(x: number, y: number, s: number, o: CastOpts & { young?:
     pants: OLIVE_DARK,
     shoes: '#1a1410',
     pose,
+    arms,
     legs: o.legs,
     face: o.face ?? (young ? 'stern' : 'angry'),
     hat: o.capOff ? 'none' : 'general',
     bulk: young ? 1.05 : 1.15,
     bodyExtra: UNIFORM + (young ? '' : MEDALS),
     headExtra: young ? '' : OLD_FACE,
+    lite: o.lite,
   });
   return at(x, y, s, body + rifle, o.flip);
 }
@@ -110,7 +132,7 @@ const CREW = [
 /** Scientist number `i` (0-7) of the first expedition. */
 export function scientist(i: number, x: number, y: number, s: number, o: CastOpts = {}): string {
   const c = CREW[i % CREW.length];
-  return person(x, y, s, { ...c, long: c.coat === '#f2f5fa', pants: '#4a4a5a', pose: o.pose, legs: o.legs, face: o.face ?? 'smile', flip: o.flip });
+  return person(x, y, s, { ...c, long: c.coat === '#f2f5fa', pants: '#4a4a5a', pose: o.pose, legs: o.legs, face: o.face ?? 'smile', flip: o.flip, lite: o.lite });
 }
 
 /** Grandma: white hair in a bun, a flowery dress with an apron, green gardening gloves. */
