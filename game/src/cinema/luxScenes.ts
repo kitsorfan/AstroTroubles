@@ -99,7 +99,7 @@ export async function luxTaken(d: Director, w: World) {
     audio.play('alarm');
     w.flash(spot.x, spot.y + 4, spot.z, '#ff3a4c', 40, 0.4);
     await Promise.all([
-      d.cam(k.clone().addScaledVector(side, 6).addScaledVector(fwd, -2).add(V(0, 3.2, 0)), spot.clone().add(V(0, 2.4, 0)), 1.3, ease.inOut, 50),
+      d.cam(k.clone().addScaledVector(side, 6.5).addScaledVector(fwd, -2).add(V(0, 2.4, 0)), spot.clone().add(V(0, 0.3, 0)), 1.3, ease.inOut, 50),
       d.tween(
         1.4,
         (x) => {
@@ -275,7 +275,7 @@ export async function rogueIntro(d: Director, w: World, b: Boss) {
     await d.cam(k.clone().addScaledVector(u, 5.5).addScaledVector(side, 2.4).add(V(0, 3.2, 0)), f.clone().lerp(k, 0.2), 1.2, ease.inOut, 48);
     await d.say(w.dialogue('rogue'));
     // Close on him: the red eye blazes.
-    await d.cam(f.clone().addScaledVector(u, 3.4).addScaledVector(side, 0.8).add(V(0, -0.2, 0)), f, 1.2, ease.inOut, 42);
+    await d.cam(f.clone().addScaledVector(u, 4.8).addScaledVector(side, 1).add(V(0, -0.2, 0)), f, 1.2, ease.inOut, 42);
     audio.play('alarm');
     w.shake(0.5);
     w.flash(f.x, f.y, f.z, card.color, 60, 0.6);
