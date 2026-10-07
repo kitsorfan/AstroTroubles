@@ -5,7 +5,7 @@ import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability, DeckId } from '../src/world/levelTypes';
 import { deckAbilities } from './deckAbilities';
-import { isCollectible, reach, refillGaps, renderReach, timedRoutes } from './reach';
+import { isCollectible, levelHeroes, reach, refillGaps, renderReach, timedRoutes } from './reach';
 
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
 
@@ -20,6 +20,14 @@ function check(id: DeckId, showMap: boolean) {
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
   const lines: string[] = [`== ${id} (${level.width}x${level.depth}) abilities: [${before.join(', ')}] -> [${after.join(', ')}]`];
+  const heroes = levelHeroes(level);
+  if (heroes.length > 1 || heroes[0] !== 'jason') {
+    lines.push(`  heroes: ${heroes.join(' + ')} (switching anywhere on the ground)`);
+    for (const h of heroes) {
+      const alone = reach(level, after, [h]).missing.filter((e) => !isCollectible(e.spec));
+      lines.push(`  ${h} alone can't reach: ${alone.map((e) => e.id).join(', ') || 'nothing (the other hero is never needed)'}`);
+    }
+  }
   const upgrade = level.entities.find((e) => e.spec.type === 'upgrade');
   if (upgrade) {
     const r0 = reach(level, before);
