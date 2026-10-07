@@ -24,7 +24,7 @@ const glow = (c: string, ei = 2.2) => mat(c, { emissive: c, ei, rough: 0.3 });
 /** The shared paint set: armour flashes white when hit, so every robot gets its own copy. */
 function paints() {
   return {
-    armour: ownMat(LEGION.armour, { emissive: '#ff3040', ei: 0.02, rough: 0.42, metal: 0.45 }),
+    armour: ownMat(LEGION.armour, { emissive: '#ff3040', ei: 0.02, rough: 0.5, metal: 0.25 }),
     dark: mat(LEGION.dark, { rough: 0.6, metal: 0.4 }),
     brass: mat(LEGION.brass, { emissive: '#5a3a08', ei: 0.25, rough: 0.3, metal: 0.8 }),
     red: mat(LEGION.red, { emissive: LEGION.red, ei: 0.4, rough: 0.4 }),
