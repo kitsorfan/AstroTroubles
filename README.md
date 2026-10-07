@@ -67,6 +67,7 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | **DASH** | Zoom forward, even in mid-air (after the Engine Core), ramming through enemies for heavy damage. Each dash uses one of 3 energy cells, refilled at checkpoints and by violet energy cells (enemies drop them, and chargers sit before every jump that needs a dash) |
 | **PULSE** | LUX's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
 | **GRAPPLE** | The grapple hook (found in the Glass Desert): look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs |
+| **Weapon button** | On Gaia Nova, once Jason owns a second weapon: switch weapons (or press **X** on a keyboard) |
 | LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings |
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
@@ -97,6 +98,8 @@ Chapter 2 takes place outdoors on Gaia Nova. Jason keeps every ability, finds th
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
+- **New weapons on Gaia Nova.** Once Jason reaches the planet, PANDORA's shop gets a Weapons tab: **Spread Shot** (three shots in a fan), **Frost Ray** (slows enemies; a charged shot freezes them solid), **Thunder Arc** (lightning that jumps to nearby enemies) and **Seeker** (slow shots that chase their target). Every weapon keeps the clip, reload and charged shot of the Blaster, and grows with Blaster Power. Bosses resist the cold.
+- **Mk II upgrades.** In Chapter 2 the shop also sells a further level of every upgrade (the heart plating can now take Jason up to 12 hearts) and four new ones: **Armor Plating** (blocks a hit, then recharges), **Dash Cell** (an extra dash), **Spin Charge** (an extra spin) and **Grapple Range** (a longer, faster grapple).
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
 - **The Colossus**, chapter 2's final boss, is longer still: 110 health plus 20 per Blaster Power level, in three phases (shield generators, swinging arms, overheating core).
@@ -115,7 +118,16 @@ Each enemy type has a floating icon and a health bar, and the first time you mee
 | Spitter Pod | Lobs acid at where you'll be when it lands |
 | Horned Brute | Charges; if it misses, it stomps in anger |
 
-Enemies get tougher deck by deck: more health, faster attacks, sharper senses. They also scale up a little with every weapon upgrade you buy. From the Engine Core on, some are **elites** with a gold crown: bigger, tougher and worth more bolts.
+On Gaia Nova, General Brennus's Thorn Legion sends its robots too:
+
+| Robot | Its plan |
+| --- | --- |
+| Legion Trooper | Sidesteps across your path, its red lens glows, then it fires three slow shots: run sideways |
+| Roller Mine | Rolls up to you and puffs up over a red circle before it pops. Blast it first and it just fizzles |
+| Shield Bulwark | Its tower shield blocks everything from the front. Get behind it and hit its glowing pink core, or drop the shield with a ground pound or LUX's zap |
+| Mortar Bot | Lobs shells at a red circle on the ground. Step out of the circle, then get close: it can't aim at its own feet |
+
+Enemies get tougher deck by deck: more health, faster attacks, sharper senses. They also scale up a little with every weapon upgrade and new weapon you buy. From the Engine Core on, some are **elites** with a gold crown: bigger, tougher and worth more bolts.
 
 ### Side quests and rewards
 
