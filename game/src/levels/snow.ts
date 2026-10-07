@@ -127,7 +127,7 @@ export const snow: LevelDef = {
     '?': { type: 'shard', id: 's1' },
     '!': { type: 'shard', id: 's2' },
     '*': { type: 'shard', id: 's3' },
-    K: { type: 'cocoon', id: 'c1', name: 'Dr. Galen', line: 'The Colossus! Brennus is building a giant machine with GaScu as its heart!' },
+    K: { type: 'cocoon', id: 'c1', name: 'Dr. Galen', line: 'Forty years... I have been asleep for FORTY years?' },
     Q: { type: 'cocoon', id: 'c2', name: 'Engineer Ariadne', line: 'I fixed the camp heaters for Brennus. I made them extra cosy for us prisoners. Ha!' },
     '+': { type: 'canister', id: 'hc' },
     A: { type: 'anchor' },
@@ -233,16 +233,50 @@ export const snow: LevelDef = {
       { who: 'jason', text: 'Then Brennus kept her for himself. We keep going.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “I took the Gorgon and flew to the farthest world on the map: Gaia Nova. No rules here. No one to say no.”' },
-      { who: 'jason', text: 'He ran away. Like when you’re in trouble and you hide in your room.' },
+      { who: 'bolt', text: 'A journal page! “Tomorrow I will end the heart. One blast. The scientists say it is wrong. They do not understand: I am protecting the colony.”' },
+      { who: 'jason', text: 'He thinks hurting something is the same as protecting people.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“Forty winters alone. The robots are my only crew. They never argue. They never laugh, either.”' },
-      { who: 'bolt', text: 'That is the saddest thing I have ever read. And I have read a LOT of error logs.' },
+      { who: 'bolt', text: '“They said NO. All twelve of them. They put GaScu in an escape pod and sent it into the stars, where I could never reach it.”' },
+      { who: 'bolt', text: 'So GaScu was all alone up there... for forty years?' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“The old seed from the dead world never grew. I need a living one. I need the one they call GaScu.”' },
-      { who: 'jason', text: 'So he knew about GaScu all along.' },
+      { who: 'bolt', text: '“Forty winters on my own. The robots are my only crew. They never argue. They never laugh, either.”' },
+      { who: 'bolt', text: 'That is the saddest thing I have ever read. And I have read a LOT of error logs.' },
+    ],
+  },
+  stories: {
+    // Dr. Galen was one of the twelve scientists of the first expedition. Brennus kept them asleep
+    // for forty years; freed, he tells Jason what really happened, over storybook pictures.
+    'colonist:c1': [
+      {
+        panel: 'past-expedition',
+        lines: [
+          { who: 'colonist', name: 'Dr. Galen', text: 'Where... where am I? Is the expedition over? What year is it?' },
+          { who: 'jason', text: 'You were on the FIRST expedition? That was forty years ago!' },
+          { who: 'colonist', name: 'Dr. Galen', text: 'Forty years... Then listen, young man. Twelve of us came here with General Brennus, to make Gaia Nova ready for the colony ship.' },
+        ],
+      },
+      {
+        panel: 'past-order',
+        lines: [
+          { who: 'colonist', name: 'Dr. Galen', text: 'But the planet fought us at every step. So Brennus decided to destroy its heart: the great plant we called GaScu.' },
+        ],
+      },
+      {
+        panel: 'past-mutiny',
+        lines: [
+          { who: 'colonist', name: 'Dr. Galen', text: 'We said no. All twelve of us. You do not destroy the heart of a world just because it is hard to live with.' },
+        ],
+      },
+      {
+        panel: 'past-launch',
+        lines: [
+          { who: 'colonist', name: 'Dr. Galen', text: 'So we put GaScu in an escape pod and launched it into the stars, far away from him. He has kept us asleep ever since.' },
+          { who: 'bolt', text: 'So THAT is why GaScu steered our ship away! It was not lost. It was running from Brennus!' },
+          { who: 'colonist', name: 'Dr. Galen', text: 'And now it has come back... and he has it. Hurry, young man. Please.' },
+        ],
+      },
     ],
   },
 };

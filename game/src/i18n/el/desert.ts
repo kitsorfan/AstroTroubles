@@ -39,12 +39,6 @@ export const EL_DESERT: Record<string, string> = {
   "The Driller stopped! And look, the sand fell away from the ruins.": "Το Τρυπάνι σταμάτησε! Και κοίτα, η άμμος κύλησε και ξεσκέπασε τα ερείπια.",
   "The freed scientists say the others were taken north, to a prison camp in the tundra.": "Οι επιστήμονες που ελευθερώθηκαν λένε ότι τους άλλους τους πήγαν βόρεια, σε ένα στρατόπεδο-φυλακή στην τούνδρα.",
   "Then north we go. The shuttle’s waiting.": "Τότε πάμε βόρεια. Το σκάφος μάς περιμένει.",
-  "Another journal page! “Captain Brennus’s log. I found an ancient seed on a dead world. It can grow on rock, on ice, even on metal.”": "Άλλη μια σελίδα ημερολογίου! «Ημερολόγιο του Κυβερνήτη Βρέννου. Βρήκα έναν αρχαίο σπόρο σε έναν νεκρό κόσμο. Μπορεί να φυτρώσει πάνω σε βράχο, σε πάγο, ακόμα και σε μέταλλο.»",
-  "A seed that grows on anything... that sounds like GaScu.": "Ένας σπόρος που φυτρώνει πάνω σε όλα... αυτό μοιάζει με τη Γάκου.",
-  "“The Fleet says the seed is wild and must be left alone. But wild things get hurt. I want to make it STRONG.”": "«Ο Στόλος λέει ότι ο σπόρος είναι άγριος και πρέπει να τον αφήσουμε ήσυχο. Όμως τα άγρια πλάσματα πληγώνονται. Θέλω να τον κάνω ΔΥΝΑΤΟ.»",
-  "He thinks being strong means nobody can ever hurt you.": "Πιστεύει ότι αν είσαι δυνατός, κανείς δεν μπορεί να σε πληγώσει ποτέ.",
-  "“They took my ship and my medals. Atalanta, my best student, would not even look at me.”": "«Μου πήραν το σκάφος και τα μετάλλιά μου. Η Αταλάντη, η καλύτερή μου μαθήτρια, δεν ήθελε ούτε να με κοιτάξει.»",
-  "Atalanta... our Captain? She was his STUDENT?": "Η Αταλάντη... η Κυβερνήτριά μας; Ήταν ΜΑΘΗΤΡΙΑ του;",
 
   /* The Dune Driller fight. */
   "Watch the sand mound! RUN out of the red circle before it bursts up!": "Πρόσεχε το φούσκωμα στην άμμο! ΤΡΕΞΕ έξω από τον κόκκινο κύκλο πριν πεταχτεί έξω!",

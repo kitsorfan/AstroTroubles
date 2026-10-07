@@ -1,4 +1,5 @@
 import type { PuzzleKind } from '../game/puzzles';
+import type { PanelId } from '../ui/panels/ids';
 
 /** Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova. */
 export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano';
@@ -147,6 +148,13 @@ export interface Line {
   name?: string;
 }
 
+/** One storybook picture in a story scene, with what is said (or narrated) over it. */
+export interface StoryBeat {
+  panel: PanelId;
+  lines?: Line[];
+  caption?: string;
+}
+
 export interface LevelDef {
   id: DeckId;
   index: number;
@@ -163,6 +171,11 @@ export interface LevelDef {
   shardIds: string[];
   colonistIds?: string[];
   dialogues: Record<string, Line[]>;
+  /**
+   * Storybook scenes: illustrated panels with lines. A `colonist:<id>` story plays when that cocoon is
+   * freed (instead of its conversation); others play from a trigger's `story:<key>` event.
+   */
+  stories?: Record<string, StoryBeat[]>;
   boss?: BossKind;
 }
 

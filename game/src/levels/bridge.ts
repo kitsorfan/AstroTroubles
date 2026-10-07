@@ -186,7 +186,7 @@ export const bridge: LevelDef = {
     ],
     reborn: [
       { who: 'halcyon', text: 'Warning! GaScu is pulling EVERY vine on the ship back into the Heart!' },
-      { who: 'gascu', text: 'NO! Home is RIGHT THERE! I will NOT go back into the cold and the dark!' },
+      { who: 'gascu', text: 'NO! The blue world is where HE is! I will NOT go back there! Never!' },
       { who: 'jason', text: 'It’s so scared, it’s fighting with everything it has left.' },
       { who: 'bolt', text: 'It only gets hurt when its big eye opens! Charge up a FIREBALL for that! And JUMP over its thorn rings and vine beams!' },
     ],
@@ -197,10 +197,10 @@ export const bridge: LevelDef = {
     friends: [
       { who: 'gascu', text: '...hello? ...safe? ...together?' },
       { who: 'bolt', text: 'YES! Together! You don’t have to be scared anymore!' },
-      { who: 'gascu', text: 'Friends... I never had friends before. I only wanted to go home.' },
-      { who: 'jason', text: 'That star isn’t your home. It would burn you... and all of us.' },
-      { who: 'gascu', text: 'Then... will you help me find a new one?' },
-      { who: 'jason', text: 'We’re looking for a new home too. Let’s find one together.' },
+      { who: 'gascu', text: 'Friends... I never had friends before. I was only running away.' },
+      { who: 'jason', text: 'Running into that star would burn you... and all of us. We won’t let anyone hurt you.' },
+      { who: 'gascu', text: 'Even... on the blue world?' },
+      { who: 'jason', text: 'Especially there. That’s where we’re all going to live. Together.' },
       { who: 'gascu', text: 'Together. Hold on tight!' },
     ],
     'shard:s1': [

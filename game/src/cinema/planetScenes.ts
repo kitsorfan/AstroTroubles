@@ -39,7 +39,8 @@ export async function arrival(d: Director, s: ShipScene) {
   d.cut(V(-120, 30, 90), V(60, 0, 0), 44);
   d.fade('#000000', 1, 0);
   await d.title(tr('GAIA NOVA'), tr('Chapter 2'), '#7fd0ff');
-  await Promise.all([d.fade('#000000', 0, 1.6), d.cam(V(-60, 20, 70), world.clone().lerp(V(), 0.5), 6, ease.inOut), d.caption(PROLOGUE2.arrive, 5.5)]);
+  await Promise.all([d.fade('#000000', 0, 1.6), d.cam(V(-60, 20, 70), world.clone().lerp(V(), 0.5), 6, ease.inOut)]);
+  await d.panel('ch2-arrival', { caption: PROLOGUE2.arrive, seconds: 5.5 });
   await Promise.all([d.cam(V(80, 26, 60), world, 5.5, ease.inOut), d.caption(PROLOGUE2.team, 5)]);
   // A little shuttle drops away toward the planet... and goes quiet.
   ship.lift.visible = true;
@@ -51,10 +52,10 @@ export async function arrival(d: Director, s: ShipScene) {
   ]);
   ship.lift.visible = false;
   await d.caption(PROLOGUE2.signal, 3);
-  // The broadcast: static, then General Brennus.
+  // The broadcast: static, then General Brennus on every screen.
   audio.play('zap', 0.5);
   d.glitch(1);
-  await d.say(BROADCAST);
+  await d.panel('ch2-broadcast', { lines: BROADCAST });
   // That night, the drones come for GaScu.
   await d.cam(V(-20, 18, 46), V(0, 2, 0), 2, ease.inOut);
   const drone = s.comet;
@@ -86,7 +87,7 @@ export async function arrival(d: Director, s: ShipScene) {
     ease.in,
   );
   drone.visible = false;
-  await d.say(STOLEN);
+  await d.panel('ch2-drones', { lines: STOLEN });
   await d.fade('#000000', 1, 1);
 }
 
@@ -192,8 +193,8 @@ export async function finale(d: Director, p: PlanetScene, kind: EndingKind) {
   ]);
   // Flowers spread across the valley: gold if Brennus helped, pink otherwise... both glow.
   const gold = kind === 'redeemed';
+  await d.panel(kind === 'redeemed' ? 'ch2-redeemed' : 'ch2-freed', { caption: text[3], seconds: 6.5 });
   await Promise.all([
-    d.caption(text[3], 6.5),
     d.cam(plains.clone().add(V(-40, 40, 90)), plains.clone().add(V(40, 10, 0)), 7, ease.inOut),
     d.tween(
       7,

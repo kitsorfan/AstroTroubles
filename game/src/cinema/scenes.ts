@@ -215,7 +215,7 @@ export async function boltFound(d: Director, w: World, find: BoltFind) {
       },
       ease.inOut,
     );
-    await d.say(w.dialogue('boltJoin'));
+    await d.panel('ch1-lux', { lines: w.dialogue('boltJoin') });
   } finally {
     w.player.pose = null;
     const at = bolt.root.position.clone();
@@ -272,7 +272,10 @@ export async function bossIntro(d: Director, w: World, b: Boss) {
   w.particles.emit(f.x, f.y, f.z, { count: 50, color: card.color, speed: 9, life: 1, size: 0.7 });
     haptic('heavy');
     await d.title(b.title, card.sub, card.color);
-    await d.say(bossLines(w, b));
+    // The two chapter finales get a storybook picture of the villain in all its glory.
+    const art = b.kind === 'heart' ? 'ch1-heart' : b.kind === 'colossus' ? 'ch2-colossus' : null;
+    if (art) await d.panel(art, { lines: bossLines(w, b) });
+    else await d.say(bossLines(w, b));
     const fight = follow(w, 17);
     await d.cam(fight.pos, fight.look, 1, ease.inOut, fight.fov);
   } finally {
@@ -438,6 +441,14 @@ export async function befriend(d: Director, w: World) {
   }
 }
 
+/** A storybook scene in the middle of a deck: illustrated panels with lines, then back to play. */
+export async function storyTime(d: Director, w: World, key: string) {
+  const beats = w.def.stories?.[key] ?? [];
+  await d.story(beats);
+  const back = follow(w);
+  d.cut(back.pos, back.look, back.fov);
+}
+
 /** The secret ending of chapter 2: Jason talks General Brennus down, and he steps out of the Colossus. */
 export async function talkDown(d: Director, w: World) {
   const b = w.boss;
@@ -450,7 +461,8 @@ export async function talkDown(d: Director, w: World) {
   const side = V(u.z, 0, -u.x);
   const giant = b as Boss & Partial<{ surrender(k: number): void }>;
   await d.cam(k.clone().addScaledVector(u, 5).addScaledVector(side, 3.5).add(V(0, 2.4, 0)), f.clone().lerp(k, 0.3), 1.4);
-  await d.say(w.dialogue('redeem'));
+  // While Jason talks, the picture of a boy in his grandmother's greenhouse.
+  await d.panel('ch2-grandma', { lines: w.dialogue('redeem') });
   // The machine powers down, piece by piece, and GaScu's glow turns gold.
   audio.play('upgrade');
   await d.tween(

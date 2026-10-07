@@ -224,16 +224,16 @@ export const rockies: LevelDef = {
       { who: 'halcyon', text: 'GaScu’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “The Gorgon fell on the mountains in a storm. I built a fortress inside the volcano. Warm. Safe. MINE.”' },
+      { who: 'bolt', text: 'A journal page! “The Gorgon fell on the mountains in the storm that night. I built a fortress inside the volcano. Warm. Safe. MINE.”' },
       { who: 'jason', text: 'He keeps saying MINE. Like a little kid with a toy.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“A colony ship is coming. Ten thousand people, trampling my world, picking my flowers. NO.”' },
-      { who: 'bolt', text: 'We are not trampling! I hover. Hovering is very gentle.' },
+      { who: 'bolt', text: '“The colony ship is coming at last. And GaScu is riding on it. After forty years, it came BACK.”' },
+      { who: 'bolt', text: 'GaScu did not come back on purpose! It tried as hard as it could to steer us AWAY!' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“The scientist, Hypatia, asked me why I am so angry. I did not have an answer.”' },
-      { who: 'jason', text: 'Maybe he has been angry for so long that he forgot why.' },
+      { who: 'bolt', text: '“I will not destroy it this time. I will cage it, and its power will make my Legion unstoppable. ...So why do I feel worse?”' },
+      { who: 'jason', text: 'Maybe because deep down, he knows it’s wrong.' },
     ],
   },
 };

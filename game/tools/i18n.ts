@@ -54,6 +54,12 @@ export function englishStrings(): Set<string> {
     add(d.subtitle);
     for (const o of d.objectives) add(o.text);
     for (const lines of Object.values(d.dialogues)) for (const l of lines) (add(l.text), add(l.name));
+    for (const beats of Object.values(d.stories ?? {})) {
+      for (const b of beats) {
+        add(b.caption);
+        for (const l of b.lines ?? []) (add(l.text), add(l.name));
+      }
+    }
     for (const s of Object.values(d.legend)) {
       if (s.type === 'sign') add(s.text);
       if (s.type === 'cocoon') (add(s.name), add(s.line));

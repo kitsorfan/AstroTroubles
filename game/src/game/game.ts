@@ -16,6 +16,7 @@ import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings }
 import { LEVELS, LEVEL_ORDER, chapterIndex, chapterOf, chapterTotals, inChapter, isFinale, nextChapterStart } from '../levels';
 import type { DeckId, EndingKind, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
+import { PANEL_IDS, type PanelId } from '../ui/panels';
 import { UI, type ShopItem } from '../ui/ui';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
@@ -159,7 +160,7 @@ export class Game {
     // (&still skips its opening, &all hands over every ability), #cinema=<arrival|descent|hop|finale> plays a
     // chapter 2 cinematic.
     const dev = inApp() ? null : new URLSearchParams(location.hash.slice(1));
-    if (dev && (dev.get('deck') || dev.get('cinema'))) {
+    if (dev && (dev.get('deck') || dev.get('cinema') || dev.get('panel'))) {
       void ready.then(() => this.devJump(dev));
       return;
     }
@@ -188,6 +189,14 @@ export class Game {
           w.snapCamera();
         }, 3400);
       }
+      return;
+    }
+    // #panel=<id> shows one storybook illustration on its own (for checking the art).
+    const art = dev.get('panel') as PanelId | null;
+    if (art && (PANEL_IDS as readonly string[]).includes(art)) {
+      this.state = 'cinema';
+      this.ui.cinema(true);
+      this.ui.storyPanel(art);
       return;
     }
     const film = dev.get('cinema');

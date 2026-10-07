@@ -584,6 +584,7 @@ export class World {
     else if (name.startsWith('flag:')) this.setFlag(name.slice(5));
     else if (name.startsWith('music:')) this.hooks.music(name.slice(6) as Track);
     else if (name === 'shake') this.shake(0.6);
+    else if (name.startsWith('story:')) this.playStory(name.slice(6));
   }
 
   /* ---------------- combat ---------------- */
@@ -1031,6 +1032,12 @@ export class World {
   /** Jason steps onto the lift and rides it up out of the deck. */
   rideLift(exit: Exit) {
     void this.hooks.cutscene((d) => scenes.liftRide(d, this, exit)).then(() => this.hooks.complete());
+  }
+
+  /** Plays one of the deck's storybook scenes (illustrated panels with lines). */
+  playStory(key: string) {
+    if (!this.def.stories?.[key]?.length) return;
+    void this.hooks.cutscene((d) => scenes.storyTime(d, this, key));
   }
 
   /** Jason finds LUX switched off in the dark and switches him back on. */

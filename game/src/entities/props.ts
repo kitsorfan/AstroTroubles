@@ -1068,9 +1068,12 @@ export class Cocoon extends Entity implements Target {
     const box = w.boxes.find((b) => b.owner === this);
     if (box) w.boxes.splice(w.boxes.indexOf(box), 1);
     w.collect('colonist', this.id);
-    // Story characters (Aunt Rosa, the Captain) get a proper conversation instead of a one-liner.
-    const lines = w.dialogue(`colonist:${this.id.split('.')[1]}`);
-    if (lines.length) w.hooks.say(lines);
+    // Story characters (Aunt Rosa, the Captain) get a proper conversation instead of a one-liner, and
+    // some (Dr. Galen) tell their story over storybook pictures.
+    const key = `colonist:${this.id.split('.')[1]}`;
+    const lines = w.dialogue(key);
+    if (w.def.stories?.[key]?.length) w.playStory(key);
+    else if (lines.length) w.hooks.say(lines);
     else w.hooks.toast(tr('{name}: “{line}”', { name: tr(this.name), line: tr(this.line) }), 'colonist');
   }
 

@@ -150,7 +150,7 @@ export const engine: LevelDef = {
     ],
     log: [
       { who: 'captain', text: 'Captain’s log, day three. Someone has locked the helm and pointed us at the star. It wasn’t me.' },
-      { who: 'captain', text: 'GaScu’s roots have reached the Bridge controls. I think that star looks like home to it.' },
+      { who: 'captain', text: 'GaScu’s roots have reached the Bridge controls. It’s as if it would rather fly into a star than go where we’re going.' },
       { who: 'captain', text: 'Engineering, if anyone is awake: restart the coolant pumps before the engines melt!' },
       { who: 'jason', text: 'Engineering... that’s me! Junior engineer, but still!' },
     ],
@@ -167,11 +167,11 @@ export const engine: LevelDef = {
       { who: 'gascu', text: 'The engine felt so warm, like a little sun. I love suns.' },
     ],
     'shard:s2': [
-      { who: 'gascu', text: 'I pointed the ship at the big bright star. It looked just like home.' },
+      { who: 'gascu', text: 'The ship was flying to the blue world. Back to HIM. So I turned it toward the bright star. Anywhere but there.' },
     ],
     'shard:s3': [
-      { who: 'gascu', text: 'My home was a garden around a star. It went dark a long, long time ago.' },
-      { who: 'bolt', text: 'So GaScu is trying to go home... but that star is far too hot for the ship!' },
+      { who: 'gascu', text: 'My home was a garden on a blue world. Then a man came who wanted to make it go dark.' },
+      { who: 'bolt', text: 'So GaScu is running AWAY from somewhere... but that star is far too hot for the ship!' },
     ],
   },
 };

@@ -9,17 +9,20 @@ import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
  * The story of ASTROTROUBLES!
  *
  * A glowing space seed, GaScu, lands on a colony ship and grows over it. It puts the crew to
- * sleep in cocoons and steers the ship toward a star, because the star looks like its long-lost
- * home. Junior engineer Jason wakes up early, rescues the Captain's scared little drone LUX,
- * follows the Captain's recorded logs up six decks, saves Aunt Rosa, frees HALCYON (the ship's
- * computer) from GaScu pollen, and learns the truth: GaScu isn't a monster, it's lost. At the
- * top, Jason can stop the Heart of GaScu, or, with every memory shard, LUX can talk to it in lights.
+ * sleep in cocoons and steers the ship toward a star, because it would rather burn than be carried
+ * to the planet the ship is flying to. Junior engineer Jason wakes up early, rescues the Captain's
+ * scared little drone LUX, follows the Captain's recorded logs up six decks, saves Aunt Rosa, frees
+ * HALCYON (the ship's computer) from GaScu pollen, and learns the truth: GaScu isn't a monster,
+ * it's terrified. At the top, Jason can stop the Heart of GaScu, or, with every memory shard, LUX
+ * can talk to it in lights.
  *
- * Chapter 2, GAIA NOVA. The ship reaches its new home, but General Brennus (Captain Atalanta's old
- * commander, thrown out of the Fleet for experimenting on living things) got there forty years
- * earlier in the warship Gorgon. He has captured Dr. Hypatia's science team, and his drones steal
- * GaScu so he can force its pollen into a Thorn Legion of machines and build the Colossus inside
- * the volcano Mount Atlantas. Jason and LUX cross six regions to free the scientists and GaScu. The
+ * Chapter 2, GAIA NOVA. Forty years ago General Brennus led the first expedition, in the warship
+ * Gorgon, to make Gaia Nova ready for the colony ship. The planet fought back, so he decided to
+ * destroy GaScu, the heart of all its plants; his twelve scientists mutinied and launched GaScu into
+ * space (which is why, when it met the colony ship flying to Gaia Nova, it turned the ship away).
+ * Now the ship has arrived: Brennus captures Dr. Hypatia's science team, and his drones steal GaScu
+ * so he can force its pollen into a Thorn Legion of machines and build the Colossus inside the
+ * volcano Mount Atlantas. Jason and LUX cross six regions to free the scientists and GaScu. The
  * 18 pages of Brennus's journal tell how a boy who loved his grandmother's greenhouse became a man
  * who tries to own everything; with all of them, Jason can talk him down instead of beating him.
  */
@@ -97,9 +100,9 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!' },
   ],
   snow: [
-    { who: 'halcyon', text: 'The freed scientists are safe on board the {ship}. Dr. Galen sent you a message.' },
-    { who: 'jason', text: 'What did he say?' },
-    { who: 'halcyon', text: '“Brennus is building something called the COLOSSUS. And he keeps a journal. Find the pages, and you will understand him.”' },
+    { who: 'halcyon', text: 'Dr. Galen is safe on board the {ship}. He slept for forty years and woke up very hungry. He has eaten eleven pancakes.' },
+    { who: 'jason', text: 'Did the others hear anything about Brennus’s plans?' },
+    { who: 'halcyon', text: 'Engineer Ariadne did: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”' },
     { who: 'bolt', text: 'A journal? Brennus has FEELINGS? ...Should I be more scared or less scared?' },
   ],
   rockies: [
@@ -133,7 +136,7 @@ export const BROADCAST: Line[] = [
   { who: 'brennus', text: 'Attention, colony ship. This is General Brennus, of the warship Gorgon.' },
   { who: 'brennus', text: 'I reached Gaia Nova forty years before you. This world is MINE. Every tree, every river, every rock.' },
   { who: 'brennus', text: 'Your scientists came poking around my planet. They will be my guests for a while.' },
-  { who: 'captain', text: 'Brennus... my old commander. The Fleet threw him out for experimenting on living things.' },
+  { who: 'captain', text: 'Brennus... my first commander. He led the first expedition here, forty years ago. We all thought he was lost.' },
   { who: 'brennus', text: 'Hello, Atalanta. Turn your ship around and fly away, or meet my THORN LEGION.' },
 ];
 
@@ -188,7 +191,7 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
   friends: [
     'LUX flashed the words: <b style="color:#5e9bff">hello</b>... <b style="color:#ff6fcf">safe</b>... <b style="color:#ffd166">together</b>. And for the first time, GaScu flashed back.',
     'Its vines turned gold and burst into flowers. After a long, long time in the dark, GaScu was not afraid anymore.',
-    'Gently, it turned the {ship} away from the star, toward a warm blue world it had seen in its dreams.',
+    'Gently, it turned the {ship} away from the star and back toward the warm blue world it had run from. It was not scared anymore: now it had friends.',
     'Ten thousand colonists woke up in a garden between the stars. And LUX was never scared of the dark again, because now something always glows.',
   ],
   freed: [

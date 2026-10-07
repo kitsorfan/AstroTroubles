@@ -5,7 +5,6 @@ export const EL_SNOW: Record<string, string> = {
 
   // Rescued scientists.
   "Dr. Galen": "Δρ. Γαληνός",
-  "The Colossus! Brennus is building a giant machine with GaScu as its heart!": "Ο Κολοσσός! Ο Βρέννος φτιάχνει μια γιγάντια μηχανή και καρδιά της θα είναι η Γάκου!",
   "Engineer Ariadne": "Μηχανικός Αριάδνη",
   "I fixed the camp heaters for Brennus. I made them extra cosy for us prisoners. Ha!": "Επισκεύασα τις θερμάστρες του στρατοπέδου για τον Βρέννο. Τις έκανα εξτρά ζεστούλες για εμάς τους κρατούμενους. Χα!",
 
@@ -52,12 +51,7 @@ export const EL_SNOW: Record<string, string> = {
   "BOREAS is down! The cell doors are opening!": "Ο ΒΟΡΙΑΣ έπεσε! Οι πόρτες των κελιών ανοίγουν!",
   "Every prisoner from the tundra camp is safe. But Dr. Hypatia was not among them.": "Όλοι οι κρατούμενοι του στρατοπέδου της τούνδρας είναι ασφαλείς. Όμως η Δρ. Υπατία δεν ήταν ανάμεσά τους.",
   "Then Brennus kept her for himself. We keep going.": "Τότε ο Βρέννος την κράτησε για τον εαυτό του. Συνεχίζουμε.",
-  "A journal page! “I took the Gorgon and flew to the farthest world on the map: Gaia Nova. No rules here. No one to say no.”": "Μια σελίδα ημερολογίου! «Πήρα τη Γοργώ και πέταξα στον πιο μακρινό κόσμο του χάρτη: τη Γαία Νόβα. Εδώ δεν υπάρχουν κανόνες. Κανείς δεν μπορεί να πει όχι.»",
-  "He ran away. Like when you’re in trouble and you hide in your room.": "Το έσκασε. Όπως όταν έχεις κάνει κάποια ζημιά και κρύβεσαι στο δωμάτιό σου.",
-  "“Forty winters alone. The robots are my only crew. They never argue. They never laugh, either.”": "«Σαράντα χειμώνες μόνος. Τα ρομπότ είναι το μόνο μου πλήρωμα. Δεν μου φέρνουν ποτέ αντίρρηση. Ούτε όμως γελάνε ποτέ.»",
   "That is the saddest thing I have ever read. And I have read a LOT of error logs.": "Αυτό είναι το πιο λυπητερό πράγμα που έχω διαβάσει ποτέ. Κι έχω διαβάσει ΠΑΡΑ πολλά μηνύματα σφάλματος.",
-  "“The old seed from the dead world never grew. I need a living one. I need the one they call GaScu.”": "«Ο παλιός σπόρος από τον νεκρό κόσμο δεν φύτρωσε ποτέ. Χρειάζομαι έναν ζωντανό. Χρειάζομαι αυτή που τη λένε Γάκου.»",
-  "So he knew about GaScu all along.": "Δηλαδή ήξερε για τη Γάκου από την αρχή.",
 
   // BOREAS's fight.
   "Blocked! Get behind BOREAS and blast its glowing back!": "Το απέκρουσε! Πήγαινε πίσω από τον ΒΟΡΙΑ και ρίξε ΒΟΛΗ στην πλάτη του που λάμπει!",

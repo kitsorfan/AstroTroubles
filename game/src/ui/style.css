@@ -1190,6 +1190,60 @@ canvas#game {
   transform: none;
 }
 
+/* Storybook illustrations: a framed cartoon picture that fades in over the scene and drifts slowly. */
+.cine .storypanel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(11vh + 1.5vh);
+  background: radial-gradient(ellipse at center, rgba(4, 6, 18, 0.55), rgba(2, 3, 10, 0.92));
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.cine .storypanel.show {
+  opacity: 1;
+}
+
+.cine .storypanel .frame {
+  /* As big as fits between the letterbox bar and the caption/dialogue area, keeping 16:9. */
+  height: min(calc(100vh - 22vh - 150px), calc(92vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 5px solid #fff6e0;
+  box-shadow: 0 0 0 3px #1a1630, 0 18px 50px rgba(0, 0, 0, 0.7);
+  transform: rotate(-0.6deg) scale(0.97);
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: #0b0f1e;
+}
+
+.cine .storypanel.show .frame {
+  transform: rotate(-0.6deg) scale(1);
+}
+
+.cine .storypanel .art,
+.cine .storypanel .art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cine .storypanel .art.drift {
+  animation: panel-drift 14s ease-out forwards;
+}
+
+@keyframes panel-drift {
+  from {
+    transform: scale(1.02) translateX(0);
+  }
+  to {
+    transform: scale(1.1) translateX(var(--dx, 1.6%));
+  }
+}
+
 .cine .caption {
   position: absolute;
   left: 50%;

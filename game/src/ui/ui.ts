@@ -22,6 +22,7 @@ import {
 import type { EndingKind, Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, portrait } from './icons';
+import { panelSvg, type PanelId } from './panels';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
 
@@ -180,6 +181,7 @@ export class UI {
     this.fadeEl = h(`<div class="fade"></div>`);
     this.cine = h(`<div class="cine">
       <div class="tap"></div><div class="bar top"></div><div class="bar bottom"></div>
+      <div class="storypanel"><div class="frame"><div class="art"></div></div></div>
       <div class="caption"></div><div class="bosscard"></div><div class="glitch-fx"></div>
     </div>`);
     this.skipBtn = h(`<button class="skip clickable hidden">${label('SKIP')} ▶▶</button>`);
@@ -573,8 +575,29 @@ export class UI {
     this.onCineTap = on ? (onTap ?? null) : null;
     if (!on) {
       this.caption(null);
+      this.storyPanel(null);
       this.cine.classList.remove('glitching');
     }
+  }
+
+  private panelDrift = 0;
+
+  /** Shows a storybook illustration over the cutscene (null hides it). It drifts slowly while it's up. */
+  storyPanel(id: PanelId | null) {
+    const el = $(this.cine, '.storypanel');
+    if (!id) {
+      el.classList.remove('show');
+      return;
+    }
+    const art = $(el, '.art');
+    art.innerHTML = panelSvg(id);
+    // Alternate the slow pan between panels so a run of them doesn't feel mechanical.
+    this.panelDrift += 1;
+    art.style.setProperty('--dx', this.panelDrift % 2 ? '-1.6%' : '1.6%');
+    art.classList.remove('drift');
+    void art.offsetWidth;
+    art.classList.add('drift');
+    el.classList.add('show');
   }
 
   caption(text: string | null) {

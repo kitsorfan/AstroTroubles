@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
+import type { PanelId } from '../ui/panels';
 import type { UI } from '../ui/ui';
-import type { Line } from '../world/levelTypes';
+import type { Line, StoryBeat } from '../world/levelTypes';
 
 /** Where a cutscene camera sits and what it looks at. */
 export interface Rig {
@@ -141,6 +142,26 @@ export class Director {
     await Promise.race([this.wait(seconds), this.tapped()]);
     this.ui.caption(null);
     await this.wait(0.25);
+  }
+
+  /**
+   * Shows a storybook illustration while its lines are spoken (or its caption is read, or for a few
+   * seconds), then fades it away.
+   */
+  async panel(id: PanelId, opts: { lines?: Line[]; caption?: string; seconds?: number } = {}) {
+    if (this.skipping) return;
+    this.ui.storyPanel(id);
+    await this.wait(0.5);
+    if (opts.lines?.length) await this.say(opts.lines);
+    else if (opts.caption) await this.caption(opts.caption, opts.seconds);
+    else await Promise.race([this.wait(opts.seconds ?? 3.5), this.tapped()]);
+    this.ui.storyPanel(null);
+    await this.wait(0.45);
+  }
+
+  /** A run of storybook panels, each with its own lines or caption. */
+  async story(beats: StoryBeat[]) {
+    for (const b of beats) await this.panel(b.panel, { lines: b.lines, caption: b.caption });
   }
 
   /** A boss's big entrance name card. */

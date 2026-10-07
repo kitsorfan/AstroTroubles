@@ -198,16 +198,16 @@ export const desert: LevelDef = {
       { who: 'jason', text: 'Then north we go. The shuttle’s waiting.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'Another journal page! “Captain Brennus’s log. I found an ancient seed on a dead world. It can grow on rock, on ice, even on metal.”' },
-      { who: 'jason', text: 'A seed that grows on anything... that sounds like GaScu.' },
+      { who: 'bolt', text: 'Another journal page! “Expedition log, day one. The Fleet sent me to Gaia Nova with twelve scientists, to make it ready for the colony ship.”' },
+      { who: 'jason', text: 'Brennus came here to HELP the colonists? So what happened?' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“The Fleet says the seed is wild and must be left alone. But wild things get hurt. I want to make it STRONG.”' },
-      { who: 'jason', text: 'He thinks being strong means nobody can ever hurt you.' },
+      { who: 'bolt', text: '“This world fights us. Vines trip our robots and sandstorms tear our tents. And at the heart of it all grows one great plant.”' },
+      { who: 'bolt', text: 'One great plant... Jason, do you think he means...?' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“They took my ship and my medals. Atalanta, my best student, would not even look at me.”' },
-      { who: 'bolt', text: 'Atalanta... our Captain? She was his STUDENT?' },
+      { who: 'bolt', text: '“The scientists call it GaScu: the heart of every plant on Gaia Nova. If the heart were gone, this planet would stop fighting us.”' },
+      { who: 'jason', text: 'He wanted to hurt GaScu? Even back then?' },
     ],
   },
 };
