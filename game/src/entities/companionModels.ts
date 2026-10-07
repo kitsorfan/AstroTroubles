@@ -72,6 +72,8 @@ export function makeIris(): IrisModel {
   const glow = glowSprite('#c9a8ff', 1.3, 0.35);
   glow.position.y = -0.5;
   root.add(glow);
+  // A touch smaller than she is drawn, so she sits next to LUX's size.
+  shell.scale.setScalar(0.85);
   return { root, shell, iris, glow, lid, fins, halo, haloMat };
 }
 

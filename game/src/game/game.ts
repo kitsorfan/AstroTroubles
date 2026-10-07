@@ -210,6 +210,8 @@ export class Game {
       const play = dev.get('play');
       if (flags.length || play) setTimeout(() => this.world?.devStory(flags, play), 3600);
       if (dev.has('talk')) setInterval(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' })), 900);
+      // &tick also drives the game from a timer: headless browsers barely run animation frames.
+      if (dev.has('tick')) setInterval(() => this.step(performance.now()), 33);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
       if (at && at.length === 2) {
@@ -551,7 +553,6 @@ export class Game {
       w.resize(window.innerWidth, window.innerHeight);
       // LUX's lines go to whoever is with Jason on this deck (IRIS, HALCYON's radio, or Jason himself).
       this.ui.voice = (who, toast) => w.voice(who, toast);
-      this.ui.setHelper(w.helper);
       // Compile every shader now so the first frames of play don't stutter.
       this.renderer.compile(w.scene, w.camera);
       return w;
@@ -897,6 +898,10 @@ export class Game {
 
   private frame(t: number) {
     requestAnimationFrame((n) => this.frame(n));
+    this.step(t);
+  }
+
+  private step(t: number) {
     const dt = Math.min(0.05, Math.max(0, (t - this.last) / 1000));
     this.last = t;
     this.frames += 1;

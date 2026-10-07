@@ -188,10 +188,12 @@ export async function irisFound(d: Director, w: World, find: BoltFind) {
     m.head.rotation.x = 0.35 * kneel;
   };
   find.waking = true;
+  // She lies tipped over in the roots, facing Jason.
+  iris.root.rotation.y = Math.atan2(dir.x, dir.z);
   const hue = new THREE.Color();
   try {
     await Promise.all([
-      d.cam(s.clone().addScaledVector(dir, 1.2).addScaledVector(side, 2.6).add(V(0, 1, 0)), s.clone().add(V(0, 0.45, 0)), 1.2, ease.inOut, 40),
+      d.cam(s.clone().addScaledVector(dir, 2.8).addScaledVector(side, 1.1).add(V(0, 1.3, 0)), s.clone().add(V(0, 0.45, 0)), 1.2, ease.inOut, 42),
       d.tween(0.8, (x) => (kneel = x)),
     ]);
     // Leaves and vines pulled away, then a spark: her visor stutters through the rainbow.

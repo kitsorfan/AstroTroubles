@@ -9,6 +9,30 @@ import { glowSprite, makeBolt, type BoltModel } from './models';
 
 const ZAP_RANGE = 6;
 const tmpC = new THREE.Color();
+const tmpV = new THREE.Vector3();
+
+/** The deck's one flashlight: a spotlight that whoever lights the way points each frame. */
+export class Torch {
+  readonly light = new THREE.SpotLight('#dff6ff', 0, 22, 0.62, 0.55, 1.1);
+  private target = new THREE.Object3D();
+
+  constructor(scene: THREE.Scene) {
+    this.light.target = this.target;
+    scene.add(this.light, this.target);
+  }
+
+  shine(from: THREE.Vector3, at: THREE.Vector3, color: string, intensity: number, dt: number) {
+    this.light.color.set(color);
+    this.light.intensity = damp(this.light.intensity, intensity, 5, dt);
+    this.light.position.copy(from);
+    this.target.position.copy(at);
+  }
+
+  /** Nobody is lighting the way: fade it out. */
+  dim(dt: number) {
+    this.light.intensity = damp(this.light.intensity, 0, 5, dt);
+  }
+}
 
 /**
  * Jason's droid: LUX (or, in the jungle and the volcano, IRIS). The lead droid follows Jason, zaps
@@ -21,8 +45,6 @@ export class Bolt {
   private yaw = 0;
   private zapCd = 2;
   private blinkT = 2;
-  private light: THREE.SpotLight;
-  private lightTarget = new THREE.Object3D();
   active = true;
   /** The lead droid does the work; a tag-along just follows. */
   role: 'lead' | 'tag' = 'lead';
@@ -30,15 +52,17 @@ export class Bolt {
   override: THREE.Vector3 | null = null;
   private t = 0;
 
+  /**
+   * `torch` is the deck's one flashlight, shared by the droids and Jason's helmet lamp (only one of
+   * them is ever lighting the way), so the number of lights in the scene never changes.
+   */
   constructor(
     private world: World,
-    readonly skin: CompanionSkin = 'lux',
+    readonly skin: CompanionSkin,
+    private torch: Torch,
   ) {
     this.model = skin === 'iris' ? makeIris() : makeBolt();
     world.scene.add(this.model.root);
-    this.light = new THREE.SpotLight(skin === 'iris' ? '#f0e6ff' : '#dff6ff', 0, 22, 0.62, 0.55, 1.1);
-    this.light.target = this.lightTarget;
-    world.scene.add(this.light, this.lightTarget);
     const p = world.player.body;
     this.pos.set(p.x - 1, p.y + 2, p.z + 1);
     this.t = skin === 'iris' ? 1.7 : 0;
@@ -66,7 +90,6 @@ export class Bolt {
     this.t += dt;
     this.model.root.visible = this.active;
     const lead = this.role === 'lead';
-    if (!this.active || !lead) this.light.intensity = 0;
     if (!this.active) return;
     const pl = w.player;
     const f = pl.facing;
@@ -117,11 +140,7 @@ export class Bolt {
     this.model.iris.emissiveIntensity = damp(this.model.iris.emissiveIntensity, 1.6 + (lead ? w.darkness * 1.5 : 0), 6, dt);
 
     // Flashlight in dark rooms.
-    if (lead) {
-      this.light.intensity = damp(this.light.intensity, w.darkness * 60, 5, dt);
-      this.light.position.copy(this.pos);
-      this.lightTarget.position.set(pl.body.x + Math.sin(f) * 4, pl.body.y, pl.body.z + Math.cos(f) * 4);
-    }
+    if (lead) this.torch.shine(this.pos, tmpV.set(pl.body.x + Math.sin(f) * 4, pl.body.y, pl.body.z + Math.cos(f) * 4), this.skin === 'iris' ? '#f0e6ff' : '#dff6ff', w.darkness * 60, dt);
     this.flareT = Math.max(0, this.flareT - dt);
     this.model.glow.material.opacity = 0.3 + (lead ? w.darkness * 0.4 : 0) + this.flareT * 1.2;
     this.model.glow.scale.setScalar(1.3 + this.flareT * 6);
@@ -146,16 +165,17 @@ export class Bolt {
  * that brightens in dark rooms, plus a small glow on the helmet so you can see it is switched on.
  */
 export class HelmetLamp {
-  private light: THREE.SpotLight;
-  private target = new THREE.Object3D();
   private dot: THREE.Sprite;
+  private from = new THREE.Vector3();
+  private at = new THREE.Vector3();
   on = false;
 
-  constructor(private world: World) {
-    this.light = new THREE.SpotLight('#fff1d6', 0, 20, 0.58, 0.5, 1.1);
-    this.light.target = this.target;
+  constructor(
+    private world: World,
+    private torch: Torch,
+  ) {
     this.dot = glowSprite('#fff1d6', 0.6, 0);
-    world.scene.add(this.light, this.target, this.dot);
+    world.scene.add(this.dot);
   }
 
   update(dt: number) {
@@ -163,9 +183,11 @@ export class HelmetLamp {
     const b = w.player.body;
     const f = w.player.facing;
     const k = this.on ? w.darkness : 0;
-    this.light.intensity = damp(this.light.intensity, k * 55, 5, dt);
-    this.light.position.set(b.x + Math.sin(f) * 0.3, b.y + 2.1, b.z + Math.cos(f) * 0.3);
-    this.target.position.set(b.x + Math.sin(f) * 5, b.y, b.z + Math.cos(f) * 5);
+    if (this.on) {
+      this.from.set(b.x + Math.sin(f) * 0.3, b.y + 2.1, b.z + Math.cos(f) * 0.3);
+      this.at.set(b.x + Math.sin(f) * 5, b.y, b.z + Math.cos(f) * 5);
+      this.torch.shine(this.from, this.at, '#fff1d6', k * 55, dt);
+    }
     this.dot.position.set(b.x + Math.sin(f) * 0.32, b.y + 1.95, b.z + Math.cos(f) * 0.32);
     this.dot.material.opacity = damp(this.dot.material.opacity, k * 0.9, 5, dt);
   }

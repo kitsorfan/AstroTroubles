@@ -9,7 +9,7 @@ import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
 import type { Director, Rig } from '../cinema/director';
 import * as scenes from '../cinema/scenes';
-import { Bolt, HelmetLamp } from '../entities/bolt';
+import { Bolt, HelmetLamp, Torch } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
 import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
@@ -125,6 +125,8 @@ export class World {
   readonly iris: Bolt;
   /** Jason's own helmet lamp, for the dark when no droid is around. */
   private lamp: HelmetLamp;
+  /** The one flashlight the lead droid (or the helmet lamp) shines into dark rooms. */
+  private torch: Torch;
   plan: CompanionPlan = { lead: null, tag: null };
   /** The main boss of the deck, while a mini-boss (Brennus's reprogrammed LUX) has the stage. */
   private mainBoss: Boss | null = null;
@@ -272,9 +274,10 @@ export class World {
     this.cameraYaw = sp.facing + Math.PI;
     this.shots = new Shots(this);
     this.boltField = new BoltField(this);
-    this.lux = new Bolt(this, 'lux');
-    this.iris = new Bolt(this, 'iris');
-    this.lamp = new HelmetLamp(this);
+    this.torch = new Torch(this.scene);
+    this.lux = new Bolt(this, 'lux', this.torch);
+    this.iris = new Bolt(this, 'iris', this.torch);
+    this.lamp = new HelmetLamp(this, this.torch);
     this.refreshCompanions();
 
     for (const pe of this.level.entities) this.spawnSpec(pe);
@@ -1161,6 +1164,7 @@ export class World {
     this.time += dt;
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
+    if (!this.boltActive && !this.lamp.on) this.torch.dim(dt);
     this.lux.update(dt);
     this.iris.update(dt);
     this.lamp.update(dt);

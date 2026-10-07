@@ -10,7 +10,7 @@ A 3D action-adventure platformer for Android, built with three.js inside an Expo
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **LUX**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
-In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find General Brennus waiting. Forty years ago he led the planet's first expedition, and when he tried to destroy the heart of all its plants, a great glowing flower the scientists named **Celestia**, they mutinied and launched it into space. Celestia is GaScu: that is why it turned the ship away, it was running from him. In Chapter 2 it goes by its real name. Brennus has captured the science team and stolen Celestia to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
+In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find General Brennus waiting. Forty years ago he led the planet's first expedition, and when he tried to destroy the heart of all its plants, a great glowing flower the scientists named **Celestia**, they mutinied and launched it into space. Celestia is GaScu: that is why it turned the ship away, it was running from him. In Chapter 2 it goes by its real name. Brennus has captured the science team and stolen Celestia to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both, though not always together: Brennus has his eye on LUX too, and in the jungle Jason meets a new droid, **IRIS**, who speaks in rainbows.
 
 It's made for players around 10 and up: bright, forgiving, and about 5–6 hours long across both chapters if you hunt for the secrets.
 
@@ -70,7 +70,7 @@ Open `game/dist/index.html` in a browser. Keyboard: **WASD / arrows** move, **Sp
 | **PULSE** | LUX's force pulse (after the Security Deck's armory): a shockwave that hits and stuns every enemy around Jason, wipes out their shots and shorts out lasers and zap floors for a few seconds. It takes 16 seconds to recharge |
 | **GRAPPLE** | The grapple hook (found in the Glass Desert): look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs |
 | **Weapon button** | On Gaia Nova, once Jason owns a second weapon: switch weapons (or press **X** on a keyboard) |
-| LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings |
+| LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings. It wears the face of whoever is helping Jason: LUX, IRIS, or (when Jason is on his own) his wrist computer, the ACTION button |
 
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
@@ -92,13 +92,13 @@ Chapter 2 takes place outdoors on Gaia Nova. Jason keeps every ability, finds th
 | 1. Whispering Plains | River rafts, windy ridges | The Thresher (make it crash, then hit its engine) |
 | 2. Glass Desert | The grapple hook; quicksand and sandstorms | The Dune Driller (hit its drill head when it surfaces) |
 | 3. Frostpeak Tundra | Ice, blizzards and rolling snowballs; the prison camp | BOREAS (block from the front, blast its back) |
-| 4. Titan Rockies | Grapple climbs, boulders, cable cars | STHENO, the Gorgon's gunship (shoot its three engines) |
-| 5. Thornwood Jungle | Shut down the pollen pumps; dark root caves | The Thorn Hydra (heads first, then the heart) |
-| 6. Mount Atlantas | Everything at once, inside a volcano | The Colossus, General Brennus's war machine |
+| 4. Titan Rockies | Grapple climbs, boulders, cable cars; no droid (wrist hacking, helmet lamp, no PULSE) | STHENO, the Gorgon's gunship (shoot its three engines) |
+| 5. Thornwood Jungle | Wake IRIS; shut down the pollen pumps; dark root caves | The Thorn Hydra (heads first, then the heart) |
+| 6. Mount Atlantas | Everything at once, inside a volcano | Shadow LUX (blast the chip on his back when he overheats), then the Colossus, General Brennus's war machine |
 
 - **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
-- **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt.
+- **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt. **IRIS** does all the same jobs (her zap is rainbow-coloured), and while no droid is around, Jason hacks with his wrist computer and his helmet lamp lights the dark, but there is no force pulse and no zap.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
 - **New weapons on Gaia Nova.** Once Jason reaches the planet, PANDORA's shop gets a Weapons tab: **Spread Shot** (three shots in a fan), **Frost Ray** (slows enemies; a charged shot freezes them solid), **Thunder Arc** (lightning that jumps to nearby enemies) and **Seeker** (slow shots that chase their target). Every weapon keeps the clip, reload and charged shot of the Blaster, and grows with Blaster Power. Bosses resist the cold.
 - **Mk II upgrades.** In Chapter 2 the shop also sells a further level of every upgrade (the heart plating can now take Jason up to 12 hearts) and four new ones: **Armor Plating** (blocks a hit, then recharges), **Dash Cell** (an extra dash), **Spin Charge** (an extra spin) and **Grapple Range** (a longer, faster grapple).
@@ -170,13 +170,16 @@ Cutscenes play in the game world with letterbox bars:
 - Boss defeats play in slow motion, and each deck ends with a lift ride.
 - Between decks the lift climbs the outside of the ship while the crew talks, and the star looks bigger every time.
 - Both endings have their own cinematic, followed by credits that list the colonists you rescued.
-- The biggest moments (the seed striking the ship, LUX waking up, the Heart of GaScu, Brennus's broadcast, the expedition forty years ago...) are shown as storybook pictures between the camera shots.
+- The biggest moments (the seed striking the ship, LUX waking up, the Heart of GaScu, Brennus's broadcast, the expedition forty years ago, LUX carried off, IRIS waking up, LUX coming home...) are shown as storybook pictures between the camera shots.
 
 **Chapter 2: Gaia Nova** (more spoilers):
 
 - **The arrival.** The ship reaches Gaia Nova and sends Dr. Hypatia's science team down first. Their radio goes quiet, General Brennus broadcasts that the planet is his (and that GaScu's real name is Celestia), and his drones steal it. Jason and LUX take the shuttle down.
 - **The first expedition.** Dr. Galen, freed in the snow, slept for forty years: he was one of the twelve scientists who came here with Brennus. His story plays as storybook pictures: the planet fighting back, Brennus's order to destroy Celestia, the mutiny, and the escape pod that carried it into space.
 - **The journey.** Each region frees two captured scientists (thorn cocoons) and beats one of Brennus's machines. Dr. Hypatia's field logs and Brennus's own recordings play on hologram projectors, and between regions the shuttle flies over the planet while the crew talks.
+- **LUX is taken.** The moment BOREAS falls in the tundra, a snare drone drops out of the blizzard, cages LUX and carries him off to the volcano while Brennus gloats on the radio. Jason climbs the Titan Rockies alone, with HALCYON keeping him company on the radio.
+- **IRIS.** In the jungle roots Jason switches on IRIS, a slim droid with a rainbow visor, fins and a golden halo. The Gardeners, the people who planted Celestia, built her long ago; Brennus dug her out of the desert ruins, and when she would not fight for him he threw her away. Calm, curious and a little poetic, she takes over LUX's jobs.
+- **Shadow LUX.** In Mount Atlantas, Brennus has clamped thorny armour and a control chip onto LUX and sends him against Jason. Blast the chip whenever he overheats; twice, IRIS sings him a rainbow light-word, and when the chip breaks LUX is himself again. LUX and IRIS both fly with Jason up to the Colossus (and in the secret ending LUX still talks to Celestia).
 - **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets Celestia go himself (the secret ending).
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
@@ -192,7 +195,7 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   build.mjs              bundles everything, fonts included, into one offline HTML page
   src/core/              input, audio (synthesized music and sound effects), save data, app bridge, translations
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
-  src/entities/          Jason, LUX, enemies, bosses, pickups and interactive props
+  src/entities/          Jason, LUX and IRIS, enemies, bosses, pickups and interactive props
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
