@@ -8,7 +8,7 @@ A 3D action-adventure platformer for Android, built with three.js inside an Expo
 
 The colony ship *Syracusia* is carrying ten thousand sleeping colonists when a glowing space vine, the Galactic Cuscuta Echinochloa (**GaScu** for short), grows over every deck and starts steering the ship toward a star. You play **Jason**, a junior engineer who wakes up early. Together with **LUX**, a nervous little repair drone who's scared of the dark, Jason climbs six decks to reach the Bridge. Along the way you rescue colonists, collect memory shards, and find out what GaScu really wants.
 
-In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find that General Brennus got there forty years earlier. He has captured the science team and stolen GaScu to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
+In **Chapter 2** the ship reaches its new home, the planet **Gaia Nova** (Γαία Νόβα), only to find General Brennus waiting. Forty years ago he led the planet's first expedition, and when he tried to destroy GaScu, the heart of all its plants, his own scientists mutinied and launched it into space. That is why GaScu turned the ship away: it was running from him. Now he has captured the science team and stolen GaScu to power his Thorn Legion and the Colossus inside the volcano Mount Atlantas. Jason and LUX cross six outdoor regions to free them both.
 
 It's made for players around 10 and up: bright, forgiving, and about 5–6 hours long across both chapters if you hunt for the secrets.
 
@@ -24,6 +24,7 @@ It's made for players around 10 and up: bright, forgiving, and about 5–6 hours
 - **No asset files.** Characters, bosses and levels are built from code, textures are drawn on canvases at runtime, and all music and sound effects are synthesized with the Web Audio API.
 - **Levels are ASCII maps, checked by a solver.** A reachability checker simulates Jason's jumps, dashes and hovering on every deck. It reports anything Jason can't reach, checks that each deck really needs its new ability, and times the fastest route through every countdown puzzle to prove it can be beaten with time to spare. The Jest suite runs the same checks.
 - **In-engine cutscenes.** A small cutscene director moves the camera through the real level and adds letterbox bars, boss name cards and slow-motion finishes.
+- **Storybook pictures.** The big story moments also get hand-drawn cartoon illustrations, written as inline SVG, that slowly pan inside a picture frame while the narration plays.
 - **Built for phones.** Each deck frees its GPU memory when you leave it. Shaders compile behind the title cards so play doesn't stutter. The quality preset on first launch is picked from the phone's CPU core count.
 - **Two languages.** English and Greek, with a test that fails if any visible string is missing its Greek translation.
 
@@ -146,7 +147,7 @@ A new game opens with a prologue out in space: a glowing seed strikes the *Syrac
 
 - **Captain's logs.** Captain Atalanta left hologram messages on every deck as GaScu took over. They tell you what happened, and where to find her drone, LUX. On the Habitat Ring, the message is from Jason's Aunt Rosa instead.
 - **Rescuing LUX.** Jason finds the Captain's little drone switched off in a dark storeroom, fixes him, and he tags along.
-- **HALCYON is infected.** By the Security Deck, GaScu pollen has scrambled the ship computer, who turns on you and sends CERBERUS. Beating CERBERUS lets LUX reboot HALCYON. HALCYON then reveals that GaScu isn't angry, it's lost, and thinks the star is its home.
+- **HALCYON is infected.** By the Security Deck, GaScu pollen has scrambled the ship computer, who turns on you and sends CERBERUS. Beating CERBERUS lets LUX reboot HALCYON. HALCYON then reveals that GaScu isn't angry, it's scared: someone on the planet the ship is flying to once tried to hurt it, and it would rather fly into the star than go back.
 - **Story characters.** Freeing Aunt Rosa (Security) and the Captain (the Bridge) from their cocoons plays a scene with each of them.
 
 Cutscenes play in the game world with letterbox bars:
@@ -155,10 +156,12 @@ Cutscenes play in the game world with letterbox bars:
 - Boss defeats play in slow motion, and each deck ends with a lift ride.
 - Between decks the lift climbs the outside of the ship while the crew talks, and the star looks bigger every time.
 - Both endings have their own cinematic, followed by credits that list the colonists you rescued.
+- The biggest moments (the seed striking the ship, LUX waking up, the Heart of GaScu, Brennus's broadcast, the expedition forty years ago...) are shown as storybook pictures between the camera shots.
 
 **Chapter 2: Gaia Nova** (more spoilers):
 
 - **The arrival.** The ship reaches Gaia Nova and sends Dr. Hypatia's science team down first. Their radio goes quiet, General Brennus broadcasts that the planet is his, and his drones steal GaScu. Jason and LUX take the shuttle down.
+- **The first expedition.** Dr. Galen, freed in the snow, slept for forty years: he was one of the twelve scientists who came here with Brennus. His story plays as storybook pictures: the planet fighting back, Brennus's order to destroy GaScu, the mutiny, and the escape pod that carried GaScu into space.
 - **The journey.** Each region frees two captured scientists (thorn cocoons) and beats one of Brennus's machines. Dr. Hypatia's field logs and Brennus's own recordings play on hologram projectors, and between regions the shuttle flies over the planet while the crew talks.
 - **Two endings.** Beat the Colossus and Gaia Nova is free. Or, with all 18 journal pages, press **TALK**: Jason reminds Brennus of his grandmother's garden, and he lets GaScu go himself (the secret ending).
 
