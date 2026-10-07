@@ -24,6 +24,11 @@ export interface Outdoor {
   hills: string;
   /** Stars in the sky (a twilight region). */
   stars: boolean;
+  /**
+   * Sky-islands: far below there is no valley, just a soft sea of clouds (with a few more islands
+   * floating in it), and the far mountains become distant cloud banks.
+   */
+  cloudSea?: boolean;
 }
 
 export interface Theme {
@@ -389,5 +394,32 @@ export const THEMES: Record<ThemeId, Theme> = {
     mood: 'motes',
     space: true,
     bloom: 0.32,
+  },
+  /* The Harpy Isles: grassy sky-islands on stone stems, high above a sea of clouds. */
+  harpies: {
+    skyTop: '#2f7ad0',
+    skyBottom: '#ffe6c8',
+    fog: '#e8eef6',
+    fogNear: 64,
+    fogFar: 215,
+    floor: '#6aac44',
+    floorLine: '#468a2c',
+    floorSide: '#8a6a4c',
+    ice: '#c8ecff',
+    wall: '#a8988a',
+    wallTrim: '#2fb7a3',
+    edge: '#d8f0a0',
+    hazard: '#7fd8ff',
+    hazardDeep: '#2a6a9a',
+    hemiSky: '#f0f6ff',
+    hemiGround: '#6a7a5a',
+    hemi: 1.05,
+    sun: '#fff0d8',
+    sunI: 2.1,
+    accent: '#2fb7a3',
+    mood: 'petals',
+    space: false,
+    bloom: 0.14,
+    outdoor: { ground: 'grass', ground2: '#9ccc5a', rock: '#a8988a', rockDark: '#6e6052', below: '#f4f6fb', sunDisc: '#fff4dc', clouds: '#ffffff', hills: '#c8d8ee', stars: false, cloudSea: true },
   },
 };

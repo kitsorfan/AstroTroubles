@@ -57,6 +57,7 @@ export const FLYOVER: Record<DeckId, string> = {
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
+  harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -130,7 +131,18 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'halcyon', text: 'Course set for the first moon. Its floating islands are called the Harpy Isles.' },
     { who: 'bolt', text: 'Harpies? Like the grabby bird monsters in the old story?' },
     { who: 'captain', text: 'Probably just a name. Probably.' },
+    { who: 'halcyon', text: 'Captain, I am picking up a little distress beacon down there. It belongs to one of OUR scout skiffs!' },
+    { who: 'captain', text: 'A colony skiff, all the way out here? ...Oh dear. I know exactly who flies off alone like that.' },
     { who: 'jason', text: 'We got through the Clashing Rocks. We can get through anything!' },
+  ],
+  // The end of the Harpy Isles: General Brennus sets off alone after Aeëtes (his own level comes next).
+  harpies: [
+    { who: 'halcyon', text: 'Captain, a message is coming in from Gaia Nova. It is... General Brennus?' },
+    { who: 'brennus', text: 'Argus. I saw Aeëtes’s gold ships fly over the colony. I know that kind of greed. I used to have it.' },
+    { who: 'brennus', text: 'He is digging for the Fleece in a mine on the next moon. I have borrowed a shuttle, and I am going after him. Alone.' },
+    { who: 'captain', text: 'Brennus, wait! ...He switched his radio off. Stubborn as ever.' },
+    { who: 'atalanta', text: 'Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.' },
+    { who: 'jason', text: 'Then let’s catch up with him. Next stop: Aeëtes’s mine!' },
   ],
 };
 
@@ -221,6 +233,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
   colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
+  aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
 };
 
 /**
@@ -240,6 +253,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   minebot: { name: 'Roller Mine', tip: 'It beeps and flashes before it pops. Blast it early, or run out of the red circle!' },
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
+  harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
