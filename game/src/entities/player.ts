@@ -173,6 +173,23 @@ export class Player {
     this.world.hooks.hud();
   }
 
+  /** Heroes who haven't joined yet wait at the spot given for them (Atalanta by her skiff), or stay hidden. */
+  showWaiting(at: (id: HeroId) => THREE.Vector3 | undefined) {
+    const now = this.roster;
+    for (const id of this.cast) {
+      if (now.includes(id)) continue;
+      const m = this.modelOf(id);
+      const p = at(id);
+      m.root.visible = !!p;
+      if (p) m.root.position.copy(p);
+    }
+  }
+
+  /** The model of any hero on this level (for cutscenes). */
+  heroModel(id: HeroId): HeroModel {
+    return this.modelOf(id);
+  }
+
   /** The playing hero's model. */
   get model(): HeroModel {
     return this.hero === 'atalanta' && this.ata ? this.ata.model : this.jason;

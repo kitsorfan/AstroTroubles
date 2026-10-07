@@ -11,6 +11,8 @@ import type { Director, Rig } from '../cinema/director';
 import * as scenes from '../cinema/scenes';
 import { Bolt, HelmetLamp, Torch } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
+import { findKind, rescueKind } from './collectibles';
+import { SupplyNet } from '../entities/isles/supplies';
 import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
 import { makeEnemy, type Enemy } from '../entities/enemies';
@@ -56,7 +58,7 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity, Speaker } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EndingKind, EnemyKind, HeroId, LevelDef, Line, ParsedLevel, PlacedEntity, Speaker } from '../world/levelTypes';
 import { makeVehicle } from '../vehicles';
 import type { Vehicle } from '../vehicles/vehicle';
 import { Ambience, Particles } from '../world/particles';
@@ -291,6 +293,8 @@ export class World {
 
     for (const pe of this.level.entities) this.spawnSpec(pe);
     this.spawnRogue();
+    // A hero who joins later waits at the marker named after her (Atalanta by her skiff).
+    this.player.showWaiting((id) => this.markers.get(id));
     this.scene.add(buildDecor(this.decorItems, th.accent, this.boxes));
 
     if (resume?.checkpoint) {
@@ -431,7 +435,8 @@ export class World {
         this.addEntity(new Conveyor(this, id, cx, cz, h, spec.dx, spec.dz, spec.speed));
         break;
       case 'cocoon':
-        if (!s.colonists.includes(id)) this.addEntity(new Cocoon(this, id, cx, cz, h, spec.name, spec.line));
+        // Chapter 3 rescues stolen things from gold harpy nets instead of people from cocoons.
+        if (!s.colonists.includes(id)) this.addEntity(rescueKind(chapterOf(this.def.id)) === 'supplies' ? new SupplyNet(this, id, cx, cz, h, spec.name, spec.line) : new Cocoon(this, id, cx, cz, h, spec.name, spec.line));
         break;
       case 'vendor':
         this.addEntity(new Vendor(this, id, cx, cz, h));
@@ -687,7 +692,12 @@ export class World {
       s.colonists.push(id);
       s.bolts += COLONIST_BOLTS;
       const ch = chapterOf(this.def.id);
-      this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / {total} saved', { n: COLONIST_BOLTS, saved: inChapter(s.colonists, ch), total: chapterTotals(ch).colonists }));
+      const args = { n: COLONIST_BOLTS, saved: inChapter(s.colonists, ch), total: chapterTotals(ch).colonists };
+      // In chapter 3 it is stolen things that get won back, counted per level.
+      if (rescueKind(ch) === 'supplies') {
+        const here = (this.def.colonistIds ?? []).filter((c) => s.colonists.includes(`${this.def.id}.${c}`)).length;
+        this.hooks.reward(tr('Won back! +{n} bolts · {saved} / {total} here', { n: COLONIST_BOLTS, saved: here, total: this.def.colonistIds?.length ?? 0 }));
+      } else this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / {total} saved', args));
     }
     this.hooks.collect(kind, id);
     this.hooks.hud();
@@ -705,6 +715,19 @@ export class World {
     else if (name.startsWith('music:')) this.hooks.music(name.slice(6) as Track);
     else if (name === 'shake') this.shake(0.6);
     else if (name.startsWith('story:')) this.playStory(name.slice(6));
+    else if (name.startsWith('join:')) this.heroJoins(name.slice(5) as HeroId);
+  }
+
+  /** Jason meets a hero who joins the Argonauts here (once): the meeting scene, then she can play. */
+  private heroJoins(hero: HeroId) {
+    const flag = this.def.joins?.[hero];
+    if (!flag || this.flags.has(flag)) return;
+    void this.hooks.cutscene((d) => scenes.heroJoins(d, this, hero));
+  }
+
+  /** Where a `marker` sits (for cutscenes), if the level has it. */
+  marker(id: string): THREE.Vector3 | null {
+    return this.markers.get(id)?.clone() ?? null;
   }
 
   /* ---------------- combat ---------------- */
@@ -1315,16 +1338,16 @@ export class World {
     }
     for (const e of this.entities) {
       if (!e.alive) continue;
-      const planet = chapterOf(this.def.id) === 2;
+      const ch = chapterOf(this.def.id);
+      const rescue = rescueKind(ch);
+      const find = findKind(ch);
       const kind =
-        e instanceof Cocoon
-          ? planet
-            ? 'scientist'
-            : 'cocoon'
+        e instanceof Cocoon || e instanceof SupplyNet
+          ? rescue === 'colonist'
+            ? 'cocoon'
+            : rescue
           : e instanceof Shard
-            ? planet
-              ? 'page'
-              : 'shard'
+            ? find
             : e instanceof Canister
               ? 'canister'
               : e instanceof Prize

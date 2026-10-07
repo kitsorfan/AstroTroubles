@@ -7,6 +7,9 @@ export const ICON = {
   /** A page of Brennus's journal (chapter 2's collectible). */
   page: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><path d="M2 1.5H11L14.5 5V18.5H2Z" fill="${got ? '#ffd166' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#fff2c2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M4.5 8H12M4.5 11H12M4.5 14H10" stroke="#a8761a" stroke-width="1"/>' : ''}</svg>`,
+  /** A Gardener light-stone (chapter 3's collectible): a smooth stone with a rainbow band. */
+  stone: (got: boolean) =>
+    `<svg viewBox="0 0 16 20"><defs><linearGradient id="istn" x1="0" x2="1"><stop offset="0" stop-color="#ff5e6a"/><stop offset=".25" stop-color="#ffd166"/><stop offset=".5" stop-color="#7dff9a"/><stop offset=".75" stop-color="#5ec8ff"/><stop offset="1" stop-color="#c37bff"/></linearGradient></defs><ellipse cx="8" cy="11" rx="6.6" ry="7.4" fill="${got ? '#f2efff' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffffff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M1.8 11.6Q8 14.4 14.2 11.6" fill="none" stroke="url(#istn)" stroke-width="2.4"/><ellipse cx="5.6" cy="7" rx="1.6" ry="1" fill="#fff" opacity=".8"/>' : ''}</svg>`,
   shard: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><polygon points="8,1 15,10 8,19 1,10" fill="${got ? '#ff6fcf' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffd6f2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.3"/></svg>`,
   pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg>`,

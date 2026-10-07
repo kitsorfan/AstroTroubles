@@ -3,6 +3,7 @@ import type { SaveData, UpgradeId } from '../core/save';
 import { LEVELS, chapterOf, chapterTotals, inChapter } from '../levels';
 import type { DeckId, LevelDef } from '../world/levelTypes';
 import { flightQuests } from '../vehicles/quests';
+import { findKind, plannedFinds, rescueKind } from './collectibles';
 import { heartCap, levelUp } from './shop';
 
 /**
@@ -55,21 +56,35 @@ export function deckQuests(id: DeckId, save: SaveData): Quest[] {
   const def = LEVELS[id];
   // A flight has its own quests: rings, drones and the dove's timing.
   if (def.vehicle) return flightQuests(id, def, save);
-  const planet = chapterOf(id) === 2;
+  const ch = chapterOf(id);
+  const rescue = rescueKind(ch);
+  const find = findKind(ch);
   const out: Quest[] = [];
   const cols = def.colonistIds ?? [];
   const freed = cols.filter((c) => save.colonists.includes(`${id}.${c}`)).length;
-  out.push({
-    id: `${id}:colonists`,
-    text: planet ? tr('Free the captured scientists (blast their thorn cocoons)') : tr('Free the trapped colonists (blast their pink cocoons)'),
-    done: freed === cols.length,
-    progress: `${freed} / ${cols.length}`,
-    reward: tr('+{each} bolts each, +{bonus} bonus', { each: COLONIST_BOLTS, bonus: QUEST_BOLTS }),
-  });
+  if (cols.length) {
+    out.push({
+      id: `${id}:colonists`,
+      text:
+        rescue === 'scientist'
+          ? tr('Free the captured scientists (blast their thorn cocoons)')
+          : rescue === 'supplies'
+            ? tr('Win back the stolen supplies (blast the gold harpy nets)')
+            : tr('Free the trapped colonists (blast their pink cocoons)'),
+      done: freed === cols.length,
+      progress: `${freed} / ${cols.length}`,
+      reward: tr('+{each} bolts each, +{bonus} bonus', { each: COLONIST_BOLTS, bonus: QUEST_BOLTS }),
+    });
+  }
   const found = def.shardIds.filter((s) => save.shards.includes(`${id}.${s}`)).length;
   out.push({
     id: `${id}:shards`,
-    text: planet ? tr('Find the pages of Brennus’s journal (glowing gold pages)') : tr('Find the memory shards (glowing pink crystals)'),
+    text:
+      find === 'page'
+        ? tr('Find the pages of Brennus’s journal (glowing gold pages)')
+        : find === 'stone'
+          ? tr('Find the Gardener light-stones (glowing rainbow stones)')
+          : tr('Find the memory shards (glowing pink crystals)'),
     done: found === def.shardIds.length,
     progress: `${found} / ${def.shardIds.length}`,
     reward: tr('+{bonus} bolts · every {n} give a heart', { bonus: QUEST_BOLTS, n: SHARDS_PER_HEART }),
@@ -93,16 +108,30 @@ export function payQuests(id: DeckId, save: SaveData): string[] {
   for (const q of deckQuests(id, save)) {
     if (!q.done || done.includes(q.id)) continue;
     done.push(q.id);
-    const planet = chapterOf(id) === 2;
+    const ch = chapterOf(id);
+    const rescue = rescueKind(ch);
+    const find = findKind(ch);
     if (q.pay) {
       save.bolts += q.pay;
       out.push(tr('Side quest done! +{n} bolts', { n: q.pay }));
     } else if (q.id.endsWith(':colonists')) {
       save.bolts += QUEST_BOLTS;
-      out.push(planet ? tr('Side quest done: every scientist here is free! +{n} bolts', { n: QUEST_BOLTS }) : tr('Side quest done: every colonist on this deck is free! +{n} bolts', { n: QUEST_BOLTS }));
+      out.push(
+        rescue === 'scientist'
+          ? tr('Side quest done: every scientist here is free! +{n} bolts', { n: QUEST_BOLTS })
+          : rescue === 'supplies'
+            ? tr('Side quest done: everything stolen here is back! +{n} bolts', { n: QUEST_BOLTS })
+            : tr('Side quest done: every colonist on this deck is free! +{n} bolts', { n: QUEST_BOLTS }),
+      );
     } else if (q.id.endsWith(':shards')) {
       save.bolts += QUEST_BOLTS;
-      out.push(planet ? tr('Side quest done: every journal page here found! +{n} bolts', { n: QUEST_BOLTS }) : tr('Side quest done: all memory shards here found! +{n} bolts', { n: QUEST_BOLTS }));
+      out.push(
+        find === 'page'
+          ? tr('Side quest done: every journal page here found! +{n} bolts', { n: QUEST_BOLTS })
+          : find === 'stone'
+            ? tr('Side quest done: every light-stone here found! +{n} bolts', { n: QUEST_BOLTS })
+            : tr('Side quest done: all memory shards here found! +{n} bolts', { n: QUEST_BOLTS }),
+      );
     }
   }
   return out;
@@ -110,21 +139,28 @@ export function payQuests(id: DeckId, save: SaveData): string[] {
 
 /**
  * Every few shards of a chapter give Jason another heart. All 18 memory shards teach LUX GaScu's
- * language; all 18 journal pages tell Brennus's whole story. Counted per chapter (`deck` is where
- * the shard was found).
+ * language; all 18 journal pages tell Brennus's whole story; all 21 Gardener light-stones (chapter 3,
+ * counted against the whole planned chapter) teach LUX and IRIS all of Celestia's language. Counted
+ * per chapter (`deck` is where the shard was found).
  */
 export function shardMilestone(save: SaveData, deck: DeckId): string | null {
   const ch = chapterOf(deck);
   const n = inChapter(save.shards, ch);
-  const total = chapterTotals(ch).shards;
+  const total = plannedFinds(ch, chapterTotals(ch).shards);
+  const find = findKind(ch);
   if (!total) return null;
-  if (n === total) return ch === 1 ? tr('ALL 18 memory shards! LUX has learned GaScu’s light-language...') : tr('ALL 18 journal pages! Now you know Brennus’s whole story...');
+  if (n === total) {
+    if (find === 'stone') return tr('ALL {n} light-stones! LUX and IRIS can speak every word of Celestia’s language!', { n });
+    return find === 'shard' ? tr('ALL 18 memory shards! LUX has learned GaScu’s light-language...') : tr('ALL 18 journal pages! Now you know Brennus’s whole story...');
+  }
   if (n % SHARDS_PER_HEART === 0) {
     save.maxHearts = Math.min(heartCap(save), save.maxHearts + 1);
-    return ch === 1 ? tr('{n} memory shards! +1 max heart', { n }) : tr('{n} journal pages! +1 max heart', { n });
+    if (find === 'stone') return tr('{n} light-stones! +1 max heart', { n });
+    return find === 'shard' ? tr('{n} memory shards! +1 max heart', { n }) : tr('{n} journal pages! +1 max heart', { n });
   }
   const left = SHARDS_PER_HEART - (n % SHARDS_PER_HEART);
-  return ch === 1 ? tr('Memory shard {n} / 18 · {left} more for an extra heart', { n, left }) : tr('Journal page {n} / 18 · {left} more for an extra heart', { n, left });
+  if (find === 'stone') return tr('Light-stone {n} / {total} · {left} more for an extra heart', { n, total, left });
+  return find === 'shard' ? tr('Memory shard {n} / 18 · {left} more for an extra heart', { n, left }) : tr('Journal page {n} / 18 · {left} more for an extra heart', { n, left });
 }
 
 /**
@@ -153,6 +189,8 @@ export const HINTS: Record<string, string> = {
   rune: 'Code pads! Step on them in the right order. There must be a sign with the code somewhere.',
   scientist: 'A thorn cocoon! One of Dr. Hypatia’s scientists is trapped inside. BLAST it to set them free!',
   page: 'A page from General Brennus’s journal! Every 6 give you an extra heart, and all 18 might help us reach him...',
+  stone: 'A Gardener light-stone! It glows with Celestia’s words. Each one teaches us a new word, and every 6 give you an extra heart!',
+  supplies: 'A gold harpy net, stuffed with stolen things! BLAST it open to win them back.',
   anchor: 'A grapple ring! With a hook, we could zip right over to those. I wonder where we could find one...',
   bolt: 'Bolts! They are money. Spend them at PANDORA’s shop on upgrades like a bigger clip.',
   vendor: 'That is PANDORA’s shop! Trade bolts for upgrades. Tap SHOP to look.',
