@@ -9,8 +9,9 @@ import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
 import type { Director, Rig } from '../cinema/director';
 import * as scenes from '../cinema/scenes';
-import { Bolt } from '../entities/bolt';
+import { Bolt, HelmetLamp } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
+import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
 import { makeEnemy, type Enemy } from '../entities/enemies';
 import { difficultyFor, type Difficulty } from './difficulty';
@@ -54,7 +55,7 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity, Speaker } from '../world/levelTypes';
 import { Ambience, Particles } from '../world/particles';
 import { pointBlocked, type Box, type Ground } from '../world/physics';
 import { buildSky } from '../world/sky';
@@ -64,7 +65,9 @@ export type Collectible = 'shard' | 'canister' | 'colonist' | 'ability';
 
 export interface WorldHooks {
   say(lines: Line[], then?: () => void): void;
-  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason'): void;
+  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason' | 'iris' | 'rogue'): void;
+  /** Who helps Jason right now (the action button's face and the hacking panel follow it). */
+  helper?(who: Helper | null): void;
   hack(length: number, done: (ok: boolean) => void, kind?: PuzzleKind): void;
   shop(): void;
   complete(): void;
@@ -117,7 +120,14 @@ export class World {
   readonly def: LevelDef;
   readonly boxes: Box[] = [];
   readonly player: Player;
-  readonly bolt: Bolt;
+  /** Jason's two droids: LUX, and IRIS (from the jungle on). Which of them is around comes from `plan`. */
+  readonly lux: Bolt;
+  readonly iris: Bolt;
+  /** Jason's own helmet lamp, for the dark when no droid is around. */
+  private lamp: HelmetLamp;
+  plan: CompanionPlan = { lead: null, tag: null };
+  /** The main boss of the deck, while a mini-boss (Brennus's reprogrammed LUX) has the stage. */
+  private mainBoss: Boss | null = null;
   readonly particles: Particles;
   readonly ambience: Ambience;
   readonly shots: Shots;
@@ -262,10 +272,13 @@ export class World {
     this.cameraYaw = sp.facing + Math.PI;
     this.shots = new Shots(this);
     this.boltField = new BoltField(this);
-    this.bolt = new Bolt(this);
-    this.bolt.active = this.flags.has('bolt');
+    this.lux = new Bolt(this, 'lux');
+    this.iris = new Bolt(this, 'iris');
+    this.lamp = new HelmetLamp(this);
+    this.refreshCompanions();
 
     for (const pe of this.level.entities) this.spawnSpec(pe);
+    this.spawnRogue();
     this.scene.add(buildDecor(this.decorItems, th.accent, this.boxes));
 
     if (resume?.checkpoint) {
@@ -277,7 +290,7 @@ export class World {
       }
     }
     const pb = this.player.body;
-    this.bolt.place(pb.x - 1, pb.y + 2, pb.z + 1);
+    this.placeDroids(pb.x, pb.y, pb.z);
     this.camTarget.set(pb.x, pb.y + 1.2, pb.z);
     this.groundY = pb.y;
     this.placeCamera(0);
@@ -419,9 +432,11 @@ export class World {
       case 'breakwall':
         if (!this.taken.has(id)) this.addEntity(new BreakWall(this, id, cx, cz, h));
         break;
-      case 'boltfind':
-        if (!this.flags.has('bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h));
+      case 'boltfind': {
+        const who = spec.who ?? 'lux';
+        if (!this.flags.has(who === 'iris' ? IRIS_FLAG : 'bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h, who));
         break;
+      }
       case 'anchor':
         this.addEntity(new Anchor(this, id, cx, cz, h));
         break;
@@ -529,17 +544,74 @@ export class World {
     return false;
   }
 
-  get boltActive() {
-    return this.bolt.active;
+  /* ---------------- Jason's droids ---------------- */
+
+  /** The droid doing the work right now (LUX, or IRIS); LUX, switched off, when Jason is alone. */
+  get bolt(): Bolt {
+    return this.plan.lead === 'iris' ? this.iris : this.lux;
   }
 
-  joinBolt() {
-    this.flags.add('bolt');
-    this.bolt.active = true;
+  /** True while a droid flies with Jason (it zaps, lights the dark and fires the force pulse). */
+  get boltActive() {
+    return this.plan.lead !== null;
+  }
+
+  /** Who hacks terminals and lights the dark: a droid, Jason's wrist computer, or nobody yet. */
+  get helper(): Helper | null {
+    return helperOf(this.def.id, this.plan);
+  }
+
+  /** Terminals need a droid, or (on Gaia Nova) Jason's wrist computer. */
+  get canHack() {
+    return this.helper !== null;
+  }
+
+  /** Works out again who is with Jason (after a droid joins, leaves or comes home). */
+  refreshCompanions() {
+    this.plan = companionPlan(this.def.id, (f) => this.flags.has(f));
+    this.lux.active = this.plan.lead === 'lux';
+    this.lux.role = 'lead';
+    this.iris.active = this.plan.lead === 'iris' || this.plan.tag === 'iris';
+    this.iris.role = this.plan.lead === 'iris' ? 'lead' : 'tag';
+    this.lamp.on = this.plan.lead === null;
+    this.hooks.helper?.(this.helper);
+  }
+
+  private placeDroids(x: number, y: number, z: number) {
+    this.lux.place(x - 1, y + 2, z + 1);
+    this.iris.place(x + 1, y + 2.4, z + 1.5);
+  }
+
+  /** Who really says a line written for LUX (see `voiceOf`). */
+  voice(who: Speaker, toast = false): Speaker {
+    return voiceOf(who, this.plan, toast);
+  }
+
+  /** A droid joins Jason: LUX on the Cryo Deck, IRIS in the jungle. */
+  joinBolt(skin: CompanionSkin = 'lux') {
+    this.flags.add(skin === 'iris' ? IRIS_FLAG : 'bolt');
+    this.refreshCompanions();
     const p = this.player.body;
-    this.bolt.place(p.x, p.y + 3, p.z);
+    (skin === 'iris' ? this.iris : this.lux).place(p.x, p.y + 3, p.z);
     audio.play('upgrade');
     this.hooks.checkpoint();
+  }
+
+  /** Brennus's reprogrammed LUX waits at the `rogue` marker until he is beaten and himself again. */
+  private spawnRogue() {
+    const at = this.markers.get(ROGUE_MARKER);
+    if (!at || this.flags.has(LUX_BACK_FLAG)) return;
+    this.mainBoss = this.boss;
+    this.addEntity(makeBoss(this, `${this.def.id}.rogue`, 'rogue', Math.floor(at.x / CELL), Math.floor(at.z / CELL), at.y));
+  }
+
+  /** The control chip breaks: LUX is himself again, and he and IRIS both fly with Jason from now on. */
+  private luxBack(b: Boss) {
+    this.flags.add(LUX_BACK_FLAG);
+    this.boss = this.mainBoss;
+    this.hooks.bossBar(null, 0);
+    this.hooks.music(this.def.music as Track);
+    void this.hooks.cutscene((d) => scenes.luxReunion(d, this, b)).then(() => this.hooks.checkpoint());
   }
 
   dialogue(id: string): Line[] {
@@ -686,7 +758,7 @@ export class World {
   }
 
   get pulseReady() {
-    return this.save.abilities.includes('pulse') && this.bolt.active && this.pulseCd <= 0;
+    return this.save.abilities.includes('pulse') && this.boltActive && this.pulseCd <= 0;
   }
 
   /** 0..1 while the force pulse recharges (1 = ready). */
@@ -973,12 +1045,14 @@ export class World {
     this.pulseCd = 0;
     this.shots.clear();
     this.respawnEnemies();
-    this.bolt.place(x - 1, y + 2, z + 1);
+    this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();
       this.boss.started = false;
       this.hooks.bossBar(null, 0);
       this.hooks.music(this.def.music as Track);
+      // A mini-boss waits for Jason to come back; the deck's own boss is the one to point at again.
+      if (this.mainBoss && this.boss !== this.mainBoss) this.boss = this.mainBoss;
     }
     if (this.player.carrying) {
       // Keep the power cell: it follows Jason back to the checkpoint.
@@ -1000,6 +1074,10 @@ export class World {
   }
 
   bossDefeated(b: Boss) {
+    if (b.kind === 'rogue') {
+      this.luxBack(b);
+      return;
+    }
     if (this.def.id === 'bridge' && b.kind === 'heart' && !this.flags.has('reborn')) {
       // It isn't over: GaScu pulls every vine on the ship into the Heart and rises again.
       this.flags.add('reborn');
@@ -1048,9 +1126,9 @@ export class World {
     void this.hooks.cutscene((d) => scenes.storyTime(d, this, key));
   }
 
-  /** Jason finds LUX switched off in the dark and switches him back on. */
+  /** Jason finds a droid switched off in the dark (LUX on the ship, IRIS in the jungle) and wakes it up. */
   findBolt(find: BoltFind) {
-    void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
+    void this.hooks.cutscene((d) => (find.who === 'iris' ? scenes.irisFound(d, this, find) : scenes.boltFound(d, this, find)));
   }
 
   /** A hologram projector plays one of the Captain's (or Aunt Rosa's) recorded messages. */
@@ -1068,7 +1146,9 @@ export class World {
     this.time += dt;
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
-    this.bolt.update(dt);
+    this.lux.update(dt);
+    this.iris.update(dt);
+    this.lamp.update(dt);
     // A boss chilled by the Frost Ray acts a little slower for a moment.
     for (const e of [...this.entities]) if (e.alive) e.update(e === this.boss ? dt * this.boss.tempo(dt) : dt);
     this.tickClocks(dt);

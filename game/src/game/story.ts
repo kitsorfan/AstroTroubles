@@ -164,6 +164,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   stheno: { sub: 'Last gunship of the Gorgon · guards the mountain pass', color: '#ffb347' },
   hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
   colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
+  rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
 };
 
 /**

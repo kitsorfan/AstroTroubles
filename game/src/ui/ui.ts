@@ -23,7 +23,8 @@ import type { DeckId, EndingKind, Line, Speaker } from '../world/levelTypes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
-import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, portrait } from './icons';
+import { HACK_TITLE, type Helper } from '../game/companions';
+import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -183,7 +184,7 @@ export class UI {
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
         <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
       </div>
-      <div class="action clickable hidden">${portrait('bolt')}<b></b></div>
+      <div class="action clickable hidden"><i class="face">${portrait('bolt')}</i><b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
       <div class="threat"><img alt=""/><div><div class="tag">${label('NEW ENEMY')}</div><b></b><p></p></div></div>
       <div class="fps"></div>
@@ -339,7 +340,20 @@ export class UI {
     $(this.countdownEl, '.dots').innerHTML = c.total > 1 ? Array.from({ length: c.total }, (_, i) => `<i class="${i < c.down ? 'on' : ''}"></i>`).join('') : '';
   }
 
-  /** The LUX button next to things he can use (terminals, pylons, the shop, lifts). */
+  /**
+   * Who really speaks a line written for a speaker (LUX's lines go to IRIS, HALCYON or Jason while
+   * LUX is away). The game sets it for each deck; `toast` is true for the little pop-up messages.
+   */
+  voice: (who: Speaker, toast: boolean) => Speaker = (who) => who;
+  private hackTitle = HACK_TITLE.lux;
+
+  /** The action button wears the helper's face (LUX, IRIS or Jason's wrist computer), and so does the hacking panel. */
+  setHelper(who: Helper | null) {
+    $(this.actionEl, '.face').innerHTML = who === 'wrist' ? WRIST_FACE : portrait(who === 'iris' ? 'iris' : 'bolt');
+    this.hackTitle = HACK_TITLE[who ?? 'lux'];
+  }
+
+  /** The action button next to things the helper can use (terminals, pylons, the shop, lifts). */
   setAction(text: string | null) {
     this.actionEl.classList.toggle('hidden', !text);
     if (text) $(this.actionEl, 'b').textContent = tr(text);
@@ -495,7 +509,8 @@ export class UI {
     this.fpsEl.textContent = text;
   }
 
-  toast(text: string, who: Speaker = 'bolt') {
+  toast(text: string, speaker: Speaker = 'bolt') {
+    const who = this.voice(speaker, true);
     const t = tr(text);
     $(this.toastEl, '.portrait').innerHTML = portrait(who);
     $(this.toastEl, '.t').textContent = t;
@@ -550,18 +565,19 @@ export class UI {
     const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
+      const speaker = this.voice(line.who, false);
       text = tr(line.text);
-      $(el, '.portrait').innerHTML = portrait(line.who);
+      $(el, '.portrait').innerHTML = portrait(speaker);
       const who = $(el, '.who');
-      who.textContent = tr(line.name ?? SPEAKER_NAME[line.who]);
-      who.style.color = SPEAKER_COLOR[line.who];
-      box.classList.toggle('glitchy', line.who === 'glitch');
+      who.textContent = tr(line.name ?? SPEAKER_NAME[speaker]);
+      who.style.color = SPEAKER_COLOR[speaker];
+      box.classList.toggle('glitchy', speaker === 'glitch' || speaker === 'rogue');
       shown = 0;
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
         shown = Math.min(text.length, shown + 2);
         $(el, '.text').textContent = text.slice(0, shown);
-        if (shown % 6 === 0) audio.play('blip', line.who === 'bolt' ? 1.4 : line.who === 'halcyon' || line.who === 'glitch' ? 0.7 : 1);
+        if (shown % 6 === 0) audio.play('blip', speaker === 'bolt' || speaker === 'rogue' ? 1.4 : speaker === 'iris' ? 1.6 : speaker === 'halcyon' || speaker === 'glitch' ? 0.7 : 1);
         if (shown >= text.length && timer) {
           clearInterval(timer);
           timer = null;
@@ -693,7 +709,7 @@ export class UI {
   /** The panel the logic puzzles share: instructions (already translated), the puzzle, progress dots, and the buttons. */
   private puzzlePanel(intro: string, body: string, dots: number, done: (ok: boolean) => void, extra = '') {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr('LUX HACK')}</h2>
+      <h2>${tr(this.hackTitle)}</h2>
       <div class="msg small">${intro}</div>
       ${body}
       <div class="dots">${'<i></i>'.repeat(dots)}</div>
@@ -836,7 +852,7 @@ export class UI {
   /** Simon-says light puzzle: watch LUX's pattern, then repeat it. */
   private memoryHack(length: number, done: (ok: boolean) => void) {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr('LUX HACK')}</h2>
+      <h2>${tr(this.hackTitle)}</h2>
       <div class="msg">${tr('Watch the lights...')}</div>
       <div class="pads"><div class="pad"></div><div class="pad"></div><div class="pad"></div><div class="pad"></div></div>
       <div class="dots">${'<i></i>'.repeat(length)}</div>

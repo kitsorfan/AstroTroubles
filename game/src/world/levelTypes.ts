@@ -8,7 +8,7 @@ export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 /** The last four are General Brennus's robots (chapter 2 only). */
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -74,7 +74,8 @@ export type Spec = Base &
     | { type: 'dark' }
     | { type: 'exit' }
     | { type: 'breakwall' }
-    | { type: 'boltfind' }
+    /** A droid switched off in a dark corner, waiting for Jason to wake it: LUX (default) or IRIS. */
+    | { type: 'boltfind'; who?: 'lux' | 'iris' }
     /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */
     | { type: 'holo'; log: string; who?: HoloSpeaker }
     /** A glowing grapple ring: with the GRAPPLE hook, Jason can zip to it from far away (and land on the cell it sits on). */
@@ -140,8 +141,11 @@ export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', '
 /** Who can appear in a hologram log. */
 export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
 
-/** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
+/**
+ * `glitch` is HALCYON while GaScu pollen scrambles its circuits; `rogue` is LUX while Brennus's
+ * control chip has hold of him; `iris` is the rainbow droid Jason finds in the jungle.
+ */
+export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia' | 'iris' | 'rogue';
 
 export interface Line {
   who: Speaker;

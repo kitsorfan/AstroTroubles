@@ -445,6 +445,7 @@ export class Game {
     // Shared helpers (cached geometry, glow textures) are simply uploaded again when the next deck uses them.
     disposeScene(this.world.scene);
     this.world = null;
+    this.ui.voice = (who) => who;
     this.queue = [];
     this.renderer.renderLists.dispose();
   }
@@ -542,6 +543,9 @@ export class Game {
       const w = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
       w.scene.environment = this.envMap;
       w.resize(window.innerWidth, window.innerHeight);
+      // LUX's lines go to whoever is with Jason on this deck (IRIS, HALCYON's radio, or Jason himself).
+      this.ui.voice = (who, toast) => w.voice(who, toast);
+      this.ui.setHelper(w.helper);
       // Compile every shader now so the first frames of play don't stutter.
       this.renderer.compile(w.scene, w.camera);
       return w;
@@ -593,6 +597,7 @@ export class Game {
       dash: this.save.abilities.includes('dash'),
       energy: pl.energy,
       energyMax: pl.energyMax,
+      // The force pulse is a droid's: Jason can't fire it while he is on his own.
       pulse: this.save.abilities.includes('pulse') && w.boltActive,
       pulseCharge: w.pulseCharge,
       pulseLeft: w.pulseCd,
@@ -658,6 +663,7 @@ export class Game {
         });
       },
       toast: (text, who) => this.ui.toast(text, who ?? 'bolt'),
+      helper: (who) => this.ui.setHelper(who),
       hack: (length, done, kind) => {
         this.state = 'hack';
         this.input.reset();

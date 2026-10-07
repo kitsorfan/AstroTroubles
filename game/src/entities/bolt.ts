@@ -2,12 +2,19 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { damp, dampAngle } from '../core/math';
+import type { CompanionSkin } from '../game/companions';
 import type { World } from '../game/world';
-import { makeBolt, type BoltModel } from './models';
+import { makeIris, rainbow, type IrisModel } from './companionModels';
+import { glowSprite, makeBolt, type BoltModel } from './models';
 
 const ZAP_RANGE = 6;
+const tmpC = new THREE.Color();
 
-/** LUX follows Jason, zaps nearby enemies, and lights up dark rooms. */
+/**
+ * Jason's droid: LUX (or, in the jungle and the volcano, IRIS). The lead droid follows Jason, zaps
+ * nearby enemies, lights up dark rooms and fires the force pulse. A `tag` droid just floats along
+ * a little further back (IRIS, once LUX is home again).
+ */
 export class Bolt {
   readonly model: BoltModel;
   readonly pos = new THREE.Vector3();
@@ -17,18 +24,24 @@ export class Bolt {
   private light: THREE.SpotLight;
   private lightTarget = new THREE.Object3D();
   active = true;
-  /** Extra offset so cutscenes can move LUX somewhere specific. */
+  /** The lead droid does the work; a tag-along just follows. */
+  role: 'lead' | 'tag' = 'lead';
+  /** Extra offset so cutscenes can move the droid somewhere specific. */
   override: THREE.Vector3 | null = null;
   private t = 0;
 
-  constructor(private world: World) {
-    this.model = makeBolt();
+  constructor(
+    private world: World,
+    readonly skin: CompanionSkin = 'lux',
+  ) {
+    this.model = skin === 'iris' ? makeIris() : makeBolt();
     world.scene.add(this.model.root);
-    this.light = new THREE.SpotLight('#dff6ff', 0, 22, 0.62, 0.55, 1.1);
+    this.light = new THREE.SpotLight(skin === 'iris' ? '#f0e6ff' : '#dff6ff', 0, 22, 0.62, 0.55, 1.1);
     this.light.target = this.lightTarget;
     world.scene.add(this.light, this.lightTarget);
     const p = world.player.body;
     this.pos.set(p.x - 1, p.y + 2, p.z + 1);
+    this.t = skin === 'iris' ? 1.7 : 0;
   }
 
   place(x: number, y: number, z: number) {
@@ -37,40 +50,49 @@ export class Bolt {
 
   private flareT = 0;
 
-  /** The force pulse: LUX's eye blazes and his glow balloons for a moment. */
+  /** The force pulse: the droid's eye blazes and its glow balloons for a moment. */
   flare() {
     this.flareT = 0.6;
     this.model.iris.emissiveIntensity = 8;
+  }
+
+  /** The droid's eye colour right now (IRIS's drifts around the rainbow). */
+  get eyeColor(): string {
+    return '#' + this.model.iris.emissive.getHexString();
   }
 
   update(dt: number) {
     const w = this.world;
     this.t += dt;
     this.model.root.visible = this.active;
-    if (!this.active) {
-      this.light.intensity = 0;
-      return;
-    }
+    const lead = this.role === 'lead';
+    if (!this.active || !lead) this.light.intensity = 0;
+    if (!this.active) return;
     const pl = w.player;
     const f = pl.facing;
+    // The lead floats at Jason's shoulder; a tag-along hangs back on the other side.
+    const back = lead ? 1.1 : 2.4;
+    const side = lead ? 1.0 : -1.5;
     const target = this.override
       ? this.override
       : new THREE.Vector3(
-          pl.body.x - Math.sin(f) * 1.1 - Math.cos(f) * 1.0,
-          pl.body.y + 2.0 + Math.sin(this.t * 2.2) * 0.12,
-          pl.body.z - Math.cos(f) * 1.1 + Math.sin(f) * 1.0,
+          pl.body.x - Math.sin(f) * back - Math.cos(f) * side,
+          pl.body.y + (lead ? 2.0 : 2.5) + Math.sin(this.t * 2.2) * 0.12,
+          pl.body.z - Math.cos(f) * back + Math.sin(f) * side,
         );
-    this.pos.x = damp(this.pos.x, target.x, 5, dt);
-    this.pos.y = damp(this.pos.y, target.y, 5, dt);
-    this.pos.z = damp(this.pos.z, target.z, 5, dt);
+    const k = lead ? 5 : 3;
+    this.pos.x = damp(this.pos.x, target.x, k, dt);
+    this.pos.y = damp(this.pos.y, target.y, k, dt);
+    this.pos.z = damp(this.pos.z, target.z, k, dt);
     this.model.root.position.copy(this.pos);
 
     // Look where Jason looks, or at the nearest threat.
-    const threat = w.nearestEnemy(pl.body.x, pl.body.z, ZAP_RANGE);
+    const threat = lead ? w.nearestEnemy(pl.body.x, pl.body.z, ZAP_RANGE) : null;
     const lookYaw = threat ? Math.atan2(threat.aim.x - this.pos.x, threat.aim.z - this.pos.z) : f;
     this.yaw = dampAngle(this.yaw, lookYaw, 6, dt);
     this.model.root.rotation.y = this.yaw;
     this.model.shell.rotation.z = Math.sin(this.t * 1.7) * 0.08;
+    if (this.skin === 'iris') this.animateIris(this.model as IrisModel);
 
     this.blinkT -= dt;
     const lid = this.model.lid;
@@ -84,22 +106,67 @@ export class Bolt {
     // Zap assist.
     this.zapCd -= dt;
     if (threat && this.zapCd <= 0 && !w.cutscene) {
-      // LUX is a helper, not a weapon: his zap only stuns until it is upgraded at PANDORA's.
+      // A droid is a helper, not a weapon: the zap only stuns until it is upgraded at PANDORA's.
       const lvl = w.save.upgrades.boltZap ?? 0;
       this.zapCd = [8, 6, 4.5, 3.5][lvl] ?? 3.5;
-      w.beams.zap(this.pos.clone().add(new THREE.Vector3(0, 0, 0)), threat.aim.clone());
+      w.beams.zap(this.pos.clone(), threat.aim.clone(), this.skin === 'iris' ? this.eyeColor : undefined);
       threat.hit(lvl, 'zap', this.pos);
-      audio.play('zap');
+      audio.play('zap', this.skin === 'iris' ? 1.25 : 1);
       this.model.iris.emissiveIntensity = 4;
     }
-    this.model.iris.emissiveIntensity = damp(this.model.iris.emissiveIntensity, 1.6 + w.darkness * 1.5, 6, dt);
+    this.model.iris.emissiveIntensity = damp(this.model.iris.emissiveIntensity, 1.6 + (lead ? w.darkness * 1.5 : 0), 6, dt);
 
     // Flashlight in dark rooms.
-    this.light.intensity = damp(this.light.intensity, w.darkness * 60, 5, dt);
-    this.light.position.copy(this.pos);
-    this.lightTarget.position.set(pl.body.x + Math.sin(f) * 4, pl.body.y, pl.body.z + Math.cos(f) * 4);
+    if (lead) {
+      this.light.intensity = damp(this.light.intensity, w.darkness * 60, 5, dt);
+      this.light.position.copy(this.pos);
+      this.lightTarget.position.set(pl.body.x + Math.sin(f) * 4, pl.body.y, pl.body.z + Math.cos(f) * 4);
+    }
     this.flareT = Math.max(0, this.flareT - dt);
-    this.model.glow.material.opacity = 0.3 + w.darkness * 0.4 + this.flareT * 1.2;
+    this.model.glow.material.opacity = 0.3 + (lead ? w.darkness * 0.4 : 0) + this.flareT * 1.2;
     this.model.glow.scale.setScalar(1.3 + this.flareT * 6);
+  }
+
+  /** IRIS's eye drifts around the rainbow, her fins flutter and her halo turns. */
+  private animateIris(m: IrisModel) {
+    rainbow(this.t, tmpC);
+    m.iris.color.copy(tmpC);
+    m.iris.emissive.copy(tmpC);
+    m.glow.material.color.copy(tmpC).lerp(new THREE.Color('#ffffff'), 0.35);
+    const flap = Math.sin(this.t * 7) * 0.35;
+    m.fins[0].rotation.z = flap;
+    m.fins[1].rotation.z = -flap;
+    m.halo.rotation.z = this.t * 1.2;
+    m.haloMat.emissiveIntensity = 1.4 + Math.sin(this.t * 3) * 0.4;
+  }
+}
+
+/**
+ * Jason's helmet lamp, for when no droid is around to light the way: a spotlight from his forehead
+ * that brightens in dark rooms, plus a small glow on the helmet so you can see it is switched on.
+ */
+export class HelmetLamp {
+  private light: THREE.SpotLight;
+  private target = new THREE.Object3D();
+  private dot: THREE.Sprite;
+  on = false;
+
+  constructor(private world: World) {
+    this.light = new THREE.SpotLight('#fff1d6', 0, 20, 0.58, 0.5, 1.1);
+    this.light.target = this.target;
+    this.dot = glowSprite('#fff1d6', 0.6, 0);
+    world.scene.add(this.light, this.target, this.dot);
+  }
+
+  update(dt: number) {
+    const w = this.world;
+    const b = w.player.body;
+    const f = w.player.facing;
+    const k = this.on ? w.darkness : 0;
+    this.light.intensity = damp(this.light.intensity, k * 55, 5, dt);
+    this.light.position.set(b.x + Math.sin(f) * 0.3, b.y + 2.1, b.z + Math.cos(f) * 0.3);
+    this.target.position.set(b.x + Math.sin(f) * 5, b.y, b.z + Math.cos(f) * 5);
+    this.dot.position.set(b.x + Math.sin(f) * 0.32, b.y + 1.95, b.z + Math.cos(f) * 0.32);
+    this.dot.material.opacity = damp(this.dot.material.opacity, k * 0.9, 5, dt);
   }
 }

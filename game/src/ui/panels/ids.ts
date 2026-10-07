@@ -16,6 +16,10 @@ export const PANEL_IDS = [
   'ch2-arrival',
   'ch2-broadcast',
   'ch2-drones',
+  // LUX is taken, Jason meets IRIS, and LUX comes home.
+  'ch2-luxtaken',
+  'ch2-iris',
+  'ch2-luxback',
   // Forty years ago: the first expedition.
   'past-expedition',
   'past-order',
