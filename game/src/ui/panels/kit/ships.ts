@@ -69,14 +69,17 @@ export function drone(x: number, y: number, s: number, flip = false): string {
   return at(x, y, s, body, flip);
 }
 
-/** The planet Gaia Nova: blue oceans, green lands, white clouds and a glowing rim. */
-export function planet(id: string, x: number, y: number, r: number, lit = 0.35): string {
+/**
+ * The planet Gaia Nova: blue oceans, green lands, white clouds and a glowing rim. `landRot` turns
+ * the continents (degrees) so a close-up can show land at the top.
+ */
+export function planet(id: string, x: number, y: number, r: number, lit = 0.35, landRot = 0): string {
   const defs = `<defs>${rad(id + 'o', [[0, '#7ac8ff'], [0.6, C.sky], [1, '#123a7a']], 0.36, 0.3, 0.75)}
     ${rad(id + 's', [[0.55, '#0b1030', 0], [1, '#0b1030', 0.85]], lit, 0.25, 0.9)}
     ${glowDef(id + 'a', '#9ad8ff', 0.6)}<clipPath id="${id}c"><circle cx="0" cy="0" r="1"/></clipPath></defs>`;
-  const land = `<g fill="${C.green2}"><path d="M-.7 -.5Q-.4 -.75 -.1 -.55Q.1 -.3 -.15 -.15Q-.3 .1 -.55 0Q-.8 -.2 -.7 -.5Z"/>
+  const land = `<g transform="rotate(${landRot})"><g fill="${C.green2}"><path d="M-.7 -.5Q-.4 -.75 -.1 -.55Q.1 -.3 -.15 -.15Q-.3 .1 -.55 0Q-.8 -.2 -.7 -.5Z"/>
     <path d="M.15 .05Q.45 -.15 .7 .1Q.8 .4 .5 .55Q.3 .7 .2 .45Q.05 .25 .15 .05Z"/><path d="M-.5 .45Q-.3 .35 -.2 .55Q-.25 .8 -.45 .75Z"/></g>
-    <g fill="${C.green}"><path d="M-.6 -.4Q-.4 -.55 -.25 -.42Q-.3 -.25 -.5 -.2Z"/><path d="M.3 .15Q.5 .05 .6 .25Q.5 .45 .35 .35Z"/></g>
+    <g fill="${C.green}"><path d="M-.6 -.4Q-.4 -.55 -.25 -.42Q-.3 -.25 -.5 -.2Z"/><path d="M.3 .15Q.5 .05 .6 .25Q.5 .45 .35 .35Z"/></g></g>
     <g fill="#fff" opacity=".85"><path d="M-.9 -.2Q-.5 -.3 -.1 -.2Q.2 -.15 .5 -.25Q.3 -.1 0 -.12Q-.4 -.08 -.9 -.2Z"/>
     <path d="M-.3 .25Q.1 .15 .4 .2Q.7 .25 .9 .15Q.6 .35 .2 .3Q-.1 .3 -.3 .25Z"/><path d="M-.2 -.75Q.2 -.85 .5 -.7Q.2 -.68 -.2 -.75Z"/></g>`;
   const body = `${glow(id + 'a', 0, 0, 1.18)}<circle r="1" fill="url(#${id}o)"/><g clip-path="url(#${id}c)">${land}</g>
