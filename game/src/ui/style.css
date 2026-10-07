@@ -2414,3 +2414,100 @@ canvas#game {
     display: none;
   }
 }
+
+/* ---------------- heroes: Atalanta's buttons and the switch-hero button ---------------- */
+
+/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta. */
+.buttons:not([data-hero='jason']) .hj,
+.buttons:not([data-hero='atalanta']) .ha {
+  display: none;
+}
+
+.buttons[data-hero='atalanta'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #a8fff0, #1d9a88);
+}
+
+.buttons[data-hero='atalanta'] .btn.spin {
+  background: radial-gradient(circle at 35% 30%, #ffe2a0, #d98a2a);
+}
+
+.buttons[data-hero='atalanta'] .btn.dash {
+  background: radial-gradient(circle at 35% 30%, #c8fff4, #2fb7a3);
+}
+
+/* Her bow has no clip: the ammo pips, dash energy and weapon button belong to Jason. */
+.buttons:not([data-hero='jason']) .ammo,
+.buttons:not([data-hero='jason']) .btn.dash .charges,
+.buttons:not([data-hero='jason']) .btn.weapon {
+  display: none;
+}
+
+.btn.swap {
+  --hero: #5fe0c8;
+  right: 196px;
+  bottom: 166px;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  background: #0b1426;
+  border: 3px solid var(--hero);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px var(--hero);
+}
+
+.btn.swap .face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.btn.swap .face svg {
+  width: 100%;
+  height: 100%;
+}
+
+.btn.swap .badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--hero);
+  border: 2px solid #fff;
+}
+
+.btn.swap .badge svg {
+  width: 70%;
+  height: 70%;
+}
+
+.btn.swap .cd-ring circle {
+  stroke: #fff;
+}
+
+.btn.swap.empty .face {
+  filter: grayscale(0.7) brightness(0.7);
+}
+
+.btn.swap:not(.empty) .cd-ring {
+  display: none;
+}
+
+.help-sub {
+  margin: 12px 0 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: #5fe0c8;
+}
+
+@media (max-height: 460px) {
+  .help-sub {
+    margin: 8px 0 4px;
+    font-size: 13px;
+  }
+}

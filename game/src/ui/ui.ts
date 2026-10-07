@@ -19,7 +19,8 @@ import {
   type PuzzleKind,
   type Token,
 } from '../game/puzzles';
-import type { DeckId, EndingKind, Line, Speaker } from '../world/levelTypes';
+import type { DeckId, EndingKind, HeroId, Line, Speaker } from '../world/levelTypes';
+import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
@@ -68,7 +69,10 @@ function h(html: string): HTMLElement {
 }
 
 /** A label that follows the language setting (see `applyLang`). */
-const label = (en: string) => `<span data-t="${en}">${tr(en)}</span>`;
+const label = (en: string, cls = '') => `<span${cls ? ` class="${cls}"` : ''} data-t="${en}">${tr(en)}</span>`;
+
+/** An icon shown only for one hero's buttons (`hj` Jason, `ha` Atalanta; see style.css). */
+const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cls}"`);
 
 /** Each shop upgrade's icon. */
 const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
@@ -124,6 +128,11 @@ export interface AbilityHud {
   /** The equipped weapon, and how many Jason owns (the weapon button shows once he has two). */
   weapon: WeaponId;
   weapons: number;
+  /** The playing hero (the buttons change with them), and who the switch button changes to (null: no switching here). */
+  hero: HeroId;
+  swapTo: HeroId | null;
+  /** 0..1 while the switch cools down (1 = ready). */
+  swapReady: number;
 }
 
 /** Where to draw the objective waypoint: screen position, whether it's pinned to the edge, and how far it is. */
@@ -176,12 +185,13 @@ export class UI {
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
       <div class="stick-hint">${label('MOVE')}</div>
-      <div class="buttons">
+      <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${ICON.shoot}${label('BLAST')}${ring('charge-ring')}</div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${ring('charge-ring')}</div>
         <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
-        <div class="btn spin clickable" data-b="spin">${ICON.spin}${label('SPIN')}${ring('cd-ring')}<div class="charges"></div></div>
-        <div class="btn dash clickable hidden" data-b="dash">${ICON.dash}${label('DASH')}<div class="charges"></div></div>
+        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${ring('cd-ring')}<div class="charges"></div></div>
+        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}<div class="charges"></div></div>
+        <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
         <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
       </div>
@@ -371,10 +381,12 @@ export class UI {
 
   /** Spin charges, dash energy, LUX's force pulse and the weapon on their buttons. */
   setAbilities(a: AbilityHud) {
-    const key = `${a.spins}|${a.spinMax}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.energyMax}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}|${a.weapon}|${a.weapons}`;
+    const key = `${a.hero}|${a.swapTo}|${Math.round(a.swapReady * 20)}|${a.spins}|${a.spinMax}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.energyMax}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}|${a.weapon}|${a.weapons}`;
     if (key === this.lastAbility) return;
     this.lastAbility = key;
-    this.setWeapon(a.weapon, a.weapons);
+    const jason = a.hero === 'jason';
+    this.setWeapon(a.weapon, jason ? a.weapons : 0);
+    this.setSwap(a.hero, a.swapTo, a.swapReady);
     const pips = (el: HTMLElement, n: number, max: number) => {
       const box = $(el, '.charges');
       if (box.childElementCount !== max) box.innerHTML = '<i></i>'.repeat(max);
@@ -388,8 +400,9 @@ export class UI {
     this.spinBtn.classList.toggle('empty', a.spins === 0);
     this.spinBtn.classList.toggle('recharging', a.spinReload > 0);
     fill(this.spinBtn, a.spinReload);
-    this.dashBtn.classList.toggle('hidden', !a.dash);
-    if (a.dash) {
+    // Atalanta's slide (on the DASH button) needs no energy cells.
+    this.dashBtn.classList.toggle('hidden', !a.dash && jason);
+    if (a.dash && jason) {
       pips(this.dashBtn, a.energy, a.energyMax);
       this.dashBtn.classList.toggle('empty', a.energy === 0);
     }
@@ -401,6 +414,25 @@ export class UI {
       fill(this.pulseBtn, a.pulseCharge);
       $(this.pulseBtn, 'em').textContent = ready ? '' : String(Math.ceil(a.pulseLeft));
     }
+  }
+
+  private lastSwap = '';
+
+  /** The switch-hero button: the face of the hero it switches to, and a ring while it cools down. */
+  private setSwap(hero: HeroId, to: HeroId | null, ready: number) {
+    const btn = $(this.hud, '.btn.swap');
+    const buttons = $(this.hud, '.buttons');
+    buttons.dataset.hero = hero;
+    btn.classList.toggle('hidden', !to);
+    if (!to) return;
+    btn.classList.toggle('empty', ready < 1);
+    const c = btn.querySelector<SVGCircleElement>('.cd-ring circle');
+    if (c) c.style.strokeDashoffset = String(100 - ready * 100);
+    if (to === this.lastSwap) return;
+    this.lastSwap = to;
+    $(btn, '.face').innerHTML = portrait(HEROES[to].speaker);
+    btn.style.setProperty('--hero', HEROES[to].color);
+    btn.setAttribute('aria-label', tr(SPEAKER_NAME[HEROES[to].speaker]));
   }
 
   /** Shakes the DASH button when Jason tries to dash on an empty tank. */
@@ -1050,7 +1082,16 @@ export class UI {
         ${item('#7fe6ff', tr('GRAPPLE'), tr('on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.'))}
         ${item('#ffb020', tr('WEAPONS'), tr('on Gaia Nova, PANDORA sells new weapons. Tap the weapon button next to BLAST (or press X) to switch.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
+      <h3 class="help-sub">${tr('ATALANTA')}</h3>
+      <div class="help-grid">
+        ${item('#5fe0c8', tr('SWITCH'), tr('on some levels you can play as Jason or Atalanta. Tap the face button (or press C) to switch; the other hero follows you around.'))}
+        ${item('#7dff9a', tr('SPRINT'), tr('push the stick all the way (or hold a direction) and Atalanta breaks into a sprint for long jumps.'))}
+        ${item('#7dff9a', tr('WALL-JUMP'), tr('jump while touching a wall to kick off it. Run at a glowing teal stripe in mid-air to WALL-RUN along it.'))}
+        ${item('#8ff8e4', tr('BOW'), tr('tap for quick arrows that fly far. HOLD to charge a POWER ARROW: it flies through enemies and hits bullseye targets.'))}
+        ${item('#ffd166', tr('KICK'), tr('a spinning kick that blocks shots, on the ground or in the air.'))}
+        ${item('#b58cff', tr('SLIDE'), tr('slide under low gaps with yellow stripes and trip enemies. Jump out of a slide for a long jump.'))}
+      </div>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }

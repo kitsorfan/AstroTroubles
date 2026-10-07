@@ -14,6 +14,7 @@ import { haptic, inApp, post, setHaptics } from '../core/bridge';
 import { CELL } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
 import { Input } from '../core/input';
+import { heroDev, parseHeroes } from '../entities/heroes/heroes';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
 import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER, catchUpChapters, chapterIndex, chapterOf, chapterSize, chapterTotals, comingSoon, inChapter, isFinale, nextChapterStart, type Chapter } from '../levels';
 import type { DeckId, EndingKind, Line } from '../world/levelTypes';
@@ -198,6 +199,11 @@ export class Game {
       const [id, n] = pair.split(':');
       this.save.upgrades[id as keyof SaveData['upgrades']] = Number(n) || 0;
     }
+    // &heroes=jason,atalanta lets you switch heroes on any deck; &hero=atalanta starts as her.
+    const heroes = parseHeroes(dev.get('heroes'));
+    if (heroes.length) heroDev.heroes = heroes;
+    const hero = parseHeroes(dev.get('hero'))[0];
+    if (hero) heroDev.hero = hero;
     const deck = dev.get('deck') as DeckId | null;
     if (deck && LEVELS[deck]) {
       this.startDeck(deck, false, dev.has('still') ? 'none' : 'auto');
@@ -661,6 +667,9 @@ export class Game {
       pulseLeft: w.pulseCd,
       weapon: pl.weapon,
       weapons: ownedWeapons(this.save.weapons).length,
+      hero: pl.hero,
+      swapTo: pl.nextHero,
+      swapReady: pl.swapReady,
     });
   }
 
