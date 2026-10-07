@@ -596,9 +596,14 @@ export class World {
 
   /** Works out again who is with Jason (after a droid joins, leaves or comes home). */
   refreshCompanions() {
-    this.plan = companionPlan(this.def.id, (f) => this.flags.has(f));
-    this.lux.active = this.plan.lead === 'lux';
-    this.lux.role = 'lead';
+    const pl = this.player;
+    this.plan = companionPlan(this.def.id, (f) => this.flags.has(f), {
+      chapter: chapterOf(this.def.id),
+      hero: pl.hero,
+      atalanta: pl.roster.includes('atalanta'),
+    });
+    this.lux.active = this.plan.lead === 'lux' || this.plan.tag === 'lux';
+    this.lux.role = this.plan.lead === 'lux' ? 'lead' : 'tag';
     this.iris.active = this.plan.lead === 'iris' || this.plan.tag === 'iris';
     this.iris.role = this.plan.lead === 'iris' ? 'lead' : 'tag';
     this.lamp.on = this.plan.lead === null;
