@@ -1,4 +1,5 @@
-export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause' | 'weapon';
+/** `swap` switches heroes on levels with more than one (Atalanta and Jason in chapter 3). */
+export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause' | 'weapon' | 'swap';
 
 const KEYMAP: Record<string, ButtonName> = {
   Space: 'jump',
@@ -11,6 +12,8 @@ const KEYMAP: Record<string, ButtonName> = {
   KeyI: 'pulse',
   KeyU: 'pulse',
   KeyX: 'weapon',
+  KeyC: 'swap',
+  Tab: 'swap',
   KeyE: 'action',
   KeyF: 'action',
   Escape: 'pause',
@@ -40,7 +43,7 @@ export class Input {
       this.keys.add(e.code);
       const b = KEYMAP[e.code];
       if (b) this.press(b, true);
-      if (e.code === 'Space') e.preventDefault();
+      if (e.code === 'Space' || e.code === 'Tab') e.preventDefault();
     });
     window.addEventListener('keyup', (e) => {
       this.keys.delete(e.code);

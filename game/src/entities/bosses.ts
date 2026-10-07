@@ -15,9 +15,12 @@ import { Boreas } from './gaia/boreas';
 import { Colossus } from './gaia/colossus';
 import { Driller } from './gaia/driller';
 import { Hydra } from './gaia/hydra';
+import { RogueLux } from './gaia/rogue';
+import { Excavator } from './ch3/excavator';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
+import { Aello } from './isles/aello';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 export { Boss };
@@ -1562,6 +1565,13 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Hydra(world, id, cx, cz, h);
     case 'colossus':
       return new Colossus(world, id, cx, cz, h);
+    case 'rogue':
+      return new RogueLux(world, id, cx, cz, h);
+    // Chapter 3.
+    case 'aello':
+      return new Aello(world, id, cx, cz, h);
+    case 'excavator':
+      return new Excavator(world, id, cx, cz, h);
   }
 }
 

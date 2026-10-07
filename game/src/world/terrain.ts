@@ -461,7 +461,9 @@ function below(theme: Theme, o: Outdoor, seed: number): Surface {
   const S = 512;
   const rng = new Rng(seed);
   const s = new Sheet(S, S, o.below, 0.5);
-  blobs(s, rng, 90, [shade(o.below, 1.25), shade(o.below, 0.7), theme.floor], 20, 90, 0.5, 0.2);
+  // Valley land, or (under sky-islands) the soft hollows of a sea of clouds.
+  const tones = o.cloudSea ? ['#ffffff', '#dfe7f2', '#fbe8da'] : [shade(o.below, 1.25), shade(o.below, 0.7), theme.floor];
+  blobs(s, rng, 90, tones, 20, 90, 0.5, 0.2);
   if (o.belowGlow) {
     s.glowUsed = true;
     for (let i = 0; i < 40; i++) {

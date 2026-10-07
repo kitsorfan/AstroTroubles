@@ -685,7 +685,7 @@ canvas#game {
 
 .title-logo .name {
   /* Sized by width as well as height, so the whole name always fits across the screen. */
-  font-size: clamp(30px, min(12vh, 6.4vw), 86px);
+  font-size: clamp(22px, min(9vh, 3.9vw), 62px);
   line-height: 1;
   background: linear-gradient(180deg, #ffffff, #9fe8ff 60%, #5e9bff);
   -webkit-background-clip: text;
@@ -1726,7 +1726,7 @@ canvas#game {
 
 .boot-logo {
   margin-top: 10px;
-  font: 800 clamp(30px, min(12vh, 6.6vw), 92px) 'Orbitron', sans-serif;
+  font: 800 clamp(22px, min(9vh, 4vw), 64px) 'Orbitron', sans-serif;
   line-height: 1.05;
   animation: fadeUp 0.9s 0.7s ease both;
   filter: drop-shadow(0 0 18px rgba(94, 224, 255, 0.5));
@@ -2360,6 +2360,201 @@ canvas#game {
     height: 42px;
   }
   .help-grid {
+    font-size: 13px;
+  }
+}
+
+/* ---------------- level select: one page per chapter ---------------- */
+
+.deck-panel {
+  width: min(760px, 92vw);
+}
+
+.deck-panel .chapter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.deck-panel .chapter-tabs button {
+  flex: 1;
+}
+
+.deck-grid.many {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.deck-grid .menu-btn.deck.soon {
+  opacity: 0.55;
+}
+
+.soon-note {
+  margin: 10px 0 0;
+  color: var(--gold, #ffd166);
+  font-weight: 700;
+}
+
+@media (max-height: 460px) {
+  .deck-panel h2 {
+    margin-bottom: 4px;
+  }
+  .deck-panel .chapter-head {
+    margin: 4px 0;
+    font-size: 14px;
+  }
+  .deck-grid {
+    gap: 6px;
+  }
+  .deck-grid .menu-btn.deck {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .deck-grid.many .menu-btn.deck.soon small {
+    display: none;
+  }
+}
+
+/* ---------------- heroes: Atalanta's buttons and the switch-hero button ---------------- */
+
+/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta, `hb` General Brennus. */
+.buttons:not([data-hero='jason']) .hj,
+.buttons:not([data-hero='atalanta']) .ha,
+.buttons:not([data-hero='brennus']) .hb {
+  display: none;
+}
+
+/* General Brennus: brass CANNON, olive SHIELD, orange CHARGE; no spin charges (his shield is held, not counted). */
+.buttons[data-hero='brennus'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #ffe0a0, #b8781a);
+}
+
+.buttons[data-hero='brennus'] .btn.spin {
+  background: radial-gradient(circle at 35% 30%, #c9d870, #4a5632);
+}
+
+.buttons[data-hero='brennus'] .btn.dash {
+  background: radial-gradient(circle at 35% 30%, #ffc890, #c8501a);
+}
+
+.buttons[data-hero='brennus'] .btn.spin .charges,
+.buttons[data-hero='brennus'] .btn.spin .cd-ring {
+  display: none;
+}
+
+/* His cannon's heat under CANNON: it fills as he fires and blinks red while it cools after overheating. */
+.heat {
+  position: absolute;
+  right: 186px;
+  bottom: 6px;
+  width: 10px;
+  height: 64px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+
+/* A thermometer beside CANNON, filling from the bottom. */
+.heat i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0;
+  background: linear-gradient(0deg, #ffd166, #ff8a3d, #ff3a3a);
+}
+
+.heat.over i {
+  background: #ff3a3a;
+  animation: blink 0.3s infinite;
+}
+
+.buttons[data-hero='atalanta'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #a8fff0, #1d9a88);
+}
+
+.buttons[data-hero='atalanta'] .btn.spin {
+  background: radial-gradient(circle at 35% 30%, #ffe2a0, #d98a2a);
+}
+
+.buttons[data-hero='atalanta'] .btn.dash {
+  background: radial-gradient(circle at 35% 30%, #c8fff4, #2fb7a3);
+}
+
+/* Her bow has no clip: the ammo pips, dash energy and weapon button belong to Jason. */
+.buttons:not([data-hero='jason']) .ammo,
+.buttons:not([data-hero='jason']) .btn.dash .charges,
+.buttons:not([data-hero='jason']) .btn.weapon {
+  display: none;
+}
+
+.btn.swap {
+  --hero: #5fe0c8;
+  right: 196px;
+  bottom: 166px;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  background: #0b1426;
+  border: 3px solid var(--hero);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 12px var(--hero);
+}
+
+.btn.swap .face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.btn.swap .face svg {
+  width: 100%;
+  height: 100%;
+}
+
+.btn.swap .badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--hero);
+  border: 2px solid #fff;
+}
+
+.btn.swap .badge svg {
+  width: 70%;
+  height: 70%;
+}
+
+.btn.swap .cd-ring circle {
+  stroke: #fff;
+}
+
+.btn.swap.empty .face {
+  filter: grayscale(0.7) brightness(0.7);
+}
+
+.btn.swap:not(.empty) .cd-ring {
+  display: none;
+}
+
+.help-sub {
+  margin: 12px 0 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: #5fe0c8;
+}
+
+@media (max-height: 460px) {
+  .help-sub {
+    margin: 8px 0 4px;
     font-size: 13px;
   }
 }

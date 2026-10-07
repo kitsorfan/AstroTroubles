@@ -166,7 +166,7 @@ export const cryo: LevelDef = {
       { who: 'jason', text: 'Okay. Okay! Deep breath. Let’s do this.' },
     ],
     log: [
-      { who: 'captain', text: 'Captain’s log. This is Captain Atalanta. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
+      { who: 'captain', text: 'Captain’s log. This is Captain Argus. A glowing comet just hit the hull. Wait... it isn’t a comet. It’s ALIVE.' },
       { who: 'captain', text: 'It’s growing through the air vents! Everyone, stay in your pods. LUX? LUX, where did you go?' },
       { who: 'captain', text: 'If anyone finds my little repair drone: he hides in the storeroom when he’s scared. Please look after him.' },
       { who: 'halcyon', text: 'That sealed door needs a drone to hack it. The storeroom is to the west. It is very dark in there... be brave, Jason.' },
@@ -177,7 +177,7 @@ export const cryo: LevelDef = {
       { who: 'bolt', text: 'I was hiding. The dark is scary. And the vines are scary. And the big BANG was very, VERY scary.' },
     ],
     boltJoin: [
-      { who: 'jason', text: 'The Captain is looking for you. She left a message. Want to come with me to the Bridge?' },
+      { who: 'jason', text: 'The Captain is looking for you. He left a message. Want to come with me to the Bridge?' },
       { who: 'bolt', text: 'The Captain! YES! I can light up dark places, zap bad guys and HACK terminals. Walk up to one and press the button!' },
       { who: 'bolt', text: 'Just... stay close, okay? I will be brave if you are brave.' },
     ],

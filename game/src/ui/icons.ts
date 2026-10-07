@@ -7,6 +7,9 @@ export const ICON = {
   /** A page of Brennus's journal (chapter 2's collectible). */
   page: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><path d="M2 1.5H11L14.5 5V18.5H2Z" fill="${got ? '#ffd166' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#fff2c2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M4.5 8H12M4.5 11H12M4.5 14H10" stroke="#a8761a" stroke-width="1"/>' : ''}</svg>`,
+  /** A Gardener light-stone (chapter 3's collectible): a smooth stone with a rainbow band. */
+  stone: (got: boolean) =>
+    `<svg viewBox="0 0 16 20"><defs><linearGradient id="istn" x1="0" x2="1"><stop offset="0" stop-color="#ff5e6a"/><stop offset=".25" stop-color="#ffd166"/><stop offset=".5" stop-color="#7dff9a"/><stop offset=".75" stop-color="#5ec8ff"/><stop offset="1" stop-color="#c37bff"/></linearGradient></defs><ellipse cx="8" cy="11" rx="6.6" ry="7.4" fill="${got ? '#f2efff' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffffff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.2"/>${got ? '<path d="M1.8 11.6Q8 14.4 14.2 11.6" fill="none" stroke="url(#istn)" stroke-width="2.4"/><ellipse cx="5.6" cy="7" rx="1.6" ry="1" fill="#fff" opacity=".8"/>' : ''}</svg>`,
   shard: (got: boolean) =>
     `<svg viewBox="0 0 16 20"><polygon points="8,1 15,10 8,19 1,10" fill="${got ? '#ff6fcf' : 'rgba(0,0,0,0.4)'}" stroke="${got ? '#ffd6f2' : 'rgba(255,255,255,0.35)'}" stroke-width="1.3"/></svg>`,
   pause: `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg>`,
@@ -26,6 +29,16 @@ export const ICON = {
   shield: (full = true) =>
     `<svg viewBox="0 0 24 24"><path d="M12 2.5l8 3v6c0 5-3.6 8.6-8 10-4.4-1.4-8-5-8-10v-6z" fill="${full ? '#5ec8ff' : 'rgba(0,0,0,0.45)'}" stroke="${full ? '#d6f3ff' : 'rgba(255,255,255,0.35)'}" stroke-width="1.6" stroke-linejoin="round"/>${full ? '<path d="M8 8.5h3.2v6.5" fill="none" stroke="#fff" stroke-width="1.6" opacity=".6" stroke-linecap="round"/>' : ''}</svg>`,
   grapple: `<svg viewBox="0 0 24 24"><circle cx="16" cy="8" r="4.2" fill="none" stroke="#7fe6ff" stroke-width="2.4"/><path d="M3 21l9.6-9.6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="2.6 2.4"/></svg>`,
+  /** Atalanta's buttons: BOW, KICK and SLIDE. */
+  bow: `<svg viewBox="0 0 24 24"><path d="M7 2.5Q16 6 16 12T7 21.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M7 2.5V21.5" stroke="#8ff8e4" stroke-width="1.2"/><path d="M3 12H21M18 9l3 3-3 3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  kick: `<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="3 2.4"/><path d="M8 17l5-5 4 1.5M13 12l-1-4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  slide: `<svg viewBox="0 0 24 24"><path d="M3 19H21" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="10.5" r="2.4" fill="#fff"/><path d="M5 16.5L12 15L15 12.5M12 15l-2-4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h3M1 15h3" stroke="#8ff8e4" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  /** General Brennus's buttons: CANNON, SHIELD and CHARGE. */
+  cannon: `<svg viewBox="0 0 24 24"><rect x="3" y="8.5" width="13" height="7" rx="2" fill="#c9a24a" stroke="#fff" stroke-width="1.6"/><rect x="15" y="9.8" width="4" height="4.4" rx="1" fill="#3a3028" stroke="#fff" stroke-width="1.3"/><circle cx="21.2" cy="12" r="1.8" fill="#ffb04a"/><path d="M6 8.5v7M10 8.5v7" stroke="#7a5a20" stroke-width="1.4"/></svg>`,
+  guard: `<svg viewBox="0 0 24 24"><path d="M12 2.5l8 3.2v6.2c0 4.8-3.4 8.2-8 9.6-4.6-1.4-8-4.8-8-9.6V5.7z" fill="#4a5632" stroke="#ffd166" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="11.5" r="3.2" fill="none" stroke="#ff4a4a" stroke-width="2"/><circle cx="12" cy="11.5" r="1" fill="#ff4a4a"/></svg>`,
+  charge: `<svg viewBox="0 0 24 24"><path d="M5 18c2-6 6-10 13-11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="17" cy="8" r="3.4" fill="#ffb04a" stroke="#fff" stroke-width="1.5"/><path d="M2 12h4M3 16h4M4 20h4" stroke="#ffd166" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  /** The badge on the switch-hero button. */
+  swap: `<svg viewBox="0 0 24 24"><path d="M5 9a7 7 0 0 1 12.5-3M19 15a7 7 0 0 1-12.5 3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M18.5 2.5V7H14M5.5 21.5V17H10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
 /** A weapon's icon (shop, the weapon button). Each has its own shape and colour. */
@@ -160,7 +173,10 @@ const CAPTAIN = person({
     <path d="M24.4 27.2Q40 33.6 55.6 27.2L55.6 28.6Q40 35.4 24.4 28.6Z" fill="#0a1022"/>
     <path d="M36.6 19.2L40 16.4L43.4 19.2L42.2 22.8H37.8Z" fill="#ffd166"/><circle cx="40" cy="20" r="1.2" fill="${CAP_NAVY}"/>
     <path d="M27.6 38.6Q28.4 39.8 29.6 40.2M52.4 38.6Q51.6 39.8 50.4 40.2" fill="none" stroke="#3e2519" stroke-width=".5" opacity=".45"/>
-    <path d="M36 47.8Q35.2 49.8 35.8 51.6M44 47.8Q44.8 49.8 44.2 51.6" fill="none" stroke="#3e2519" stroke-width=".55" opacity=".4"/>`,
+    <path d="M36 47.8Q35.2 49.8 35.8 51.6M44 47.8Q44.8 49.8 44.2 51.6" fill="none" stroke="#3e2519" stroke-width=".55" opacity=".4"/>
+    <path d="M27.4 42.6Q27.6 54.8 40 58.6Q52.4 54.8 52.6 42.6Q50.6 49.8 46.4 51.4Q43.6 49.2 40 49.4Q36.4 49.2 33.6 51.4Q29.4 49.8 27.4 42.6Z" fill="#c9c9d2"/>
+    <path d="M33.8 49.2Q37 46.8 40 48Q43 46.8 46.2 49.2Q43 50.4 40 49.8Q37 50.4 33.8 49.2Z" fill="#b4b4be"/>
+    <path d="M37 52.4Q40 53.8 43 52.4" fill="none" stroke="#7a4436" stroke-width=".9"/>`,
 });
 
 const ROSA_HAIR = '#23150e';
@@ -238,8 +254,124 @@ const HYPATIA = person({
     <path d="M29.6 34.6Q31 33.4 32.6 33.6M43.6 34.6Q45 33.4 46.6 33.6" fill="none" stroke="#ffffff" stroke-width=".7" opacity=".5"/>`,
 });
 
+/** Aeëtes: slicked-back silver hair, a gold-rimmed eyepatch screen, a too-wide smile and a high gold collar. */
+const AEETES = person({
+  id: 'pa',
+  skin: '#e8c0a0',
+  hair: '#d8dce8',
+  iris: '#3a5a7a',
+  lips: '#a0505a',
+  suit: '#e2b23c',
+  front: `<path d="M24.6 33C22.6 19 31 14.4 40 14.4C49.4 14.4 57.6 19 55.4 33C54.8 26 51 22.4 40 22C31 22.2 26.4 25.2 24.6 33Z" fill="#d8dce8"/>
+    <path d="M28 22Q38 17 52 21M27 26Q38 20.6 53 25" fill="none" stroke="#ffffff" stroke-width=".9" opacity=".7"/><path d="M30 19.4Q40 16 50 18.6" fill="none" stroke="#9aa0b4" stroke-width=".6"/>`,
+  collar: `<path d="M26 60L33 56L40 66L47 56L54 60L50 68L40 72L30 68Z" fill="#5a1a4a"/>
+    <path d="M24 61L32 52L37 64L30 74Z" fill="#f6d27a"/><path d="M56 61L48 52L43 64L50 74Z" fill="#c89a2a"/>
+    <path d="M34 70Q40 74 46 70" fill="none" stroke="#fff2b0" stroke-width="1.2"/><circle cx="40" cy="72.6" r="2" fill="#fff2b0"/>`,
+  extra: `<rect x="41" y="31.6" width="12.4" height="11" rx="3" fill="#12202e" stroke="#ffd166" stroke-width="1.4"/>
+    <path d="M42.6 39.6L45 37.6L47 39L51.4 34.4" fill="none" stroke="#7dff9a" stroke-width=".9" stroke-linecap="round"/>
+    <path d="M41 34L25.6 30.6M53.4 34L55.4 33" stroke="#3a2a20" stroke-width=".8"/>
+    <path d="M31.6 49.6Q40 58.4 49.6 49.2Q40 53.2 31.6 49.6Z" fill="#6a1e2a"/><path d="M33 50.2Q40 53.8 48.2 49.8L47.6 51.4Q40 55.2 33.6 51.6Z" fill="#ffffff"/>
+    <path d="M30.6 48.4Q31 50.4 32.4 50.8M50.6 48Q50.4 50 49 50.6" fill="none" stroke="#7a4e3a" stroke-width=".6"/>`,
+});
+
+/**
+ * Atalanta: the colony's scout, about 13. Warm light-brown skin, green eyes, dark auburn hair with a
+ * side-swept fringe and a long braid over her shoulder, a light visor band, a teal-and-white suit and
+ * the gold strap of her bow across her chest.
+ */
+const ATA_HAIR = '#6a2618';
+const ATALANTA = person({
+  id: 'pt',
+  skin: '#c68a5e',
+  hair: ATA_HAIR,
+  iris: '#3f9a4a',
+  lips: '#a8604e',
+  suit: '#2fb7a3',
+  back: `<path d="M23 54C17 38 19 15 40 14C61 15 63 38 57 54L53 51C54 40 54 30 51 26C46 23 34 23 29 26C26 30 26 40 27 51Z" fill="${ATA_HAIR}"/>`,
+  front: `<path d="M24.4 35C22 21 30 13.6 40.4 13.6C51 13.6 58.4 20.6 55.8 34C55 28 53 25.2 50 24C44 24.6 37 23.4 31.6 26.8C29 28.6 26.6 31.4 24.4 35Z" fill="${ATA_HAIR}"/>
+    ${shine('M28.6 21.6Q35 15.8 45 16.8', ATA_HAIR)}`,
+  collar: `<path d="M26 61Q40 68 54 61L57 64Q40 73 23 64Z" fill="#eef3f6"/><path d="M23 64Q40 73 57 64" fill="none" stroke="#ffc94a" stroke-width="1.2"/>
+    <path d="M16 80L52 61.5" stroke="#ffc94a" stroke-width="2.4"/><circle cx="31" cy="73" r="1.6" fill="#8ff8e4"/>`,
+  extra: `<path d="M24.8 27.6Q40 21.6 55.2 27.6L55 30.6Q40 25 25 30.6Z" fill="#eef3f6"/><path d="M31 26.8Q40 23.8 49 26.8L48.8 28.6Q40 26 31.2 28.6Z" fill="#8ff8e4" opacity=".9"/>
+    ${[0, 1, 2, 3, 4, 5].map((i) => `<ellipse cx="${55.5 + i * 0.9}" cy="${47 + i * 5.2}" rx="${(3.8 - i * 0.25).toFixed(2)}" ry="3.3" fill="${ATA_HAIR}" stroke="${shade(ATA_HAIR, 0.6)}" stroke-width=".7"/>`).join('')}
+    <rect x="58.2" y="74" width="5" height="2.4" rx=".8" fill="#ffc94a"/>`,
+});
+/** Phineus, the blind old astronomer of the Harpy Isles: round dark glasses, a cloud of white beard, a starry robe. */
+const PHIN_WHITE = '#eef0f6';
+const PHINEUS = person({
+  id: 'pp',
+  skin: '#c4916e',
+  hair: '#d8dae2',
+  iris: '#3a2a20',
+  lips: '#9a5a48',
+  suit: '#2e2a6e',
+  back: `<path d="M22 44C18 34 20 26 25 24L27 34Z" fill="${PHIN_WHITE}"/><path d="M58 44C62 34 60 26 55 24L53 34Z" fill="${PHIN_WHITE}"/>`,
+  front: `<path d="M24.6 36C23 30 24 26 27 24.6L29.4 27C27.6 29.6 26 32.4 24.6 36Z" fill="${PHIN_WHITE}"/><path d="M55.4 36C57 30 56 26 53 24.6L50.6 27C52.4 29.6 54 32.4 55.4 36Z" fill="${PHIN_WHITE}"/>
+    ${shine('M30 21.4Q40 17.6 50 21.4', '#c4916e')}`,
+  collar: `<path d="M28 60.5Q40 66 52 60.5L56 63Q40 70 24 63Z" fill="#1e1a52"/>
+    <path d="M18 72l1.4-2.6 1.4 2.6-2.8-1.6h2.8z" fill="#ffd166"/><path d="M60 68l1.2-2.2 1.2 2.2-2.4-1.4h2.4z" fill="#ffd166"/><circle cx="66" cy="75" r="1.1" fill="#ffd166"/><circle cx="14" cy="77" r="1" fill="#ffd166"/>`,
+  extra: `<circle cx="33" cy="37.4" r="5.4" fill="#16141e" stroke="#8a7a5a" stroke-width="1"/><circle cx="47" cy="37.4" r="5.4" fill="#16141e" stroke="#8a7a5a" stroke-width="1"/>
+    <path d="M38.4 37H41.6" stroke="#8a7a5a" stroke-width="1.1"/><path d="M27.6 36.6L25 35.6M52.4 36.6L55 35.6" stroke="#8a7a5a" stroke-width="1"/>
+    <ellipse cx="31.4" cy="35.6" rx="1.6" ry=".9" fill="#fff" opacity=".45"/><ellipse cx="45.4" cy="35.6" rx="1.6" ry=".9" fill="#fff" opacity=".45"/>
+    <path d="M28.2 31.2Q32.4 28.6 37.6 30.4M42.4 30.4Q47.6 28.6 51.8 31.2" fill="none" stroke="${PHIN_WHITE}" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M26 44Q24 60 32 70Q36 76 40 78Q44 76 48 70Q56 60 54 44Q51 50 46.6 51.6Q43.6 49.4 40 49.6Q36.4 49.4 33.4 51.6Q29 50 26 44Z" fill="${PHIN_WHITE}"/>
+    <path d="M33 49.4Q36.8 46.2 40 47.6Q43.2 46.2 47 49.4Q43.2 51 40 50.2Q36.8 51 33 49.4Z" fill="#dcdee6"/>
+    <path d="M36.4 52.2Q40 54.6 43.6 52.2" fill="none" stroke="#9a5a48" stroke-width="1"/>
+    <path d="M34 58Q36 64 38 68M46 58Q44 64 42 68M40 56V72" fill="none" stroke="#c8cad4" stroke-width=".7" opacity=".8"/>`,
+});
+
+/** IRIS: a pearl teardrop with a dark visor, a rainbow eye, little fins and a golden halo. */
+const IRIS = `<svg viewBox="0 0 80 80">
+    ${screen('pi', '#c9a8ff')}
+    <defs>
+      <radialGradient id="piS" cx="38%" cy="28%" r="80%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e6e4f6"/><stop offset="1" stop-color="#9c92c4"/></radialGradient>
+      <linearGradient id="piR" x1="0" x2="1"><stop offset="0" stop-color="#ff5e6a"/><stop offset=".2" stop-color="#ffb347"/><stop offset=".4" stop-color="#ffe066"/><stop offset=".6" stop-color="#7dff9a"/><stop offset=".8" stop-color="#5ec8ff"/><stop offset="1" stop-color="#c37bff"/></linearGradient>
+    </defs>
+    <ellipse cx="40" cy="12" rx="9" ry="3" fill="none" stroke="#ffd166" stroke-width="2.2"/><ellipse cx="40" cy="12" rx="12" ry="5" fill="#ffd166" opacity=".18"/>
+    <path d="M40 15V22" stroke="#b9a8e8" stroke-width="1.6"/>
+    <path d="M17 44Q6 40 4 50Q12 52 19 50Z" fill="#b9a8e8" stroke="#8a7cc0" stroke-width=".8"/><path d="M63 44Q74 40 76 50Q68 52 61 50Z" fill="#b9a8e8" stroke="#8a7cc0" stroke-width=".8"/>
+    <path d="M40 21C55 21 63 32 63 45C63 58 52 68 40 77C28 68 17 58 17 45C17 32 25 21 40 21Z" fill="url(#piS)"/>
+    <path d="M18 52Q40 60 62 52" fill="none" stroke="#b9a8e8" stroke-width="2"/>
+    <rect x="20" y="34" width="40" height="14" rx="7" fill="#141428"/>
+    <rect x="25" y="38" width="30" height="6" rx="3" fill="url(#piR)"/><rect x="25" y="38" width="30" height="6" rx="3" fill="#fff" opacity=".18"/>
+    <circle cx="29" cy="39.4" r="1.2" fill="#fff" opacity=".9"/>
+    <ellipse cx="31" cy="27" rx="5" ry="2.4" fill="#fff" opacity=".7" transform="rotate(-20 31 27)"/>
+    ${glass('pi', '#c9a8ff')}
+  </svg>`;
+
+/** LUX with Brennus's control chip on: red eye, dark spiky armour, glitchy scanlines. */
+const ROGUE = `<svg viewBox="0 0 80 80">
+    ${screen('pr', '#ff3a4c')}
+    <defs>
+      <radialGradient id="prS" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#e8e8ee"/><stop offset=".55" stop-color="#b4b4c2"/><stop offset="1" stop-color="#5e5a6c"/></radialGradient>
+      <radialGradient id="prI" cx="42%" cy="40%" r="62%"><stop offset="0" stop-color="#fff0f0"/><stop offset=".35" stop-color="#ff7a86"/><stop offset=".8" stop-color="#d61a2e"/><stop offset="1" stop-color="#5a0610"/></radialGradient>
+    </defs>
+    <path d="M48 22L53 8" stroke="#6a6478" stroke-width="2" stroke-linecap="round"/><circle cx="53.4" cy="7.6" r="3.2" fill="#ff2a3a"/>
+    <path d="M14 47L2 40L10 52ZM66 47L78 40L70 52ZM24 26L16 12L30 22ZM56 26L64 12L50 22Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <circle cx="40" cy="44" r="24.5" fill="url(#prS)"/>
+    <path d="M17 49Q40 58 63 49L63 55Q40 64 17 55Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <path d="M24 24Q40 15 56 24L54 29Q40 22 26 29Z" fill="#2a1e26" stroke="#a8202a" stroke-width="1"/>
+    <circle cx="40" cy="41" r="13" fill="#140608"/>
+    <circle cx="40" cy="41" r="8.6" fill="url(#prI)"/>
+    <path d="M33 37L47 37" stroke="#140608" stroke-width="2.4"/>
+    <circle cx="40" cy="42" r="2.6" fill="#ffe0e4"/>
+    <path d="M6 30h22v2.4H6zM50 60h24v2H50z" fill="#ff3a4c" opacity=".45"/>
+    ${glass('pr', '#ff3a4c')}
+  </svg>`;
+
+/** Jason's wrist computer, the face on the action button while no droid is around. */
+export const WRIST_FACE = `<svg viewBox="0 0 80 80">
+    <rect x="8" y="22" width="64" height="36" rx="10" fill="#3a4458" stroke="#cfd6e2" stroke-width="2.4"/>
+    <rect x="16" y="28" width="48" height="24" rx="5" fill="#0c131e"/>
+    <path d="M20 40h8l4 -8 6 16 5 -12 3 4h14" fill="none" stroke="#7dff9a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="2" y="30" width="8" height="20" rx="3" fill="#5a6274"/><rect x="70" y="30" width="8" height="20" rx="3" fill="#5a6274"/>
+  </svg>`;
+
 const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   jason: JASON,
+  aeetes: AEETES,
+  atalanta: ATALANTA,
+  phineus: PHINEUS,
   brennus: BRENNUS,
   hypatia: HYPATIA,
   bolt: `<svg viewBox="0 0 80 80">
@@ -285,6 +417,8 @@ const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
     <path d="M18 30l14 6-6 4 12 8" stroke="#ffe0f4" stroke-width="1.6" fill="none"/>
     ${glass('pg', '#ff4fd8')}
   </svg>`,
+  iris: IRIS,
+  rogue: ROGUE,
   colonist: COLONIST,
   captain: CAPTAIN,
   rosa: ROSA,
@@ -319,24 +453,32 @@ export const PORTRAIT: Record<Speaker, string> = { ...FACES, celestia: FACES.gas
 
 export const SPEAKER_NAME: Record<Speaker, string> = {
   jason: 'Jason',
+  atalanta: 'Atalanta',
   bolt: 'LUX',
   halcyon: 'HALCYON',
   glitch: 'HALCYON?!',
+  iris: 'IRIS',
+  rogue: 'LUX?!',
   colonist: 'Colonist',
-  captain: 'Captain Atalanta',
+  captain: 'Captain Argus',
   rosa: 'Aunt Rosa',
   vendy: 'Pandora',
   gascu: 'GaScu',
   celestia: 'Celestia',
   brennus: 'General Brennus',
   hypatia: 'Dr. Hypatia',
+  aeetes: 'Aeëtes',
+  phineus: 'Phineus',
 };
 
 export const SPEAKER_COLOR: Record<Speaker, string> = {
   jason: '#ffb07a',
+  atalanta: '#5fe0c8',
   bolt: '#7fe6ff',
   halcyon: '#ff8a6a',
   glitch: '#ff4fd8',
+  iris: '#c9a8ff',
+  rogue: '#ff3a4c',
   colonist: '#ffd166',
   captain: '#ffd166',
   rosa: '#ff8a8a',
@@ -345,6 +487,8 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   celestia: '#ff6fcf',
   brennus: '#ff6a5a',
   hypatia: '#9adfff',
+  aeetes: '#ffd166',
+  phineus: '#c9b8ff',
 };
 
 let portraitCopies = 0;

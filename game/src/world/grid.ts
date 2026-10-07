@@ -119,7 +119,7 @@ export function parseLevel(def: LevelDef): ParsedLevel {
       const spec = legend[ch];
       if (!spec) throw new Error(`${def.id}: unknown map character '${ch}' at ${x},${z}`);
       const near = majority(rows, x, z);
-      const floor: TileKind = spec.floor ?? (spec.type === 'platform' || spec.type === 'faller' ? 'void' : near.kind);
+      const floor: TileKind = spec.floor ?? (spec.type === 'platform' || spec.type === 'faller' ? 'void' : spec.type === 'wallrun' ? 'wall' : near.kind);
       const h = spec.h ?? near.h;
       cells.push({ kind: floor, h: floor === 'hazard' ? -0.35 : h, dark: false });
       if (spec.type === 'spawn') {

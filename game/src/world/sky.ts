@@ -40,7 +40,8 @@ function outdoorSky(theme: Theme, o: Outdoor, center: THREE.Vector3, span: numbe
   const q = new THREE.Quaternion();
   const col = new THREE.Color();
   const haze = new THREE.Color(theme.skyBottom);
-  const flat = o.ground === 'sand';
+  // Dunes and far cloud banks stay low; mountains rise.
+  const flat = o.ground === 'sand' || !!o.cloudSea;
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + rng.range(-0.05, 0.05);
     const dist = span * 0.75 + 150 + rng.range(0, 60);

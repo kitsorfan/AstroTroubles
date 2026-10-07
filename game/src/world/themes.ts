@@ -24,6 +24,11 @@ export interface Outdoor {
   hills: string;
   /** Stars in the sky (a twilight region). */
   stars: boolean;
+  /**
+   * Sky-islands: far below there is no valley, just a soft sea of clouds (with a few more islands
+   * floating in it), and the far mountains become distant cloud banks.
+   */
+  cloudSea?: boolean;
 }
 
 export interface Theme {
@@ -363,5 +368,85 @@ export const THEMES: Record<ThemeId, Theme> = {
     space: false,
     bloom: 0.24,
     outdoor: { ground: 'basalt', ground2: '#4a3a38', rock: '#3a2e2e', rockDark: '#1e1616', below: '#ff5a10', belowGlow: true, sunDisc: '#ff9060', clouds: '#4a2a24', hills: '#2a1414', stars: false },
+  },
+  /* Chapter 3: the Argo's voyage. A flight level has no deck to build; the vehicle stages its own sky. */
+  rocks: {
+    skyTop: '#05061a',
+    skyBottom: '#1a1240',
+    fog: '#120c30',
+    fogNear: 90,
+    fogFar: 300,
+    floor: '#6a6478',
+    floorLine: '#3a3448',
+    floorSide: '#2a2438',
+    ice: '#cfd6ff',
+    wall: '#4a4258',
+    wallTrim: '#ffd166',
+    edge: '#ffd166',
+    hazard: '#ffb84a',
+    hazardDeep: '#4a2a08',
+    hemiSky: '#d8d0ff',
+    hemiGround: '#2a1a30',
+    hemi: 0.6,
+    sun: '#fff0d8',
+    sunI: 1.5,
+    accent: '#ffd166',
+    mood: 'motes',
+    space: true,
+    bloom: 0.32,
+  },
+  /* The Harpy Isles: grassy sky-islands on stone stems, high above a sea of clouds. */
+  harpies: {
+    skyTop: '#2f7ad0',
+    skyBottom: '#ffe6c8',
+    fog: '#e8eef6',
+    fogNear: 64,
+    fogFar: 215,
+    floor: '#6aac44',
+    floorLine: '#468a2c',
+    floorSide: '#8a6a4c',
+    ice: '#c8ecff',
+    wall: '#a8988a',
+    wallTrim: '#2fb7a3',
+    edge: '#d8f0a0',
+    hazard: '#7fd8ff',
+    hazardDeep: '#2a6a9a',
+    hemiSky: '#f0f6ff',
+    hemiGround: '#6a7a5a',
+    hemi: 1.05,
+    sun: '#fff0d8',
+    sunI: 2.1,
+    accent: '#2fb7a3',
+    mood: 'petals',
+    space: false,
+    bloom: 0.14,
+    outdoor: { ground: 'grass', ground2: '#9ccc5a', rock: '#a8988a', rockDark: '#6e6052', below: '#f4f6fb', sunDisc: '#fff4dc', clouds: '#ffffff', hills: '#c8d8ee', stars: false, cloudSea: true },
+  },
+  /* Aeëtes's Mine: an open-pit gold mine on a dusty moon, under a black sky full of stars, with molten ore glowing at the bottom of the pit. */
+  mine: {
+    skyTop: '#070614',
+    skyBottom: '#3a2a3e',
+    fog: '#2e2230',
+    fogNear: 48,
+    fogFar: 165,
+    floor: '#7a6a5a',
+    floorLine: '#4a3e34',
+    floorSide: '#3a3028',
+    ice: '#c8d0e8',
+    wall: '#5e4e42',
+    wallTrim: '#ffc23a',
+    edge: '#ffc23a',
+    hazard: '#ffaa22',
+    hazardDeep: '#5a2a04',
+    hemiSky: '#ffd8b0',
+    hemiGround: '#2a1a14',
+    hemi: 0.72,
+    sun: '#fff0d8',
+    sunI: 1.7,
+    accent: '#ffc23a',
+    mood: 'dust',
+    space: false,
+    bloom: 0.26,
+    outdoor: { ground: 'rock', ground2: '#9a8466', rock: '#6e5c4c', rockDark: '#3e322a', below: '#ff9a20', belowGlow: true, sunDisc: '#fff4e0', clouds: null, hills: '#4a3a48', stars: true },
   },
 };

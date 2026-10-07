@@ -5,14 +5,30 @@ import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability, DeckId } from '../src/world/levelTypes';
 import { deckAbilities } from './deckAbilities';
-import { isCollectible, reach, refillGaps, renderReach, timedRoutes } from './reach';
+import { isCollectible, levelHeroes, reach, refillGaps, renderReach, timedRoutes } from './reach';
 
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
 
 function check(id: DeckId, showMap: boolean) {
+  const def = LEVELS[id];
+  if (def.flight) {
+    // A flight level has no map to walk: its course is checked by game/tests/chapter3.test.ts.
+    const n = (k: string) => def.flight?.things.filter((t) => t.kind === k).length ?? 0;
+    console.log(`== ${id} (flight: ${def.vehicle}) rocks ${n('rock')} crystals ${n('crystal')} rings ${n('ring')} bolts ${n('bolt')} drone waves ${n('drones')} clashing pairs ${n('clash')} hold lines ${n('hold')} checkpoints ${n('checkpoint')}`);
+    return;
+  }
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
   const lines: string[] = [`== ${id} (${level.width}x${level.depth}) abilities: [${before.join(', ')}] -> [${after.join(', ')}]`];
+  const heroes = levelHeroes(level);
+  if (heroes.length === 1 && heroes[0] !== 'jason') lines.push(`  hero: ${heroes[0]} only (no switching on this level)`);
+  else if (heroes.length > 1) {
+    lines.push(`  heroes: ${heroes.join(' + ')} (switching anywhere on the ground)`);
+    for (const h of heroes) {
+      const alone = reach(level, after, [h]).missing.filter((e) => !isCollectible(e.spec));
+      lines.push(`  ${h} alone can't reach: ${alone.map((e) => e.id).join(', ') || 'nothing (the other hero is never needed)'}`);
+    }
+  }
   const upgrade = level.entities.find((e) => e.spec.type === 'upgrade');
   if (upgrade) {
     const r0 = reach(level, before);

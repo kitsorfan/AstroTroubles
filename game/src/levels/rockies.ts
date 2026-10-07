@@ -4,7 +4,9 @@ import type { LevelDef } from '../world/levelTypes';
  * Region 4 of Gaia Nova — the Titan Rockies, one long climb. Cross the plank bridge at the bottom of
  * the canyon, grapple from ring to ring up the cliffs, dodge the boulders rolling across the high
  * plateau and clear the Thorn Legion camp, zip over the rapids gorge, brave the windy ledges and the
- * cable car, and stop STHENO, the Gorgon's last gunship, on the pass beside the wreck.
+ * cable car, and stop STHENO, the Gorgon's last gunship, on the pass beside the wreck. Brennus has
+ * taken LUX, so Jason climbs alone: his wrist computer hacks the terminals, his helmet lamp lights the
+ * Gorgon's dark cargo hold, and HALCYON keeps him company on the radio.
  */
 export const rockies: LevelDef = {
   id: 'rockies',
@@ -37,7 +39,7 @@ export const rockies: LevelDef = {
             ##################666#########
                          #Y66y666h66#6Y66#
                          #66V666666TD66I6#
-                         #6666666]66#6666#
+                         #6666666]66#6%66#
                          #666666(666######
                          #H6666C66v6666s6#
                          #6x6666;6666o66x#
@@ -182,7 +184,7 @@ export const rockies: LevelDef = {
     p: { type: 'sign', text: 'The rapids are fast and freezing! Cross the plank bridge to the big rock, then GRAPPLE from rock to rock.' },
     q: { type: 'sign', text: 'Windy ledge! When dust streaks blow past, a gust is coming: walk into the wind, or SPIN to dig in. The loose stones fall when you step on them, so keep moving!' },
     n: { type: 'sign', text: 'All aboard the cable car! Hop on and ride it across the gap.' },
-    v: { type: 'sign', text: 'The Gorgon’s old cargo hold is still locked. HACK the terminal to open it!' },
+    v: { type: 'sign', text: 'The Gorgon’s old cargo hold is still locked. HACK the terminal with your wrist computer! It’s dark in there, but your helmet lamp switches on by itself.' },
     y: { type: 'sign', text: 'STHENO flies on three glowing ENGINES. Zip up to the rings at the edge of the pass, get close, and BLAST the engines!' },
     // Decor.
     M: { type: 'decor', kind: 'wreck', scale: 1.8, rot: 0.6 },
@@ -208,8 +210,9 @@ export const rockies: LevelDef = {
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'The Titan Rockies. The Gorgon’s wreck is at the very top of the pass.' },
-      { who: 'bolt', text: 'Up? We have to go UP? Okay. Okay okay okay.' },
-      { who: 'jason', text: 'We have the grapple. We can climb anything.' },
+      { who: 'jason', text: 'It’s so quiet without LUX. Nobody saying “okay okay okay” every time we have to climb.' },
+      { who: 'halcyon', text: 'You are not alone, Jason. I am right here on the radio. Your wrist computer can HACK terminals, and your helmet lamp will light up anywhere dark.' },
+      { who: 'jason', text: 'Okay. I climb, I beat whatever Brennus throws at me, and I get LUX back.' },
       { who: 'halcyon', text: 'Careful: Brennus’s last gunship, STHENO, guards the pass. And the rocks up here like to roll.' },
     ],
     log: [
@@ -218,27 +221,28 @@ export const rockies: LevelDef = {
       { who: 'hypatia', text: 'If anyone finds the Gorgon: his journal pages are scattered all over these mountains. Read them. There is a person in there.' },
     ],
     boss: [
-      { who: 'brennus', text: 'STHENO, sister of the Gorgon! Blow them off my mountain!' },
-      { who: 'bolt', text: 'A flying gunship! Jason, it is shooting MISSILES!' },
-      { who: 'jason', text: 'Then we go up and meet it. Grapple, LUX!' },
+      { who: 'brennus', text: 'STHENO, sister of the Gorgon! Blow this boy off my mountain!' },
+      { who: 'jason', text: 'Where is LUX, Brennus? What did you do with him?' },
+      { who: 'brennus', text: 'Your little robot is safe in my fortress. He is learning to be USEFUL.' },
+      { who: 'jason', text: 'Then I’m coming to get him. Right after I ground your gunship!' },
     ],
     bossDown: [
-      { who: 'bolt', text: 'Stheno is going down... into the clouds!' },
-      { who: 'jason', text: 'Look, LUX. Brennus planted a little garden in the wreck.' },
-      { who: 'bolt', text: 'Dead flowers. Forty years of dead flowers.' },
-      { who: 'halcyon', text: 'Celestia’s signal is getting stronger. It is coming from the east: through the jungle, and on to the volcano.' },
+      { who: 'halcyon', text: 'Stheno is going down... into the clouds!' },
+      { who: 'jason', text: 'Look. Brennus planted a little garden in the wreck. Dead flowers. Forty years of dead flowers.' },
+      { who: 'jason', text: 'LUX would have said something funny about that. I miss him.' },
+      { who: 'halcyon', text: 'Celestia’s signal is getting stronger, and so is the signal of the drone that took LUX. Both come from the east: through the jungle, and on to the volcano.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “The Gorgon fell on the mountains in the storm that night. I built a fortress inside the volcano. Warm. Safe. MINE.”' },
-      { who: 'jason', text: 'He keeps saying MINE. Like a little kid with a toy.' },
+      { who: 'jason', text: 'A journal page! “The Gorgon fell on the mountains in the storm that night. I built a fortress inside the volcano. Warm. Safe. MINE.”' },
+      { who: 'halcyon', text: 'He says MINE a lot. Like a small child with a toy.' },
     ],
     'shard:s2': [
-      { who: 'bolt', text: '“The colony ship is coming at last. And Celestia is riding on it. After forty years, it came BACK.”' },
-      { who: 'bolt', text: 'Celestia did not come back on purpose! It tried as hard as it could to steer us AWAY!' },
+      { who: 'jason', text: '“The colony ship is coming at last. And Celestia is riding on it. After forty years, it came BACK.”' },
+      { who: 'halcyon', text: 'Celestia did not come back on purpose. It tried as hard as it could to steer our ship AWAY.' },
     ],
     'shard:s3': [
-      { who: 'bolt', text: '“I will not destroy it this time. I will cage it, and its power will make my Legion unstoppable. ...So why do I feel worse?”' },
-      { who: 'jason', text: 'Maybe because deep down, he knows it’s wrong.' },
+      { who: 'jason', text: '“I will not destroy it this time. I will cage it, and its power will make my Legion unstoppable. ...So why do I feel worse?”' },
+      { who: 'halcyon', text: 'Maybe because deep down, he knows it is wrong.' },
     ],
   },
 };

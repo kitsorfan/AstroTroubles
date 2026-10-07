@@ -158,7 +158,12 @@ function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: numb
   const ball = new THREE.SphereGeometry(1, 10, 7);
   const spire = new THREE.ConeGeometry(1, 2.4, 7).translate(0, 1.2, 0);
   const stone = new THREE.DodecahedronGeometry(1, 0);
-  switch (o.ground) {
+  if (o.cloudSea) {
+    // A sea of clouds: soft, flattened puffs in white and a blush of sunset.
+    const puff = new THREE.SphereGeometry(1, 18, 12);
+    kinds.push({ geo: puff, colors: ['#ffffff', '#f4f6fb', '#e8eef8', '#fff0e2'], sy: [0.4, 0.65] });
+    kinds.push({ geo: puff, colors: ['#ffffff', '#f6f8fc'], sy: [0.5, 0.8] });
+  } else switch (o.ground) {
     case 'grass':
     case 'jungle':
       kinds.push({ geo: ball, colors: [theme.floor, o.ground2, shade(o.ground2, 0.7), '#2f5a24'], sy: [0.8, 1.2] });
@@ -184,16 +189,60 @@ function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: numb
   const col = new THREE.Color();
   for (const k of kinds) {
     const n = 220;
-    const inst = new THREE.InstancedMesh(k.geo, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true }), n);
+    const inst = new THREE.InstancedMesh(k.geo, new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: !o.cloudSea }), n);
     for (let i = 0; i < n; i++) {
       const x = cx + (rng.next() - 0.5) * span;
       const z = cz + (rng.next() - 0.5) * span;
-      const r = 2 + rng.next() * 5;
+      const r = (2 + rng.next() * 5) * (o.cloudSea ? 2.6 : 1);
       q.setFromAxisAngle(up, rng.next() * Math.PI * 2);
       m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r, r * (k.sy[0] + rng.next() * (k.sy[1] - k.sy[0])), r));
       inst.setMatrixAt(i, m4);
       inst.setColorAt(i, col.set(k.colors[Math.floor(rng.next() * k.colors.length)]).multiplyScalar(0.85 + rng.next() * 0.3));
     }
+    inst.instanceMatrix.needsUpdate = true;
+    if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    inst.computeBoundingSphere();
+    group.add(inst);
+  }
+  return group;
+}
+
+/**
+ * More sky-islands drifting around the play area, out of reach: grassy tops on upside-down cones of
+ * rock, a few with a tree, at different heights between the clouds (one instanced mesh per part).
+ */
+function farIslands(o: Outdoor, theme: Theme, w: number, d: number): THREE.Group {
+  const group = new THREE.Group();
+  const rng = new Rng(29);
+  const n = 18;
+  const rock = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 2.2, 7).rotateX(Math.PI).translate(0, -1.1, 0), new THREE.MeshStandardMaterial({ roughness: 0.95, flatShading: true }), n);
+  const top = new THREE.InstancedMesh(new THREE.CylinderGeometry(1.05, 1, 0.35, 9).translate(0, 0.17, 0), new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true }), n);
+  const tree = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true }), n);
+  const m4 = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const col = new THREE.Color();
+  const reach = Math.hypot(w, d) / 2 + 30;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng.range(-0.15, 0.15);
+    const dist = reach + rng.range(10, 90);
+    const x = w / 2 + Math.cos(a) * dist;
+    const z = d / 2 + Math.sin(a) * dist;
+    const y = rng.range(-14, 10);
+    const s = rng.range(5, 13);
+    q.setFromAxisAngle(up, rng.next() * Math.PI * 2);
+    m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(s, s * rng.range(0.8, 1.4), s));
+    rock.setMatrixAt(i, m4);
+    rock.setColorAt(i, col.set(i % 2 ? o.rock : o.rockDark));
+    m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(s, s, s));
+    top.setMatrixAt(i, m4);
+    top.setColorAt(i, col.set(i % 3 ? theme.floor : o.ground2));
+    const ts = i % 3 === 0 ? 0 : s * 0.3;
+    m4.compose(new THREE.Vector3(x + s * 0.3, y + s * 0.5 + ts * 0.6, z), q, new THREE.Vector3(ts, ts * 1.2, ts));
+    tree.setMatrixAt(i, m4);
+    tree.setColorAt(i, col.set(i % 2 ? '#4f8a34' : '#3f7a2c'));
+  }
+  for (const inst of [rock, top, tree]) {
     inst.instanceMatrix.needsUpdate = true;
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     inst.computeBoundingSphere();
@@ -564,6 +613,7 @@ export function buildLevel(level: ParsedLevel, grid: Grid, theme: Theme, shadows
     floor.position.set((W * CELL) / 2, ABYSS_Y, (D * CELL) / 2);
     group.add(floor);
     group.add(belowProps(outdoor, theme, (W * CELL) / 2, (D * CELL) / 2, span, ABYSS_Y));
+    if (outdoor.cloudSea) group.add(farIslands(outdoor, theme, W * CELL, D * CELL));
   } else if (!theme.space) {
     // The floor of the machinery shafts far below, with its own dim lights.
     const span = Math.max(W, D) * CELL + 120;

@@ -12,7 +12,10 @@ import type { Cond, HoloSpeaker, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
-import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus } from './models';
+import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
+import { makeIris } from './companionModels';
+import { makeHauler, makeOreCart, railSegment } from './mineModels';
+import type { CompanionSkin } from '../game/companions';
 import type { Player } from './player';
 
 export interface FloorFx {
@@ -313,7 +316,7 @@ export class Terminal extends Entity implements Interactable {
 
   label() {
     if (this.done) return null;
-    return this.world.boltActive ? 'HACK' : null;
+    return this.world.canHack ? 'HACK' : null;
   }
 
   interact() {
@@ -539,7 +542,16 @@ export class Platform extends Entity {
     const hw = this.half;
     this.mesh = new THREE.Group();
     const outdoor = world.theme.outdoor;
-    if (outdoor) {
+    if (spec.look === 'cart') {
+      // Aeëtes's Mine: an ore cart, with its rails laid along the whole run.
+      this.mesh.add(makeOreCart(hw));
+      for (let i = 1; i < this.points.length; i++) this.obj.add(railSegment(this.points[i - 1], this.points[i]));
+    } else if (spec.look === 'hauler') {
+      // One of General Brennus's old Legion haulers: it only flies once he gives the order.
+      const hauler = makeHauler(hw);
+      this.mesh.add(hauler.group);
+      this.lens = hauler.lens;
+    } else if (outdoor) {
       // On Gaia Nova: a raft of logs lashed together (stone slabs over lava, so they don't burn).
       const stone = outdoor.ground === 'basalt';
       const logs = Math.max(2, Math.round((hw * 2) / 0.62));
@@ -604,7 +616,17 @@ export class Platform extends Entity {
     this.box.top = this.pos.y;
     this.box.bottom = this.pos.y - 0.5;
     this.mesh.position.copy(this.pos);
+    if (this.lens) {
+      // A hauler's lens turns green once it has its orders, and it bobs a little as it hovers.
+      const go = running;
+      this.lens.color.set(go ? '#3dff8a' : '#ff3a3a');
+      this.lens.emissive.set(go ? '#3dff8a' : '#ff3a3a');
+      this.mesh.position.y += Math.sin(this.world.time * 3) * 0.04;
+    }
   }
+
+  /** A Legion hauler's lens (red until Brennus gives the order). */
+  private lens: THREE.MeshStandardMaterial | null = null;
 }
 
 export class Faller extends Entity {
@@ -743,9 +765,20 @@ export class Vent extends Entity implements FloorFx {
     this.x = cx2x(cx);
     this.z = cx2x(cz);
     this.h = h;
-    this.obj.add(mesh(cyl(0.85, 0.95, 0.14, 20), mat('#2a2f3a', { metal: 0.6 }), this.x, h + 0.07, this.z));
-    for (let i = 0; i < 4; i++) {
-      this.obj.add(mesh(boxG(1.2, 0.05, 0.12), mat('#ffb347', { emissive: '#ff8a1a', ei: 0.6 }), this.x, h + 0.15, this.z - 0.45 + i * 0.3, false));
+    if (world.theme.outdoor?.cloudSea) {
+      // On the sky-islands an updraft is a ring of pale stones around a swirl of warm air.
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        this.obj.add(mesh(sphere(0.22, 8), mat('#d8d0c4', { rough: 0.9 }), this.x + Math.cos(a) * 0.9, h + 0.1, this.z + Math.sin(a) * 0.9));
+      }
+      const swirl = mesh(torus(0.55, 0.05), mat('#ffffff', { emissive: '#bff4ff', ei: 0.8 }), this.x, h + 0.12, this.z, false);
+      swirl.rotation.x = Math.PI / 2;
+      this.obj.add(swirl);
+    } else {
+      this.obj.add(mesh(cyl(0.85, 0.95, 0.14, 20), mat('#2a2f3a', { metal: 0.6 }), this.x, h + 0.07, this.z));
+      for (let i = 0; i < 4; i++) {
+        this.obj.add(mesh(boxG(1.2, 0.05, 0.12), mat('#ffb347', { emissive: '#ff8a1a', ei: 0.6 }), this.x, h + 0.15, this.z - 0.45 + i * 0.3, false));
+      }
     }
     this.glow = glowSprite('#ffe0b0', 3, 0);
     this.glow.position.set(this.x, h + 1.5, this.z);
@@ -1426,8 +1459,9 @@ export class Exit extends Entity implements Interactable {
     this.ring.rotation.x = Math.PI / 2;
     this.pad.add(this.ring);
     this.obj.add(this.pad);
-    if (chapterOf(world.def.id) === 2) {
-      // On Gaia Nova the way out is a hover skiff from the shuttle: Jason stands in it and it flies up and away.
+    if (chapterOf(world.def.id) >= 2) {
+      // Outdoors (Gaia Nova, and the Argonauts' moons) the way out is a hover skiff from the shuttle or the
+      // Argo: Jason stands in it and it flies up and away.
       this.planet = true;
       const hull = mat('#e6edf7', { metal: 0.3, rough: 0.4 });
       const trim = mat('#ff8a3d', { rough: 0.5 });
@@ -1478,7 +1512,7 @@ export class Exit extends Entity implements Interactable {
 }
 
 /** A hologram projector that plays a recorded message the first time Jason walks by. */
-const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a' };
+const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a', atalanta: '#8ff8e4' };
 
 export class Holo extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
@@ -1565,18 +1599,26 @@ export class Holo extends Entity implements Interactable {
   }
 }
 
-/** LUX, switched off and hiding in the dark, waiting for someone to fix him. */
+/** A droid switched off in the dark, waiting for someone to fix it: LUX on the ship, IRIS in the jungle. */
 export class BoltFind extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
   range = 2.8;
-  readonly model = makeBolt();
-  /** Set while the wake-up cutscene animates LUX; stops the idle sputtering. */
+  readonly model: BoltModel;
+  /** Set while the wake-up cutscene animates the droid; stops the idle sputtering. */
   waking = false;
   private t = 0;
   private busy = false;
 
-  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+  constructor(
+    world: World,
+    id: string,
+    cx: number,
+    cz: number,
+    h: number,
+    readonly who: CompanionSkin = 'lux',
+  ) {
     super(world, id);
+    this.model = who === 'iris' ? makeIris() : makeBolt();
     this.spot = new THREE.Vector3(cx2x(cx), h, cx2x(cz));
     this.model.root.position.set(this.spot.x, h + 0.35, this.spot.z);
     this.model.root.rotation.z = 0.9;
@@ -1587,7 +1629,12 @@ export class BoltFind extends Entity implements Interactable {
   }
 
   label() {
-    return this.busy ? null : 'FIX DRONE';
+    if (this.busy) return null;
+    return this.isLux ? 'FIX DRONE' : 'WAKE UP';
+  }
+
+  private get isLux() {
+    return this.who === 'lux';
   }
 
   interact() {

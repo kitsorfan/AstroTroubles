@@ -1,14 +1,32 @@
 import type { PuzzleKind } from '../game/puzzles';
 import type { PanelId } from '../ui/panels/ids';
+import type { FlightCourse } from '../vehicles/course';
 
-/** Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova. */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano';
+/**
+ * Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova;
+ * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
+ * one by one: see `CHAPTER_PLAN` in levels/index.ts).
+ */
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine';
+/**
+ * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
+ * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
+ */
+export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
-/** The last four are General Brennus's robots (chapter 2 only). */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus';
+/**
+ * The playable heroes (see `entities/heroes/heroes.ts` for what each one can do). Jason is the
+ * default; chapter 3 adds Atalanta, and General Brennus plays his own levels (3 and 8).
+ */
+export type HeroId = 'jason' | 'atalanta' | 'brennus';
+/**
+ * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
+ * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
+ */
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -59,6 +77,8 @@ export type Spec = Base &
         wait?: number;
         size?: number;
         needs?: Cond;
+        /** Dressed as a mine's ore cart on rails, or one of Brennus's hauler robots (default: the deck's own platform). */
+        look?: 'cart' | 'hauler';
       }
     | { type: 'faller' }
     | { type: 'bounce' }
@@ -74,7 +94,8 @@ export type Spec = Base &
     | { type: 'dark' }
     | { type: 'exit' }
     | { type: 'breakwall' }
-    | { type: 'boltfind' }
+    /** A droid switched off in a dark corner, waiting for Jason to wake it: LUX (default) or IRIS. */
+    | { type: 'boltfind'; who?: 'lux' | 'iris' }
     /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */
     | { type: 'holo'; log: string; who?: HoloSpeaker }
     /** A glowing grapple ring: with the GRAPPLE hook, Jason can zip to it from far away (and land on the cell it sits on). */
@@ -85,6 +106,26 @@ export type Spec = Base &
     | { type: 'quicksand' }
     /** A lane that a boulder (or log, or snowball) rolls down every `period` seconds: jump over it. */
     | { type: 'boulder'; axis: 'x' | 'z'; length: number; period?: number; offset?: number }
+    /** A bullseye on a post: only an arrow from Atalanta's bow (a charged power arrow) sets `flag`. */
+    | { type: 'target'; flag: string }
+    /** A wall cell with a glowing running stripe: Atalanta can wall-run along its faces. The cell is a wall. */
+    | { type: 'wallrun' }
+    /** A wall with a low crawl hole: only Atalanta's slide fits under it. `axis` is the way through (guessed from the walls beside it). */
+    | { type: 'lowgap'; axis?: 'x' | 'z' }
+    /* General Brennus's puzzles (his own levels). */
+    /** A cracked rock wall veined with gold: only a charged CANNON blast or Brennus's CHARGE smashes it. The cell under it is floor. */
+    | { type: 'cracked' }
+    /**
+     * A Legion command post: Brennus walks up and gives the order with the action button (COMMAND), which
+     * sets `flag`. `order` says what his robots do: walk onto a heavy plate (`plate`), carry him over a
+     * gap (`carry`: a hauler platform with `needs: { flag }`), or switch sides and fight for him
+     * (`fight`: the gold robots of `room`).
+     */
+    | { type: 'post'; flag: string; order: 'plate' | 'carry' | 'fight'; room?: string }
+    /** One of Brennus's old Legion robots, painted gold by Aeëtes and standing idle: on the post's `flag` it marches to the nearest heavy plate. */
+    | { type: 'legionbot'; flag: string }
+    /** A heavy plate: sets `flag` while something heavy (Brennus, or a robot for good) stands on it. */
+    | { type: 'plate'; flag: string }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -130,7 +171,8 @@ export type DecorKind =
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
- * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`).
+ * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`). Chapter 3's
+ * endings (the true final ones) come with its last level.
  */
 export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 
@@ -138,10 +180,32 @@ export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops'];
 
 /** Who can appear in a hologram log. */
-export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus';
+export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus' | 'atalanta';
 
 /** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
-export type Speaker = 'jason' | 'bolt' | 'halcyon' | 'glitch' | 'colonist' | 'vendy' | 'gascu' | 'celestia' | 'captain' | 'rosa' | 'brennus' | 'hypatia';
+export type Speaker =
+  | 'jason'
+  | 'bolt'
+  | 'halcyon'
+  | 'glitch'
+  | 'colonist'
+  | 'vendy'
+  | 'gascu'
+  | 'celestia'
+  | 'captain'
+  | 'rosa'
+  | 'brennus'
+  | 'hypatia'
+  /** Aeëtes, the salvage tycoon who wants the Golden Fleece (chapter 3's villain). */
+  | 'aeetes'
+  /** Atalanta, the scout who joins the Argonauts in chapter 3 (a playable hero). */
+  | 'atalanta'
+  /** IRIS, the rainbow droid Jason finds in the jungle. */
+  | 'iris'
+  /** LUX while Brennus's control chip has hold of him. */
+  | 'rogue'
+  /** Phineus, the blind old astronomer of the Harpy Isles (chapter 3). */
+  | 'phineus';
 
 export interface Line {
   who: Speaker;
@@ -178,6 +242,23 @@ export interface LevelDef {
    */
   stories?: Record<string, StoryBeat[]>;
   boss?: BossKind;
+  /**
+   * Driven instead of walked: the vehicle replaces Jason on foot, with its own controls, camera and HUD.
+   * A vehicle level still has a (tiny) map for the spawn, but its play happens on the vehicle's course.
+   */
+  vehicle?: VehicleKind;
+  /** The Argo's flight course (for `vehicle: 'argo'`). */
+  flight?: FlightCourse;
+  /**
+   * Heroes the player can switch between on this level, the first one starting (default: just
+   * Jason). With two or more, the HUD shows the switch button.
+   */
+  heroes?: HeroId[];
+  /**
+   * Heroes from `heroes` who join partway through the level, with the flag that brings them in:
+   * until it is set they stay out of the roster (Atalanta joins on the Harpy Isles when Jason meets her).
+   */
+  joins?: Partial<Record<HeroId, string>>;
 }
 
 export interface Cell {

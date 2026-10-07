@@ -6,7 +6,7 @@ import { Grid } from '../world/grid';
 import type { EnemyKind } from '../world/levelTypes';
 import { Enemy } from './enemies';
 import { Entity, type HitKind } from './entity';
-import { LEGION, makeBulwark, makeMinebot, makeMortar, makeShell, makeTrooper } from './robotModels';
+import { LEGION, makeBulwark, makeMinebot, makeMortar, makeShell, makeTrooper, paintRobot } from './robotModels';
 
 /**
  * General Brennus's robots (the Thorn Legion's machines), met only on Gaia Nova. Every attack has a
@@ -42,9 +42,12 @@ let classes: Record<RobotKind, RobotClass> | null = null;
  * Builds one of Brennus's robots. The classes extend `Enemy`, and enemies.ts imports this file for
  * `makeEnemy`, so they are defined on first use rather than when the module loads.
  */
-export function makeRobot(world: World, id: string, kind: RobotKind, x: number, y: number, z: number): Enemy {
+export function makeRobot(world: World, id: string, kind: RobotKind, x: number, y: number, z: number, variant?: string): Enemy {
   classes ??= { trooper: trooperClass(), minebot: minebotClass(), bulwark: bulwarkClass(), mortar: mortarClass() };
-  return new classes[kind](world, id, x, y, z);
+  const e = new classes[kind](world, id, x, y, z);
+  // `gold`: one of the Legion robots Aeëtes stole and painted gold (chapter 3).
+  if (variant === 'gold') paintRobot(e.model.root, 'gold');
+  return e;
 }
 
 /** Floor height at a world position (or `fallback` over void and walls). */
@@ -413,7 +416,7 @@ function bulwarkClass() {
     hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean {
       if (!this.alive) return false;
       // A ground pound shakes the shield out of its hands; LUX's zap and pulse jolt its arm.
-      const knocks = kind === 'pound' || kind === 'zap' || kind === 'pulse' || kind === 'blast';
+      const knocks = kind === 'pound' || kind === 'zap' || kind === 'pulse' || kind === 'blast' || kind === 'smash';
       if (this.shieldUp && !knocks && this.facingDot(from) > 0.3) {
         this.block(from);
         return true;

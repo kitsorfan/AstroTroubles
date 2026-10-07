@@ -23,7 +23,10 @@ import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
  * Gaia Nova, it turned the ship away), and chapter 2 calls it by that real name: Brennus reveals it
  * in his broadcast. Brennus captures Dr. Hypatia's science team, and his drones steal Celestia so he
  * can force its pollen into a Thorn Legion of machines and build the Colossus inside the volcano
- * Mount Atlantas. Jason and LUX cross six regions to free the scientists and Celestia. The
+ * Mount Atlantas. Jason and LUX cross six regions to free the scientists and Celestia. In the
+ * tundra Brennus's snare drone carries LUX off, so Jason climbs the Rockies alone; in the jungle he
+ * wakes IRIS, a rainbow droid of the Gardeners that Brennus threw away; and in the volcano Brennus
+ * sets the reprogrammed LUX on him, until IRIS sings the control chip off and LUX comes home. The
  * 18 pages of Brennus's journal tell how a boy who loved his grandmother's greenhouse became a man
  * who tries to own everything; with all of them, Jason can talk him down instead of beating him.
  */
@@ -53,6 +56,9 @@ export const FLYOVER: Record<DeckId, string> = {
   rockies: 'The <b>Titan Rockies</b>. Cliffs taller than the {ship}, rickety bridges, and up at the very top... the wreck of the Gorgon.',
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
+  rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
+  harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
+  mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -100,32 +106,60 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'halcyon', text: 'That would explain why Celestia dreamed of a warm blue world. It was not a dream. It was a memory.' },
     { who: 'jason', text: 'And now Brennus wants to turn it into a weapon. Not if we can help it. North, to the tundra!' },
   ],
+  // LUX was carried off at the end of the tundra: Jason flies on alone, with HALCYON on the radio.
   snow: [
     { who: 'halcyon', text: 'Dr. Galen is safe on board the {ship}. He slept for forty years and woke up very hungry. He has eaten eleven pancakes.' },
-    { who: 'jason', text: 'Did the others hear anything about Brennus’s plans?' },
-    { who: 'halcyon', text: 'Engineer Ariadne did: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”' },
-    { who: 'bolt', text: 'A journal? Brennus has FEELINGS? ...Should I be more scared or less scared?' },
+    { who: 'jason', text: 'That’s good. ...HALCYON, any sign of LUX?' },
+    { who: 'halcyon', text: 'Not yet. But Engineer Ariadne heard something: “Brennus is building something called the COLOSSUS. And he writes everything in his journal. Find the pages, and you will understand him.”' },
+    { who: 'jason', text: 'Then I’ll find every page. And I’ll find LUX.' },
   ],
   rockies: [
     { who: 'jason', text: 'The Gorgon crashed up there forty years ago. Brennus has been alone on this planet ever since.' },
-    { who: 'bolt', text: 'Forty years alone. I was alone in a dark storeroom for ONE day, and I did not like it at all.' },
-    { who: 'halcyon', text: 'Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.' },
-    { who: 'jason', text: 'Then we fix it. Hang on, Celestia. We’re coming.' },
+    { who: 'jason', text: 'Forty years alone. One day without LUX and I’m already talking to myself.' },
+    { who: 'halcyon', text: 'You are talking to me, Jason. That counts. Warning: the jungle ahead is thick with Celestia pollen. Something has gone very wrong down there.' },
+    { who: 'jason', text: 'Then we fix it. Hang on, Celestia. Hang on, LUX. I’m coming.' },
   ],
+  // IRIS joined in the jungle.
   jungle: [
     { who: 'celestia', text: '...Jason... ...LUX... ...hot... ...trapped... ...please...' },
-    { who: 'bolt', text: 'That was Celestia! It flashed to me through the pollen. It is inside the volcano!' },
+    { who: 'iris', text: 'That was Celestia, speaking in pink light through the pollen. It is inside the volcano... and so is your friend.' },
     { who: 'halcyon', text: 'Mount Atlantas. Brennus’s fortress. The Colossus will be waiting for you.' },
-    { who: 'jason', text: 'So will we. One last climb, LUX.' },
-    { who: 'bolt', text: 'One last climb. I will be brave if you are brave.' },
+    { who: 'jason', text: 'So will we. One last climb, IRIS. We’re bringing LUX home.' },
+    { who: 'iris', text: 'One last climb. I will light the way.' },
   ],
   volcano: [],
+  rocks: [
+    { who: 'halcyon', text: 'Course set for the first moon. Its floating islands are called the Harpy Isles.' },
+    { who: 'bolt', text: 'Harpies? Like the grabby bird monsters in the old story?' },
+    { who: 'captain', text: 'Probably just a name. Probably.' },
+    { who: 'halcyon', text: 'Captain, I am picking up a little distress beacon down there. It belongs to one of OUR scout skiffs!' },
+    { who: 'captain', text: 'A colony skiff, all the way out here? ...Oh dear. I know exactly who flies off alone like that.' },
+    { who: 'jason', text: 'We got through the Clashing Rocks. We can get through anything!' },
+  ],
+  // The end of the Harpy Isles: General Brennus sets off alone after Aeëtes (his own level comes next).
+  harpies: [
+    { who: 'halcyon', text: 'Captain, a message is coming in from Gaia Nova. It is... General Brennus?' },
+    { who: 'brennus', text: 'Argus. I saw Aeëtes’s gold ships fly over the colony. I know that kind of greed. I used to have it.' },
+    { who: 'brennus', text: 'He is digging for the Fleece in a mine on the next moon. I am taking the Gorgon’s old lifeboat, and I am going after him. Alone.' },
+    { who: 'captain', text: 'Brennus, wait! ...He switched his radio off. Stubborn as ever.' },
+    { who: 'atalanta', text: 'Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.' },
+    { who: 'jason', text: 'Then we keep going, and we listen for his signal. Hang on, General!' },
+  ],
+  // Brennus's map reaches the Argo (the next level, the Sirens' Sea, is still being built).
+  mine: [
+    { who: 'captain', text: 'Argo to everyone: a message is coming in. From... the Gorgon’s old lifeboat?' },
+    { who: 'brennus', text: 'Argus. It is Brennus. I am sending you a map: the way into the Fleece vault on Colchis. Aeëtes was hiding it in his desk.' },
+    { who: 'hypatia', text: 'You went into Aeëtes’s mine ALONE? Brennus, are you hurt?' },
+    { who: 'brennus', text: 'A few dents. My robots and I are flying home. You fly to Colchis. The map says the way goes through the Sirens’ Sea.' },
+    { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
+    { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
 export const PROLOGUE2 = {
   arrive: 'After months between the stars, the <b>{ship}</b> reached its new home: a green and blue world called <b>Gaia Nova</b>.',
-  team: 'Captain Atalanta sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
+  team: 'Captain Argus sent the science team down first. Their leader, <b>Dr. Hypatia</b>, would find the perfect place to land.',
   quiet: 'Three days later, their radio went quiet...',
   signal: '...and then a message came up from the planet.',
   snatch: 'That night, little black drones swooped onto the {ship}, grabbed Celestia and flew it down to the planet.',
@@ -139,7 +173,7 @@ export const BROADCAST: Line[] = [
   { who: 'brennus', text: 'Your scientists came poking around my planet. They will be my guests for a while.' },
   { who: 'brennus', text: 'And you have brought back something of mine. That little plant you call GaScu. Its real name is CELESTIA.' },
   { who: 'captain', text: 'Brennus... my first commander. He led the first expedition here, forty years ago. We all thought he was lost.' },
-  { who: 'brennus', text: 'Hello, Atalanta. Turn your ship around and fly away, or meet my THORN LEGION.' },
+  { who: 'brennus', text: 'Hello, Argus. Turn your ship around and fly away, or meet my THORN LEGION.' },
 ];
 
 /** After the drones steal Celestia. */
@@ -147,6 +181,50 @@ export const STOLEN: Line[] = [
   { who: 'bolt', text: 'GaScu! I mean... Celestia! They took it! Jason, they TOOK it!' },
   { who: 'captain', text: 'Celestia: the name the first expedition gave it. He wants its pollen for his army. Jason, LUX: take the shuttle down. Find the scientists, and bring Celestia back.' },
   { who: 'jason', text: 'We will, Captain. Come on, LUX. Gaia Nova needs us.' },
+];
+
+/* ---------------- Chapter 3: The Argonauts ---------------- */
+
+/**
+ * Chapter 3, THE ARGONAUTS. After chapter 2, Celestia starts to fade: she is the last of her kind.
+ * Dr. Hypatia and LUX read the light-word ruins of Celestia's people, the Gardeners: they left a Golden
+ * Fleece, a living golden cloak of seeds that can make any world bloom, on Colchis, a moon of the gas
+ * giant next door. Captain Argus rebuilds the shuttle into the Argo, and the crew (the Argonauts) set
+ * off. But the salvage tycoon Aeëtes wants the Fleece too, to sell green planets to the highest bidder.
+ */
+export const PROLOGUE3 = {
+  garden: 'Spring came to <b>Gaia Nova</b>. The colonists planted their very first garden, and Celestia bloomed right in the middle of it.',
+  fading: 'But one morning, Celestia’s glow began to fade. She was the last of her kind... and she was getting very tired.',
+  argo: 'So Captain Argus rebuilt the old shuttle into a brand new ship, and named her the <b>Argo</b>.',
+  crew: 'Her crew called themselves the <b style="color:#ffd166">Argonauts</b>.',
+  launch: 'One bright morning, the Argo lifted off from the Whispering Plains...',
+  moons: '...toward the gas giant next door and its ring of moons. One of them was <b>Colchis</b>.',
+  gold: 'But someone else was heading there too.',
+  soon: 'The voyage continues soon...',
+};
+
+/** The ruins, the Fleece and the plan: said over the storybook picture of the fading Celestia. */
+export const FLEECE: Line[] = [
+  { who: 'celestia', text: '...tired... ...alone... ...the last one...' },
+  { who: 'bolt', text: 'Celestia? Celestia, please wake up! Dr. Hypatia, what do we do?' },
+  { who: 'hypatia', text: 'These old ruins are covered in Celestia’s light-words. LUX, can you read them with me?' },
+  { who: 'bolt', text: 'They say... GARDENERS. Celestia’s people called themselves the Gardeners!' },
+  { who: 'hypatia', text: 'The Gardeners left a gift on Colchis, a moon of the gas giant next door: a living golden cloak of seeds. The GOLDEN FLEECE. It can make any world bloom.' },
+  { who: 'jason', text: 'Then it can make Celestia strong again! How do we get there?' },
+];
+
+/** Captain Argus and his new ship. */
+export const ARGO_BUILT: Line[] = [
+  { who: 'captain', text: 'In the old stories, a ship called the Argo carried the bravest heroes in the world on a quest for a Golden Fleece.' },
+  { who: 'captain', text: 'Our Argo has a ram’s head on the prow, solar oars and a great solar sail. And our heroes are... a little shorter.' },
+  { who: 'jason', text: 'Hey!' },
+  { who: 'halcyon', text: 'All systems ready. Crew: Jason, LUX, Dr. Hypatia, Captain Argus, and me. Please keep your hands inside the ship.' },
+];
+
+/** Our first look at Aeëtes, on his golden flagship. */
+export const AEETES_INTRO: Line[] = [
+  { who: 'aeetes', text: 'A golden cloak that makes dead worlds bloom? Ha! Imagine the PRICE of a brand new green planet.' },
+  { who: 'aeetes', text: 'I am Aeëtes, and I buy and sell EVERYTHING. Find me that Fleece, my little drones. Before anyone else does.' },
 ];
 
 /** Name cards for boss entrances. */
@@ -164,6 +242,9 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   stheno: { sub: 'Last gunship of the Gorgon · guards the mountain pass', color: '#ffb347' },
   hydra: { sub: 'The jungle’s sickness · three heads, zero manners', color: '#ff6fcf' },
   colossus: { sub: 'General Brennus’s war machine · with Celestia caged inside', color: '#ff3a4c' },
+  rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
+  aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
+  excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
 };
 
 /**
@@ -183,6 +264,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   minebot: { name: 'Roller Mine', tip: 'It beeps and flashes before it pops. Blast it early, or run out of the red circle!' },
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
+  harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
@@ -203,7 +285,7 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
   freed: [
     'The Colossus crashed down into the crater, and Mount Atlantas let out one last, tired puff of smoke.',
     'Celestia’s vines slipped free of the machines. All over Gaia Nova, the Thorn Legion switched off and went quiet.',
-    'General Brennus was taken up to the {ship} to explain himself to Captain Atalanta. It was going to be a VERY long talk.',
+    'General Brennus was taken up to the {ship} to explain himself to Captain Argus. It was going to be a VERY long talk.',
     'And at last, the colonists stepped out onto <b>Gaia Nova</b>: a brand new home that belonged to everyone.',
   ],
   redeemed: [
@@ -229,7 +311,7 @@ export function endingText(kind: EndingKind, save: SaveData): string[] {
       ? tr('GaScu became the ship’s gardener. Every deck is full of flowers now, and they glow a little brighter whenever LUX flies by.')
       : tr('LUX kept the little GaScu seed in a flower pot on the Bridge, and whispered to it every night. It always glowed back.'),
   );
-  if (captain) out.push(tr('Captain Atalanta promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
+  if (captain) out.push(tr('Captain Argus promoted Jason to Chief Engineer on the spot. LUX got a medal. He wears it every day.'));
   if (rosa) out.push(tr('Aunt Rosa tells everyone the story of the day her Jason saved the ship. Twice a day. Sometimes three times.'));
   out.push(n ? tr('You rescued {n} of {total} colonists from their cocoons.', { n, total: chapterTotals(1).colonists }) : tr('The colonists woke up and cheered for the engineer who saved the day.'));
   if (kind === 'saved' && inChapter(save.shards, 1) < chapterTotals(1).shards) out.push(tr('Psst... GaScu still has secrets. Find all 18 memory shards and LUX might learn to talk to it.'));
@@ -246,7 +328,8 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
       : tr('Celestia planted itself in the middle of the Whispering Plains. By spring, the whole valley was in flower.'),
   );
   if (hypatia) out.push(tr('Dr. Hypatia named a brand new flower after LUX. It glows in the dark, of course.'));
-  out.push(tr('Captain Atalanta made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
+  out.push(tr('Captain Argus made Jason the colony’s first Chief Explorer. LUX got a second medal. He wears both.'));
+  out.push(tr('IRIS paints rainbows on the greenhouse windows every morning. She has made a new friend: Atalanta, the fastest runner in the colony.'));
   out.push(n ? tr('You freed {n} of {total} scientists from Brennus’s camps.', { n, total: chapterTotals(2).colonists }) : tr('The scientists found their own way home, and told everyone about the boy and his robot.'));
   if (kind === 'freed' && inChapter(save.shards, 2) < chapterTotals(2).shards) out.push(tr('Psst... Brennus’s journal still has missing pages. Find all 18 and you might reach the man inside the machine.'));
   return out;
@@ -273,15 +356,16 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
       head('STARRING'),
       p('Jason, junior engineer'),
       p('LUX, a very brave little drone'),
+      p('IRIS, a droid who speaks in rainbows'),
       head('WITH'),
       p('HALCYON, the ship computer'),
-      p('Captain Atalanta'),
+      p('Captain Argus'),
       p('Dr. Hypatia, chief scientist'),
       p('PANDORA, the travelling shop'),
       p('Celestia, home at last'),
       kind === 'redeemed' ? p('General Brennus, a gardener at last') : p('General Brennus, a very grumpy old general'),
       head('THE THORN LEGION'),
-      p('Thresher · Dune Driller · Boreas'),
+      p('Thresher · Dune Driller · Boreas · Shadow LUX (not really)'),
       p('Stheno · the Thorn Hydra · the Colossus'),
       head('SCIENTISTS YOU FREED'),
       ...(rescued.length ? rescued.map(p) : [p('Everyone made it home safe and sound!')]),
@@ -298,7 +382,7 @@ export function creditsHtml(kind: EndingKind, save: SaveData): string {
     p('LUX, a very brave little drone'),
     head('WITH'),
     p('HALCYON, the ship computer'),
-    p('Captain Atalanta'),
+    p('Captain Argus'),
     p('Aunt Rosa, Security Chief'),
     p('PANDORA, the travelling shop'),
     kind === 'friends' ? p('GaScu, as our new friend') : p('GaScu, as a sleepy seed'),

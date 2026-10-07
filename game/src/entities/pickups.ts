@@ -3,13 +3,14 @@ import * as THREE from 'three';
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
+import { findKind } from '../game/collectibles';
 import { heartCap } from '../game/shop';
 import type { World } from '../game/world';
 import { chapterOf } from '../levels';
 import { Grid } from '../world/grid';
 import type { Ability } from '../world/levelTypes';
 import { Entity } from './entity';
-import { blobShadow, cone, cyl, glowSprite, mat, mesh, sphere, torus } from './models';
+import { blobShadow, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 interface BoltItem {
   x: number;
@@ -30,6 +31,7 @@ const q = new THREE.Quaternion();
 const up = new THREE.Vector3(0, 1, 0);
 const one = new THREE.Vector3(1, 1, 1);
 const p3 = new THREE.Vector3();
+const STONE_HUE = new THREE.Color();
 
 /** Every bolt on the deck, drawn as one instanced mesh. */
 export class BoltField {
@@ -281,15 +283,31 @@ export class EnergyPickup extends Floater {
   }
 }
 
-/** A memory shard on the ship (a pink crystal), or a page of Brennus's journal on Gaia Nova (a glowing gold page). */
+/**
+ * A memory shard on the ship (a pink crystal), a page of Brennus's journal on Gaia Nova (a glowing gold
+ * page), or a Gardener light-stone in chapter 3 (a smooth stone glowing through the rainbow).
+ */
 export class Shard extends Floater {
   private spark: string;
+  /** A light-stone's glow, which drifts through the colours of the rainbow. */
+  private stone: THREE.MeshStandardMaterial | null = null;
+  private stoneGlow: THREE.Sprite | null = null;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 1.2);
-    const page = chapterOf(world.def.id) === 2;
-    this.spark = page ? '#ffe08a' : '#ff9ae0';
-    if (page) {
+    const kind = findKind(chapterOf(world.def.id));
+    const page = kind === 'page';
+    this.spark = page ? '#ffe08a' : kind === 'stone' ? '#ffffff' : '#ff9ae0';
+    if (kind === 'stone') {
+      // A smooth river stone with a glowing Gardener rune band around it.
+      this.stone = ownMat('#e8e4ff', { emissive: '#ff5e6a', ei: 1.3, rough: 0.25, metal: 0.1 });
+      const rock = mesh(new THREE.DodecahedronGeometry(0.36, 1), this.stone);
+      rock.scale.set(1, 0.72, 0.86);
+      this.obj.add(rock);
+      this.obj.add(mesh(torus(0.37, 0.035), mat('#ffffff', { emissive: '#ffffff', ei: 1.4 }), 0, 0, 0, false).rotateX(Math.PI / 2));
+      this.stoneGlow = glowSprite('#ffffff', 2.8, 0.55);
+      this.obj.add(this.stoneGlow);
+    } else if (page) {
       // A slightly curled page, its lines of handwriting glowing, with a red wax seal.
       const paper = mat('#fff4d6', { emissive: '#ffcf5a', ei: 0.7, rough: 0.6 });
       const sheet = mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.9, 12, 1, true, -0.28, 0.56), paper, 0, 0, -1.3, false);
@@ -306,13 +324,20 @@ export class Shard extends Floater {
       crystal.scale.set(0.7, 1.25, 0.7);
       this.obj.add(crystal, glowSprite('#ff6fcf', 2.8, 0.55));
     }
-    const ring = mesh(torus(0.62, 0.03), mat('#ffffff', { emissive: page ? '#ffe08a' : '#ffc6ef', ei: 1 }), 0, 0, 0, false);
+    const ring = mesh(torus(0.62, 0.03), mat('#ffffff', { emissive: page ? '#ffe08a' : kind === 'stone' ? '#ffffff' : '#ffc6ef', ei: 1 }), 0, 0, 0, false);
     ring.rotation.x = Math.PI / 2;
     this.obj.add(ring);
   }
 
   update(dt: number) {
     super.update(dt);
+    if (this.stone && this.stoneGlow) {
+      // Red, orange, yellow, green, blue, violet... and round again.
+      STONE_HUE.setHSL((this.world.time * 0.12) % 1, 0.95, 0.6);
+      this.stone.emissive.copy(STONE_HUE);
+      this.stoneGlow.material.color.copy(STONE_HUE);
+      this.spark = '#' + STONE_HUE.getHexString();
+    }
     if (Math.random() < 0.15) {
       const o = this.obj.position;
       this.world.particles.emit(o.x, o.y, o.z, { count: 1, color: this.spark, speed: 1.5, life: 0.8, size: 0.35, gravity: -1 });

@@ -1,5 +1,6 @@
 import { CH1_ART } from './ch1';
 import { CH2_ART } from './ch2';
+import { CH3_ART } from './ch3';
 import { PANEL_H, PANEL_W, type PanelId } from './ids';
 
 export { PANEL_IDS, type PanelId } from './ids';
@@ -16,7 +17,7 @@ function sketch(id: PanelId): string {
 }
 
 /** The painted illustrations; any panel missing here falls back to `sketch`. */
-const ART: Partial<Record<PanelId, () => string>> = { ...CH1_ART, ...CH2_ART };
+const ART: Partial<Record<PanelId, () => string>> = { ...CH1_ART, ...CH2_ART, ...CH3_ART };
 
 /** The illustration for a panel, as an SVG string (16:9). */
 export function panelSvg(id: PanelId): string {

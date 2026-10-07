@@ -16,6 +16,10 @@ export const PANEL_IDS = [
   'ch2-arrival',
   'ch2-broadcast',
   'ch2-drones',
+  // LUX is taken, Jason meets IRIS, and LUX comes home.
+  'ch2-luxtaken',
+  'ch2-iris',
+  'ch2-luxback',
   // Forty years ago: the first expedition.
   'past-expedition',
   'past-order',
@@ -25,6 +29,16 @@ export const PANEL_IDS = [
   'ch2-grandma',
   'ch2-freed',
   'ch2-redeemed',
+  // Chapter 3: the Argonauts.
+  'ch3-fading',
+  'ch3-argo',
+  'ch3-aeetes',
+  // The Harpy Isles: Atalanta, and old Phineus's stolen dinner.
+  'ch3-atalanta',
+  'ch3-phineus',
+  // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
+  'ch3-brennus',
+  'ch3-map',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

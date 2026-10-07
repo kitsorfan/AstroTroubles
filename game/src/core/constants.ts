@@ -68,6 +68,114 @@ export const PLAYER = {
   magnetRange: 3.2,
 };
 
+/**
+ * Atalanta, the scout (chapter 3): quicker on her feet than Jason, a higher single jump, wall-jumps
+ * and wall-runs, a slide under low gaps, and a bow with long, straight arrows instead of a blaster.
+ */
+export const ATALANTA = {
+  speed: 8,
+  /** Top speed once she breaks into a sprint: full stick (or a held direction key) for `sprintBuild` seconds. */
+  sprintSpeed: 11.5,
+  sprintBuild: 0.35,
+  /** Stick push that counts as "full" (0..1), and how sharp a turn (radians) breaks the sprint. */
+  sprintStick: 0.9,
+  sprintTurn: 1.2,
+  /** One strong jump (no jet boots): apex about 2.6 units, against Jason's 2.1 for a single jump. */
+  jumpV: 13,
+  /** Kick off a wall: straight up this fast, and away from it at `wallKick`. */
+  wallJumpV: 11.5,
+  wallKick: 7,
+  /** Wall-run on marked walls: at least this fast along the wall, for at most `wallRunTime` seconds. */
+  wallRunTime: 1.1,
+  wallRunLift: 3.5,
+  /** Gravity is scaled by this while she runs along a wall. */
+  wallRunGravity: 0.25,
+  /** Slide (her DASH button): speed, length in seconds, cooldown, and her height while low. */
+  slideSpeed: 14,
+  slideTime: 0.45,
+  slideCooldown: 0.45,
+  crouchHeight: 0.8,
+  /** Crawl speed while a low ceiling keeps her down after the slide. */
+  crawlSpeed: 3.2,
+  /** A slide trips enemies: this much damage (plus Blaster Power) and a stagger. */
+  slideDamage: 1,
+  slideHitRadius: 1.1,
+  /** BOW: quick arrows (tap) and the power arrow (hold). No clip: just a short cooldown. */
+  arrowCooldown: 0.38,
+  arrowSpeed: 34,
+  /** World units a quick arrow flies (Jason's blaster shots fly 22). */
+  arrowRange: 32,
+  /** Auto-aim reach for the bow, in world units. */
+  aimRange: 18,
+  chargeDelay: 0.2,
+  chargeTime: 0.7,
+  powerSpeed: 42,
+  powerRange: 44,
+  /** Enemies a power arrow can pass through before it stops. */
+  pierce: 4,
+  powerDamage: 3,
+};
+
+/**
+ * General Brennus (chapter 3, his own levels): old, slow and strong. A low jump (no jet boots, no
+ * grapple), an arm CANNON with an overheat meter instead of a clip, a big SHIELD, a shoulder CHARGE
+ * that smashes, a heavy STOMP in the air, and COMMAND for his old Legion robots.
+ */
+export const BRENNUS = {
+  speed: 5.6,
+  /** Walking behind the raised shield. */
+  shieldSpeed: 2.4,
+  height: 1.9,
+  /** One low jump: apex about 1.7 units (Jason's single jump reaches 2.1). */
+  jumpV: 10.5,
+  /** CHARGE (the DASH button): a shoulder charge along the ground; jump out of it for a charge-leap. */
+  chargeSpeed: 13,
+  chargeTime: 0.42,
+  chargeCooldown: 0.9,
+  chargeDamage: 3,
+  chargeRadius: 1.35,
+  /** How fast a charge-leap carries on through the air. */
+  leapSpeed: 10,
+  /** CANNON (the BLAST button): heavy shells, no clip, a short cooldown and an overheat meter. */
+  shellCooldown: 0.5,
+  shellSpeed: 21,
+  shellGravity: 6,
+  shellDamage: 2,
+  /** Each shell splashes the targets around where it lands. */
+  shellSplash: 1.6,
+  /** Hold to charge the BIG BLAST: it smashes cracked walls and knocks robots' shields away. */
+  chargeDelay: 0.25,
+  blastCharge: 0.9,
+  blastSpeed: 17,
+  blastDamage: 5,
+  blastRadius: 3.2,
+  /** Heat added by a shell and by a big blast, cooling per second, and the cool-down after overheating. */
+  heatShell: 0.2,
+  heatBlast: 0.45,
+  cool: 0.32,
+  overheat: 2.2,
+  aimRange: 14,
+  /** SHIELD (the SPIN button, held): blocks everything from the front (within this cosine of straight ahead). */
+  shieldArc: 0.3,
+  /** Letting go of the shield bashes forward. */
+  bashSpeed: 10,
+  bashTime: 0.22,
+  bashDamage: 2,
+  /** STOMP (SPIN in the air): the heavy landing presses red switches like Jason's ground pound. */
+  stompSpeed: 24,
+} as const;
+
+/** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */
+export const HERO_SWITCH = {
+  cooldown: 1,
+  /** How far behind the leader the follower walks (world units), and how fast it may go. */
+  followDist: 2.6,
+  followSpeed: 10,
+  /** Farther than this (or stuck for `stuckTime` seconds) and the follower pops over in a flash. */
+  teleportDist: 16,
+  stuckTime: 2,
+};
+
 export const START_HEARTS = 5;
 /** Most hearts Jason can have: heart canisters, shards and the shop stop here... */
 export const MAX_HEARTS = 10;

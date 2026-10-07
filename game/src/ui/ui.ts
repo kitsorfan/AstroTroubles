@@ -19,11 +19,14 @@ import {
   type PuzzleKind,
   type Token,
 } from '../game/puzzles';
-import type { DeckId, EndingKind, Line, Speaker } from '../world/levelTypes';
+import type { DeckId, EndingKind, HeroId, Line, Speaker } from '../world/levelTypes';
+import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
-import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, portrait } from './icons';
+import type { FindKind } from '../game/collectibles';
+import type { Helper } from '../game/companions';
+import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -68,7 +71,10 @@ function h(html: string): HTMLElement {
 }
 
 /** A label that follows the language setting (see `applyLang`). */
-const label = (en: string) => `<span data-t="${en}">${tr(en)}</span>`;
+const label = (en: string, cls = '') => `<span${cls ? ` class="${cls}"` : ''} data-t="${en}">${tr(en)}</span>`;
+
+/** An icon shown only for one hero's buttons (`hj` Jason, `ha` Atalanta; see style.css). */
+const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cls}"`);
 
 /** Each shop upgrade's icon. */
 const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
@@ -101,9 +107,11 @@ export interface DeckInfo {
   shardTotal: number;
   unlocked: boolean;
   completed: boolean;
-  chapter: 1 | 2;
-  /** Its number within the chapter (1-6). */
+  chapter: 1 | 2 | 3;
+  /** Its number within the chapter (1-6, or 1-10 in chapter 3). */
   number: number;
+  /** A level of a chapter still being built: shown by name, marked "coming soon", not playable. */
+  soon?: boolean;
 }
 
 /** Everything the ability buttons show, refreshed every frame. */
@@ -122,6 +130,11 @@ export interface AbilityHud {
   /** The equipped weapon, and how many Jason owns (the weapon button shows once he has two). */
   weapon: WeaponId;
   weapons: number;
+  /** The playing hero (the buttons change with them), and who the switch button changes to (null: no switching here). */
+  hero: HeroId;
+  swapTo: HeroId | null;
+  /** 0..1 while the switch cools down (1 = ready). */
+  swapReady: number;
 }
 
 /** Where to draw the objective waypoint: screen position, whether it's pinned to the edge, and how far it is. */
@@ -174,16 +187,18 @@ export class UI {
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
       <div class="stick-hint">${label('MOVE')}</div>
-      <div class="buttons">
+      <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${ICON.shoot}${label('BLAST')}${ring('charge-ring')}</div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${ring('charge-ring')}</div>
         <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
-        <div class="btn spin clickable" data-b="spin">${ICON.spin}${label('SPIN')}${ring('cd-ring')}<div class="charges"></div></div>
-        <div class="btn dash clickable hidden" data-b="dash">${ICON.dash}${label('DASH')}<div class="charges"></div></div>
+        <div class="heat hb"><i></i></div>
+        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${ring('cd-ring')}<div class="charges"></div></div>
+        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}<div class="charges"></div></div>
+        <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
         <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
       </div>
-      <div class="action clickable hidden">${portrait('bolt')}<b></b></div>
+      <div class="action clickable hidden"><i class="face">${portrait('bolt')}</i><b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
       <div class="threat"><img alt=""/><div><div class="tag">${label('NEW ENEMY')}</div><b></b><p></p></div></div>
       <div class="fps"></div>
@@ -306,9 +321,11 @@ export class UI {
     $(el, 'b').textContent = String(n);
   }
 
-  /** Shard icons for the deck (memory shards on the ship, journal pages on Gaia Nova). */
-  setShards(got: boolean[], pages = false) {
-    $(this.hud, '.shards').innerHTML = got.map((g) => (pages ? ICON.page(g) : ICON.shard(g))).join('');
+  /** Collectible icons for the deck (memory shards on the ship, journal pages on Gaia Nova, light-stones in chapter 3). */
+  setShards(got: boolean[], kind: FindKind = 'shard') {
+    const el = $(this.hud, '.shards');
+    el.innerHTML = got.map((g) => (kind === 'page' ? ICON.page(g) : kind === 'stone' ? ICON.stone(g) : ICON.shard(g))).join('');
+    el.classList.toggle('hidden', !got.length);
   }
 
   setObjective(text: string) {
@@ -339,7 +356,25 @@ export class UI {
     $(this.countdownEl, '.dots').innerHTML = c.total > 1 ? Array.from({ length: c.total }, (_, i) => `<i class="${i < c.down ? 'on' : ''}"></i>`).join('') : '';
   }
 
-  /** The LUX button next to things he can use (terminals, pylons, the shop, lifts). */
+  /**
+   * Who really speaks a line written for a speaker (LUX's lines go to IRIS, HALCYON or Jason while
+   * LUX is away). The game sets it for each deck; `toast` is true for the little pop-up messages.
+   */
+  voice: (who: Speaker, toast: boolean) => Speaker = (who) => who;
+  private helperNow: Helper | null = 'lux';
+
+  /** The title on the terminal puzzle panel: whoever is doing the hacking. */
+  private hackTitle() {
+    return this.helperNow === 'iris' ? tr('IRIS HACK') : this.helperNow === 'wrist' ? tr('WRIST HACK') : tr('LUX HACK');
+  }
+
+  /** The action button wears the helper's face (LUX, IRIS or Jason's wrist computer), and so does the hacking panel. */
+  setHelper(who: Helper | null) {
+    $(this.actionEl, '.face').innerHTML = who === 'wrist' ? WRIST_FACE : portrait(who === 'iris' ? 'iris' : 'bolt');
+    this.helperNow = who;
+  }
+
+  /** The action button next to things the helper can use (terminals, pylons, the shop, lifts). */
   setAction(text: string | null) {
     this.actionEl.classList.toggle('hidden', !text);
     if (text) $(this.actionEl, 'b').textContent = tr(text);
@@ -367,10 +402,12 @@ export class UI {
 
   /** Spin charges, dash energy, LUX's force pulse and the weapon on their buttons. */
   setAbilities(a: AbilityHud) {
-    const key = `${a.spins}|${a.spinMax}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.energyMax}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}|${a.weapon}|${a.weapons}`;
+    const key = `${a.hero}|${a.swapTo}|${Math.round(a.swapReady * 20)}|${a.spins}|${a.spinMax}|${Math.round(a.spinReload * 30)}|${a.dash}|${a.energy}|${a.energyMax}|${a.pulse}|${Math.round(a.pulseCharge * 40)}|${Math.ceil(a.pulseLeft)}|${a.weapon}|${a.weapons}`;
     if (key === this.lastAbility) return;
     this.lastAbility = key;
-    this.setWeapon(a.weapon, a.weapons);
+    const jason = a.hero === 'jason';
+    this.setWeapon(a.weapon, jason ? a.weapons : 0);
+    this.setSwap(a.hero, a.swapTo, a.swapReady);
     const pips = (el: HTMLElement, n: number, max: number) => {
       const box = $(el, '.charges');
       if (box.childElementCount !== max) box.innerHTML = '<i></i>'.repeat(max);
@@ -384,8 +421,9 @@ export class UI {
     this.spinBtn.classList.toggle('empty', a.spins === 0);
     this.spinBtn.classList.toggle('recharging', a.spinReload > 0);
     fill(this.spinBtn, a.spinReload);
-    this.dashBtn.classList.toggle('hidden', !a.dash);
-    if (a.dash) {
+    // Atalanta's slide (on the DASH button) needs no energy cells.
+    this.dashBtn.classList.toggle('hidden', !a.dash && jason);
+    if (a.dash && jason) {
       pips(this.dashBtn, a.energy, a.energyMax);
       this.dashBtn.classList.toggle('empty', a.energy === 0);
     }
@@ -397,6 +435,25 @@ export class UI {
       fill(this.pulseBtn, a.pulseCharge);
       $(this.pulseBtn, 'em').textContent = ready ? '' : String(Math.ceil(a.pulseLeft));
     }
+  }
+
+  private lastSwap = '';
+
+  /** The switch-hero button: the face of the hero it switches to, and a ring while it cools down. */
+  private setSwap(hero: HeroId, to: HeroId | null, ready: number) {
+    const btn = $(this.hud, '.btn.swap');
+    const buttons = $(this.hud, '.buttons');
+    buttons.dataset.hero = hero;
+    btn.classList.toggle('hidden', !to);
+    if (!to) return;
+    btn.classList.toggle('empty', ready < 1);
+    const c = btn.querySelector<SVGCircleElement>('.cd-ring circle');
+    if (c) c.style.strokeDashoffset = String(100 - ready * 100);
+    if (to === this.lastSwap) return;
+    this.lastSwap = to;
+    $(btn, '.face').innerHTML = portrait(HEROES[to].speaker);
+    btn.style.setProperty('--hero', HEROES[to].color);
+    btn.setAttribute('aria-label', tr(SPEAKER_NAME[HEROES[to].speaker]));
   }
 
   /** Shakes the DASH button when Jason tries to dash on an empty tank. */
@@ -462,6 +519,18 @@ export class UI {
     }
   }
 
+  private lastHeat = '';
+
+  /** General Brennus's cannon heat, a thermometer beside CANNON: it blinks red while the cannon cools down after overheating. */
+  setHeat(heat: number, over: boolean) {
+    const key = `${Math.round(heat * 30)}|${over}`;
+    if (key === this.lastHeat) return;
+    this.lastHeat = key;
+    const bar = $(this.hud, '.heat');
+    bar.classList.toggle('over', over);
+    $<HTMLElement>(bar, 'i').style.height = `${Math.round(heat * 100)}%`;
+  }
+
   private threatQueue: [string, string, string, string][] = [];
   private threatBusy = false;
 
@@ -495,7 +564,8 @@ export class UI {
     this.fpsEl.textContent = text;
   }
 
-  toast(text: string, who: Speaker = 'bolt') {
+  toast(text: string, speaker: Speaker = 'bolt') {
+    const who = this.voice(speaker, true);
     const t = tr(text);
     $(this.toastEl, '.portrait').innerHTML = portrait(who);
     $(this.toastEl, '.t').textContent = t;
@@ -550,18 +620,19 @@ export class UI {
     const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
+      const speaker = this.voice(line.who, false);
       text = tr(line.text);
-      $(el, '.portrait').innerHTML = portrait(line.who);
+      $(el, '.portrait').innerHTML = portrait(speaker);
       const who = $(el, '.who');
-      who.textContent = tr(line.name ?? SPEAKER_NAME[line.who]);
-      who.style.color = SPEAKER_COLOR[line.who];
-      box.classList.toggle('glitchy', line.who === 'glitch');
+      who.textContent = tr(line.name ?? SPEAKER_NAME[speaker]);
+      who.style.color = SPEAKER_COLOR[speaker];
+      box.classList.toggle('glitchy', speaker === 'glitch' || speaker === 'rogue');
       shown = 0;
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
         shown = Math.min(text.length, shown + 2);
         $(el, '.text').textContent = text.slice(0, shown);
-        if (shown % 6 === 0) audio.play('blip', line.who === 'bolt' ? 1.4 : line.who === 'halcyon' || line.who === 'glitch' ? 0.7 : 1);
+        if (shown % 6 === 0) audio.play('blip', speaker === 'bolt' || speaker === 'rogue' ? 1.4 : speaker === 'iris' ? 1.6 : speaker === 'halcyon' || speaker === 'glitch' ? 0.7 : 1);
         if (shown >= text.length && timer) {
           clearInterval(timer);
           timer = null;
@@ -693,7 +764,7 @@ export class UI {
   /** The panel the logic puzzles share: instructions (already translated), the puzzle, progress dots, and the buttons. */
   private puzzlePanel(intro: string, body: string, dots: number, done: (ok: boolean) => void, extra = '') {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr('LUX HACK')}</h2>
+      <h2>${this.hackTitle()}</h2>
       <div class="msg small">${intro}</div>
       ${body}
       <div class="dots">${'<i></i>'.repeat(dots)}</div>
@@ -836,7 +907,7 @@ export class UI {
   /** Simon-says light puzzle: watch LUX's pattern, then repeat it. */
   private memoryHack(length: number, done: (ok: boolean) => void) {
     const el = this.open(`<div class="panel hack">
-      <h2>${tr('LUX HACK')}</h2>
+      <h2>${this.hackTitle()}</h2>
       <div class="msg">${tr('Watch the lights...')}</div>
       <div class="pads"><div class="pad"></div><div class="pad"></div><div class="pad"></div><div class="pad"></div></div>
       <div class="dots">${'<i></i>'.repeat(length)}</div>
@@ -991,7 +1062,28 @@ export class UI {
     }, 2300);
   }
 
-  pause(opts: { deck: string; shards: string; colonists: string; planet: boolean; quests: { text: string; done: boolean; progress: string; reward: string }[]; onResume: () => void; onSettings: () => void; onHelp: () => void; onRestart: () => void; onQuit: () => void }) {
+  pause(opts: {
+    deck: string;
+    shards: string;
+    colonists: string;
+    planet: boolean;
+    /** A chapter 3 level (the Argonauts' voyage). */
+    voyage?: boolean;
+    /** What the shard and colonist rows are called in this chapter (see `lootLabels`). */
+    labels?: { finds: string; rescues: string };
+    /** Replaces the shard and colonist rows (a flight shows its rings and drones instead). */
+    stats?: [string, string][];
+    quests: { text: string; done: boolean; progress: string; reward: string }[];
+    onResume: () => void;
+    onSettings: () => void;
+    onHelp: () => void;
+    onRestart: () => void;
+    onQuit: () => void;
+  }) {
+    const stats = opts.stats ?? [
+      [opts.labels?.finds ?? (opts.planet ? 'Journal pages' : 'Memory shards'), opts.shards],
+      [opts.labels?.rescues ?? (opts.planet ? 'Scientists freed' : 'Colonists rescued'), opts.colonists],
+    ];
     const el = this.open(`<div class="panel pause-panel">
       <h2>${tr('PAUSED')} · ${upper(tr(opts.deck))}</h2>
       <div class="row">
@@ -1003,9 +1095,8 @@ export class UI {
           <button class="menu-btn danger quit">${tr('Save & quit to title')}</button>
         </div>
         <div class="col-info">
-          <div class="stat"><span>${opts.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${opts.shards}</b></div>
-          <div class="stat"><span>${opts.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${opts.colonists}</b></div>
-          <div class="quests"><div class="qh">${opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
+          ${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
+          <div class="quests"><div class="qh">${opts.stats || opts.voyage ? tr('SIDE QUESTS ON THIS LEVEL') : opts.planet ? tr('SIDE QUESTS IN THIS REGION') : tr('SIDE QUESTS ON THIS DECK')}</div>${opts.quests
             .map((q) => `<div class="q ${q.done ? 'done' : ''}"><i>${q.done ? '✔' : ''}</i><div><b>${q.text}</b><small>${q.progress} · ${tr('Reward')}: ${q.reward}</small></div></div>`)
             .join('')}</div>
         </div>
@@ -1030,7 +1121,23 @@ export class UI {
         ${item('#7fe6ff', tr('GRAPPLE'), tr('on Gaia Nova, look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs.'))}
         ${item('#ffb020', tr('WEAPONS'), tr('on Gaia Nova, PANDORA sells new weapons. Tap the weapon button next to BLAST (or press X) to switch.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}</p>
+      <h3 class="help-sub">${tr('ATALANTA')}</h3>
+      <div class="help-grid">
+        ${item('#5fe0c8', tr('SWITCH'), tr('on some levels you can play as Jason or Atalanta. Tap the face button (or press C) to switch; the other hero follows you around.'))}
+        ${item('#7dff9a', tr('SPRINT'), tr('push the stick all the way (or hold a direction) and Atalanta breaks into a sprint for long jumps.'))}
+        ${item('#7dff9a', tr('WALL-JUMP'), tr('jump while touching a wall to kick off it. Run at a glowing teal stripe in mid-air to WALL-RUN along it.'))}
+        ${item('#8ff8e4', tr('BOW'), tr('tap for quick arrows that fly far. HOLD to charge a POWER ARROW: it flies through enemies and hits bullseye targets.'))}
+        ${item('#ffd166', tr('KICK'), tr('a spinning kick that blocks shots, on the ground or in the air.'))}
+        ${item('#b58cff', tr('SLIDE'), tr('slide under low gaps with yellow stripes and trip enemies. Jump out of a slide for a long jump.'))}
+      </div>
+      <h3 class="help-sub">${tr('GENERAL BRENNUS')}</h3>
+      <div class="help-grid">
+        ${item('#ffb04a', tr('CANNON'), tr('tap for a heavy shell that splashes. HOLD for a BIG BLAST that smashes cracked rock. Too many shots and it overheats.'))}
+        ${item('#c9d870', tr('SHIELD'), tr('hold it up to block everything from the front (shots bounce back). Let go to bash.'))}
+        ${item('#ffd166', tr('CHARGE'), tr('a shoulder charge through crates, cracked walls and robots. Jump while charging for a CHARGE-LEAP over wide gaps.'))}
+        ${item('#ff6a5a', tr('COMMAND'), tr('at a Legion command post, give your old robots an order: hold a plate, carry you, or fight on your side.'))}
+      </div>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }
@@ -1164,38 +1271,83 @@ export class UI {
     render();
   }
 
-  results(r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean }, next: () => void) {
-    const go = r.next ? (r.planet ? `${tr('Fly the shuttle to {deck}', { deck: tr(r.next) })} ✈` : `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲`) : tr('Continue');
+  /**
+   * The results card. `voyage` is a chapter 3 level (the Argo sails on); `rows` are extra stats (a
+   * flight's rings and drones); `soon` names the next level when it isn't built yet.
+   */
+  results(
+    r: { deck: string; time: string; bolts: number; shards: string; colonists: string; next: string | null; planet: boolean; voyage?: boolean; rows?: [string, string][]; soon?: string | null; labels?: { finds: string; rescues: string } },
+    next: () => void,
+  ) {
+    const go = r.next
+      ? r.voyage
+        ? `${tr('Sail the Argo to {deck}', { deck: tr(r.next) })} ⛵`
+        : r.planet
+          ? `${tr('Fly the shuttle to {deck}', { deck: tr(r.next) })} ✈`
+          : `${tr('Ride the lift to {deck}', { deck: tr(r.next) })} ▲`
+      : tr('Continue');
+    const kicker = r.voyage ? tr('LEVEL COMPLETE') : r.planet ? tr('REGION COMPLETE') : tr('DECK COMPLETE');
     const el = this.open(`<div class="panel card" style="width:min(520px,88vw)">
-      <div class="deck">${r.planet ? tr('REGION COMPLETE') : tr('DECK COMPLETE')}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
+      <div class="deck">${kicker}</div><div class="deckname" style="color:var(--good);font-size:34px">${upper(tr(r.deck))}</div>
       <div class="stat"><span>${tr('Time')}</span><b>${r.time}</b></div>
       <div class="stat"><span>${tr('Bolts collected')}</span><b>${r.bolts}</b></div>
-      <div class="stat"><span>${r.planet ? tr('Journal pages') : tr('Memory shards')}</span><b>${r.shards}</b></div>
-      ${r.colonists ? `<div class="stat"><span>${r.planet ? tr('Scientists freed') : tr('Colonists rescued')}</span><b>${r.colonists}</b></div>` : ''}
+      ${r.shards ? `<div class="stat"><span>${r.labels?.finds ?? (r.planet ? tr('Journal pages') : tr('Memory shards'))}</span><b>${r.shards}</b></div>` : ''}
+      ${r.colonists ? `<div class="stat"><span>${r.labels?.rescues ?? (r.planet ? tr('Scientists freed') : tr('Colonists rescued'))}</span><b>${r.colonists}</b></div>` : ''}
+      ${(r.rows ?? []).map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}
+      ${r.soon ? `<p class="soon-note">${tr('Next: {deck}. Coming soon!', { deck: tr(r.soon) })}</p>` : ''}
       <button class="menu-btn primary next" style="margin-top:14px">${go}</button></div>`);
     this.button(el, '.next', next);
   }
 
+  /** The chapter page the level select shows (kept between visits). */
+  private deckTab = 0;
+
+  /**
+   * The level select: one page per chapter, with tabs along the top (a chapter's tab appears once any
+   * of its levels is unlocked). Levels of a chapter still being built show as "coming soon".
+   */
   decks(list: DeckInfo[], pick: (id: string) => void, back: () => void) {
-    const button = (d: DeckInfo) => `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
-          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${d.unlocked ? tr(d.name) : '???'}
-          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}${d.chapter === 2 ? '▤' : '◆'} ${d.shards}/${d.shardTotal}` : ICON.lock}</small></button>`;
-    const section = (ch: 1 | 2, title: string) => {
-      const decks = list.filter((d) => d.chapter === ch);
-      if (ch === 2 && !decks.some((d) => d.unlocked)) return '';
-      return `<h3 class="chapter-head">${title}</h3><div class="grid2">${decks.map(button).join('')}</div>`;
+    const chapters = ([1, 2, 3] as const).filter((ch) => ch === 1 || list.some((d) => d.chapter === ch && d.unlocked && !d.soon));
+    if (!chapters.includes(this.deckTab as 1 | 2 | 3)) this.deckTab = chapters[chapters.length - 1];
+    const titles: Record<number, string> = {
+      1: tr('THE {ship} · ELEVATOR', { ship: upper(tr(SHIP)) }),
+      2: tr('GAIA NOVA · SHUTTLE'),
+      3: tr('THE ARGONAUTS · THE ARGO'),
     };
-    const el = this.open(`<div class="panel" style="width:min(760px,92vw)"><h2>${tr('REPLAY A LEVEL')}</h2>
-      ${section(1, tr('THE {ship} · ELEVATOR', { ship: upper(tr(SHIP)) }))}
-      ${section(2, tr('GAIA NOVA · SHUTTLE'))}
-      <button class="menu-btn back" style="margin-top:10px">${tr('Back')}</button></div>`);
-    for (const b of el.querySelectorAll<HTMLElement>('.deck')) {
-      b.addEventListener('click', () => {
-        audio.play('select');
-        pick(b.dataset.id as string);
-      });
-    }
-    this.button(el, '.back', back);
+    const icon = (d: DeckInfo) => (d.chapter === 1 ? '◆' : d.chapter === 2 ? '▤' : '✦');
+    const button = (d: DeckInfo) =>
+      d.soon
+        ? `<button class="menu-btn deck soon" disabled style="border-color:${d.color}"><span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${tr(d.name)}<small>${tr('coming soon')}</small></button>`
+        : `<button class="menu-btn deck" data-id="${d.id}" ${d.unlocked ? '' : 'disabled'} style="border-color:${d.color}">
+          <span style="color:${d.color};font-family:Orbitron,sans-serif;font-weight:800">${d.number}</span> ${d.unlocked ? tr(d.name) : '???'}
+          <small>${d.unlocked ? `${d.completed ? '✓ ' : ''}${d.shardTotal ? `${icon(d)} ${d.shards}/${d.shardTotal}` : icon(d)}` : ICON.lock}</small></button>`;
+    const render = () => {
+      const ch = this.deckTab;
+      const decks = list.filter((d) => d.chapter === ch);
+      const tabs =
+        chapters.length > 1
+          ? `<div class="seg chapter-tabs">${chapters.map((c) => `<button data-ch="${c}" class="${c === ch ? 'on' : ''}">${tr('Chapter {n}', { n: c })}</button>`).join('')}</div>`
+          : '';
+      const el = this.open(`<div class="panel deck-panel"><h2>${tr('REPLAY A LEVEL')}</h2>${tabs}
+        <h3 class="chapter-head">${titles[ch]}</h3><div class="grid2 deck-grid ${decks.length > 6 ? 'many' : ''}">${decks.map(button).join('')}</div>
+        <button class="menu-btn back" style="margin-top:10px">${tr('Back')}</button></div>`);
+      for (const b of el.querySelectorAll<HTMLElement>('.deck[data-id]')) {
+        b.addEventListener('click', () => {
+          audio.play('select');
+          pick(b.dataset.id as string);
+        });
+      }
+      for (const b of el.querySelectorAll<HTMLElement>('[data-ch]')) {
+        b.addEventListener('click', () => {
+          if (Number(b.dataset.ch) === this.deckTab) return;
+          this.deckTab = Number(b.dataset.ch);
+          audio.play('select');
+          render();
+        });
+      }
+      this.button(el, '.back', back);
+    };
+    render();
   }
 
   down(done: () => void) {
@@ -1210,8 +1362,11 @@ export class UI {
     this.open(html);
   }
 
-  /** The final card of a chapter. `next` (after chapter 1) offers to fly straight on to Gaia Nova. */
-  ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void) {
+  /**
+   * The final card of a chapter (`chapter`). `next` offers to go straight on to the next chapter: Gaia
+   * Nova after chapter 1, the Argonauts' voyage after chapter 2.
+   */
+  ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void, chapter = 1) {
     const secret = kind === 'friends' || kind === 'redeemed';
     const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' ? 'var(--gold)' : 'var(--good)';
     const title =
@@ -1222,13 +1377,14 @@ export class UI {
           : kind === 'freed'
             ? tr('GAIA NOVA IS FREE!')
             : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
-    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER 1') : tr('THE END');
+    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
+    const nextLabel = chapter === 1 ? tr('Chapter 2: Gaia Nova') : tr('Chapter 3: The Argonauts');
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kicker}</div>
       <div class="big-msg" style="color:${color};margin:6px 0 12px">${title}</div>
       <div class="story" style="font-size:17px;max-width:none">${paragraphs.map((p) => `<p>${tr(p)}</p>`).join('')}</div>
       <div class="grid2" style="text-align:left;margin:8px 0">${stats.map(([k, v]) => `<div class="stat"><span>${tr(k)}</span><b>${v}</b></div>`).join('')}</div>
-      ${next ? `<button class="menu-btn primary next">▶ ${tr('Chapter 2: Gaia Nova')}</button>` : ''}
+      ${next ? `<button class="menu-btn primary next">▶ ${nextLabel}</button>` : ''}
       <button class="menu-btn ${next ? '' : 'primary'} done">${tr('Back to title')}</button></div>`);
     this.button(el, '.done', done);
     if (next) this.button(el, '.next', next);

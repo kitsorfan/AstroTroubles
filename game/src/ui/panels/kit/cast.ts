@@ -1,6 +1,6 @@
 /**
  * The named grown-ups of the story, built on `person`: General Brennus (old and young), Captain
- * Atalanta, Dr. Hypatia, the scientists of the first expedition, Grandma and little Brennus.
+ * Argus, Dr. Hypatia, the scientists of the first expedition, Grandma and little Brennus.
  */
 import { at, C, ink } from './base';
 import type { Expr } from './face';
@@ -86,7 +86,11 @@ export function brennus(
   return at(x, y, s, body + rifle, o.flip);
 }
 
-/** Captain Atalanta: dark skin, short grey hair, navy and gold uniform, captain's cap. */
+/** Captain Argus's short grey beard and moustache (head coordinates). */
+const BEARD = `<path d="M-34 6Q-34 44 0 52Q34 44 34 6Q26 26 14 28Q6 22 0 23Q-6 22 -14 28Q-26 26 -34 6Z" fill="#d8d8e0" ${ink(3)}/>
+  <path d="M-15 21Q-7 15 0 18Q7 15 15 21Q7 25 0 23Q-7 25 -15 21Z" fill="#c4c4ce" ${ink(2)}/>`;
+
+/** Captain Argus: dark skin, short grey hair and beard, navy and gold uniform, captain's cap. */
 export function captain(x: number, y: number, s: number, o: CastOpts = {}): string {
   return person(x, y, s, {
     skin: '#6f4631',
@@ -99,6 +103,7 @@ export function captain(x: number, y: number, s: number, o: CastOpts = {}): stri
     face: o.face ?? 'determined',
     flip: o.flip,
     hat: 'captain',
+    headExtra: BEARD,
     bodyExtra: `<path d="M-58 -166Q-40 -180 -20 -168L-24 -156Q-42 -160 -56 -152ZM58 -166Q40 -180 20 -168L24 -156Q42 -160 56 -152Z" fill="${C.gold}" ${ink(3)}/><path d="M-16 -172L0 -146L16 -172" fill="#e6edf7" ${ink(3)}/><g fill="${C.gold}"><circle cx="0" cy="-128" r="3.5"/><circle cx="0" cy="-108" r="3.5"/><circle cx="0" cy="-88" r="3.5"/></g>`,
   });
 }

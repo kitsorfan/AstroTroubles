@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -19,6 +19,7 @@ const COLORS: Record<BadgeKind, string> = {
   minebot: '#ff8a3a',
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
+  harpy: '#ffc94a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -252,6 +253,44 @@ function glyph(g: G, kind: BadgeKind) {
       g.beginPath();
       g.ellipse(108, 100, 12, 5, 0, 0, Math.PI * 2);
       g.stroke();
+      break;
+    }
+    case 'harpy': {
+      // A bird with spread wings, a hooked beak and grabbing claws holding a bolt.
+      g.beginPath();
+      g.moveTo(64, 50);
+      g.quadraticCurveTo(38, 26, 12, 40);
+      g.quadraticCurveTo(34, 50, 44, 66);
+      g.quadraticCurveTo(64, 74, 84, 66);
+      g.quadraticCurveTo(94, 50, 116, 40);
+      g.quadraticCurveTo(90, 26, 64, 50);
+      g.fill();
+      g.beginPath();
+      g.arc(64, 54, 13, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.moveTo(58, 62);
+      g.lineTo(64, 74);
+      g.lineTo(70, 62);
+      g.fill();
+      g.lineWidth = 5;
+      g.beginPath();
+      g.moveTo(56, 76);
+      g.lineTo(52, 92);
+      g.moveTo(72, 76);
+      g.lineTo(76, 92);
+      g.stroke();
+      g.fillStyle = COLORS.harpy;
+      g.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        g.lineTo(64 + Math.cos(a) * 10, 100 + Math.sin(a) * 10);
+      }
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 52, 5, 0, Math.PI * 2);
+      g.fill();
       break;
     }
   }

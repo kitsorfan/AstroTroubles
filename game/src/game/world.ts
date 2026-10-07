@@ -9,8 +9,11 @@ import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
 import type { Director, Rig } from '../cinema/director';
 import * as scenes from '../cinema/scenes';
-import { Bolt } from '../entities/bolt';
+import { Bolt, HelmetLamp, Torch } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
+import { findKind, rescueKind } from './collectibles';
+import { SupplyNet } from '../entities/isles/supplies';
+import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
 import { makeEnemy, type Enemy } from '../entities/enemies';
 import { difficultyFor, type Difficulty } from './difficulty';
@@ -20,6 +23,10 @@ import { chapterOf, chapterTotals, inChapter, isFinale } from '../levels';
 import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
+import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
+import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
+import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
 import { Player } from '../entities/player';
@@ -54,7 +61,9 @@ import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
 import { Grid, parseLevel } from '../world/grid';
-import type { Ability, BossKind, Cond, EndingKind, EnemyKind, LevelDef, Line, ParsedLevel, PlacedEntity } from '../world/levelTypes';
+import type { Ability, BossKind, Cond, EndingKind, EnemyKind, HeroId, LevelDef, Line, ParsedLevel, PlacedEntity, Speaker } from '../world/levelTypes';
+import { makeVehicle } from '../vehicles';
+import type { Vehicle } from '../vehicles/vehicle';
 import { Ambience, Particles } from '../world/particles';
 import { pointBlocked, type Box, type Ground } from '../world/physics';
 import { buildSky } from '../world/sky';
@@ -64,7 +73,9 @@ export type Collectible = 'shard' | 'canister' | 'colonist' | 'ability';
 
 export interface WorldHooks {
   say(lines: Line[], then?: () => void): void;
-  toast(text: string, who?: 'bolt' | 'halcyon' | 'colonist' | 'jason'): void;
+  toast(text: string, who?: Speaker): void;
+  /** Who helps Jason right now (the action button's face and the hacking panel follow it). */
+  helper?(who: Helper | null): void;
   hack(length: number, done: (ok: boolean) => void, kind?: PuzzleKind): void;
   shop(): void;
   complete(): void;
@@ -84,6 +95,8 @@ export interface WorldHooks {
   threat(kind: BadgeKind | 'elite'): void;
   /** Jason tried to dash with no energy left. */
   dashEmpty(): void;
+  /** A side quest may have just been finished (a flight's best run improved): pay it out and save. */
+  progress(): void;
   /** Queues a cutscene; it plays as soon as nothing else is on screen and resolves when it ends. */
   cutscene(script: (d: Director) => Promise<void>): Promise<void>;
 }
@@ -117,7 +130,16 @@ export class World {
   readonly def: LevelDef;
   readonly boxes: Box[] = [];
   readonly player: Player;
-  readonly bolt: Bolt;
+  /** Jason's two droids: LUX, and IRIS (from the jungle on). Which of them is around comes from `plan`. */
+  readonly lux: Bolt;
+  readonly iris: Bolt;
+  /** Jason's own helmet lamp, for the dark when no droid is around. */
+  private lamp: HelmetLamp;
+  /** The one flashlight the lead droid (or the helmet lamp) shines into dark rooms. */
+  private torch: Torch;
+  plan: CompanionPlan = { lead: null, tag: null };
+  /** The main boss of the deck, while a mini-boss (Brennus's reprogrammed LUX) has the stage. */
+  private mainBoss: Boss | null = null;
   readonly particles: Particles;
   readonly ambience: Ambience;
   readonly shots: Shots;
@@ -186,6 +208,8 @@ export class World {
   private flashPower = 0;
   /** Remaining hit-stop: a split-second freeze that sells heavy impacts. */
   private freezeT = 0;
+  /** On a vehicle level (the Argo...), the vehicle that runs instead of Jason on foot. */
+  readonly vehicle: Vehicle | null = null;
 
   constructor(
     def: LevelDef,
@@ -247,7 +271,9 @@ export class World {
     this.built = buildLevel(this.level, this.grid, th, shadows);
     this.scene.add(this.built.group);
     const span = Math.max(this.level.width, this.level.depth) * CELL;
-    this.scene.add(buildSky(th, new THREE.Vector3((this.level.width * CELL) / 2, 0, (this.level.depth * CELL) / 2), span));
+    // A vehicle level has no deck to walk on: the vehicle stages its own surroundings.
+    if (def.vehicle) this.built.group.visible = false;
+    else this.scene.add(buildSky(th, new THREE.Vector3((this.level.width * CELL) / 2, 0, (this.level.depth * CELL) / 2), span));
 
     this.particles = new Particles(quality === 'low' ? 900 : 1600);
     this.scene.add(this.particles.points);
@@ -262,10 +288,16 @@ export class World {
     this.cameraYaw = sp.facing + Math.PI;
     this.shots = new Shots(this);
     this.boltField = new BoltField(this);
-    this.bolt = new Bolt(this);
-    this.bolt.active = this.flags.has('bolt');
+    this.torch = new Torch(this.scene);
+    this.lux = new Bolt(this, 'lux', this.torch);
+    this.iris = new Bolt(this, 'iris', this.torch);
+    this.lamp = new HelmetLamp(this, this.torch);
+    this.refreshCompanions();
 
     for (const pe of this.level.entities) this.spawnSpec(pe);
+    this.spawnRogue();
+    // A hero who joins later waits at the marker named after her (Atalanta by her skiff).
+    this.player.showWaiting((id) => this.markers.get(id));
     this.scene.add(buildDecor(this.decorItems, th.accent, this.boxes));
 
     if (resume?.checkpoint) {
@@ -277,9 +309,16 @@ export class World {
       }
     }
     const pb = this.player.body;
-    this.bolt.place(pb.x - 1, pb.y + 2, pb.z + 1);
+    this.placeDroids(pb.x, pb.y, pb.z);
     this.camTarget.set(pb.x, pb.y + 1.2, pb.z);
     this.groundY = pb.y;
+    if (def.vehicle) {
+      // Jason and LUX ride inside the vehicle.
+      this.player.model.root.visible = false;
+      this.bolt.active = false;
+      this.bolt.model.root.visible = false;
+      this.vehicle = makeVehicle(def.vehicle, this);
+    }
     this.placeCamera(0);
   }
 
@@ -399,7 +438,8 @@ export class World {
         this.addEntity(new Conveyor(this, id, cx, cz, h, spec.dx, spec.dz, spec.speed));
         break;
       case 'cocoon':
-        if (!s.colonists.includes(id)) this.addEntity(new Cocoon(this, id, cx, cz, h, spec.name, spec.line));
+        // Chapter 3 rescues stolen things from gold harpy nets instead of people from cocoons.
+        if (!s.colonists.includes(id)) this.addEntity(rescueKind(chapterOf(this.def.id)) === 'supplies' ? new SupplyNet(this, id, cx, cz, h, spec.name, spec.line) : new Cocoon(this, id, cx, cz, h, spec.name, spec.line));
         break;
       case 'vendor':
         this.addEntity(new Vendor(this, id, cx, cz, h));
@@ -419,9 +459,11 @@ export class World {
       case 'breakwall':
         if (!this.taken.has(id)) this.addEntity(new BreakWall(this, id, cx, cz, h));
         break;
-      case 'boltfind':
-        if (!this.flags.has('bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h));
+      case 'boltfind': {
+        const who = spec.who ?? 'lux';
+        if (!this.flags.has(who === 'iris' ? IRIS_FLAG : 'bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h, who));
         break;
+      }
       case 'anchor':
         this.addEntity(new Anchor(this, id, cx, cz, h));
         break;
@@ -433,6 +475,27 @@ export class World {
         break;
       case 'boulder':
         this.addEntity(new Boulder(this, id, cx, cz, h, spec.axis, spec.length, spec.period, spec.offset));
+        break;
+      case 'target':
+        this.addEntity(new ArrowTarget(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'wallrun':
+        this.addEntity(new WallRun(this, id, cx, cz, h));
+        break;
+      case 'lowgap':
+        this.addEntity(new LowGap(this, id, cx, cz, h, spec.axis));
+        break;
+      case 'cracked':
+        if (!this.taken.has(id)) this.addEntity(new CrackedWall(this, id, cx, cz, h));
+        break;
+      case 'post':
+        this.addEntity(new CommandPost(this, id, cx, cz, h, spec.flag, spec.order, spec.room));
+        break;
+      case 'legionbot':
+        this.addEntity(new LegionBot(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'plate':
+        this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
         break;
       case 'decor':
         this.decorItems.push({
@@ -529,17 +592,96 @@ export class World {
     return false;
   }
 
-  get boltActive() {
-    return this.bolt.active;
+  /* ---------------- Jason's droids ---------------- */
+
+  /** The droid doing the work right now (LUX, or IRIS); LUX, switched off, when Jason is alone. */
+  get bolt(): Bolt {
+    return this.plan.lead === 'iris' ? this.iris : this.lux;
   }
 
-  joinBolt() {
-    this.flags.add('bolt');
-    this.bolt.active = true;
+  /** True while a droid flies with Jason (it zaps, lights the dark and fires the force pulse). */
+  get boltActive() {
+    return this.plan.lead !== null;
+  }
+
+  /** Who hacks terminals and lights the dark: a droid, Jason's wrist computer, or nobody yet. */
+  get helper(): Helper | null {
+    return helperOf(this.def.id, this.plan);
+  }
+
+  /** Terminals need a droid, or (on Gaia Nova) Jason's wrist computer. */
+  get canHack() {
+    return this.helper !== null;
+  }
+
+  /** Works out again who is with Jason (after a droid joins, leaves or comes home). */
+  refreshCompanions() {
+    const pl = this.player;
+    this.plan = companionPlan(this.def.id, (f) => this.flags.has(f), {
+      chapter: chapterOf(this.def.id),
+      hero: pl.hero,
+      atalanta: pl.roster.includes('atalanta'),
+    });
+    this.lux.active = this.plan.lead === 'lux' || this.plan.tag === 'lux';
+    this.lux.role = this.plan.lead === 'lux' ? 'lead' : 'tag';
+    this.iris.active = this.plan.lead === 'iris' || this.plan.tag === 'iris';
+    this.iris.role = this.plan.lead === 'iris' ? 'lead' : 'tag';
+    this.lamp.on = this.plan.lead === null;
+    this.hooks.helper?.(this.helper);
+  }
+
+  private placeDroids(x: number, y: number, z: number) {
+    this.lux.place(x - 1, y + 2, z + 1);
+    this.iris.place(x + 1, y + 2.4, z + 1.5);
+  }
+
+  /** Who really says a line written for LUX (see `voiceOf`). */
+  voice(who: Speaker, toast = false): Speaker {
+    return voiceOf(who, this.plan, toast, this.player?.hero);
+  }
+
+  /** A droid joins Jason: LUX on the Cryo Deck, IRIS in the jungle. */
+  joinBolt(skin: CompanionSkin = 'lux') {
+    this.flags.add(skin === 'iris' ? IRIS_FLAG : 'bolt');
+    this.refreshCompanions();
     const p = this.player.body;
-    this.bolt.place(p.x, p.y + 3, p.z);
+    (skin === 'iris' ? this.iris : this.lux).place(p.x, p.y + 3, p.z);
     audio.play('upgrade');
     this.hooks.checkpoint();
+  }
+
+  /** Dev helper (`#deck=...&flags=...&play=...`): sets story flags and plays one of LUX's chapter 2 scenes. */
+  devStory(flags: string[], play: string | null) {
+    for (const f of flags) this.flags.add(f);
+    // A join flag (`&flags=atalanta`) brings that hero in at once.
+    if (Object.values(this.def.joins ?? {}).some((f) => flags.includes(f))) this.player.heroJoined();
+    this.refreshCompanions();
+    const find = this.entities.find((e): e is BoltFind => e instanceof BoltFind);
+    const rogue = this.entities.find((e) => (e as Boss).bossKind === 'rogue') as Boss | undefined;
+    if (play === 'taken') void this.hooks.cutscene((d) => scenes.luxTaken(d, this));
+    else if (play === 'iris' && find) this.findBolt(find);
+    else if (play === 'rogue' && rogue) rogue.begin();
+    else if (play === 'reunion' && rogue) {
+      rogue.defeated = true;
+      this.luxBack(rogue);
+    }
+  }
+
+  /** Brennus's reprogrammed LUX waits at the `rogue` marker until he is beaten and himself again. */
+  private spawnRogue() {
+    const at = this.markers.get(ROGUE_MARKER);
+    if (!at || this.flags.has(LUX_BACK_FLAG)) return;
+    this.mainBoss = this.boss;
+    this.addEntity(makeBoss(this, `${this.def.id}.rogue`, 'rogue', Math.floor(at.x / CELL), Math.floor(at.z / CELL), at.y));
+  }
+
+  /** The control chip breaks: LUX is himself again, and he and IRIS both fly with Jason from now on. */
+  private luxBack(b: Boss) {
+    this.flags.add(LUX_BACK_FLAG);
+    this.boss = this.mainBoss;
+    this.hooks.bossBar(null, 0);
+    this.hooks.music(this.def.music as Track);
+    void this.hooks.cutscene((d) => scenes.luxReunion(d, this, b)).then(() => this.hooks.checkpoint());
   }
 
   dialogue(id: string): Line[] {
@@ -567,7 +709,12 @@ export class World {
       s.colonists.push(id);
       s.bolts += COLONIST_BOLTS;
       const ch = chapterOf(this.def.id);
-      this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / {total} saved', { n: COLONIST_BOLTS, saved: inChapter(s.colonists, ch), total: chapterTotals(ch).colonists }));
+      const args = { n: COLONIST_BOLTS, saved: inChapter(s.colonists, ch), total: chapterTotals(ch).colonists };
+      // In chapter 3 it is stolen things that get won back, counted per level.
+      if (rescueKind(ch) === 'supplies') {
+        const here = (this.def.colonistIds ?? []).filter((c) => s.colonists.includes(`${this.def.id}.${c}`)).length;
+        this.hooks.reward(tr('Won back! +{n} bolts · {saved} / {total} here', { n: COLONIST_BOLTS, saved: here, total: this.def.colonistIds?.length ?? 0 }));
+      } else this.hooks.reward(tr('Colonist rescued! +{n} bolts · {saved} / {total} saved', args));
     }
     this.hooks.collect(kind, id);
     this.hooks.hud();
@@ -585,6 +732,19 @@ export class World {
     else if (name.startsWith('music:')) this.hooks.music(name.slice(6) as Track);
     else if (name === 'shake') this.shake(0.6);
     else if (name.startsWith('story:')) this.playStory(name.slice(6));
+    else if (name.startsWith('join:')) this.heroJoins(name.slice(5) as HeroId);
+  }
+
+  /** Jason meets a hero who joins the Argonauts here (once): the meeting scene, then she can play. */
+  private heroJoins(hero: HeroId) {
+    const flag = this.def.joins?.[hero];
+    if (!flag || this.flags.has(flag)) return;
+    void this.hooks.cutscene((d) => scenes.heroJoins(d, this, hero));
+  }
+
+  /** Where a `marker` sits (for cutscenes), if the level has it. */
+  marker(id: string): THREE.Vector3 | null {
+    return this.markers.get(id)?.clone() ?? null;
   }
 
   /* ---------------- combat ---------------- */
@@ -685,8 +845,41 @@ export class World {
     haptic('medium');
   }
 
+  /**
+   * General Brennus's shoulder charge and shield bash: a heavy `smash` just in front of him (each target
+   * once per move). It knocks robots over and their shields away, and smashes crates and cracked walls.
+   */
+  smash(player: Player, r: number, dmg: number, hitSet: Set<unknown>) {
+    const b = player.body;
+    const p = new THREE.Vector3(b.x + Math.sin(player.facing) * 0.6, b.y + 0.9, b.z + Math.cos(player.facing) * 0.6);
+    if (!this.hitAll(p, r, dmg, 'smash', hitSet)) return;
+    this.impacts.slam(p.x, b.y, p.z, 2.4, '#ffb04a');
+    this.particles.emit(p.x, p.y, p.z, { count: 18, color: '#ffd8a0', speed: 8, life: 0.4, size: 0.55 });
+    this.shake(0.4);
+    this.hitStop(0.06);
+    audio.play('pound', 1.2);
+    haptic('medium');
+  }
+
+  /** The stolen Legion robots still fighting in a room (all of them if `room` is left out). */
+  goldRobots(room?: string): Enemy[] {
+    return this.enemies.filter((e) => e.alive && (room === undefined || e.room === room) && isRobot(e.kind as EnemyKind));
+  }
+
+  /** A command post's "fight" order: every Legion robot in the room switches back to Brennus's side. */
+  turnRobots(room?: string): number {
+    const list = this.goldRobots(room);
+    for (const e of list) {
+      const root = e.model.root;
+      this.addEntity(new AllyBot(this, root.position.x, root.position.y, root.position.z, root.rotation.y));
+      e.remove();
+      this.enemyDied(e);
+    }
+    return list.length;
+  }
+
   get pulseReady() {
-    return this.save.abilities.includes('pulse') && this.bolt.active && this.pulseCd <= 0;
+    return this.save.abilities.includes('pulse') && this.boltActive && this.pulseCd <= 0;
   }
 
   /** 0..1 while the force pulse recharges (1 = ready). */
@@ -963,6 +1156,11 @@ export class World {
   }
 
   respawn() {
+    if (this.vehicle) {
+      this.shots.clear();
+      this.vehicle.respawn();
+      return;
+    }
     const cp = this.activeCheckpoint;
     const sp = this.level.spawn;
     const x = cp ? cp.spot.x : Grid.center(sp.cx);
@@ -972,13 +1170,20 @@ export class World {
     this.player.revive();
     this.pulseCd = 0;
     this.shots.clear();
+    this.player.bren?.cannon.clear();
     this.respawnEnemies();
-    this.bolt.place(x - 1, y + 2, z + 1);
+    // Robots that changed sides go back to Aeëtes's paint with the rest of their squad.
+    const lw = legionWorld(this);
+    for (const a of lw.allies) a.remove();
+    lw.allies.length = 0;
+    this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();
       this.boss.started = false;
       this.hooks.bossBar(null, 0);
       this.hooks.music(this.def.music as Track);
+      // A mini-boss waits for Jason to come back; the deck's own boss is the one to point at again.
+      if (this.mainBoss && this.boss !== this.mainBoss) this.boss = this.mainBoss;
     }
     if (this.player.carrying) {
       // Keep the power cell: it follows Jason back to the checkpoint.
@@ -1000,6 +1205,10 @@ export class World {
   }
 
   bossDefeated(b: Boss) {
+    if (b.kind === 'rogue') {
+      this.luxBack(b);
+      return;
+    }
     if (this.def.id === 'bridge' && b.kind === 'heart' && !this.flags.has('reborn')) {
       // It isn't over: GaScu pulls every vine on the ship into the Heart and rises again.
       this.flags.add('reborn');
@@ -1048,9 +1257,9 @@ export class World {
     void this.hooks.cutscene((d) => scenes.storyTime(d, this, key));
   }
 
-  /** Jason finds LUX switched off in the dark and switches him back on. */
+  /** Jason finds a droid switched off in the dark (LUX on the ship, IRIS in the jungle) and wakes it up. */
   findBolt(find: BoltFind) {
-    void this.hooks.cutscene((d) => scenes.boltFound(d, this, find));
+    void this.hooks.cutscene((d) => (find.who === 'iris' ? scenes.irisFound(d, this, find) : scenes.boltFound(d, this, find)));
   }
 
   /** A hologram projector plays one of the Captain's (or Aunt Rosa's) recorded messages. */
@@ -1066,9 +1275,16 @@ export class World {
       dt *= 0.05;
     }
     this.time += dt;
+    if (this.vehicle) {
+      this.updateVehicle(this.vehicle, dt, input);
+      return;
+    }
     for (const m of this.movers) m.update(dt);
     this.player.update(dt, input);
-    this.bolt.update(dt);
+    if (!this.boltActive && !this.lamp.on) this.torch.dim(dt);
+    this.lux.update(dt);
+    this.iris.update(dt);
+    this.lamp.update(dt);
     // A boss chilled by the Frost Ray acts a little slower for a moment.
     for (const e of [...this.entities]) if (e.alive) e.update(e === this.boss ? dt * this.boss.tempo(dt) : dt);
     this.tickClocks(dt);
@@ -1132,6 +1348,35 @@ export class World {
     this.ambience.update(dt, this.time, p.x, p.y, p.z);
   }
 
+  /** A frame of a vehicle level: the vehicle flies (or drives), the shared effects and objectives keep running. */
+  private updateVehicle(v: Vehicle, dt: number, input: Input) {
+    v.update(dt, input, this.cutscene);
+    for (const e of [...this.entities]) if (e.alive) e.update(dt);
+    this.beams.update(dt);
+    this.rings.update(dt);
+    this.impacts.update(dt);
+    this.particles.update(dt);
+    if (this.flashLight) {
+      this.flashT = Math.max(0, this.flashT - dt);
+      const k = this.flashT / this.flashMax;
+      this.flashLight.intensity = this.flashPower * k * k;
+    }
+    this.focus = null;
+    this.objT -= dt;
+    if (this.objT <= 0) {
+      this.objT = 0.3;
+      const obj = this.def.objectives.find((o) => !this.cond(o.until));
+      const text = obj?.text ?? '';
+      if (text !== this.lastObjective) {
+        this.lastObjective = text;
+        this.hooks.objective(text);
+      }
+      this.waypoint = null;
+    }
+    input.consumeCamDrag();
+    this.placeCamera(dt);
+  }
+
   /** LUX explains each kind of collectible the first time Jason gets close to one. */
   private checkHints() {
     const seen = (this.save.hints ??= []);
@@ -1148,16 +1393,16 @@ export class World {
     }
     for (const e of this.entities) {
       if (!e.alive) continue;
-      const planet = chapterOf(this.def.id) === 2;
+      const ch = chapterOf(this.def.id);
+      const rescue = rescueKind(ch);
+      const find = findKind(ch);
       const kind =
-        e instanceof Cocoon
-          ? planet
-            ? 'scientist'
-            : 'cocoon'
+        e instanceof Cocoon || e instanceof SupplyNet
+          ? rescue === 'colonist'
+            ? 'cocoon'
+            : rescue
           : e instanceof Shard
-            ? planet
-              ? 'page'
-              : 'shard'
+            ? find
             : e instanceof Canister
               ? 'canister'
               : e instanceof Prize
@@ -1207,6 +1452,12 @@ export class World {
   }
 
   private placeCamera(dt: number) {
+    if (this.vehicle) {
+      this.vehicle.cameraPose(this.follow, dt);
+      this.follow.fov += this.baseFov - 50;
+      this.aimCamera(dt, this.vehicle.pos);
+      return;
+    }
     const p = this.player.body;
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
     if (dt === 0) this.camTarget.copy(aim);
@@ -1228,11 +1479,15 @@ export class World {
     this.followPose(this.follow, dist);
     const ground = p.grounded ? p.y : Math.min(this.groundY, p.y);
     this.groundY = dt === 0 ? ground : damp(this.groundY, ground, 5, dt);
+    this.aimCamera(dt, tmpV.set(p.x, this.groundY, p.z));
+  }
 
+  /** Puts the camera on the follow pose (or a cutscene rig, or between the two), shakes it, and moves the shadows to `focus`. */
+  private aimCamera(dt: number, focus: THREE.Vector3) {
     // Cutscenes steer the camera through a rig; afterwards it eases back to following Jason.
     const c = this.camera.position;
     const look = tmpL;
-    let fov = this.baseFov;
+    let fov = this.follow.fov;
     if (this.camRig) {
       c.copy(this.camRig.pos);
       look.copy(this.camRig.look);
@@ -1243,7 +1498,7 @@ export class World {
       const e = k * k * (3 - 2 * k);
       c.lerpVectors(this.blendFrom.pos, this.follow.pos, e);
       look.lerpVectors(this.blendFrom.look, this.follow.look, e);
-      fov = this.blendFrom.fov + (this.baseFov - this.blendFrom.fov) * e;
+      fov = this.blendFrom.fov + (this.follow.fov - this.blendFrom.fov) * e;
     } else {
       c.copy(this.follow.pos);
       look.copy(this.follow.look);
@@ -1262,7 +1517,7 @@ export class World {
     this.cameraLook.copy(look);
     // Shadows follow whatever the camera is looking at.
     if (this.camRig || this.blendT > 0) this.placeSun(look.x, look.y - 1.2, look.z);
-    else this.placeSun(p.x, this.groundY, p.z);
+    else this.placeSun(focus.x, focus.y, focus.z);
   }
 
   /** Puts the follow camera straight on Jason, with no easing (after a teleport). */

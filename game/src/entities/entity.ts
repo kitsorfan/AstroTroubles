@@ -2,8 +2,11 @@ import * as THREE from 'three';
 
 import type { World } from '../game/world';
 
-/** `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse. */
-export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse';
+/**
+ * `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse,
+ * `smash` General Brennus's shoulder charge or shield bash (heavy: it knocks robots over and shields away).
+ */
+export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse' | 'smash';
 
 export abstract class Entity {
   alive = true;
@@ -34,6 +37,11 @@ export interface Target {
   aimable: boolean;
   /** Returns true if the hit connected (projectiles stop on it). */
   hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean;
+  /**
+   * Hit by one of Atalanta's charged power arrows. Targets without it take the arrow as an ordinary
+   * shot; a few (AELLO) react to nothing else. Returns true if the arrow connected.
+   */
+  powerArrow?(dmg: number, from: THREE.Vector3): boolean;
 }
 
 /** Anything the LUX/action button can use. */

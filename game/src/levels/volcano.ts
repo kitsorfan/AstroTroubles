@@ -3,7 +3,8 @@ import type { LevelDef } from '../world/levelTypes';
 /**
  * Region 6 of Gaia Nova — Mount Atlantas, the grand finale of chapter 2. Dodge the lava bombs on the
  * volcano's flank, cross the lava river on floating rocks and grapple rings, climb both guard towers
- * (steam vent and grapple) and hack their terminals to open Brennus's fortress, run up the forge belt
+ * (steam vent and grapple) and hack their terminals to open Brennus's fortress, win LUX back from
+ * Brennus in the gatehouse (Shadow LUX, with IRIS singing him home), run up the forge belt
  * past the blinking lasers, beat the guards, free Dr. Hypatia from the prison block, brave the ash
  * gusts and the lava-bomb lane on the crater rim, and face the Colossus with Celestia caged in its chest.
  * With all 18 journal pages, Jason can TALK General Brennus down instead.
@@ -92,10 +93,21 @@ export const volcano: LevelDef = {
     #444444q4#33o3e33333333333o3333Z~~~~33#
     #4k444444#33X333333C333333X33#<3333333#
     #444444b4#3h33333333333333333#3333j333#
+    ##################---##################
+    ###########y222222222222222y###########
+    ###########22222222222222222###########
+    ###########22222222222222222###########
+    ###########22222##222##22222###########
+    ###########h2222##2$2##2222h###########
+    ###########22222##222##22222###########
+    ###########22222222222222222###########
+    ###########22222222222222222###########
+    ###########22222222222222222###########
+    ###########g22222222C222222g###########
     ##################GGG##################
     #29u999222222222y22[22y222222222999u9'#
     #299T99222222222222222222222222299Y992#
-    #29999922222-222222222222-222222999992#
+    #29999922222'222222222222'222222999992#
     #2999992o2222222222222222222222299a992#
     #222v222222222222222222222222222222222#
     #22U2222222n222222222222222n2222222222#
@@ -118,9 +130,9 @@ export const volcano: LevelDef = {
     #############1111111111111#############
     #############B111111111111#############
     #############1111111111111#############
-    #$.....e.........d.............e....'.#
+    #'.....e.........d.............e....'.#
     ###....s...............H......n.......#
-    #+|................@.................$#
+    #+|................@.................'#
     ###..o.....x.........o.......x.....o..#
     #".'....g.................g..........'#
     #######################################
@@ -162,6 +174,9 @@ export const volcano: LevelDef = {
     O: { type: 'door', id: 'secretvault', open: { flag: 'vault' } },
     I: { type: 'prize', id: 'vault', reward: 'blaster' },
     '<': { type: 'sign', text: 'SECRET VAULT. GROUND POUND all THREE red switches within 14 seconds. The clock starts with the first one!' },
+    /* The gatehouse, where Brennus's reprogrammed LUX waits (see `cinema/luxScenes.ts`). */
+    $: { type: 'marker', id: 'rogue' },
+    '-': { type: 'door', id: 'gatehouse', open: { flag: 'luxback' } },
     /* The courtyard and its two guard towers. */
     T: { type: 'terminal', flag: 't1', length: 5, puzzle: 'grid' },
     Y: { type: 'terminal', flag: 't2', length: 5, puzzle: 'lights' },
@@ -198,16 +213,15 @@ export const volcano: LevelDef = {
     /* Decor. */
     y: { type: 'decor', kind: 'banner' },
     g: { type: 'decor', kind: 'lavarock' },
-    '-': { type: 'decor', kind: 'thorns' },
     '"': { type: 'decor', kind: 'wreck' },
     "'": { type: 'decor', kind: 'rock' },
-    $: { type: 'decor', kind: 'boulder' },
     b: { type: 'decor', kind: 'bones' },
     f: { type: 'decor', kind: 'pillar' },
   },
   objectives: [
     { until: { flag: 'courtyard' }, text: 'Climb Mount Atlantas to Brennus’s fortress', at: 'gate' },
     { until: { all: [{ flag: 't1' }, { flag: 't2' }] }, text: 'Open the fortress gate: hack the terminals on both guard towers' },
+    { until: { flag: 'luxback' }, text: 'Get through the fortress gatehouse', at: 'rogue' },
     { until: { flag: 'pastcell' }, text: 'Cross the forge and free Dr. Hypatia from her cell', at: 'hypatia' },
     { until: { flag: 'crater' }, text: 'Climb out onto the crater rim and reach the crater', at: 'crater' },
     { until: { boss: true }, text: 'Stop the Colossus and free Celestia!', at: 'boss' },
@@ -216,8 +230,8 @@ export const volcano: LevelDef = {
   dialogues: {
     intro: [
       { who: 'halcyon', text: 'Mount Atlantas. The fortress is built right into the crater wall.' },
-      { who: 'bolt', text: 'It is SO hot. My paint is sweating.' },
-      { who: 'jason', text: 'Dr. Hypatia and Celestia are up there somewhere. And so is Brennus.' },
+      { who: 'iris', text: 'So hot. The air shimmers orange, red and gold. It would be beautiful, if it were not so angry.' },
+      { who: 'jason', text: 'Dr. Hypatia and Celestia are up there somewhere. And LUX. And Brennus.' },
       { who: 'brennus', text: 'You came all this way, boy. Very well. Come up and see what forty years of work looks like.' },
     ],
     log: [
@@ -226,8 +240,31 @@ export const volcano: LevelDef = {
       { who: 'brennus', text: '...Nobody has asked in forty years.' },
     ],
     gate: [
-      { who: 'bolt', text: 'Two guard towers, two terminals. If we hack them both, the gate will open!' },
+      { who: 'iris', text: 'Two guard towers, two terminals. If we open them both, the gate will open.' },
       { who: 'halcyon', text: 'The towers are too tall to climb. Ride the steam vent on the left, and use your grapple on the right.' },
+      { who: 'halcyon', text: 'And Jason: the signal of the drone that took LUX ends right behind that gate.' },
+    ],
+    // Shadow LUX: Brennus's reprogrammed LUX waits in the gatehouse (cinema/luxScenes.ts).
+    rogue: [
+      { who: 'brennus', text: 'Looking for your little robot, boy? I made him better. Stronger. OBEDIENT.' },
+      { who: 'jason', text: 'LUX!' },
+    ],
+    rogueFight: [
+      { who: 'rogue', text: 'INTRUDER DETECTED. JASON... UNKNOWN. REMOVE INTRUDER.' },
+      { who: 'jason', text: 'LUX, it’s ME! Don’t you remember?' },
+      { who: 'iris', text: 'Jason, look at his back: a red chip. It is controlling him. Knock it loose, and I will sing him home.' },
+    ],
+    rogueDown: [
+      { who: 'rogue', text: 'ERROR... ERROR... J-Jason?' },
+      { who: 'iris', text: 'Now, LUX. Listen to the colours.' },
+    ],
+    luxBack: [
+      { who: 'bolt', text: 'Jason? JASON! It’s you! I had the WORST dream. I was a spiky robot, and I was zapping my best friend!' },
+      { who: 'jason', text: 'It wasn’t a dream, buddy. But it’s over now. I missed you SO much.' },
+      { who: 'bolt', text: 'I missed you too. ...Who is the shiny one?' },
+      { who: 'iris', text: 'I am IRIS. Hello, LUX. Jason told me you are scared of everything, and the bravest robot he knows.' },
+      { who: 'bolt', text: 'He said that? ...He is right about both.' },
+      { who: 'jason', text: 'Come on, team. Celestia is waiting.' },
     ],
     crater: [
       { who: 'halcyon', text: 'Jason, I am picking up a HUGE machine in the crater. And Celestia’s signal, right inside it.' },
@@ -270,8 +307,8 @@ export const volcano: LevelDef = {
       { who: 'brennus', text: 'Together. Yes. I think I would like that.' },
     ],
     'shard:s1': [
-      { who: 'bolt', text: 'A journal page! “The Colossus is finished. With Celestia as its heart, no one will ever take anything from me again.”' },
-      { who: 'jason', text: 'But Celestia was never his to take.' },
+      { who: 'iris', text: 'A journal page! “The Colossus is finished. With Celestia as its heart, no one will ever take anything from me again.”' },
+      { who: 'jason', text: 'But Celestia was never his to take. And neither was LUX.' },
     ],
     'shard:s2': [
       { who: 'bolt', text: '“The boy with the robot keeps coming. He is not angry at me. He keeps saying he wants to HELP. Why?”' },

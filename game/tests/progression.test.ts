@@ -2,7 +2,7 @@ import { MAX_HEARTS } from '../src/core/constants';
 import { newSave } from '../src/core/save';
 import { difficultyFor } from '../src/game/difficulty';
 import { COLONIST_BOLTS, QUEST_BOLTS, UPGRADE_MAX, deckQuests, givePrize, payQuests, shardMilestone } from '../src/game/quests';
-import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER } from '../src/levels';
+import { CHAPTER_DECKS, FOOT_LEVELS, LEVELS, LEVEL_ORDER } from '../src/levels';
 
 // newSave() reads navigator for its quality default; give Jest a stand-in.
 beforeAll(() => {
@@ -33,9 +33,12 @@ describe('difficulty', () => {
 describe('side quests and rewards', () => {
   it('gives every deck its four side quests, including a vault', () => {
     const save = newSave();
-    for (const id of LEVEL_ORDER) {
+    for (const id of FOOT_LEVELS) {
       const qs = deckQuests(id, save);
-      expect(qs.map((q) => q.id.split(':')[1])).toEqual(['colonists', 'shards', 'canister', 'vault']);
+      // A level with nobody to rescue and nothing to collect (General Brennus's mine) keeps the canister and the vault.
+      const def = LEVELS[id];
+      const kinds = [...(def.colonistIds?.length ? ['colonists'] : []), ...(def.shardIds.length ? ['shards'] : []), 'canister', 'vault'];
+      expect(qs.map((q) => q.id.split(':')[1])).toEqual(kinds);
       expect(qs.every((q) => !q.done)).toBe(true);
     }
   });

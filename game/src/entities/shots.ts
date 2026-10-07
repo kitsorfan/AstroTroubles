@@ -161,9 +161,12 @@ export class Shots {
         const dz = pl.body.z - p.z;
         const dy = pl.body.y + 0.9 - p.y;
         // A spin bats shots away a little before they reach Jason.
-        const reach = pl.body.r + s.radius + (pl.spinning ? 0.9 : 0);
+        // General Brennus's raised shield stops them a step in front of him.
+        const shielded = pl.shieldBlocks(p.x, p.z);
+        const reach = pl.body.r + s.radius + (pl.spinning ? 0.9 : shielded ? 0.7 : 0);
         if (dx * dx + dz * dz < reach * reach && Math.abs(dy) < 1.4) {
-          if (pl.spinning) {
+          if (pl.spinning || shielded) {
+            if (shielded) pl.bren?.clang();
             const back = tmp.copy(s.vel).setY(0).multiplyScalar(-1).normalize();
             this.pop(s, '#bff4ff');
             this.fire('player', p.clone(), back.clone(), PLAYER.shotSpeed, 1 + (w.save.upgrades.blaster ?? 0));
