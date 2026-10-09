@@ -33,7 +33,7 @@ import {
   vine,
 } from '../kit';
 import * as gn from '../gn';
-import { goldenKing, goldVine, legionBot, lifeboat, lightWord, rootGN } from '../gn/ch3d';
+import { celestia, fleeceGN, goldenKing, legionBot, lifeboat, lightWord, rootGN } from '../gn/ch3d';
 
 const GOLD_VINE = '#e8b030';
 
@@ -334,37 +334,222 @@ function meadow(seed: number, y: number, colors: string[]): string {
   return out;
 }
 
-/** 27. Home on Gaia Nova: the Argonauts lay the Golden Fleece over Celestia in the colony garden, the Argo behind. */
-export function ch3Home(): string {
-  const id = 'ch3-home';
-  return panel(
-    backdrop(id + 'b', [[0, '#5a6ad0'], [0.45, '#ff9a7a'], [0.75, '#ffd8a0'], [1, '#ffe8c0']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.7)}</defs>` +
-      stars(5, 30, 0, 0, 1600, 180, '#fff6e0') +
-      gasGiant(id + 'j', 1380, 200, 120) +
-      cloud(240, 150, 0.8, '#fff', 0.7) +
-      ridge(3, 560, 60, '#c87a6a', 5) +
-      ridge(8, 620, 40, '#8a9a5a', 4) +
-      argoShip(id + 'a', 1220, 560, 0.55, 0, false) +
-      meadow(4, 690, [C.pink, C.gold, C.hello, '#fff']) +
-      // Celestia, bright and strong again, with the Fleece draped round her like a golden blanket.
-      glow(id + 'g', 800, 430, 380, 0.9) +
-      gascuBloom(id + 'c', 800, 400, 1.15, 300) +
-      fleece(id + 'f', 800, 700, 1.05) +
-      leaf(700, 760, 1.4, 200) +
-      leaf(900, 770, 1.3, -20) +
-      jason(560, 905, 1.2, { pose: 'cheer', face: 'grin' }) +
-      atalanta(380, 905, 1.15, { pose: 'cheer', face: 'happy' }) +
-      brennus(1040, 905, 1.2, { pose: 'plant', face: 'smile' }) +
-      hypatia(1230, 905, 1.1, { pose: 'cheer', face: 'happy' }) +
-      captain(190, 905, 1.1, { pose: 'wave', face: 'smile' }) +
-      lux(640, 560, 0.75, 'happy') +
-      iris(960, 540, 0.8, 'happy', true) +
-      sparkle(800, 240, 16, '#fff6d0') +
-      sparkle(620, 360, 10, '#fff') +
-      sparkle(990, 330, 12, '#fff6d0') +
-      vignette(id + 'v', 0.3, '#2a1030'),
+/* ---------------- 27 and 28. The endings, in the graphic-novel style ---------------- */
+
+/** Little five-petal wild flowers scattered in a box, bigger toward the bottom (the valley in bloom). */
+function wildFlowers(pen: gn.Pen, seed: number, n: number, x0: number, x1: number, y0: number, y1: number, colors: string[], size = 12, line = 1.8): string {
+  const rand = gn.rng(seed);
+  const byColor: Record<string, string> = {};
+  let centres = '';
+  for (let i = 0; i < n; i++) {
+    const t = rand();
+    const x = x0 + rand() * (x1 - x0);
+    const y = y0 + t * (y1 - y0);
+    const r = size * (0.45 + t * 0.8);
+    const c = colors[i % colors.length];
+    let d = '';
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2 + rand();
+      const px = x + Math.cos(a) * r * 0.62;
+      const py = y + Math.sin(a) * r * 0.5;
+      d += `M${gn.r1(px - r * 0.42)} ${gn.r1(py)}a${gn.r1(r * 0.42)} ${gn.r1(r * 0.36)} 0 1 0 ${gn.r1(r * 0.84)} 0a${gn.r1(r * 0.42)} ${gn.r1(r * 0.36)} 0 1 0 ${gn.r1(-r * 0.84)} 0`;
+    }
+    byColor[c] = (byColor[c] ?? '') + d;
+    centres += `M${gn.r1(x)} ${gn.r1(y)}h0`;
+  }
+  return (
+    Object.entries(byColor)
+      .map(([c, d]) => `<path d="${d}" fill="${c}" stroke="${gn.INK}" stroke-width="${line}"/>`)
+      .join('') + `<path d="${centres}" stroke="#ffd166" stroke-width="${gn.r1(size * 0.5)}" stroke-linecap="round"/>`
   );
+}
+
+/** Tiny far-off flowers: dots of colour in a box (cheap: one path per colour). */
+function flowerDots(seed: number, n: number, x0: number, x1: number, y0: number, y1: number, colors: string[], size: number): string {
+  const rand = gn.rng(seed);
+  const d = colors.map(() => '');
+  for (let i = 0; i < n; i++) {
+    const t = rand();
+    d[i % colors.length] += `M${Math.round(x0 + rand() * (x1 - x0))} ${Math.round(y0 + t * (y1 - y0))}h0`;
+  }
+  return colors.map((c, i) => `<path d="${d[i]}" stroke="${c}" stroke-width="${size}" stroke-linecap="round"/>`).join('');
+}
+
+/** The Argo landed far off in the valley, a flat silhouette in the haze (hull, mast and sail), centred at (x, y). */
+function argoFar(x: number, y: number, s: number, color: string): string {
+  const d = 'M-340 -30Q0 -46 300 -36Q370 -30 390 0Q340 50 260 60Q0 76 -250 64Q-330 50 -350 0ZM-300 -30Q-350 -120 -300 -200Q-260 -220 -250 -190Q-290 -150 -270 -40ZM-10 -470H10V-40H-10ZM-166 -446Q-122 -300 -166 -146H178Q222 -300 178 -446Z';
+  return gn.at(x, y, s, `<path d="${d}" fill="${color}"/>`);
+}
+
+/** A kneeling pose (facing right): the far knee down, the near knee up, both hands reaching down in front. */
+const KNEEL: gn.Pose = { turn: 0.5, lean: 12, tilt: -14, legN: { to: [0.4, 0.66] }, legF: { to: [-0.42, 0.66] }, footF: 70, armN: { to: [1.2, 1.25] }, armF: { to: [1.45, 1.1] }, handN: 'flat', handF: 'flat', wristN: -30, wristF: -30 };
+
+/**
+ * 27. Home on Gaia Nova at sunset: in the colony garden the Argonauts have laid the Golden Fleece over
+ * Celestia like a blanket of sunshine, and she blooms, glowing brighter than ever. Jason and Atalanta kneel
+ * at the Fleece's edge, Brennus holds his cap to his heart, Captain Argus beams, the Argo rests in the valley.
+ */
+export function ch3Home(): string {
+  const pen = gn.Pen.scene('ch3-home', { key: [0, -1], keyColor: '#ffe6b0', rim: [0, -1], rimColor: '#ffc8b0', shadow: '#6a4a9a', depth: 0.5 });
+  const cx = 800;
+  const cy = 320;
+  const sky =
+    gn.sky(pen, [
+      [0, '#2a3a8a'],
+      [0.3, '#8a6ab8'],
+      [0.52, '#ff9a8a'],
+      [0.7, '#ffd0a0'],
+    ]) +
+    gn.starfield(pen, 6, 30, 0, 0, 1600, 200, '#fff6e0') +
+    gn.gasGiant(pen, 200, 150, 84, { lightDir: [0.9, 0.4], haze: 0.5, sky: '#7a6ab0' }) +
+    gn.godRays(pen, cx, cy, [-150, -125, -100, -78, -56, 56, 78, 100, 125, 150, 180], 7, 1300, '#fff0c0', 0.3);
+  const far =
+    gn.silhouette(
+      [
+        [-80, 600],
+        [160, 520],
+        [420, 560],
+        [640, 500],
+        [900, 540],
+        [1180, 490],
+        [1420, 540],
+        [1680, 500],
+        [1680, 640],
+        [-80, 640],
+      ],
+      '#b88aa8',
+    ) +
+    argoFar(1170, 552, 0.22, '#9a6a8e') +
+    // The colony's domes on the far hillside.
+    [
+      [260, 566, 30],
+      [320, 572, 20],
+      [372, 568, 26],
+    ]
+      .map(([x, y, r]) => `<path d="M${x - r} ${y}A${r} ${r * 0.8} 0 0 1 ${x + r} ${y}Z" fill="#c8a0b8"/><circle cx="${x}" cy="${y - r * 0.5}" r="3" fill="#fff2c0"/>`)
+      .join('') +
+    gn.haze(pen, 500, 640, '#ffd0b0', 0.7) +
+    gn.silhouette(
+      [
+        [-80, 660],
+        [260, 600],
+        [560, 640],
+        [1000, 600],
+        [1300, 630],
+        [1680, 590],
+        [1680, 700],
+        [-80, 700],
+      ],
+      '#8a8a9a',
+    ) +
+    flowerDots(3, 70, -40, 1640, 612, 680, ['#ff6fcf', '#ffd166', '#5e9bff', '#ffffff'], 7) +
+    gn.haze(pen, 600, 720, '#ffc8a8', 0.5);
+  // The garden: a meadow in bloom; Celestia in the middle with the Fleece draped round her like a blanket.
+  const ground = pen.form('M-80 690Q400 660 800 672Q1200 660 1680 690V960H-80Z', '#5a9a4a', {
+    line: 3,
+    paint: pen.lin([
+      [0, '#9ad06a'],
+      [0.5, '#4a8a44'],
+      [1, '#1e3a2a'],
+    ]),
+    inner: pen.glow(cx, 700, 700, '#fff0b0', 0.55, 130) + flowerDots(9, 80, -60, 1660, 690, 860, ['#ff6fcf', '#ffd166', '#5e9bff', '#7dff9a'], 11),
+  });
+  const fleecePts: gn.P[] = [
+    [cx - 40, 474],
+    [cx + 40, 474],
+    [cx + 92, 524],
+    [cx + 150, 600],
+    [cx + 240, 656],
+    [cx + 340, 700],
+    [cx + 290, 738],
+    [cx + 120, 756],
+    [cx - 120, 756],
+    [cx - 290, 738],
+    [cx - 340, 700],
+    [cx - 240, 656],
+    [cx - 150, 600],
+    [cx - 92, 524],
+  ];
+  const garden =
+    ground +
+    gn.bloom(pen, cx, cy, 200, '#fff0c0', 0.8) +
+    celestia(pen.relight({ key: [0, -1], rim: [0, 1], rimColor: '#ffffff' }), cx, cy, 1.18, { stem: 380, sway: 16 }) +
+    pen.glow(cx, 640, 440, '#ffd166', 0.8, 200) +
+    fleeceGN(pen.relight({ key: [0, -1] }), fleecePts, {
+      edge: 0.2,
+      seeds: [
+        [cx - 70, 600],
+        [cx + 50, 540],
+        [cx + 170, 680],
+        [cx - 20, 700],
+        [cx - 230, 690],
+      ],
+      folds: [
+        [
+          [cx - 14, 490],
+          [cx - 50, 600],
+          [cx - 110, 750],
+        ],
+        [
+          [cx + 18, 490],
+          [cx + 60, 600],
+          [cx + 120, 750],
+        ],
+        [
+          [cx - 60, 540],
+          [cx - 170, 650],
+          [cx - 300, 720],
+        ],
+        [
+          [cx + 60, 540],
+          [cx + 170, 650],
+          [cx + 300, 720],
+        ],
+      ],
+      sh: 18,
+      bump: 13,
+      curl: 50,
+      glow: 1.1,
+    }) +
+    pen.glow(cx, 600, 220, '#fff2a0', 0.6, 140) +
+    gn.bloom(pen, cx, cy, 130, '#fff6e0', 0.95) +
+    gn.spark(pen, cx - 230, 230, 16, '#fff6d0') +
+    gn.spark(pen, cx + 250, 190, 20, '#fff6d0') +
+    gn.spark(pen, cx + 170, 420, 10, '#ffffff');
+  // The Argonauts, lit by Celestia's glow.
+  const fromL = pen.relight({ key: [1, -0.45], rim: [-0.7, -0.7], rimColor: '#ffb8a0' });
+  const fromR = pen.relight({ key: [-1, -0.45], rim: [0.7, -0.7], rimColor: '#ffb8a0' });
+  const heroes =
+    gn.castShadow(fromL, 300, 900, 150, 16, 0.4) +
+    gn.brennus(fromL, 290, 904, 1.02, {
+      capOff: true,
+      shield: false,
+      cannon: false,
+      pose: { turn: 0.5, tilt: -6, hipTilt: 6, armN: { to: [0.5, 1.0] }, armF: [8, 4], legN: { to: [-0.08, 0.985] }, legF: { to: [0.2, 0.96] }, handN: 'flat', handF: 'fist', wristN: 80 },
+      mood: 'proud',
+      look: [2.4, -2.5],
+    }) +
+    gn.castShadow(fromR, 1350, 900, 150, 16, 0.4) +
+    gn.argus(fromR, 1350, 904, 1.0, { pose: 'hips', mood: 'smile', flip: true, look: [2.4, -2.5] }) +
+    gn.castShadow(fromL, 530, 890, 130, 14, 0.45) +
+    gn.jason(fromL, 520, 892, 1.0, { pose: KNEEL, mood: 'smile', look: [2.6, -3.5] }) +
+    gn.castShadow(fromR, 1080, 890, 130, 14, 0.45) +
+    gn.atalanta(fromR, 1090, 892, 1.0, { pose: KNEEL, mood: 'smile', flip: true, look: [2.6, -3.5], wind: 0.4 }) +
+    gn.lux(fromL, 600, 330, 0.8, 'happy', { look: [8, -4] }) +
+    gn.iris(fromR, 1010, 300, 0.78, 'happy', { flip: true });
+  // Petals and motes of light drifting up out of her.
+  const motes = [
+    [560, 460],
+    [700, 180],
+    [930, 150],
+    [1060, 430],
+    [420, 260],
+    [1200, 280],
+    [880, 520],
+  ]
+    .map(([x, y], i) => pen.glow(x, y, 22, gn.RAINBOW[i % 6], 0.9) + `<circle cx="${x}" cy="${y}" r="4" fill="#fff"/>`)
+    .join('');
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, garden) + gn.layer(1, heroes + motes) + gn.vignette(pen, 0.45, '#1a0c2a') + gn.grain(pen, 0.08));
 }
 
 /** 28. The secret ending: LUX and IRIS sing light-words over a valley full of little Celestias, golden seeds drifting down. */

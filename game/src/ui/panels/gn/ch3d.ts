@@ -268,6 +268,8 @@ export interface FleeceOpts {
   bump?: number;
   /** Fold lines (brush strokes) across it. */
   folds?: P[][];
+  /** How much its edges darken (default 0.55). */
+  edge?: number;
 }
 
 /**
@@ -298,7 +300,7 @@ export function fleeceGN(pen: Pen, pts: P[], o: FleeceOpts = {}): string {
     if (o.awake) seeds += spark(pen, sx, sy, 16, '#f0fff4', 0.9);
   }
   const folds = (o.folds ?? []).map((f) => [f, 4] as [P[], number]);
-  const edge = pen.rad([[0.55, "#7a3a08", 0], [1, "#7a3a08", 0.55]], 0.5, 0.45, 0.62);
+  const edge = pen.rad([[0.55, "#7a3a08", 0], [1, "#7a3a08", o.edge ?? 0.55]], 0.5, 0.45, 0.62);
   const box = `x="${r1(minX - 40)}" y="${r1(minY - 40)}" width="${r1(maxX - minX + 80)}" height="${r1(h + 80)}"`;
   const inner = `<rect ${box} fill="${curlFill(pen, o.curl ?? 40)}"/><rect ${box} fill="${edge}"/>` + (folds.length ? pen.brushes(folds, '#7a4208', [0.2, 0.5], 0.55) : '') + seeds;
   const paint = pen.rad(
@@ -563,29 +565,24 @@ export function celestia(pen: Pen, x: number, y: number, s: number, o: CelestiaO
       out += leafD(lp, [-sw * 0.6, stem * 0.45], -70, 150, '#3e9a48', 3) + leafD(lp, [sw * 0.4, stem * 0.62], 64, 170, '#4aae52', 3) + leafD(lp, [-4, stem * 0.88], -110, 120, '#358a40', 3);
     } else out += leafD(lp, [-sw * 0.6, stem * 0.5], -70, 100, '#3e9a48', 2.6) + leafD(lp, [sw * 0.4, stem * 0.7], 64, 110, '#4aae52', 2.6);
   }
-  out += lp.glow(0, 0, 300, '#ffe6a0', 0.55 * g) + lp.glow(0, 0, 200, '#ff8ad8', 0.35 * g);
-  // Two rings of petals: the back ring longer and darker, the front ring between them.
-  const petal = (deg: number, r0: number, r1v: number, w: number, color: string, back: boolean) => {
+  out += lp.glow(0, 0, 320, '#ffe6a0', 0.6 * g) + lp.glow(0, 0, 210, '#ff8ad8', 0.4 * g);
+  // Two rings of long glowing petals (the back ring longer and deeper in colour), each a little different,
+  // their tips curling; the whole flower seen a little from below (squashed).
+  let head = '';
+  const petal = (deg: number, r0: number, r1v: number, w: number, color: string, back: boolean, curl: number) => {
     const q = lp.local(false, deg);
     const mid = (r0 + r1v) * 0.5;
-    const d = `M0 ${-r0}C${-w} ${-mid + w * 0.3} ${-w * 0.7} ${-r1v + w * 0.4} 0 ${-r1v}C${w * 0.7} ${-r1v + w * 0.4} ${w} ${-mid + w * 0.3} 0 ${-r0}Z`;
-    const paint = q.lin(
-      [
-        [0, mix(color, '#ffffff', back ? 0.25 : 0.55)],
-        [1, mix(color, '#ffffff', back ? 0 : 0.1)],
-      ],
-      0,
-      1,
-      0,
-      0,
-    );
-    const vein = q.brush([[0, -r0 - 6], [w * 0.08, -mid], [0, -r1v + 16]], mini ? 2 : 3, '#ffffff', [0.1, 0.5], back ? 0.35 : 0.6);
-    const veins = mini ? '' : q.brushes([[[[0, -mid + 10], [-w * 0.35, -mid - 30]], 1.6], [[[0, -mid + 30], [w * 0.4, -mid - 6]], 1.6]], mix(color, INK, 0.35), [0.2, 0.5], 0.5);
-    return at(0, 0, 1, q.form(d, color, { sh: w * 0.45, hatch: back && !mini ? 1 : 0, line, rim: mini ? 0 : 2, paint, shade: q.dark(color, back ? 0.75 : 0.5), inner: vein + veins }), false, deg);
+    const tx = curl * w * 0.22;
+    const d = `M0 ${-r0}C${r1(-w)} ${r1(-mid + w * 0.3)} ${r1(-w * 0.6 + tx)} ${r1(-r1v + w * 0.5)} ${r1(tx)} ${-r1v}C${r1(w * 0.75 + tx)} ${r1(-r1v + w * 0.45)} ${r1(w)} ${r1(-mid + w * 0.2)} 0 ${-r0}Z`;
+    // Petals glow from the heart outward: pale at the base, full colour at the tip (one gradient per colour).
+    const gid = q.shared(`pt${color.slice(1)}${back ? 'b' : ''}`, (id) => `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${mix(color, '#ffffff', back ? 0.35 : 0.7)}"/><stop offset=".55" stop-color="${mix(color, '#ffffff', back ? 0.1 : 0.25)}"/><stop offset="1" stop-color="${color}"/></linearGradient>`);
+    const vein = q.brush([[0, -r0 - 6], [w * 0.08, -mid], [tx * 0.8, -r1v + 18]], mini ? 2 : 3, '#ffffff', [0.1, 0.5], back ? 0.4 : 0.7);
+    const veins = mini || back ? '' : q.brushes([[[[0, -mid + 10], [-w * 0.35, -mid - 30]], 1.6], [[[0, -mid + 30], [w * 0.4, -mid - 6]], 1.6]], mix(color, INK, 0.35), [0.2, 0.5], 0.45);
+    return at(0, 0, 1, q.form(d, color, { sh: w * (back ? 0.5 : 0.35), hatch: back && !mini ? 1 : 0, line: back ? line : line * 0.85, rim: mini ? 0 : 2.4, paint: `url(#${gid})`, shade: q.dark(color, back ? 0.7 : 0.45), inner: vein + veins }), false, deg);
   };
   const n = mini ? 6 : 8;
-  for (let i = 0; i < n; i++) out += petal((i * 360) / n + 180 / n, 30, mini ? 150 : 175, mini ? 62 : 64, PETALS[(i + 1) % 4], true);
-  for (let i = 0; i < n; i++) out += petal((i * 360) / n, 26, mini ? 118 : 138, mini ? 56 : 58, PETALS[i % 4], false);
+  for (let i = 0; i < n; i++) head += petal((i * 360) / n + 180 / n + ((i * 7) % 5) - 2, 30, (mini ? 150 : 178) * (0.9 + ((i * 37) % 7) / 30), mini ? 62 : 64, PETALS[(i + 1) % 4], true, (i % 3) - 1);
+  for (let i = 0; i < n; i++) head += petal((i * 360) / n + ((i * 5) % 4) - 1.5, 26, (mini ? 118 : 140) * (0.92 + ((i * 53) % 5) / 30), mini ? 56 : 58, PETALS[i % 4], false, ((i + 1) % 3) - 1);
   // Stamens: little glowing beads on fine stalks round the bulb.
   if (!mini) {
     const st: [P[], number][] = [];
@@ -596,7 +593,7 @@ export function celestia(pen: Pen, x: number, y: number, s: number, o: CelestiaO
       st.push([[[Math.cos(a) * 40, Math.sin(a) * 40], e], 3]);
       beads += `<circle cx="${r1(e[0])}" cy="${r1(e[1])}" r="5.5" fill="#fff6c8" stroke="${INK}" stroke-width="1.6"/>`;
     }
-    out += lp.brushes(st, '#ffe6a0', [0.1, 0.1]) + beads;
+    head += lp.brushes(st, '#ffe6a0', [0.1, 0.1]) + beads;
   }
   // The bulb: white at the heart, pale gold, then pink at the edge.
   const bulb = lp.rad(
@@ -610,8 +607,9 @@ export function celestia(pen: Pen, x: number, y: number, s: number, o: CelestiaO
     0.38,
     0.62,
   );
-  out += lp.form(circ(0, 0, 54), '#ffd8ec', { sh: 10, line: line + 0.4, paint: bulb, shade: '#ff9ad8', inner: `<ellipse cx="-18" cy="-20" rx="15" ry="9" fill="#fff" opacity=".9" transform="rotate(-30 -18 -20)"/>` });
-  out += lp.glow(0, 0, 90, '#ffffff', 0.6 * g);
+  head += lp.form(circ(0, 0, 54), '#ffd8ec', { sh: 10, line: line + 0.4, paint: bulb, shade: '#ff9ad8', inner: `<ellipse cx="-18" cy="-20" rx="15" ry="9" fill="#fff" opacity=".9" transform="rotate(-30 -18 -20)"/>` });
+  head += lp.glow(0, 0, 110, '#ffffff', 0.75 * g);
+  out += `<g transform="scale(1 .84)">${head}</g>`;
   return at(x, y, s, out, false, o.rot ?? 0);
 }
 
