@@ -79,7 +79,7 @@ export function ignite(w: World, t: Target, up: ArmsUpgrades) {
   else if (w.boss?.started && !w.boss.defeated && t.aim.distanceTo(w.boss.where) < 14) w.boss.ignite(FLAME.burn * FLAME.bossBurn, dps);
 }
 
-const FLAME_COLORS = ['#fff1c4', '#ffd166', '#ff9a2a', '#ff5a1a'];
+const FLAME_COLORS = ['#ffd166', '#ffa030', '#ff7a1a', '#ff4a10'];
 
 /**
  * The fire coming out of the nozzle: three flickering glow sprites along the cone, plus a stream of
@@ -93,9 +93,9 @@ export class FlameJet {
 
   constructor(private w: World) {
     this.glows = [
-      glowSprite('#fff1c4', 1, 0.9),
-      glowSprite('#ffb030', 1, 0.75),
-      glowSprite('#ff5a1a', 1, 0.55),
+      glowSprite('#ffc860', 1, 0.6),
+      glowSprite('#ff8a20', 1, 0.5),
+      glowSprite('#ff4a10', 1, 0.38),
     ];
     for (const g of this.glows) {
       g.visible = false;
@@ -117,7 +117,7 @@ export class FlameJet {
       const flicker = 0.85 + Math.sin(this.t * (31 + i * 7)) * 0.1 + Math.random() * 0.1;
       g.position.copy(origin).addScaledVector(dir, along);
       g.position.y += i * 0.25;
-      g.scale.setScalar([1.1, 2.3, 3.3][i] * this.level * flicker);
+      g.scale.setScalar([0.8, 1.9, 2.8][i] * this.level * flicker);
     });
     if (!on) return;
     const speed = WEAPONS.flame.speed;
@@ -125,7 +125,7 @@ export class FlameJet {
     for (let i = 0; i < 4; i++) {
       const c = FLAME_COLORS[(Math.random() * FLAME_COLORS.length) | 0];
       const s = speed * (0.75 + Math.random() * 0.4);
-      this.w.particles.emit(origin.x, origin.y, origin.z, { count: 1, color: c, vel: [dir.x * s, dir.y * s + 0.6, dir.z * s], speed: 2.4, spread: 1, life, size: 0.6 + i * 0.25, gravity: -3, drag: 0.6 });
+      this.w.particles.emit(origin.x, origin.y, origin.z, { count: 1, color: c, vel: [dir.x * s, dir.y * s + 0.6, dir.z * s], speed: 2.4, spread: 1, life, size: 0.45 + i * 0.2, gravity: -3, drag: 0.6 });
     }
     // A warm light on the ground around the flames, now and then.
     this.flashT -= dt;

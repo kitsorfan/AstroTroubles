@@ -369,12 +369,13 @@ function whiteTexture() {
 
 /** Health bar size in world units (before the distance scaling). */
 const BAR_W = 1.5;
-const BAR_H = 0.2;
-const EDGE = 0.07;
+const BAR_H = 0.24;
+const EDGE = 0.08;
 
-const RED = new THREE.Color('#ff3b3b');
-const YELLOW = new THREE.Color('#ffd23a');
-const GREEN = new THREE.Color('#46e05a');
+// Picked in linear light, strong enough to stay vivid through the game's filmic tone mapping.
+const RED = new THREE.Color().setRGB(1.25, 0.05, 0.04);
+const YELLOW = new THREE.Color().setRGB(1.15, 0.8, 0.0);
+const GREEN = new THREE.Color().setRGB(0.05, 1.0, 0.08);
 
 /** The bar's colour for a share of health left: green when healthy, through yellow, to red. */
 export function healthColor(frac: number, out = new THREE.Color()): THREE.Color {
@@ -429,11 +430,14 @@ export class Badge {
   private flashT = 0;
   private color = new THREE.Color();
   private bar = new THREE.Group();
+  private iconSize = 0.8;
 
   constructor(kind: BadgeKind, elite: boolean, maxHp = 1) {
-    const sm = (map: THREE.Texture, color = '#ffffff') => new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, depthTest: false, opacity: 0 });
+    // Flat, untoned colours: the bar must read the same in fog, at night and under bloom.
+    const sm = (map: THREE.Texture, color = '#ffffff') => new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, depthTest: false, opacity: 0, toneMapped: false, fog: false });
     this.icon = new THREE.Sprite(sm(iconTexture(kind, elite)));
-    this.icon.scale.setScalar(elite ? 0.95 : 0.8);
+    this.iconSize = elite ? 0.95 : 0.8;
+    this.icon.scale.setScalar(this.iconSize);
     this.icon.position.y = 0.62;
     this.frame = new THREE.Sprite(sm(whiteTexture(), '#07040a'));
     this.frame.scale.set(BAR_W + EDGE * 2, BAR_H + EDGE * 2, 1);
@@ -501,7 +505,7 @@ export class Badge {
     if (this.flashT > 0) this.fillMat.color.set('#ffffff');
     else this.fillMat.color.copy(healthColor(frac, this.color));
     // The icon sits above the bar, or in its place while the bar is hidden.
-    this.icon.position.y = 0.3 + 0.32 * a;
+    this.icon.position.y = 0.3 + a * (BAR_H / 2 + EDGE + 0.06 + this.iconSize / 2 - 0.3);
     if (this.num && this.numCanvas && this.numTex) {
       const n = Math.max(0, Math.ceil(st.hp - 1e-3));
       if (n !== this.numShown) {
