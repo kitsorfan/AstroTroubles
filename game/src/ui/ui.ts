@@ -705,6 +705,8 @@ export class UI {
       who.style.color = SPEAKER_COLOR[speaker];
       box.classList.toggle('glitchy', speaker === 'glitch' || speaker === 'rogue');
       shown = 0;
+      // Clear the last line at once, so it never shows next to the new speaker's face.
+      $(el, '.text').textContent = '';
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
         shown = Math.min(text.length, shown + 2);
