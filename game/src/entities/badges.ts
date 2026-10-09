@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,8 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  crab: '#ff9a4a',
+  jelly: '#ff8ad8',
 };
 
 type G = CanvasRenderingContext2D;
@@ -291,6 +293,76 @@ function glyph(g: G, kind: BadgeKind) {
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
       g.fill();
+      break;
+    }
+    case 'crab': {
+      // A round crab shell, two big raised claws, stalk eyes and little legs.
+      g.beginPath();
+      g.ellipse(64, 74, 30, 20, 0, 0, Math.PI * 2);
+      g.fill();
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.ellipse(64 + sx * 36, 40, 12, 16, sx * 0.4, 0, Math.PI * 2);
+        g.fill();
+        g.lineWidth = 7;
+        g.beginPath();
+        g.moveTo(64 + sx * 22, 62);
+        g.lineTo(64 + sx * 34, 50);
+        g.stroke();
+        g.lineWidth = 4;
+        for (let i = 0; i < 3; i++) {
+          g.beginPath();
+          g.moveTo(64 + sx * 26, 78 + i * 6);
+          g.lineTo(64 + sx * 44, 90 + i * 7);
+          g.stroke();
+        }
+        g.beginPath();
+        g.moveTo(64 + sx * 9, 58);
+        g.lineTo(64 + sx * 11, 44);
+        g.stroke();
+      }
+      // A notch in each pincer, and red eyes.
+      g.fillStyle = COLORS.crab;
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(64 + sx * 36, 40);
+        g.lineTo(64 + sx * 40, 24);
+        g.lineTo(64 + sx * 30, 26);
+        g.fill();
+      }
+      g.fillStyle = '#e0142a';
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.arc(64 + sx * 11, 42, 5, 0, Math.PI * 2);
+        g.fill();
+      }
+      break;
+    }
+    case 'jelly': {
+      // A jellyfish bell with wavy tentacles and a glowing spark at the tips.
+      g.beginPath();
+      g.arc(64, 58, 32, Math.PI, 0);
+      g.closePath();
+      g.fill();
+      g.lineWidth = 5;
+      for (let i = 0; i < 5; i++) {
+        const x = 40 + i * 12;
+        g.beginPath();
+        g.moveTo(x, 60);
+        g.quadraticCurveTo(x - 7, 76, x, 88);
+        g.quadraticCurveTo(x + 7, 100, x, 112);
+        g.stroke();
+      }
+      g.fillStyle = COLORS.jelly;
+      g.beginPath();
+      g.arc(64, 44, 9, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#7fe6ff';
+      for (let i = 0; i < 5; i++) {
+        g.beginPath();
+        g.arc(40 + i * 12, 112, 4, 0, Math.PI * 2);
+        g.fill();
+      }
       break;
     }
   }

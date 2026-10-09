@@ -57,6 +57,7 @@ export const FLYOVER: Record<DeckId, string> = {
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
+  reef: 'The strait of <b>Scylla’s Reef</b>. Coral, sunshine and turquoise water... between a great dark rock and a whirlpool that never stops turning.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
 };
@@ -154,6 +155,15 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // Through the strait at last: next comes Talos's bronze island.
+  reef: [
+    { who: 'captain', text: 'Argo to the reef: the strait is clear! Scylla’s arms are folded, and Charybdis is just a gentle swirl. We are sailing through.' },
+    { who: 'halcyon', text: 'Beyond the strait there is an island of black rock and bronze cliffs. Its volcano is smoking... and something enormous is walking along the beach.' },
+    { who: 'atalanta', text: 'Enormous? How enormous?' },
+    { who: 'halcyon', text: 'About as tall as a ten-storey building. And it is made of bronze.' },
+    { who: 'bolt', text: 'Oh good. A giant. I was worried today would be boring.' },
+    { who: 'jason', text: 'The map says the way to Colchis goes right across that island. Let’s go and say hello. Politely.' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +255,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
 };
 
 /**
@@ -265,6 +276,8 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  crab: { name: 'Crab-Drone', tip: 'Its big claws block shots from the front. When it snaps, the claws hang open: blast it then, or from the side!' },
+  jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

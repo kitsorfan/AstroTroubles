@@ -694,6 +694,11 @@ export class Player {
     this.world.hooks.hud();
   }
 
+  /** Swept off by the sea (a rising tide, a whirlpool): like a fall, one heart and back to the last dry spot. */
+  washBack() {
+    this.fellOff();
+  }
+
   private fellOff() {
     audio.play('hurt');
     this.world.particles.emit(this.body.x, this.body.y + 0.5, this.body.z, { count: 20, color: this.world.theme.hazard, speed: 6, life: 0.6, up: 4 });

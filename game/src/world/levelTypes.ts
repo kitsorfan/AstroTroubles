@@ -7,7 +7,7 @@ import type { FlightCourse } from '../vehicles/course';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
@@ -25,8 +25,8 @@ export type HeroId = 'jason' | 'atalanta' | 'brennus';
  * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
  * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -126,6 +126,9 @@ export type Spec = Base &
     | { type: 'legionbot'; flag: string }
     /** A heavy plate: sets `flag` while something heavy (Brennus, or a robot for good) stands on it. */
     | { type: 'plate'; flag: string }
+    /* Scylla's Reef. */
+    /** A raft of driftwood on the tidal flats: it rests on the sand at low tide and floats up with the sea (see `LevelDef.tide`). */
+    | { type: 'raft' }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -167,7 +170,14 @@ export type DecorKind =
   | 'wreck'
   | 'thorns'
   | 'banner'
-  | 'pillar';
+  | 'pillar'
+  /* Scylla's Reef. */
+  | 'coral'
+  | 'seafan'
+  | 'kelp'
+  | 'shell'
+  | 'lighthouse'
+  | 'tidepost';
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
@@ -177,7 +187,7 @@ export type DecorKind =
 export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 
 /** Low props Jason walks straight through (they never block a cell). */
-export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops'];
+export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops', 'kelp'];
 
 /** Who can appear in a hologram log. */
 export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus' | 'atalanta';
@@ -259,6 +269,19 @@ export interface LevelDef {
    * until it is set they stay out of the roster (Atalanta joins on the Harpy Isles when Jason meets her).
    */
   joins?: Partial<Record<HeroId, string>>;
+  /** The sea rises and falls on a cycle, flooding the low floors (Scylla's Reef). */
+  tide?: TideDef;
+}
+
+/**
+ * Tides: the sea level goes from `low` up to `high` and back again, spending `phases` seconds at low
+ * tide, rising, at high tide and falling. A walkable floor below the sea is flooded: a hero standing on
+ * it is washed back to the last dry spot. `raft`s float on the sea (see `entities/reef/tide.ts`).
+ */
+export interface TideDef {
+  low: number;
+  high: number;
+  phases: [low: number, rising: number, high: number, falling: number];
 }
 
 export interface Cell {

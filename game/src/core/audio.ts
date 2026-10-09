@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'reef' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -292,6 +292,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.....x.x.....x.', s: '....x.......xxxx', h: 'x.x.x.x.x.x.x.x.' },
     lead: 'square',
     padLevel: 0.65,
+  },
+  // Scylla's Reef: a sunny, bouncy island tune with off-beat steel-drum bells.
+  reef: {
+    bpm: 118,
+    chords: [
+      [60, 'maj'],
+      [65, 'maj'],
+      [67, 'maj'],
+      [64, 'min'],
+    ],
+    bass: '0..0..2.0..0..3.',
+    arp: '.2.1.3.2.2.1.3.0',
+    drums: { k: 'x..x..x.x..x..x.', s: '....x.......x..x', h: '.x.x.x.x.x.x.xx.' },
+    lead: 'bell',
+    padLevel: 0.75,
   },
   boss: {
     bpm: 144,
