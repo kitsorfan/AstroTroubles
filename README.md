@@ -137,7 +137,7 @@ Chapter 3, **The Argonauts**, is the voyage of the Argo to the moon Colchis (it'
 - **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt. **IRIS** does all the same jobs (her zap is rainbow-coloured), and while no droid is around, Jason hacks with his wrist computer and his helmet lamp lights the dark, but there is no force pulse and no zap.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
-- **New weapons on Gaia Nova.** Once Jason reaches the planet, PANDORA's shop gets a Weapons tab: **Spread Shot** (three shots in a fan), **Frost Ray** (slows enemies; a charged shot freezes them solid), **Thunder Arc** (lightning that jumps to nearby enemies) and **Seeker** (slow shots that chase their target). Every weapon keeps the clip, reload and charged shot of the Blaster, and grows with Blaster Power. Bosses resist the cold.
+- **New weapons on Gaia Nova.** Once Jason reaches the planet, PANDORA's shop gets a Weapons tab (see **The arsenal** below). Switch between the weapons you own with the weapon button next to BLAST (or **X**); a little card pops up with the weapon's name and stat bars.
 - **Mk II upgrades.** In Chapter 2 the shop also sells a further level of every upgrade (the heart plating can now take Jason up to 12 hearts) and four new ones: **Armor Plating** (blocks a hit, then recharges), **Dash Cell** (an extra dash), **Spin Charge** (an extra spin) and **Grapple Range** (a longer, faster grapple).
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
@@ -146,9 +146,26 @@ Chapter 3, **The Argonauts**, is the voyage of the Argo to the moon Colchis (it'
 - **Gardener light-stones.** In Chapter 3 every level on foot hides three glowing rainbow stones left by the Gardeners, Celestia's people (21 in the whole chapter). Each one teaches LUX and IRIS another word of Celestia's light-language, and every 6 give an extra heart. Instead of cocoons, Chapter 3 has things to win back: on the Harpy Isles, gold harpy nets stuffed with old Phineus's stolen food (blast them open).
 - **Harpy drones** (Chapter 3) are Aeëtes's gold thief birds: one circles you, flashes its red eye, then swoops in and snatches a handful of bolts. Blast it (or arrow it) and it drops everything it stole; a spin or kick bats it away.
 
+### The arsenal
+
+Every weapon has its own range, power, speed and ammo, and a special trick. The shop shows them as four stat bars (1 to 5). Each weapon keeps its own clip when you switch; tap BLAST to shoot and hold it for a charged shot (it uses a few shots from the clip). Blaster Power raises every weapon's damage, Bigger Clip every clip (and the fuel tank), Quick Reload every fire rate and reload (and the refuelling). The numbers live in `game/src/entities/weapons.ts`.
+
+| Weapon | Price | Range | Power (per hit) | Fire rate | Ammo | Special |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Blaster** | (yours) | 22 | 1 | a shot every 0.28 s, fast bolts | 6, reload 1.5 s | All-rounder. Hold BLAST for a big fireball |
+| **Spread Shot** | 300 | 11 | 0.5 x 5 pellets | every 0.5 s | 10, reload 1.7 s | Five pellets in a fan: up close they all hit. Charged: three fireballs |
+| **Frost Ray** | 450 | 16 | 0.5 | every 0.18 s | 12, reload 1.4 s | Every hit slows the enemy; a charged shot freezes everything around it |
+| **Thunder Arc** | 600 | 15 | 1.6 | every 0.65 s, very fast bolts | 4, reload 1.9 s | Lightning jumps to 2 more enemies (4 when charged) |
+| **Seeker** | 750 | 30 | 1.3 | every 0.55 s, slow orbs | 5, reload 2 s | Homing: turns hard after its target, never misses a moving enemy |
+| **Flamethrower** | 950 | 5.5 (cone) | 4.5 a second | continuous while held | fuel tank: 3.5 s of fire, refills in 4 s | Sets enemies **burning** (they flicker orange and lose health for 3 s), melts frost, and burns away **brambles** |
+
+- **Burning and cold.** Fire thaws a frozen enemy, and the Frost Ray puts a fire out. Bosses resist both: they never freeze, a chill only slows them a little, and they burn for about a second.
+- **The fuel tank.** The Flamethrower drains its tank while it burns and refills it by itself after a short rest. If it runs dry it sputters out (the gauge blinks red) until the tank is about a third full again.
+- **Brambles** (`{ type: 'bramble' }` in a level's legend) are thorny hedges that fill a cell. Only fire gets through: the Flamethrower burns one away in a moment, and a charged fireball (or General Brennus's cannon blast) sets it alight too.
+
 ### Enemies
 
-Each enemy type has a floating icon and a health bar, and the first time you meet one, a small card under your hearts names it and gives a tip:
+Each enemy type has a floating icon, and the first time you meet one, a small card under your hearts names it and gives a tip. Once an enemy is hurt (or right next to you) a bold health bar shows over it: a dark outline, a fill that goes from green through yellow to red, a white flash and a pale chunk that drains away after every hit. Far away the badge grows, so it stays readable on a phone; tough enemies and elites also show their health as a number. Bosses get a big bar at the top of the screen, with notches where the fight changes phase.
 
 | Enemy | Its plan |
 | --- | --- |
