@@ -12,9 +12,12 @@
  * through bronze gates, and its SLAM drops it through cracked floor plates (`brittle`) into the cellar below. Doors are treated as open: the checker proves the geometry works,
  * the level's conditions decide the order.
  */
-import { ATALANTA, BRENNUS, CELL, GAZE, GRAPPLE, GRAVITY, MECH, PLAYER, STEP_UP } from '../src/core/constants';
+import { ATALANTA, BRENNUS, CELL, GAZE, GRAPPLE, GRAVITY, HERO_SWITCH, MECH, PLAYER, STEP_UP } from '../src/core/constants';
+import { atalantaReach, atalantaRise, brennusReach, flight, jumpReach, MARGIN, maxRise, mechReach } from '../src/entities/heroes/envelope';
 import { HEROES, heroRoster } from '../src/entities/heroes/heroes';
 import { RAFT_TOP } from '../src/world/tides';
+
+export { atalantaReach, brennusReach, jumpReach, mechReach };
 import { PASSABLE_DECOR, type Ability, type Cond, type HeroId, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
 type SpotKind = 'floor' | 'plat' | 'pad' | 'vent';
@@ -25,55 +28,6 @@ interface Spot {
   h: number;
   kind: SpotKind;
   group: number;
-}
-
-/**
- * Horizontal distance Jason covers is scaled by MARGIN (a safety margin for kids' thumbs); EDGE is how far
- * the take-off and landing spots can sit from the cell centres (world units).
- */
-const MARGIN = 0.9;
-const EDGE = 1.6;
-
-function flight(v: number, dh: number): number | null {
-  const disc = v * v - 2 * GRAVITY * dh;
-  if (disc < 0) return null;
-  return (v + Math.sqrt(disc)) / GRAVITY;
-}
-
-/** Largest centre-to-centre distance (in cells) for a jump that ends `dh` higher. */
-export function jumpReach(dh: number, abilities: Ability[], launch: number = PLAYER.jumpV): number {
-  const has = (a: Ability) => abilities.includes(a);
-  const speed = PLAYER.speed;
-  const options: number[] = [];
-  const apex1 = (launch * launch) / (2 * GRAVITY);
-  const t1 = launch / GRAVITY;
-  const dashBonus = has('dash') ? PLAYER.dashSpeed * PLAYER.dashTime - speed * PLAYER.dashTime : 0;
-
-  // Single jump.
-  if (dh <= apex1 - 0.3) {
-    const t = flight(launch, dh);
-    if (t !== null) options.push(speed * t + dashBonus);
-    if (has('glide') && dh <= apex1 - 0.3) options.push(speed * (t1 + (apex1 - dh) / PLAYER.glideFall) + dashBonus);
-  }
-  // Double jump from the apex.
-  if (has('doubleJump')) {
-    const v2 = PLAYER.doubleJumpV;
-    const apex2 = apex1 + (v2 * v2) / (2 * GRAVITY);
-    if (dh <= apex2 - 0.3) {
-      const t2 = flight(v2, dh - apex1);
-      if (t2 !== null) options.push(speed * (t1 + t2) + dashBonus);
-      if (has('glide')) options.push(speed * (t1 + v2 / GRAVITY + (apex2 - dh) / PLAYER.glideFall) + dashBonus);
-    }
-  }
-  if (!options.length) return 0;
-  const units = Math.max(...options) * MARGIN + EDGE;
-  return Math.min(units / CELL, 9);
-}
-
-function maxRise(abilities: Ability[], launch: number) {
-  let apex = (launch * launch) / (2 * GRAVITY);
-  if (abilities.includes('doubleJump')) apex += (PLAYER.doubleJumpV * PLAYER.doubleJumpV) / (2 * GRAVITY);
-  return apex - 0.3;
 }
 
 /** Props nobody can stand in: solid decor, and the eye-sentries, mirrors and crystals of Medusa's Labyrinth. */
@@ -229,70 +183,14 @@ function gateCells(level: ParsedLevel): Set<number> {
   return new Set(level.entities.filter((e) => e.spec.type === 'bronzegate').map((e) => e.cz * level.width + e.cx));
 }
 
-/**
- * Largest centre-to-centre distance (in cells) for one of the mech's jumps that ends `dh` higher: its
- * one jump at walking speed, plus a THRUST in the air (which holds it up while the jets fire).
- */
-export function mechReach(dh: number, launch: number = MECH.jumpV): number {
-  if (dh > (launch * launch) / (2 * GRAVITY) - 0.3) return 0;
-  const t = flight(launch, dh);
-  if (t === null) return 0;
-  const units = MECH.speed * t + (MECH.thrustSpeed - MECH.speed) * MECH.thrustTime;
-  return Math.min((units * MARGIN + EDGE) / CELL, 9);
-}
-
 /** Cells holding a low gap: only Atalanta's slide fits through, and nobody can jump over or into one. */
 function lowGaps(level: ParsedLevel): Set<number> {
   return new Set(level.entities.filter((e) => e.spec.type === 'lowgap').map((e) => e.cz * level.width + e.cx));
 }
 
-/**
- * Largest centre-to-centre distance (in cells) for one of Atalanta's jumps that ends `dh` higher:
- * her single jump at `speed` (a sprint after a run-up), plus a wall-jump off a wall she passes.
- */
-export function atalantaReach(dh: number, speed: number, wallJump: boolean, launch: number = ATALANTA.jumpV): number {
-  const options: number[] = [];
-  const apex1 = (launch * launch) / (2 * GRAVITY);
-  const t1 = launch / GRAVITY;
-  if (dh <= apex1 - 0.3) {
-    const t = flight(launch, dh);
-    if (t !== null) options.push(speed * t);
-  }
-  if (wallJump) {
-    const v2 = ATALANTA.wallJumpV;
-    const apex2 = apex1 + (v2 * v2) / (2 * GRAVITY);
-    if (dh <= apex2 - 0.3) {
-      const t2 = flight(v2, dh - apex1);
-      // After the kick she moves at her normal running speed, not a sprint.
-      if (t2 !== null) options.push(Math.min(speed, ATALANTA.speed) * (t1 + t2));
-    }
-  }
-  if (!options.length) return 0;
-  return Math.min((Math.max(...options) * MARGIN + EDGE) / CELL, 9);
-}
-
 /** Cells holding a cracked wall (`cracked`): only General Brennus can smash through. */
 function crackedCells(level: ParsedLevel): Set<number> {
   return new Set(level.entities.filter((e) => e.spec.type === 'cracked').map((e) => e.cz * level.width + e.cx));
-}
-
-/**
- * Largest centre-to-centre distance (in cells) for one of General Brennus's jumps that ends `dh`
- * higher: his low jump at walking speed, or a charge-leap (a jump out of his CHARGE keeps its speed).
- */
-export function brennusReach(dh: number, leap: boolean, launch: number = BRENNUS.jumpV): number {
-  if (dh > (launch * launch) / (2 * GRAVITY) - 0.3) return 0;
-  const t = flight(launch, dh);
-  if (t === null) return 0;
-  const speed = leap ? BRENNUS.leapSpeed : BRENNUS.speed;
-  return Math.min((speed * t * MARGIN + EDGE) / CELL, 9);
-}
-
-/** Highest rise for Atalanta from a launch speed (with a wall-jump when a wall is in reach). */
-function atalantaRise(launch: number, wallJump: boolean) {
-  let apex = (launch * launch) / (2 * GRAVITY);
-  if (wallJump) apex += (ATALANTA.wallJumpV * ATALANTA.wallJumpV) / (2 * GRAVITY);
-  return apex - 0.3;
 }
 
 /** A row of cells in front of wall-run walls, all facing the same way: Atalanta can run along it. */
@@ -341,6 +239,9 @@ export function wallRunStrips(level: ParsedLevel): RunStrip[] {
   return out;
 }
 
+/** Highest cliff Atalanta climbs in one go: as far as her grip lasts, with a margin. */
+const CLIMB_RISE = ATALANTA.climbSpeed * ATALANTA.climbGrip * 0.8;
+
 /** Cells along the strip's length a wall-run carries her (plus a jump on and off at either end). */
 const RUN_CELLS = (ATALANTA.wallRunTime * ATALANTA.sprintSpeed * MARGIN) / CELL;
 
@@ -349,14 +250,22 @@ const RUN_CELLS = (ATALANTA.wallRunTime * ATALANTA.sprintSpeed * MARGIN) / CELL;
  * differ when checking what a single ability (the dash) is needed for. `heroes` are the heroes the
  * player can switch between (anywhere on the ground), so a spot either one reaches works for both.
  */
-function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors, heroes: HeroId[] = footHeroes(level), from?: [number, number]): JumpGraph {
+function jumpGraph(
+  level: ParsedLevel,
+  doors: Ability[],
+  moves: Ability[] = doors,
+  heroes: HeroId[] = footHeroes(level),
+  from?: [number, number],
+  smashed = false,
+): JumpGraph {
   const jason = heroes.includes('jason');
   const atalanta = heroes.includes('atalanta');
   const brennus = heroes.includes('brennus');
   const mech = heroes.includes('mech');
   // Cracked walls only fall to General Brennus's big blast or charge (or the mech's punch): for anyone
-  // else they are walls. Bronze gates only open to the mech.
-  const cracked = brennus || mech ? new Set<number>() : crackedCells(level);
+  // else they are walls, unless Brennus is in the party and has already smashed them (`smashed`).
+  // Bronze gates only open to the mech.
+  const cracked = brennus || mech || smashed ? new Set<number>() : crackedCells(level);
   if (!mech) for (const i of gateCells(level)) cracked.add(i);
   const spots = buildSpots(level, doors).filter((s) => s.kind === 'plat' || !cracked.has(s.cz * level.width + s.cx));
   const shut = shutDoors(level, doors);
@@ -398,6 +307,7 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
       ? level.entities.filter((e) => e.spec.type === 'anchor').flatMap((e) => spots.flatMap((s, i) => (s.cx === e.cx && s.cz === e.cz && s.kind !== 'plat' ? [i] : [])))
       : [];
   const strips = atalanta ? wallRunStrips(level) : [];
+  const climbs = new Set(atalanta ? level.entities.filter((e) => e.spec.type === 'climb').map((e) => e.cz * level.width + e.cx) : []);
   /** True if a wall is right beside some cell of the jump line (not the landing): she can kick off it. */
   const wallOnLine = (a: Spot, b: Spot) => {
     const steps = Math.max(1, Math.ceil(Math.hypot(b.cx - a.cx, b.cz - a.cz) * 2));
@@ -481,6 +391,21 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
             ok = d <= atalantaReach(dh, speed, wall, launch) && lineClear(level, solid, a, b);
           }
           if (ok) out.add(bi);
+        }
+      }
+    }
+    // Climbing: from the foot of a `climb` cliff straight up onto its top.
+    if (!lowA) {
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        if (!climbs.has((a.cz + dz) * level.width + (a.cx + dx))) continue;
+        for (const bi of byCell.get(`${a.cx + dx},${a.cz + dz}`) ?? []) {
+          const rise = spots[bi].h - a.h;
+          if (bi !== ai && !out.has(bi) && rise > 0 && rise <= CLIMB_RISE) out.add(bi);
         }
       }
     }
@@ -568,6 +493,130 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     return list;
   };
   return { spots, start, next };
+}
+
+/** Something that stops the heroes travelling together (see `togetherCheck`). */
+export interface TogetherProblem {
+  hero: HeroId;
+  /** The entity's id, or what it is. */
+  what: string;
+  cx: number;
+  cz: number;
+  /**
+   * `apart`: this hero can't get to a place the party must reach (the exit, the boss, a checkpoint).
+   * `tether`: only one hero gets to it, and it is further than the tether from anywhere the others can be.
+   */
+  why: 'apart' | 'tether';
+}
+
+/** Where a hero starts: the spawn, or (for a hero who joins later) the marker named after them. */
+export function heroStart(level: ParsedLevel, hero: HeroId): [number, number] {
+  return level.def.joins?.[hero] ? vehicleStart(level, hero) : [level.spawn.cx, level.spawn.cz];
+}
+
+/**
+ * The heroes travel together: a follower only goes where its own hero can, so nobody may be left
+ * behind for good. Each hero's reach here is their own moves, plus a hand-up from a hero standing just
+ * above them (`HERO_SWITCH.helpReach`) and a tandem zip on Jason's grapple line, with every door open.
+ * Every hero must reach the exit and the boss (and the checkpoints, if they start at the spawn), and
+ * whatever only one of them reaches must be within the tether of somewhere the others can wait.
+ */
+export function togetherCheck(level: ParsedLevel, abilities: Ability[]): TogetherProblem[] {
+  const heroes = footHeroes(level).filter((h) => !HEROES[h].vehicle);
+  if (heroes.length < 2) return [];
+  const smashed = heroes.includes('brennus');
+  const graphs = new Map(heroes.map((h) => [h, jumpGraph(level, abilities, abilities, [h], heroStart(level, h), smashed)] as const));
+  const spots = (graphs.get(heroes[0]) as JumpGraph).spots;
+  const byCell = new Map<string, number[]>();
+  spots.forEach((s, i) => {
+    const k = `${s.cx},${s.cz}`;
+    byCell.set(k, [...(byCell.get(k) ?? []), i]);
+  });
+  const anchorCells = new Set(level.entities.filter((e) => e.spec.type === 'anchor').map((e) => `${e.cx},${e.cz}`));
+  const seen = new Map(heroes.map((h) => [h, new Uint8Array(spots.length)] as const));
+  const reachOf = (h: HeroId) => seen.get(h) as Uint8Array;
+  const helpCells = Math.floor(HERO_SWITCH.helpReach / CELL);
+  /** Moves a hero gets from the others: a hand-up from above, and riding along on Jason's grapple. */
+  const assists = (i: number, h: HeroId, out: number[]) => {
+    const a = spots[i];
+    for (const o of heroes) {
+      if (o === h) continue;
+      const theirs = reachOf(o);
+      for (let dz = -helpCells; dz <= helpCells; dz++) {
+        for (let dx = -helpCells; dx <= helpCells; dx++) {
+          if (Math.hypot(dx, dz) * CELL > HERO_SWITCH.helpReach) continue;
+          for (const j of byCell.get(`${a.cx + dx},${a.cz + dz}`) ?? []) {
+            const rise = spots[j].h - a.h;
+            if (theirs[j] && rise >= HERO_SWITCH.helpMinRise && rise <= HERO_SWITCH.helpMaxRise) out.push(j);
+          }
+        }
+      }
+      if (o === 'jason' && abilities.includes('grapple') && theirs[i]) {
+        for (const j of (graphs.get('jason') as JumpGraph).next(i)) if (anchorCells.has(`${spots[j].cx},${spots[j].cz}`)) out.push(j);
+      }
+    }
+  };
+  for (let round = 0, changed = true; changed && round < 10; round++) {
+    changed = false;
+    for (const h of heroes) {
+      const g = graphs.get(h) as JumpGraph;
+      const mine = reachOf(h);
+      if (!mine[g.start]) {
+        mine[g.start] = 1;
+        changed = true;
+      }
+      const queue: number[] = [];
+      mine.forEach((v, i) => v && queue.push(i));
+      const extra: number[] = [];
+      while (queue.length) {
+        const i = queue.pop() as number;
+        extra.length = 0;
+        assists(i, h, extra);
+        for (const j of [...g.next(i), ...extra]) {
+          if (mine[j]) continue;
+          mine[j] = 1;
+          changed = true;
+          queue.push(j);
+        }
+      }
+    }
+  }
+  const nearSeen = (r: Uint8Array, e: PlacedEntity) => {
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) for (const j of byCell.get(`${e.cx + dx},${e.cz + dz}`) ?? []) if (r[j]) return true;
+    return false;
+  };
+  const common = spots.filter((_, i) => heroes.every((h) => reachOf(h)[i]));
+  const tethered = (s: Spot) => common.some((c) => Math.hypot(c.cx - s.cx, c.cz - s.cz) * CELL <= HERO_SWITCH.tether);
+  const problems: TogetherProblem[] = [];
+  // With a vehicle (the forge's mech), the heroes on foot only have to get to where it is parked together.
+  const ride = levelHeroes(level).find((h) => HEROES[h].vehicle);
+  const parked = ride ? level.entities.find((e) => e.spec.type === 'marker' && e.spec.id === ride) : undefined;
+  for (const e of level.entities) {
+    const t = e.spec.type;
+    const name = 'id' in e.spec && typeof e.spec.id === 'string' ? `${t}:${e.spec.id}` : t;
+    if (t === 'exit' || t === 'boss' || t === 'checkpoint' || e === parked) {
+      // A place past the vehicle's parking spot is the vehicle's business.
+      if (ride && e !== parked && !heroes.some((h) => nearSeen(reachOf(h), e))) continue;
+      for (const h of heroes) {
+        if (t === 'checkpoint' && level.def.joins?.[h]) continue;
+        if (!nearSeen(reachOf(h), e)) problems.push({ hero: h, what: name, cx: e.cx, cz: e.cz, why: 'apart' });
+      }
+      continue;
+    }
+    if (!isTarget(e.spec)) continue;
+    // Who can get at it, and from where: standing next to it, or (bullseyes, crystals, mirrors) from afar.
+    const from = (h: HeroId) =>
+      spots.filter((s, i) => {
+        if (!reachOf(h)[i]) return false;
+        if (t === 'target') return h === 'atalanta' && arrowSight(level, s, e);
+        if (t === 'crystal' || t === 'mirror') return beamSight(level, s, e, ATALANTA.arrowRange / CELL);
+        return Math.abs(s.cx - e.cx) <= 1 && Math.abs(s.cz - e.cz) <= 1;
+      });
+    const spotsFor = heroes.flatMap(from);
+    if (!spotsFor.length) continue; // Nobody reaches it at all: `reach` reports that.
+    if (!spotsFor.some(tethered)) problems.push({ hero: heroes.find((h) => from(h).length) as HeroId, what: name, cx: e.cx, cz: e.cz, why: 'tether' });
+  }
+  return problems;
 }
 
 /** Breadth-first flood from `from`, skipping anything in `skip`. Returns the new spots and their parents. */
