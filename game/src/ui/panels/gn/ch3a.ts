@@ -692,47 +692,71 @@ export function fleece(pen: Pen, x: number, y: number, s: number, o: { holo?: bo
 /* ---------------- Aeëtes's ships and drones ---------------- */
 
 /**
- * One of Aeëtes's salvage ships: a long gold beetle of a hull with a dark canopy, claw cranes folded
- * under its belly, an amber engine glow at the stern and the glowing "A" crest. Faces left, centred.
- * Far ones pass `line` small.
+ * One of Aeëtes's salvage ships: a gold space-beetle. A ridged carapace split down the middle, a dark
+ * head with an amber cockpit and two salvage mandibles reaching forward, jointed crane claws folded
+ * under its belly, an engine glow at the stern and the glowing "A" crest. Faces left, centred; about
+ * 760 long at scale 1. Far ones pass `line` small.
  */
 export function goldShip(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; line?: number } = {}): string {
   const lp = pen.local(!!o.flip);
   const line = o.line ?? 3;
-  let out = lp.glow(330, 0, 150, '#ffb020', 0.8, 80) + lp.glow(330, 0, 50, '#fff2c0', 0.9);
-  // Claw cranes under the belly.
-  const claws: [P[], number][] = [];
-  for (const cx of [-60, 40, 140]) {
-    claws.push([
-      [
-        [cx, 40],
-        [cx - 20, 110],
-        [cx + 10, 100],
-      ],
-      14,
-    ]);
-  }
+  let out = lp.glow(330, 0, 160, '#ffb020', 0.8, 70) + lp.glow(320, 0, 50, '#fff2c0', 0.95);
+  // Crane claws folded under the belly.
+  const claws: [P[], number][] = [-120, 0, 120].map((cx) => [
+    [
+      [cx, 40],
+      [cx - 30, 100],
+      [cx + 4, 120],
+    ],
+    16,
+  ]);
   out += lp.brushes(claws, INK, [0.05, 0.05]) + lp.brushes(
-    claws.map(([p]) => [p, 7] as [P[], number]),
-    '#4a3a40',
+    claws.map(([p]) => [p, 8] as [P[], number]),
+    '#6a5040',
     [0.05, 0.05],
   );
-  const plates = `<path d="M-200 -70Q-180 0 -200 70M-60 -96V76M80 -96V76M220 -96Q240 0 220 76" fill="none" stroke="${INK}" stroke-width="${r1(line * 1.1)}" opacity=".5"/><path d="M-270 -20H300" stroke="#fff6c0" stroke-width="6" opacity=".55"/>`;
-  out += lp.form('M-300 0Q-260 -90 -60 -96H220Q320 -80 320 0Q320 70 220 76H-60Q-260 70 -300 0Z', '#f0c050', {
-    sh: 60,
+  // The mandibles, curving forward from the head.
+  const mand: [P[], number][] = [
+    [
+      [
+        [-320, -14],
+        [-410, -40],
+        [-440, 4],
+      ],
+      18,
+    ],
+    [
+      [
+        [-316, 22],
+        [-400, 40],
+        [-420, 4],
+      ],
+      16,
+    ],
+  ];
+  out += lp.brushes(mand, INK, [0.05, 0.5]) + lp.brushes(
+    mand.map(([p, w]) => [p, w * 0.55] as [P[], number]),
+    '#c8901e',
+    [0.05, 0.5],
+  );
+  // The belly, then the carapace over it.
+  out += lp.form('M-290 10Q-250 74 -60 80H200Q300 74 330 10Z', '#a8741c', { sh: 18, hatch: 1, line, axis: [1, 0] });
+  const seam = `<path d="M-250 -20Q20 -70 300 -30" fill="none" stroke="${INK}" stroke-width="${r1(line * 1.4)}"/><path d="M-170 -70Q-150 -10 -170 10M-30 -100Q-10 -30 -30 10M110 -96Q130 -30 110 10M230 -66Q246 -20 236 10" fill="none" stroke="${INK}" stroke-width="${r1(line)}" opacity=".5"/>`;
+  const crest = lp.glow(40, -40, 50, '#ffe08a', 0.5) + `<path d="M14 -16L40 -70L66 -16M24 -36H56" fill="none" stroke="#fff6c0" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`;
+  out += lp.form('M-270 10Q-250 -100 -40 -116Q180 -118 300 -46Q336 -16 324 10Z', '#f0c050', {
+    sh: 40,
     hatch: 2,
     rim: 2.4,
     line,
-    axis: [1, 0],
     paint: lp.lin([
       [0, '#fff0b0'],
       [0.5, '#f0c050'],
       [1, '#a87018'],
     ]),
-    inner: plates,
+    inner: seam + crest + lp.brush([[-220, -50], [-60, -100], [120, -96]], 10, '#fffbe0', [0.2, 0.4], 0.6),
   });
-  out += lp.form('M-200 -64Q-170 -116 -104 -98L-128 -58Z', '#2a2230', { sh: 10, line: line * 0.8, inner: lp.brush([[-180, -70], [-160, -96], [-130, -100]], 4, '#ffd88a', [0.3, 0.3], 0.8) });
-  out += lp.glow(70, 0, 70, '#ffe08a', 0.6) + `<path d="M30 40L70 -40L110 40M48 10H92" fill="none" stroke="#fff6c0" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // The head and its cockpit.
+  out += lp.form('M-340 6Q-334 -56 -262 -60L-246 22Q-310 34 -340 6Z', '#3a2a30', { sh: 14, line, rim: 1.8, inner: lp.glow(-300, -24, 40, '#ffb020', 0.8) + `<path d="M-322 -16Q-306 -44 -272 -44L-270 -20Q-300 -12 -322 -16Z" fill="#ffcf6a"/>` });
   return at(x, y, s, out, o.flip);
 }
 

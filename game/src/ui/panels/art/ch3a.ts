@@ -1,29 +1,6 @@
 /** Chapter 3 panels: Celestia fading by the Gardeners' ruins, the Argo being built, and Aeëtes on his golden flagship. */
-import {
-  aeetes,
-  argoShip,
-  at,
-  backdrop,
-  C,
-  captain,
-  fleece as kitFleece,
-  gasGiant,
-  glow,
-  glowDef,
-  goldShip as kitGoldShip,
-  ink,
-  jason,
-  lin,
-  lux,
-  panel,
-  ridge,
-  saucer as kitSaucer,
-  sparkle,
-  stars,
-  vignette,
-} from '../kit';
 import * as gn from '../gn';
-import { celestia, fallenPetal, fleece, hypatia, ruinStone } from '../gn/ch3a';
+import { celestia, ellD, fallenPetal, fleece, goldShip, hypatia, ruinStone, saucer } from '../gn/ch3a';
 
 /* ---------------- 20. Celestia fading, in the graphic-novel style ---------------- */
 
@@ -348,37 +325,98 @@ export function ch3Argo(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, ground + frame + cradle + ship + welding) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#120a20') + gn.grain(pen, 0.08));
 }
 
-/** 22. Aeëtes on the bridge of his golden flagship, arms wide, grinning at a hologram of the Fleece. */
-export function ch3Aeetes(): string {
-  const id = 'ch3-aeetes';
-  const coins = [0, 1, 2, 3, 4, 5]
-    .map((i) => `<ellipse cx="${150 + (i % 3) * 40}" cy="${850 - Math.floor(i / 3) * 18 - i * 6}" rx="40" ry="12" fill="${C.gold}" ${ink(4)}/>`)
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#05061a'], [1, '#1a1040']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.6)}${glowDef(id + 'h', '#7fe6ff', 0.5)}${lin(id + 'f', [[0, '#5a3a5a'], [1, '#22142a']])}</defs>` +
-      stars(31, 140, 0, 0, 1600, 700) +
-      gasGiant(id + 'j', 1080, 300, 170) +
-      kitGoldShip(id + 's', 420, 260, 0.55) +
-      kitGoldShip(id + 't', 1450, 520, 0.4) +
-      kitSaucer(760, 180, 0.6) +
-      kitSaucer(900, 120, 0.45, true) +
-      kitSaucer(250, 470, 0.5) +
-      // The window frame of the flagship's bridge.
-      `<path d="M0 0H1600V900H0ZM80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="#2a1a10" fill-rule="evenodd"/>` +
-      `<path d="M80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="none" stroke="${C.gold}" stroke-width="16"/>` +
-      `<path d="M800 30V700" stroke="${C.gold}" stroke-width="12"/>` +
-      `<path d="M0 700Q800 660 1600 700V900H0Z" fill="url(#${id}f)" ${ink(6)}/><path d="M0 760Q800 724 1600 760" fill="none" stroke="${C.gold}" stroke-width="6" opacity=".5"/>` +
-      coins +
-      // The hologram table and the Fleece spinning above it.
-      `<path d="M1120 900L1160 760H1400L1440 900Z" fill="#3a2a40" ${ink(5)}/><ellipse cx="1280" cy="760" rx="120" ry="20" fill="#7fe6ff" opacity=".6"/>` +
-      `<path d="M1180 760L1220 470H1340L1380 760Z" fill="#7fe6ff" opacity=".18"/>` +
-      glow(id + 'h', 1280, 520, 200, 0.7) +
-      `<g opacity=".85">${kitFleece(id + 'l', 1280, 520, 0.7)}</g>` +
-      glow(id + 'g', 600, 560, 340, 0.4) +
-      aeetes(600, 960, 1.45, { pose: 'spread' }) +
-      sparkle(1170, 420, 14, '#fff6d0') +
-      sparkle(1390, 600, 10, '#bff4ff') +
-      vignette(id + 'v', 0.45),
-  );
+/* ---------------- 22. Aeëtes, in the graphic-novel style ---------------- */
+
+/** A pile of gold coins on the floor, base centre at (x, y), `w` wide: stacked shaded discs with glints. */
+function coins(pen: gn.Pen, x: number, y: number, w: number, seed: number): string {
+  const rand = gn.rng(seed);
+  let out = pen.form(`M${x - w / 2} ${y}Q${x - w * 0.3} ${y - w * 0.32} ${x} ${y - w * 0.36}Q${x + w * 0.3} ${y - w * 0.32} ${x + w / 2} ${y}Q${x} ${y + w * 0.06} ${x - w / 2} ${y}Z`, '#e8b43a', { sh: w * 0.16, hatch: 1, line: 2.6, rim: 1.8 });
+  for (let i = 0; i < 9; i++) {
+    const cx = x + (rand() - 0.5) * w * 0.8;
+    const cy = y - w * 0.04 - rand() * w * 0.26 * (1 - Math.abs(cx - x) / w);
+    out += pen.form(ellD(cx, cy, 16, 6), '#ffd166', { sh: 3, line: 1.8 });
+  }
+  return out + gn.spark(pen, x - w * 0.15, y - w * 0.3, 12, '#fff6d0') + gn.spark(pen, x + w * 0.22, y - w * 0.16, 8, '#fff6d0');
 }
+
+/** 22. On the bridge of his golden flagship, Aeëtes throws his arms wide before a hologram of the Fleece, its light gold on his grin; his fleet and drones wait for orders. */
+export function ch3Aeetes(): string {
+  const pen = gn.Pen.scene('ch3-aeetes', { key: [0.55, 0.7], keyColor: '#ffd27a', rim: [-0.75, -0.6], rimColor: '#7ff0ff', shadow: '#4a2a6a', depth: 0.6 });
+  // Space through the great window: a nebula, the gas giant, and Aeëtes's gold fleet.
+  const space =
+    gn.sky(pen, [
+      [0, '#05061a'],
+      [0.6, '#1a1040'],
+      [1, '#2a1438'],
+    ]) +
+    gn.starfield(pen, 31, 160, 0, 0, 1600, 700) +
+    gn.nebula(pen, 900, 260, 420, ['#7a3aa8', '#2a7a9a', '#c84a8a'], 3, 0.55) +
+    gn.gasGiant(pen, 330, 560, 220, { lightDir: [0.8, -0.4], haze: 0.15, sky: '#1a1040' });
+  // Out there the sun lights the ships from above.
+  const sun = pen.relight({ key: [-0.6, -0.75], keyColor: '#fff0d8', rim: [0.8, 0.3], rimColor: '#b89aff', depth: 0.5 });
+  const fleet = goldShip(sun, 290, 420, 0.3, { line: 2 }) + goldShip(sun, 790, 330, 0.18, { line: 1.4 }) + goldShip(sun, 1390, 130, 0.15, { line: 1.2 });
+  // The bridge: a gold-ribbed wall round an arched window, a dark polished floor with gold inlay.
+  const win = 'M150 660L1450 660L1450 260Q1430 90 800 60Q170 90 150 260Z';
+  const wall = pen.form(`M-80 -60H1680V960H-80Z${win}`, '#3a2030', {
+    sh: 0,
+    line: 0,
+    paint: pen.lin([
+      [0, '#2a1428'],
+      [1, '#4a2a34'],
+    ]),
+  });
+  const ribs = [
+    [460, 75],
+    [800, 60],
+    [1140, 75],
+  ]
+    .map(([rx, ry]) => pen.form(`M${rx - 14} ${ry}Q${rx - 20} 360 ${rx - 16} 660H${rx + 16}Q${rx + 20} 360 ${rx + 14} ${ry}Z`, '#c8901e', { sh: 10, hatch: 1, line: 2.6, rim: 2, axis: [0, 1] }))
+    .join('');
+  const frame = pen.form(`M120 690L118 250Q140 56 800 26Q1460 56 1482 250L1480 690H1450L1450 260Q1430 90 800 60Q170 90 150 260L150 690Z`, '#e8b43a', { sh: 14, hatch: 1, line: 3, rim: 2.4 });
+  // Art-deco sunburst panels on the wall either side.
+  const deco = (cx: number) =>
+    `<path d="M${cx} 820L${cx - 60} 300M${cx} 820L${cx - 20} 290M${cx} 820L${cx + 20} 290M${cx} 820L${cx + 60} 300" stroke="#c8901e" stroke-width="5" opacity=".55"/>`;
+  const floor =
+    pen.form('M-80 690Q800 660 1680 690V960H-80Z', '#2a1828', {
+      sh: 0,
+      line: 3,
+      paint: pen.lin([
+        [0, '#5a3438'],
+        [1, '#140a14'],
+      ]),
+      inner: `<path d="M-80 760Q800 724 1680 760M300 960L700 690M1300 960L900 690" fill="none" stroke="#e8b43a" stroke-width="5" opacity=".5"/>`,
+    }) + `<ellipse cx="1180" cy="740" rx="320" ry="40" fill="#ffd27a" opacity=".22"/>`;
+  // The hologram projector: a gold pedestal casting a cone of light up into the turning Fleece.
+  const hx = 1190;
+  const cone = `<path d="M${hx - 60} 650L${hx - 200} 230H${hx + 200}L${hx + 60} 650Z" fill="${pen.lin([
+    [0, '#ffd27a', 0.05],
+    [1, '#ffd27a', 0.45],
+  ])}"/>`;
+  const projector =
+    gn.godRays(pen, hx, 640, [-170, -160, -150, 150, 160, 170, 180, 190], 4, 600, '#fff0c0', 0.25) +
+    cone +
+    pen.form(`M${hx - 110} 790L${hx - 80} 660H${hx + 80}L${hx + 110} 790Z`, '#c8901e', { sh: 30, hatch: 2, line: 3, rim: 2.2, inner: `<path d="M${hx - 96} 720H${hx + 96}" stroke="${gn.INK}" stroke-width="3" opacity=".5"/>` }) +
+    pen.form(ellD(hx, 660, 90, 18), '#ffe9a0', { line: 2.6, inner: pen.glow(hx, 660, 80, '#ffffff', 0.9) }) +
+    `<ellipse cx="${hx}" cy="380" rx="190" ry="40" fill="none" stroke="#fff2c0" stroke-width="3" opacity=".5"/><ellipse cx="${hx}" cy="380" rx="230" ry="52" fill="none" stroke="#ffd27a" stroke-width="2" opacity=".35" stroke-dasharray="18 12"/>` +
+    fleece(pen, hx, 360, 0.82, { holo: true }) +
+    gn.spark(pen, hx - 170, 250, 14, '#fff6d0') +
+    gn.spark(pen, hx + 180, 470, 10, '#fff6d0');
+  const drones = saucer(pen, 1450, 230, 0.75, { flip: true, rot: -8 }) + saucer(pen, 1470, 560, 0.85, { flip: true, rot: 4 });
+  const villain =
+    gn.castShadow(pen, 600, 954, 230, 20, 0.6) +
+    pen.glow(560, 400, 260, '#ffd27a', 0.25) +
+    gn.aeetes(pen, 600, 960, 1.14, {
+      pose: { turn: 0.3, lean: -4, tilt: -8, hipTilt: 4, armN: [-104, -124], armF: [110, 128], legN: { to: [-0.2, 0.96] }, legF: { to: [0.24, 0.95] }, handN: 'open', handF: 'open', wristN: 20, wristF: -20 },
+      mood: 'scheming',
+      look: [3, -1],
+      rim: 2.4,
+    }) +
+    // The hologram's gold light spilling over him from the right.
+    `<ellipse cx="900" cy="460" rx="520" ry="420" fill="${pen.rad([
+      [0, '#ffd27a', 0.28],
+      [1, '#ffd27a', 0],
+    ])}" style="mix-blend-mode:screen"/>`;
+  const fore = coins(pen, 150, 900, 300, 2) + coins(pen, 260, 940, 220, 3) + coins(pen, 1480, 930, 280, 4);
+  return pen.svg(gn.layer(0.15, space) + gn.layer(0.3, fleet) + gn.layer(0.8, wall + ribs + frame + deco(70) + deco(1530) + floor + projector + drones) + gn.layer(1, villain) + gn.layer(1.3, fore) + gn.vignette(pen, 0.55, '#08040c') + gn.grain(pen, 0.08));
+}
+
