@@ -1,78 +1,197 @@
 /** Chapter 1 panels, part 3: the ship saved from the star, and LUX making friends with the Heart. */
-import { at, backdrop, C, flower, gascuHeart, gascuSprout, glow, glowDef, ink, jason, lin, lux, panel, r1, rad, sparkle, stars, syracusia, vignette, vine } from '../kit';
+import * as gn from '../gn';
+import * as c1 from '../gn/ch1';
 
-/** Light-word arcs fanning out from (x, y) toward the right (r = radius). */
-function arcs(x: number, y: number, list: [number, string][], spread = 38, rot = 0): string {
-  return list
-    .map(([r, c]) => {
-      const a = (spread * Math.PI) / 180;
-      const p = (s: number) => `${r1(x + Math.cos(s * a) * r)} ${r1(y + Math.sin(s * a) * r)}`;
-      const d = `M${p(-1)}A${r} ${r} 0 0 1 ${p(1)}`;
-      return `<g transform="rotate(${rot} ${x} ${y})"><path d="${d}" fill="none" stroke="${c}" stroke-width="40" stroke-linecap="round" opacity=".25"/><path d="${d}" fill="none" stroke="${c}" stroke-width="14" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/></g>`;
-    })
-    .join('');
+/** A circular comic inset at (cx, cy), radius r: its own picture inside (in panel coordinates), clipped, under a white ring. */
+function roundInset(pen: gn.Pen, cx: number, cy: number, r: number, body: string): string {
+  const id = pen.uid();
+  pen.def(id, `<clipPath id="${id}"><path d="${c1.circleD(cx, cy, r)}"/></clipPath>`);
+  return (
+    `<circle cx="${cx + 10}" cy="${cy + 12}" r="${r}" fill="${gn.INK}" opacity=".5"/>` +
+    `<g clip-path="url(#${id})">${body}</g>` +
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${gn.INK}" stroke-width="18"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f4f6ff" stroke-width="9"/>`
+  );
 }
 
-/** 7. The Syracusia swinging away from the star on a big curved trail; LUX holding the sprout. */
+/** LUX holding something in two little grabber arms that reach down from his side pods to (hx, hy) (his own coordinates, unflipped). */
+function luxArms(pen: gn.Pen, x: number, y: number, s: number, hx: number, hy: number): string {
+  const arm = (k: number) => {
+    const pts: gn.P[] = [
+      [k * 44, 14],
+      [k * 66, 50],
+      [k * (hx + 6), hy - 20],
+      [k * hx, hy],
+    ];
+    return pen.brush(pts, 14, gn.INK, [0.05, 0.05]) + pen.brush(pts, 7, '#9aa6ba', [0.05, 0.05]) + pen.form(c1.circleD(k * hx, hy, 9), '#9aa6ba', { sh: 4, line: 2.4 });
+  };
+  return gn.at(x, y, s, arm(-1) + arm(1));
+}
+
+/* ---------------- 7. The ship saved ---------------- */
+
+/** 7. The SYRACUSIA swings away from the star on a great curving trail toward Gaia Nova; in an inset, Jason grins and LUX hugs the sleeping sprout. */
 export function ch1Saved(): string {
-  const id = 'ch1-saved';
-  return panel(
-    backdrop(id + 'b', [[0, '#1a0f3a'], [0.7, '#0b1030'], [1, '#0b1030']]) +
-      `<defs>${rad(id + 's', [[0, '#fffbe0'], [0.2, '#ffd166'], [0.45, '#ff8a3d'], [0.75, '#ff4a1a', 0.5], [1, '#ff4a1a', 0]])}
-      ${lin(id + 't', [[0, '#bfefff', 0], [0.5, '#bfefff', 0.5], [1, '#ffffff', 0.95]], 1, 0)}${glowDef(id + 'p', C.pink)}${rad(id + 'c', [[0, '#ffffff'], [0.5, '#fff2b0'], [0.85, '#ffc04a'], [1, '#ff8a3d']])}</defs>` +
-      stars(41, 90) +
-      `<circle cx="1640" cy="640" r="680" fill="url(#${id}s)"/><circle cx="1640" cy="640" r="250" fill="none" stroke="#ffd166" stroke-width="40" opacity=".45"/><circle cx="1640" cy="640" r="230" fill="url(#${id}c)"/>` +
-      `<path d="M1340 560Q1280 120 860 170" fill="none" stroke="url(#${id}t)" stroke-width="90" stroke-linecap="round" opacity=".35"/>
-      <path d="M1340 560Q1280 120 860 170" fill="none" stroke="url(#${id}t)" stroke-width="26" stroke-linecap="round"/>
-      <path d="M1300 620Q1230 220 880 230" fill="none" stroke="url(#${id}t)" stroke-width="10" stroke-linecap="round" opacity=".6"/>` +
-      at(615, 190, 1, syracusia(id + 'h', 0, 0, 0.42), true, -4) +
-      // The inset: LUX hugging the flower pot with the tiny sprout.
-      `<circle cx="330" cy="660" r="216" fill="#2a3470"/>` +
-      `<defs><clipPath id="${id}c"><circle cx="330" cy="660" r="216"/></clipPath></defs><g clip-path="url(#${id}c)">${glow(id + 'p', 330, 610, 260, 0.6)}${stars(7, 20, 110, 440, 440, 440)}` +
-      lux(330, 610, 1.9, 'happy') +
-      gascuSprout(id + 'g', 330, 830, 1.05) +
-      at(330, 610, 1.9, `<path d="M-44 6Q-70 60 -40 98M44 6Q70 60 40 98" fill="none" ${ink(14)}/><path d="M-44 6Q-70 60 -40 98M44 6Q70 60 40 98" fill="none" stroke="#9aa6ba" stroke-width="6" stroke-linecap="round"/><circle cx="-40" cy="98" r="8" fill="#9aa6ba" ${ink(4)}/><circle cx="40" cy="98" r="8" fill="#9aa6ba" ${ink(4)}/>`) +
-      `</g><circle cx="330" cy="660" r="216" fill="none" stroke="#fff" stroke-width="16"/><circle cx="330" cy="660" r="226" fill="none" ${ink(5)}/>` +
-      sparkle(130, 450, 22) +
-      sparkle(1000, 80, 14, '#cfe0ff') +
-      vignette(id + 'v', 0.3),
-  );
+  const pen = gn.Pen.scene('ch1-saved', { key: [0.95, 0.2], keyColor: '#ffc890', rim: [-0.8, -0.5], rimColor: '#8fd8ff', shadow: '#2a2060', depth: 0.6 });
+  const sky =
+    gn.sky(pen, [
+      [0, '#070b26'],
+      [0.6, '#0e0c30'],
+      [1, '#1a0c24'],
+    ]) +
+    gn.nebula(pen, 420, 160, 520, ['#5ec8ff', '#3f5ad6', '#2a2a80'], 3, 0.5) +
+    gn.starfield(pen, 41, 160, -80, -60, 1760, 1020, '#f4f6ff');
+  // The star, burning at the right edge; Gaia Nova waiting, small and blue, far away to the upper left.
+  const far = c1.sun(pen, 1760, 640, 460) + c1.planet(pen, 230, 170, 74, [0.9, 0.4]);
+  // The trail: a great swoosh of light from the star's edge round and up to the ship.
+  const trail: gn.P[] = gn.spline([
+    [1330, 760],
+    [1250, 470],
+    [1080, 300],
+    [880, 240],
+    [720, 236],
+  ], 8);
+  const wake =
+    pen.brush(trail, 120, '#8fd8ff', [0.9, 0.1], 0.18) +
+    pen.brush(trail, 54, '#bff0ff', [0.9, 0.08], 0.4) +
+    pen.brush(trail, 16, '#ffffff', [0.9, 0.06], 0.9) +
+    [
+      [1200, 400, 12],
+      [1000, 270, 9],
+      [1290, 600, 10],
+      [880, 210, 7],
+    ]
+      .map(([x, y, r]) => gn.spark(pen, x, y, r, '#ffffff', 0.9))
+      .join('');
+  const ship = c1.syracusia(pen, 560, 232, 0.4, { flip: true, rot: 8, line: 2.4 });
+  // The inset: Jason, proud, one fist up; LUX beside him hugging the flower pot with the sleeping sprout.
+  const cx = 360;
+  const cy = 530;
+  const r = 205;
+  const inPen = pen.relight({ key: [1, -0.12], keyColor: '#ffe0b0', rim: [-0.9, -0.3], rimColor: '#7fe6ff', depth: 0.55 });
+  const inside =
+    `<path d="${c1.circleD(cx, cy, r)}" fill="${pen.lin([
+      [0, '#2a3a6a'],
+      [1, '#141a3a'],
+    ])}"/>` +
+    gn.starfield(pen, 7, 26, cx - r, cy - r, r * 2, r * 2) +
+    pen.glow(cx + 60, cy - 30, 220, '#ffd890', 0.4) +
+    gn.jason(inPen, cx - 70, cy + 470, 1.05, {
+      pose: { turn: 0.32, tilt: -4, hipTilt: 6, armN: { to: [-0.62, 1.42], bend: 1 }, armF: [150, 186], legN: { to: [-0.08, 0.985] }, legF: { to: [0.22, 0.95] }, handN: 'fist', handF: 'fist' },
+      mood: 'grin',
+      look: [2.6, -0.5],
+      rim: 2,
+    }) +
+    gn.lux(inPen, cx + 110, cy - 110, 1.25, 'happy', { flip: true }) +
+    c1.sproutPot(inPen, cx + 110, cy + 110, 0.7) +
+    luxArms(inPen, cx + 110, cy - 110, 1.25, 40, 122);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, wake + ship) + gn.layer(1, roundInset(pen, cx, cy, r, inside)) + gn.vignette(pen, 0.45, '#04040e') + gn.grain(pen, 0.08));
 }
 
-/** 8. LUX flashing light-words at the Heart, which answers in gold; flowers burst out everywhere. */
+/* ---------------- 8. Friends ---------------- */
+
+/** 8. On the Bridge, LUX flashes light-words at the Heart and it flashes back in gold; its vines burst into flowers and Jason cheers. */
 export function ch1Friends(): string {
-  const id = 'ch1-friends';
+  const pen = gn.Pen.scene('ch1-friends', { key: [0.85, -0.35], keyColor: '#ffd890', rim: [-0.9, -0.3], rimColor: '#7fe6ff', shadow: '#5a2a50', depth: 0.55 });
+  const hx = 1130;
+  const hy = 360;
+  // Through the Bridge window: stars, and the warm blue world the ship is turning back toward.
+  const sky =
+    gn.sky(pen, [
+      [0, '#0c1030'],
+      [0.6, '#1a1640'],
+      [1, '#2a1830'],
+    ]) +
+    gn.starfield(pen, 51, 120, -80, -60, 1760, 760) +
+    c1.planet(pen, 300, 200, 120, [0.9, -0.2]);
+  const win =
+    `<path d="M-80 -60H1680V700H-80ZM70 60Q70 20 110 20H1490Q1530 20 1530 60V620H70Z" fill="#3a2440" fill-rule="evenodd"/>` +
+    [430, 800, 1170].map((mx) => pen.form(`M${mx - 16} 20H${mx + 16}V640H${mx - 16}Z`, '#3a2440', { sh: 30, hatch: 1, line: 3, rim: 2.4 })).join('') +
+    pen.form('M-80 640H1680V960H-80Z', '#3a2030', { line: 3, paint: pen.lin([[0, '#8a5a3a'], [1, '#2a1424']]) });
+  // The Heart, gold now, its vines turned gold and flowering everywhere; gold light pouring off it.
+  const goldVine: c1.VineOpts = { color: '#e8a830', glow: c1.GASCU.gold, leaves: 3, buds: 0, curls: 4 };
+  const vines =
+    c1.vine(
+      pen,
+      [
+        [hx - 100, hy - 60],
+        [880, 120],
+        [560, 90],
+        [260, 20],
+        [-60, 60],
+      ],
+      26,
+      { ...goldVine, seed: 1 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [hx + 120, hy - 60],
+        [1360, 120],
+        [1700, 160],
+      ],
+      26,
+      { ...goldVine, seed: 2 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [hx + 110, hy + 90],
+        [1360, 470],
+        [1460, 620],
+        [1700, 700],
+      ],
+      26,
+      { ...goldVine, seed: 3 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [hx - 60, hy + 140],
+        [960, 600],
+        [760, 680],
+        [520, 760],
+        [200, 900],
+      ],
+      28,
+      { ...goldVine, seed: 4 },
+    );
   const blooms: [number, number, number, string][] = [
-    [120, 140, 30, C.pink],
-    [330, 80, 24, C.gold],
-    [610, 130, 28, '#fff'],
-    [900, 70, 26, C.pink],
-    [1250, 90, 30, C.hello],
-    [1500, 160, 26, C.gold],
-    [1530, 520, 30, C.pink],
-    [1380, 760, 28, '#fff'],
-    [760, 820, 26, C.gold],
-    [560, 700, 22, C.pink],
-    [60, 520, 26, C.hello],
-    [1100, 820, 30, C.pink],
+    [190, 40, 30, '#ff8ad8'],
+    [420, 96, 26, '#ffd166'],
+    [700, 110, 32, '#ffffff'],
+    [960, 100, 26, '#5e9bff'],
+    [1320, 120, 34, '#ff8ad8'],
+    [1560, 170, 28, '#ffd166'],
+    [1420, 520, 32, '#ffffff'],
+    [1560, 660, 30, '#ff8ad8'],
+    [900, 620, 28, '#5e9bff'],
+    [640, 720, 30, '#ffd166'],
+    [1240, 220, 22, '#ffffff'],
+    [1020, 680, 24, '#ff8ad8'],
   ];
-  return panel(
-    backdrop(id + 'b', [[0, '#5a2a10'], [0.5, '#a8501a'], [1, '#3a1a20']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.7)}${glowDef(id + 'l', C.cyan, 0.7)}</defs>` +
-      glow(id + 'g', 1080, 400, 900, 0.9, 600) +
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => `<path d="M1080 400L${r1(1080 + Math.cos(i * 0.5236) * 1300)} ${r1(400 + Math.sin(i * 0.5236) * 1300)}" stroke="#ffe08a" stroke-width="${60 + (i % 2) * 50}" opacity=".12"/>`).join('') +
-      vine([[-20, 90], [300, 40], [600, 100], [900, 40], [1300, 80], [1620, 40]], 24) +
-      vine([[-20, 620], [140, 480], [80, 300], [180, 200]], 22) +
-      vine([[1620, 820], [1450, 700], [1560, 480], [1420, 300]], 22) +
-      vine([[500, 920], [640, 780], [880, 840], [1200, 760], [1400, 920]], 22) +
-      blooms.map(([x, y, r, c]) => flower(x, y, r, c, c === C.gold ? '#ff8a3d' : C.gold)).join('') +
-      gascuHeart(id + 'h', 1080, 400, 0.78, C.gold, false) +
-      arcs(1080, 400, [[190, C.gold], [250, C.gold]], 26, 180) +
-      glow(id + 'l', 560, 360, 150) +
-      arcs(560, 360, [[95, C.hello], [150, C.pink], [205, C.gold]], 34) +
-      lux(560, 360, 1.5, 'happy', C.gold) +
-      jason(260, 900, 1.35, { pose: 'cheer', face: 'happy' }) +
-      [[420, 220], [760, 560], [1320, 200], [960, 660], [200, 360]].map(([x, y], i) => sparkle(x, y, 14 + (i % 3) * 6, i % 2 ? '#fff' : '#fff2b0')).join('') +
-      vignette(id + 'v', 0.4, '#2a0e04'),
-  );
+  const flowers = blooms.map(([x, y, r, c], i) => c1.flower(pen, x, y, r, c, c === '#ffd166' ? '#ff8a3d' : c1.GASCU.gold, i * 17)).join('');
+  const heart =
+    gn.godRays(pen, hx, hy, [-160, -130, -100, -70, -40, -10, 20, 50, 80, 110, 140, 170, 200, 230, 260], 7, 1300, '#ffe08a', 0.3) +
+    c1.heart(pen, hx, hy, 0.8, { gold: true }) +
+    c1.lightWords(pen, hx, hy, [
+      [230, c1.GASCU.gold],
+      [290, '#fff2b0'],
+    ], 24, 180);
+  // LUX, glowing, flashing his words: hello (blue), safe (pink), together (gold).
+  const lx = 600;
+  const ly = 330;
+  const luxWords =
+    gn.bloom(pen, lx, ly, 120, '#bff8ff', 0.6) +
+    c1.lightWords(pen, lx, ly, [
+      [110, '#5e9bff'],
+      [165, '#ff6fcf'],
+      [220, '#ffd166'],
+    ], 30, 0) +
+    gn.lux(pen, lx, ly, 1.6, 'happy', { eye: '#ffd166' });
+  // Jason cheering at the left, both fists up, lit gold.
+  const hero = gn.castShadow(pen, 270, 900, 190, 18, 0.5) + gn.jason(pen.relight({ key: [1, -0.1] }), 270, 904, 1.12, { pose: 'cheer', mood: 'grin', look: [2.6, -1.5], rim: 2.2 });
+  const rand = gn.rng(13);
+  let petals = '';
+  for (let i = 0; i < 22; i++) petals += gn.spark(pen, 80 + rand() * 1440, 60 + rand() * 640, 4 + rand() * 9, i % 3 ? '#fff2b0' : '#ffffff', 0.9);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.4, win) + gn.layer(0.7, vines + heart + flowers) + gn.layer(1, luxWords + hero + petals) + gn.vignette(pen, 0.45, '#2a0e04') + gn.grain(pen, 0.08));
 }

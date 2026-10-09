@@ -3,11 +3,11 @@
  * and flowers, the cryo pods and the sleeping colonists in them, and extras for Jason's face (a yawn)
  * that the cast's moods don't cover. Everything draws through a `Pen` like the rest of the kit.
  */
-import { add, angle, at, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
+import { add, angle, at, dir, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
 import { ADULT, faceFrame, headOn, type HeadOpts, neck, type Pose, rig, type Rig, TEEN_BOY, torso } from './body';
 import { jason, type JasonOpts, POSES } from './cast';
 import { lux, type LuxMood } from './droids';
-import { spark } from './fx';
+import { bloom, godRays, spark } from './fx';
 
 /* ---------------- GaScu: vines, leaves, buds and flowers ---------------- */
 
@@ -353,6 +353,137 @@ export function syracusia(pen: Pen, x: number, y: number, s: number, o: ShipOpts
   return at(x, y, s, out, o.flip, o.rot ?? 0);
 }
 
+/**
+ * A star seen close up: its corona and rays, the white-hot disc (darker toward the limb), loops of fire
+ * rising off its edge and granules on its face. Centred at (sx, sy), `sr` in radius.
+ */
+export function sun(pen: Pen, sx: number, sy: number, sr: number): string {
+  let out = '';
+  // The corona, then the disc with its limb darkening toward the edge.
+  out += `<circle cx="${sx}" cy="${sy}" r="${sr * 2.6}" fill="${pen.rad(
+    [
+      [0, '#ffb060', 0.9],
+      [0.4, '#e8501a', 0.55],
+      [1, '#8a1a0e', 0],
+    ],
+    sx,
+    sy,
+    sr * 2.6,
+    true,
+  )}"/>`;
+  out += godRays(pen, sx, sy, [-130, -100, -70, -40, -10, 30, 60, 100, 140, 175, 210, 240], 5, sr * 2.8, '#ffd890', 0.3);
+  out += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="${pen.rad(
+    [
+      [0, '#fffbe8'],
+      [0.45, '#ffe89a'],
+      [0.8, '#ffb050'],
+      [1, '#ff7a2a'],
+    ],
+    sx,
+    sy,
+    sr,
+    true,
+  )}"/>`;
+  // Loops of fire rising off the limb, and granules on the face.
+  const limb = (deg: number, k = 1): P => add([sx, sy], mul(dir(deg), sr * k));
+  const loops: [P[], number][] = [
+    [[limb(-60), limb(-50, 1.25), limb(-36, 1.2), limb(-30)], 22],
+    [[limb(60), limb(72, 1.18), limb(84, 1)], 26],
+    [[limb(160), limb(168, 1.22), limb(180, 1.28), limb(188)], 18],
+    [[limb(-150), limb(-160, 1.15), limb(-168)], 16],
+  ];
+  out += pen.brushes(loops, '#ffd166', [0.3, 0.3], 0.75) + pen.brushes(
+    loops.map(([p, w]) => [p, w * 0.35] as [P[], number]),
+    '#fff6d0',
+    [0.3, 0.3],
+    0.85,
+  );
+  const rand = rng(5);
+  const gran: [P[], number][] = [];
+  for (let i = 0; i < 30; i++) {
+    const a = rand() * Math.PI * 2;
+    const d = sr * (0.3 + rand() * 0.6);
+    const p: P = [sx + Math.cos(a) * d, sy + Math.sin(a) * d];
+    gran.push([[p, add(p, [16 + rand() * 26, (rand() - 0.5) * 14])], 7]);
+  }
+  out += pen.brushes(gran, '#ff9a40', [0.4, 0.4], 0.35);
+  return out + bloom(pen, sx, sy, sr * 0.7, '#fffbe8', 0.8);
+}
+
+/**
+ * Gaia Nova seen from space: blue oceans, green lands, swirls of white cloud, a night side turned away from
+ * `light` (the direction toward its sun) and a thin glowing atmosphere. Centred at (x, y), `r` in radius.
+ */
+export function planet(pen: Pen, x: number, y: number, r: number, light: P = [0.8, -0.3]): string {
+  const id = pen.uid();
+  pen.def(id, `<clipPath id="${id}"><path d="${circleD(x, y, r)}"/></clipPath>`);
+  const k = r / 100;
+  const land = (pts: P[]) => `<path d="${dSmooth(pts.map(([px, py]) => [x + px * k, y + py * k] as P))}" fill="#4fae5a"/>`;
+  const clouds: [P[], number][] = [
+    [
+      [
+        [-80, -40],
+        [-30, -54],
+        [20, -44],
+      ],
+      9,
+    ],
+    [
+      [
+        [-40, 30],
+        [20, 20],
+        [70, 34],
+      ],
+      8,
+    ],
+    [
+      [
+        [10, -80],
+        [50, -70],
+      ],
+      6,
+    ],
+  ];
+  const night = pen.rad(
+    [
+      [0, '#000010', 0],
+      [0.55, '#000010', 0],
+      [1, '#05061a', 0.88],
+    ],
+    0.5 + light[0] * 0.3,
+    0.5 + light[1] * 0.3,
+    0.75,
+  );
+  return (
+    pen.glow(x, y, r * 1.5, '#7fd0ff', 0.45) +
+    `<g clip-path="url(#${id})"><path d="${circleD(x, y, r)}" fill="#2a78c8"/>` +
+    land([
+      [-70, -30],
+      [-30, -60],
+      [10, -40],
+      [0, 10],
+      [-40, 30],
+      [-80, 10],
+    ]) +
+    land([
+      [20, 20],
+      [70, 0],
+      [90, 40],
+      [50, 80],
+      [10, 60],
+    ]) +
+    pen.brushes(
+      clouds.map(([p, w]) => [p.map(([px, py]) => [x + px * k, y + py * k] as P), w * k] as [P[], number]),
+      '#ffffff',
+      [0.3, 0.3],
+      0.85,
+    ) +
+    `<path d="${circleD(x, y, r)}" fill="${night}"/></g>` +
+    `<path d="${circleD(x, y, r)}" fill="none" stroke="#bfefff" stroke-width="${r1(3 * k + 1)}" opacity=".8"/>` +
+    `<path d="${circleD(x, y, r)}" fill="none" stroke="${INK}" stroke-width="${r1(1.6 * k + 1)}" opacity=".6"/>`
+  );
+}
+
 /* ---------------- GaScu's seed ---------------- */
 
 /**
@@ -692,6 +823,73 @@ export function guardPod(pen: Pen, x: number, y: number, s: number, lean = 0, co
       ),
     });
   return at(x, y, s, body, false, lean);
+}
+
+/**
+ * What the Heart became: a tiny GaScu sprout asleep in a terracotta flower pot, one closed pink bud
+ * glowing softly. Bottom of the pot at (x, y); the pot is 110 wide and 100 tall at scale 1.
+ */
+export function sproutPot(pen: Pen, x: number, y: number, s: number): string {
+  const stem: P[] = [
+    [0, -96],
+    [-10, -130],
+    [4, -168],
+    [0, -190],
+  ];
+  return at(
+    x,
+    y,
+    s,
+    pen.glow(0, -190, 90, GASCU.glow, 0.7) +
+      pen.brush(stem, 14, INK, [0.05, 0.3]) +
+      pen.brush(stem, 8, '#4f9a3a', [0.05, 0.3]) +
+      leafAt(pen, [-6, -128], 200, 0.6, GASCU.leafLight) +
+      leafAt(pen, [2, -150], -25, 0.55, GASCU.leaf) +
+      pen.form('M0 -224Q22 -210 16 -188Q8 -176 0 -176Q-8 -176 -16 -188Q-22 -210 0 -224Z', GASCU.glow, {
+        sh: 8,
+        line: 2.4,
+        rim: 1.4,
+        paint: pen.rad([
+          [0, '#ffffff'],
+          [0.5, '#ffc0ec'],
+          [1, GASCU.glow],
+        ]),
+        inner: pen.brush(
+          [
+            [0, -220],
+            [2, -196],
+            [0, -180],
+          ],
+          2.4,
+          '#c2389a',
+          [0.2, 0.2],
+          0.7,
+        ),
+      }) +
+      pen.form('M-56 -92H56L42 0H-42Z', '#d0683c', { sh: 26, hatch: 1, line: 3, rim: 1.8, inner: pen.brush([[-30, -70], [-24, -20]], 6, '#ffffff', [0.3, 0.3], 0.35) }) +
+      pen.form('M-64 -108H64V-84H-64Z', '#e07a48', { sh: 8, line: 3, rim: 1.6 }) +
+      `<path d="M-58 -108Q0 -122 58 -108Q0 -98 -58 -108Z" fill="#4a2818"/>`,
+  );
+}
+
+/**
+ * Light-words: arcs of light fanning out from (x, y) toward `deg` (screen degrees, clockwise from +x),
+ * one per [radius, colour], each with a soft glow, a bright core and a dotted rhythm of light along it.
+ */
+export function lightWords(pen: Pen, x: number, y: number, list: [number, string][], spread = 36, deg = 0): string {
+  let out = '';
+  for (const [r, c] of list) {
+    const pts: P[] = [];
+    for (let i = 0; i <= 6; i++) {
+      const a = ((deg - spread + (i / 6) * spread * 2) * Math.PI) / 180;
+      pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]);
+    }
+    out += pen.brush(pts, 46, c, [0.25, 0.25], 0.22) + pen.brush(pts, 16, c, [0.15, 0.15]) + pen.brush(pts, 5, '#ffffff', [0.2, 0.2], 0.9);
+    const dots: string[] = [];
+    for (let i = 1; i < 6; i += 2) dots.push(`<circle cx="${r1(pts[i][0])}" cy="${r1(pts[i][1])}" r="7" fill="#ffffff"/>`);
+    out += pen.glow(pts[3][0], pts[3][1], 40, c, 0.7) + dots.join('');
+  }
+  return out;
 }
 
 /* ---------------- LUX ---------------- */

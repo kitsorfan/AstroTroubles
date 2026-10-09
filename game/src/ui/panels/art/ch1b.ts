@@ -612,55 +612,7 @@ function starView(pen: gn.Pen, sx: number, sy: number, sr: number): string {
     [0.5, '#7a1e10'],
     [1, '#2a0810'],
   ]);
-  // The corona, then the disc with its limb darkening toward the edge.
-  out += `<circle cx="${sx}" cy="${sy}" r="${sr * 2.6}" fill="${pen.rad(
-    [
-      [0, '#ffb060', 0.9],
-      [0.4, '#e8501a', 0.55],
-      [1, '#8a1a0e', 0],
-    ],
-    sx,
-    sy,
-    sr * 2.6,
-    true,
-  )}"/>`;
-  out += gn.godRays(pen, sx, sy, [-130, -100, -70, -40, -10, 30, 60, 100, 140, 175, 210, 240], 5, sr * 2.8, '#ffd890', 0.3);
-  out += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="${pen.rad(
-    [
-      [0, '#fffbe8'],
-      [0.45, '#ffe89a'],
-      [0.8, '#ffb050'],
-      [1, '#ff7a2a'],
-    ],
-    sx,
-    sy,
-    sr,
-    true,
-  )}"/>`;
-  // Loops of fire rising off the limb, and granules on the face.
-  const limb = (deg: number, k = 1): gn.P => gn.add([sx, sy], gn.mul(gn.dir(deg), sr * k));
-  const loops: [gn.P[], number][] = [
-    [[limb(-60), limb(-50, 1.25), limb(-36, 1.2), limb(-30)], 22],
-    [[limb(60), limb(72, 1.18), limb(84, 1)], 26],
-    [[limb(160), limb(168, 1.22), limb(180, 1.28), limb(188)], 18],
-    [[limb(-150), limb(-160, 1.15), limb(-168)], 16],
-  ];
-  out += pen.brushes(loops, '#ffd166', [0.3, 0.3], 0.75) + pen.brushes(
-    loops.map(([p, w]) => [p, w * 0.35] as [gn.P[], number]),
-    '#fff6d0',
-    [0.3, 0.3],
-    0.85,
-  );
-  const rand = gn.rng(5);
-  const gran: [gn.P[], number][] = [];
-  for (let i = 0; i < 30; i++) {
-    const a = rand() * Math.PI * 2;
-    const d = sr * (0.3 + rand() * 0.6);
-    const p: gn.P = [sx + Math.cos(a) * d, sy + Math.sin(a) * d];
-    gran.push([[p, gn.add(p, [16 + rand() * 26, (rand() - 0.5) * 14])], 7]);
-  }
-  out += pen.brushes(gran, '#ff9a40', [0.4, 0.4], 0.35);
-  return out + gn.bloom(pen, sx, sy, sr * 0.7, '#fffbe8', 0.8);
+  return out + c1.sun(pen, sx, sy, sr);
 }
 
 /** The Bridge's great window: a heavy frame and mullions, black against the star, rimmed with its fire. */
