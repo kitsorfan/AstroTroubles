@@ -268,12 +268,15 @@ export class Game {
       this.deckSelect();
       return;
     }
-    // #panel=<id> shows one storybook illustration on its own (for checking the art).
+    // #panel=<id> shows one storybook illustration on its own (for checking the art); add &caption or
+    // &talk to see a sample caption or line of dialogue over it.
     const art = dev.get('panel') as PanelId | null;
     if (art && (PANEL_IDS as readonly string[]).includes(art)) {
       this.state = 'cinema';
       this.ui.cinema(true);
       this.ui.storyPanel(art);
+      if (dev.has('caption')) this.ui.caption('Low over the dock, white and gold, the Argo slipped through the great arch.');
+      if (dev.has('talk')) this.ui.dialogue([{ who: 'jason', text: 'Look! He’s saluting! General, you were AMAZING!' }], () => {});
       return;
     }
     const film = dev.get('cinema');
