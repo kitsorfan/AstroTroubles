@@ -1,6 +1,7 @@
 /**
  * Props for hero puzzles: arrow targets (only Atalanta's power arrows set them off), wall-run walls
- * (a glowing stripe she can run along) and low gaps (a crawl hole only her slide fits under).
+ * (a glowing stripe she can run along), climbing cliffs (handholds she climbs up) and low gaps (a crawl
+ * hole only her slide fits under).
  */
 import * as THREE from 'three';
 
@@ -15,12 +16,16 @@ import { boxG, cyl, glowSprite, mat, mesh, ownMat } from '../models';
 /** How high the top of a low gap's crawl hole is above its floor (Jason stands 1.7 tall, Atalanta slides 0.8 low). */
 export const LOWGAP_CLEAR = 0.95;
 
-/** Per-world lookups the hero moves need: wall-run cells and arrow targets. */
+/** Per-world lookups the hero moves need: wall-run cells, climbing cliffs and arrow targets. */
 export interface HeroWorld {
   wallRuns: Set<number>;
+  /** Cells whose lower faces Atalanta can climb. */
+  climbs: Set<number>;
   targets: ArrowTarget[];
   /** True once the "charge a power arrow" hint was shown on this level. */
   hinted: boolean;
+  /** True once the climbing hint was shown on this level. */
+  climbHinted?: boolean;
 }
 
 const registry = new WeakMap<World, HeroWorld>();
@@ -28,7 +33,7 @@ const registry = new WeakMap<World, HeroWorld>();
 export function heroWorld(world: World): HeroWorld {
   let r = registry.get(world);
   if (!r) {
-    r = { wallRuns: new Set(), targets: [], hinted: false };
+    r = { wallRuns: new Set(), climbs: new Set(), targets: [], hinted: false };
     registry.set(world, r);
   }
   return r;
@@ -198,6 +203,107 @@ export class WallRun extends Entity {
   update() {
     const t = this.world.time;
     this.mat.color.setScalar(0.8 + Math.sin(t * 4) * 0.2);
+  }
+}
+
+/* ---------------- climbing cliff ---------------- */
+
+let holdTex: THREE.CanvasTexture | null = null;
+
+/**
+ * Handholds on a cliff (one tile, repeated up the face): weathered stone with chunky teal-and-gold
+ * grips in a zig-zag, so the way up reads at a glance from the camera above.
+ */
+function holdTexture(): THREE.CanvasTexture {
+  if (holdTex) return holdTex;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 128;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  g.fillStyle = 'rgba(28,40,44,0.55)';
+  g.fillRect(0, 0, 128, 128);
+  // Cracks in the rock.
+  g.strokeStyle = 'rgba(0,0,0,0.35)';
+  g.lineWidth = 3;
+  for (const [x0, y0, x1, y1] of [
+    [10, 20, 40, 60],
+    [90, 0, 70, 50],
+    [20, 100, 60, 128],
+    [110, 80, 128, 120],
+  ]) {
+    g.beginPath();
+    g.moveTo(x0, y0);
+    g.lineTo(x1, y1);
+    g.stroke();
+  }
+  // The grips: a zig-zag of rounded holds, each with a highlight and a dark underside.
+  const grips: [number, number, string][] = [
+    [32, 18, '#8ff8e4'],
+    [92, 46, '#ffd166'],
+    [36, 76, '#8ff8e4'],
+    [94, 108, '#ffd166'],
+  ];
+  for (const [x, y, col] of grips) {
+    g.fillStyle = 'rgba(0,0,0,0.5)';
+    g.beginPath();
+    g.ellipse(x + 2, y + 5, 15, 9, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = col;
+    g.beginPath();
+    g.ellipse(x, y, 15, 9, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.75)';
+    g.beginPath();
+    g.ellipse(x - 4, y - 3, 6, 3, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  holdTex = new THREE.CanvasTexture(c);
+  holdTex.colorSpace = THREE.SRGBColorSpace;
+  holdTex.wrapT = THREE.RepeatWrapping;
+  return holdTex;
+}
+
+/**
+ * Marks a high cell as a climbing cliff: handholds on every face that drops to a lower neighbour (or
+ * to a void), and a glowing lip along the top where Atalanta pulls herself up.
+ */
+export class ClimbWall extends Entity {
+  private glow: THREE.MeshStandardMaterial;
+
+  constructor(world: World, id: string, cx: number, cz: number, h: number) {
+    super(world, id);
+    const g = world.grid;
+    heroWorld(world).climbs.add(cz * g.width + cx);
+    this.glow = ownMat('#8ff8e4', { emissive: '#8ff8e4', ei: 1.2 });
+    const x = center(cx);
+    const z = center(cz);
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const n = g.cell(cx + dx, cz + dz);
+      if (n.kind === 'wall') continue;
+      const low = n.kind === 'void' || n.kind === 'hazard' ? h - 8 : n.h;
+      const tall = h - low;
+      if (tall < 1) continue;
+      const tex = holdTexture().clone();
+      tex.needsUpdate = true;
+      tex.repeat.set(1, tall / CELL);
+      const face = new THREE.Mesh(
+        new THREE.PlaneGeometry(CELL * 0.96, tall),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, side: THREE.DoubleSide, depthWrite: false }),
+      );
+      face.position.set(x + dx * (CELL / 2 + 0.03), low + tall / 2, z + dz * (CELL / 2 + 0.03));
+      face.rotation.y = Math.atan2(dx, dz);
+      this.obj.add(face);
+      this.obj.add(mesh(boxG(Math.abs(dz) * CELL + 0.16, 0.1, Math.abs(dx) * CELL + 0.16), this.glow, x + dx * (CELL / 2 - 0.06), h + 0.05, z + dz * (CELL / 2 - 0.06), false));
+    }
+  }
+
+  update() {
+    this.glow.emissiveIntensity = 0.9 + Math.sin(this.world.time * 3) * 0.35;
   }
 }
 

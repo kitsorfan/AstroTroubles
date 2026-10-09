@@ -45,16 +45,16 @@ export const harpies: LevelDef = {
    #6666666666666666666666666#       5C55m55
    #6/666666666666666666666/6#        55=55
    #6666666666666666666666666#
-   ###########################
+   ###########################         33
 
                                       11111111
                              999     111o1Q1111
                              9*9     1:11111e11
               ###############999##   1111111111
               1111111111111111v11#   11{11111q1
-              1+9911#11111o111Q11#   111111]111
-  #####RRRRRRR19P911#1o1111111111#   1S11}11111
-  11111       199911#11111111r1m1#   111|1111:1
+              1+9&11#11111o111Q11#   111111]111
+  #####RRRRRRR19P&11#1o1111111111#   1S11}11111
+  11111       199&11#11111111r1m1#   111|1111:1
   1o1o1       1###11#11Q111111111#   111b1o1111
   11111       s11111H111111Q11111#,,,1q11111111
   1)111       11111a11111u1111111d,,,111Ff1####
@@ -148,12 +148,13 @@ export const harpies: LevelDef = {
     w: { type: 'wind', dx: 1, dz: 0, w: 5, d: 3, period: 4.5, strength: 2.5 },
     W: { type: 'wind', dx: -1, dz: 0, w: 5, d: 3, period: 4.5, offset: 2.25, strength: 2.5 },
     X: { type: 'wind', dx: -1, dz: 0, w: 7, d: 5, period: 5, offset: 1, strength: 2 },
-    // Hero puzzles: bullseyes and low gaps for Atalanta, red switches for Jason, a wall-run for her.
+    // Hero puzzles: bullseyes, low gaps, a wall-run and a cliff to climb for Atalanta, red switches for Jason.
     T: { type: 'target', flag: 'tA' },
     '"': { type: 'target', flag: 'tB' },
     P: { type: 'switch', flag: 'sw1' },
     '<': { type: 'switch', flag: 'sw2' },
     R: { type: 'wallrun' },
+    '&': { type: 'climb', h: 4.5 },
     l: { type: 'lowgap', axis: 'x' },
     // Phineus's star garden (the vault): hottest star to coolest.
     '{': { type: 'rune', group: 'vault', order: 1, color: '#5ec8ff' },
@@ -184,10 +185,10 @@ export const harpies: LevelDef = {
     B: { type: 'sign', text: 'Too far to jump? Face the glowing ring and GRAPPLE across!' },
     U: {
       type: 'sign',
-      text: 'TWO HEROES! Tap the switch button above your buttons to play as Jason or Atalanta, right where you stand. Atalanta wall-jumps, wall-runs, SLIDES under low gaps and shoots a bow. Jason grapples, ground-pounds, dashes and blasts.',
+      text: 'TWO HEROES! Tap the switch button above your buttons to play as Jason or Atalanta, wherever they are. You travel together: if one of you can’t get past something, open a way for them, or help them up from above. Atalanta CLIMBS, wall-jumps, wall-runs, SLIDES under low gaps and shoots a bow. Jason grapples, ground-pounds, dashes and blasts.',
     },
     k: { type: 'sign', text: 'Bullseye targets only take Atalanta’s POWER ARROW. Hold BOW to charge it, then let go!' },
-    H: { type: 'sign', text: 'This tower is too high for one jump. Atalanta can WALL-JUMP: jump at the wall, then jump again off it. The red switch on top needs Jason’s GROUND POUND, so switch to him up there!' },
+    H: { type: 'sign', text: 'This tower is too high to jump. As Atalanta, CLIMB the handholds: keep pushing into the wall. Up top, stand by the edge above Jason and she pulls him up. The red switch up there needs his GROUND POUND!' },
     s: { type: 'sign', text: 'Teal stripes mean WALL-RUN! As Atalanta, jump at the striped wall and keep running along it. Her SLIDE also fits under walls with yellow-and-black stripes.' },
     S: { type: 'sign', text: 'Phineus’s star garden: “The hottest stars shine blue, then white, then gold, and the coolest glow red. Step on my stars from hottest to coolest, and my old treasure box will open.”' },
     C: { type: 'sign', text: 'The nest gate needs BOTH of you: a red switch out on that rock for Jason, and a bullseye beyond the high step for Atalanta.' },

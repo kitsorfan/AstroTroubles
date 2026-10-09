@@ -26,6 +26,7 @@ export type HeroMove =
   | 'sprint'
   | 'wallJump'
   | 'wallRun'
+  | 'climb'
   | 'slide'
   | 'bow'
   | 'kick'
@@ -85,7 +86,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
     jumpV: ATALANTA.jumpV,
     height: PLAYER.height,
     buttons: { shoot: 'BOW', spin: 'KICK', dash: 'SLIDE' },
-    moves: ['sprint', 'wallJump', 'wallRun', 'slide', 'bow', 'kick'],
+    moves: ['sprint', 'wallJump', 'wallRun', 'climb', 'slide', 'bow', 'kick'],
   },
   // Slow and strong, on his own levels (see `heroes/brennus.ts`): a cannon, a shield, a smashing charge,
   // a heavy stomp, and his old Legion robots obey him at command posts.
@@ -164,6 +165,38 @@ export function nextHero(roster: readonly HeroId[], current: HeroId): HeroId | n
 }
 
 /** What the switch rules look at. */
+/**
+ * A special move that got the playing hero from one footprint to the next (see `Player.landMoves`):
+ * Jason's double jump, air dash, glide and grapple, Atalanta's wall-jump, wall-run, climb and crawl,
+ * General Brennus's charge-leap, and a bounce pad or updraft (`launch`) that throws anyone.
+ */
+export type TrailMove = 'double' | 'dash' | 'glide' | 'grapple' | 'launch' | 'walljump' | 'wallrun' | 'climb' | 'crawl' | 'leap';
+
+const TRAIL_MOVE: Record<TrailMove, HeroMove | null> = {
+  double: 'doubleJump',
+  dash: 'dash',
+  glide: 'glide',
+  grapple: 'grapple',
+  launch: null,
+  walljump: 'wallJump',
+  wallrun: 'wallRun',
+  climb: 'climb',
+  crawl: 'slide',
+  leap: 'smash',
+};
+
+/**
+ * True if `hero` can copy a footprint reached with `moves` (a bounce pad works for anyone). Moves
+ * like the double jump also need the hero's matching ability (`has`).
+ */
+export function canCopy(hero: HeroId, moves: Iterable<TrailMove>, has: (m: HeroMove) => boolean = () => true): boolean {
+  for (const m of moves) {
+    const need = TRAIL_MOVE[m];
+    if (need && (!HEROES[hero].moves.includes(need) || !has(need))) return false;
+  }
+  return true;
+}
+
 export interface SwitchState {
   roster: readonly HeroId[];
   current: HeroId;

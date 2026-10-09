@@ -29,6 +29,7 @@ import type { Helper } from '../game/companions';
 import type { TideGauge } from '../world/tides';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
+import { showPanel } from './cinePanel';
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
 
@@ -227,7 +228,7 @@ export class UI {
     this.fadeEl = h(`<div class="fade"></div>`);
     this.cine = h(`<div class="cine">
       <div class="tap"></div><div class="bar top"></div><div class="bar bottom"></div>
-      <div class="storypanel"><div class="frame"><div class="art"></div></div></div>
+      <div class="storypanel"><div class="art"></div></div>
       <div class="caption"></div><div class="bosscard"></div><div class="glitch-fx"></div>
     </div>`);
     this.skipBtn = h(`<button class="skip clickable hidden">${label('SKIP')} ▶▶</button>`);
@@ -704,8 +705,11 @@ export class UI {
     });
   }
 
-  /** Shows lines one at a time; tap to advance. Returns a function that closes it early. */
-  dialogue(lines: Line[], done: () => void): () => void {
+  /**
+   * Shows lines one at a time; tap to advance. `onLine` hears each line as it comes up (so a scene can
+   * animate whoever is speaking). Returns a function that closes it early.
+   */
+  dialogue(lines: Line[], done: () => void, onLine?: (line: Line) => void): () => void {
     if (!lines.length) {
       done();
       return () => {};
@@ -720,6 +724,7 @@ export class UI {
     const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
+      onLine?.(line);
       const speaker = this.voice(line.who, false);
       text = tr(line.text);
       $(el, '.portrait').innerHTML = portrait(speaker);
@@ -788,23 +793,24 @@ export class UI {
     }
   }
 
-  private panelDrift = 0;
+  private panelCount = 0;
+  private panelMoves: Animation[] = [];
 
-  /** Shows a storybook illustration over the cutscene (null hides it). It drifts slowly while it's up. */
+  /**
+   * Shows a storybook illustration full-screen over the cutscene (null fades it out). The camera drifts
+   * slowly across it (alternating direction from panel to panel) and its parallax layers drift at
+   * their own speeds; captions and dialogue sit over a soft dark gradient at the bottom.
+   */
   storyPanel(id: PanelId | null) {
     const el = $(this.cine, '.storypanel');
+    this.cine.classList.toggle('paneled', !!id);
     if (!id) {
       el.classList.remove('show');
       return;
     }
-    const art = $(el, '.art');
-    art.innerHTML = panelSvg(id);
-    // Alternate the slow pan between panels so a run of them doesn't feel mechanical.
-    this.panelDrift += 1;
-    art.style.setProperty('--dx', this.panelDrift % 2 ? '-1.6%' : '1.6%');
-    art.classList.remove('drift');
-    void art.offsetWidth;
-    art.classList.add('drift');
+    for (const a of this.panelMoves) a.cancel();
+    this.panelCount += 1;
+    this.panelMoves = showPanel($(el, '.art'), panelSvg(id), this.panelCount);
     el.classList.add('show');
   }
 

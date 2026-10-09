@@ -90,6 +90,11 @@ export const ATALANTA = {
   wallRunLift: 3.5,
   /** Gravity is scaled by this while she runs along a wall. */
   wallRunGravity: 0.25,
+  /** CLIMB marked cliffs: speed up and sideways, seconds of grip before her arms tire, and the pull-up at the top. */
+  climbSpeed: 3.6,
+  climbSide: 2.2,
+  climbGrip: 4.5,
+  climbMantle: 0.4,
   /** Slide (her DASH button): speed, length in seconds, cooldown, and her height while low. */
   slideSpeed: 14,
   slideTime: 0.45,
@@ -202,9 +207,17 @@ export const HERO_SWITCH = {
   /** How far behind the leader the follower walks (world units), and how fast it may go. */
   followDist: 2.6,
   followSpeed: 10,
-  /** Farther than this (or stuck for `stuckTime` seconds) and the follower pops over in a flash. */
-  teleportDist: 16,
-  stuckTime: 2,
+  /** While a follower waits at something it can't get past, the leader can only go this far from it. */
+  tether: 13,
+  /** A waiting follower gets a hand-up (a rope, a hand) from a leader standing this close above it. */
+  helpReach: 5,
+  helpMinRise: 1.1,
+  helpMaxRise: 11,
+  /** Seconds to lower the rope, and how fast the follower climbs it. */
+  helpDrop: 0.45,
+  helpClimb: 4.5,
+  /** A follower this close when Jason fires the grapple grabs on and zips along with him. */
+  tandem: 4,
 };
 
 export const START_HEARTS = 5;

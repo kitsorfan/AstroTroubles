@@ -11,7 +11,6 @@ export * from './kit/cast';
 export * from './kit/atalanta';
 export * from './kit/gascu';
 export * from './kit/ships';
-export * from './kit/colossus';
 export * from './kit/voyage';
 export * from './kit/aeetes';
 export * from './kit/droids';

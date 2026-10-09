@@ -1,4 +1,4 @@
-import type { Speaker } from '../world/levelTypes';
+import type { HoloSpeaker, Speaker } from '../world/levelTypes';
 
 export const ICON = {
   heart: (full: boolean) =>
@@ -90,11 +90,16 @@ function screen(id: string, glow: string): string {
 const glass = (id: string, color: string) =>
   `<rect width="80" height="80" fill="url(#${id}sl)"/><path d="M4 14V4h10M66 4h10v10M76 66v10H66M14 76H4V66" fill="none" stroke="${color}" stroke-width="1.6" opacity=".7"/>`;
 
+/** Everyone drawn by `person`, by their id, so their face can be drawn again on its own (for holograms). */
+const PEOPLE = new Map<string, Person>();
+
 /**
  * An illustrated portrait, lit from the upper left: a proper face shape and jaw, almond eyes under
- * lids, shaped brows, a nose and lips, and a uniform with its collar and insignia.
+ * lids, shaped brows, a nose and lips, and a uniform with its collar and insignia. A `bare` portrait
+ * is just the head on a transparent background: no comms screen, shoulders or collar.
  */
-function person(p: Person): string {
+function person(p: Person, bare = false): string {
+  PEOPLE.set(p.id, p);
   const id = p.id;
   const skinHi = shade(p.skin, 1.12);
   const skinLo = shade(p.skin, 0.72);
@@ -107,17 +112,17 @@ function person(p: Person): string {
     <circle cx="${cx - 0.6}" cy="36.4" r=".5" fill="#fff" opacity=".85"/>
     <path d="M${cx - 4.9} 37.1Q${cx} 33.1 ${cx + 4.9} 36.8" fill="none" stroke="#1d1310" stroke-width="1" stroke-linecap="round"/>
     <path d="M${cx - 3.5} 38.9Q${cx} 39.9 ${cx + 3.6} 38.6" fill="none" stroke="${skinLo}" stroke-width=".5" opacity=".7"/>`;
-  return `<svg viewBox="0 0 80 80">
-    ${screen(id, shade(p.suit, 1.3))}
+  return `<svg viewBox="0 0 80 80"${bare ? ' xmlns="http://www.w3.org/2000/svg"' : ''}>
+    ${bare ? '' : screen(id, shade(p.suit, 1.3))}
     <defs>
       <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${skinHi}"/><stop offset=".55" stop-color="${p.skin}"/><stop offset="1" stop-color="${skinLo}"/></linearGradient>
       <linearGradient id="${id}n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(p.skin, 0.62)}"/><stop offset=".6" stop-color="${shade(p.skin, 0.85)}"/></linearGradient>
       <linearGradient id="${id}c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(p.suit, 1.25)}"/><stop offset="1" stop-color="${shade(p.suit, 0.62)}"/></linearGradient>
     </defs>
     ${p.back ?? ''}
-    <path d="M8 81C9 68 20 62 32 60.5L48 60.5C60 62 71 68 72 81Z" fill="url(#${id}c)"/>
-    <path d="M34.2 50H45.8L46.8 61.5Q40 64 33.2 61.5Z" fill="url(#${id}n)"/>
-    ${p.collar}
+    ${bare ? '' : `<path d="M8 81C9 68 20 62 32 60.5L48 60.5C60 62 71 68 72 81Z" fill="url(#${id}c)"/>`}
+    ${bare ? '' : `<path d="M34.2 50H45.8L46.8 61.5Q40 64 33.2 61.5Z" fill="url(#${id}n)"/>`}
+    ${bare ? '' : p.collar}
     <ellipse cx="24.8" cy="39.5" rx="2.6" ry="4.6" fill="${p.skin}"/><path d="M24.4 37.2Q23.2 39.5 24.8 42" fill="none" stroke="${skinLo}" stroke-width=".7"/>
     <ellipse cx="55.2" cy="39.5" rx="2.6" ry="4.6" fill="${skinLo}"/>
     <path d="M25.4 29C25.4 17.8 54.6 17.8 54.6 29C55.6 40.5 53.6 47.6 48.6 53.2C45.6 56.6 43 58 40 58C37 58 34.4 56.6 31.4 53.2C26.4 47.6 24.4 40.5 25.4 29Z" fill="url(#${id}s)"/>
@@ -135,7 +140,7 @@ function person(p: Person): string {
     <path d="M38.6 53.4Q40 54 41.4 53.4" fill="none" stroke="#fff" stroke-width=".5" opacity=".25"/>
     ${p.front}
     ${p.extra ?? ''}
-    ${glass(id, shade(p.suit, 1.6))}
+    ${bare ? '' : glass(id, shade(p.suit, 1.6))}
   </svg>`;
 }
 
@@ -522,6 +527,18 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   aeetes: '#ffd166',
   phineus: '#c9b8ff',
 };
+
+/** Which portrait each hologram speaker uses (their `person` id). */
+const HOLO_PERSON: Record<HoloSpeaker, string> = { captain: 'pc', rosa: 'pr', brennus: 'pg', hypatia: 'ph', aeetes: 'pa', atalanta: 'pt' };
+
+/**
+ * A hologram speaker's head on its own, as a standalone SVG document (80 by 80, the face centred
+ * at x = 40, the chin at y = 58), with their skin colour so the hologram can light the face evenly.
+ */
+export function holoFaceArt(who: HoloSpeaker): { svg: string; skin: string } {
+  const p = PEOPLE.get(HOLO_PERSON[who]) as Person;
+  return { svg: person(p, true), skin: p.skin };
+}
 
 let portraitCopies = 0;
 

@@ -1,140 +1,445 @@
 /** Chapter 1 panels, part 1: the ship in the nebula, the comet, and the vines growing on board. */
-import {
-  at,
-  backdrop,
-  C,
-  face,
-  flower,
-  glow,
-  glowDef,
-  gascuSeed,
-  ink,
-  panel,
-  person,
-  rad,
-  sparkle,
-  stars,
-  syracusia,
-  vignette,
-  vine,
-} from '../kit';
+import * as gn from '../gn';
+import * as c1 from '../gn/ch1';
 
-/** Soft nebula clouds: big faint glows. */
-function nebula(id: string, blobs: [number, number, number, number, string][]): string {
-  const cols = [...new Set(blobs.map((b) => b[4]))];
-  const defs = `<defs>${cols.map((c, i) => glowDef(`${id}n${i}`, c, 0.5)).join('')}</defs>`;
-  return defs + blobs.map(([x, y, rx, ry, c]) => glow(`${id}n${cols.indexOf(c)}`, x, y, rx, 1, ry)).join('');
+/* ---------------- 1. The ship in the nebula ---------------- */
+
+/** Deep space with a nebula: the gradient, glowing clouds of gas with dark dust lanes, and stars. */
+function spaceGN(pen: gn.Pen, seed: number, clouds: [number, number, number, string[]][]): string {
+  return (
+    gn.sky(pen, [
+      [0, '#05081e'],
+      [0.55, '#120e3a'],
+      [1, '#1a0c30'],
+    ]) +
+    clouds.map(([x, y, r, cols], i) => gn.nebula(pen, x, y, r, cols, seed + i, 0.7)).join('') +
+    gn.starfield(pen, seed, 170, -80, -60, 1760, 1020, '#f4f6ff')
+  );
 }
 
-/** 1. The Syracusia cruising through a starry nebula, with sleeping colonists in their pods. */
+/**
+ * A comic inset: a framed window (x, y, w, h) with its own picture inside, clipped, under a white border.
+ * `body` is drawn in panel coordinates.
+ */
+function inset(pen: gn.Pen, x: number, y: number, w: number, h: number, body: string): string {
+  const id = pen.uid();
+  const d = `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+  pen.def(id, `<clipPath id="${id}"><path d="${d}"/></clipPath>`);
+  return (
+    `<path d="${d}" fill="${gn.INK}" transform="translate(10 12)" opacity=".5"/>` +
+    `<g clip-path="url(#${id})">${body}</g>` +
+    `<path d="${d}" fill="none" stroke="${gn.INK}" stroke-width="16"/><path d="${d}" fill="none" stroke="#f4f6ff" stroke-width="8"/>`
+  );
+}
+
+/** 1. The SYRACUSIA cruises through a quiet nebula; in an inset, colonists sleep in their frosted pods while HALCYON's eye keeps watch. */
 export function ch1Ship(): string {
-  const id = 'ch1-ship';
-  const pods = [0, 1, 2, 3]
-    .map((i) => {
-      const x = 340 + i * 300;
-      const looks = [
-        { skin: '#e8bf9a', hair: '#5a3a22', hairStyle: 'long' as const },
-        { skin: '#8a5a3c', hair: '#1a1210', hairStyle: 'curly' as const },
-        { skin: '#f0cfb0', hair: '#c96a2a', hairStyle: 'pony' as const },
-        { skin: '#c8906c', hair: '#2a1a12', hairStyle: 'short' as const },
-      ][i];
-      const sleeper = person(x, 925, 0.95, { ...looks, coat: '#c9d6e6', face: 'sleep', legs: 'none' });
-      return `<clipPath id="${id}c${i}"><rect x="${x - 95}" y="640" width="190" height="210" rx="90"/></clipPath>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="#2a3470"/>
-        <g clip-path="url(#${id}c${i})">${sleeper}<rect x="${x - 95}" y="640" width="190" height="210" fill="${C.cyan}" opacity=".18"/></g>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="none" stroke="#d8dee8" stroke-width="12"/>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="none" ${ink(4)}/>
-        <path d="M${x - 60} 672Q${x - 30} 652 ${x + 4} 656" fill="none" stroke="#fff" stroke-width="7" opacity=".6" stroke-linecap="round"/>
-        <circle cx="${x + 74}" cy="${612 - (i % 2) * 14}" r="9" fill="${C.cyan}" opacity=".5"/><circle cx="${x + 92}" cy="${588 - (i % 2) * 14}" r="6" fill="${C.cyan}" opacity=".4"/>`;
-    })
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#0b1030'], [0.55, '#241a5a'], [1, '#3a1f5a']]) +
-      nebula(id, [
-        [1250, 180, 520, 260, '#8a4fff'],
-        [300, 520, 600, 220, '#3f86d6'],
-        [900, 380, 420, 180, C.pink],
-      ]) +
-      stars(11, 110) +
-      `<path d="M120 300Q300 260 560 310" stroke="#8fd8ff" stroke-width="3" opacity=".25" fill="none"/>` +
-      syracusia(id + 's', 780, 300, 0.92) +
-      // The cut-away: a long hull window strip with four sleeping colonists.
-      `<path d="M610 470L210 600M1010 470L1230 600" stroke="#d8dee8" stroke-width="4" stroke-dasharray="12 12" opacity=".7"/>
-      <rect x="190" y="596" width="1210" height="282" rx="60" fill="#c9d1dc" ${ink(7)}/>
-      <rect x="214" y="618" width="1162" height="238" rx="44" fill="#141a44"/>` +
-      pods +
-      sparkle(1460, 120, 18) +
-      sparkle(160, 160, 12, '#cfe0ff') +
-      vignette(id + 'v', 0.45),
+  const pen = gn.Pen.scene('ch1-ship', { key: [-0.7, -0.6], keyColor: '#fff0e0', rim: [0.85, 0.45], rimColor: '#8fd8ff', shadow: '#2a2a70', depth: 0.6 });
+  const sky =
+    spaceGN(pen, 11, [
+      [1180, 200, 620, ['#d080ff', '#8a4fff', '#3f3aa6']],
+      [260, 620, 560, ['#7ac8ff', '#3f86d6', '#2a2a80']],
+      [820, 460, 380, ['#ff8ad8', '#c04fa8']],
+    ]) +
+    gn.bloom(pen, 110, 90, 60, '#fff4e0', 0.9);
+  // The ship, big and slow, sliding across the frame; a faint wake of light behind it.
+  const ship = c1.syracusia(pen, 900, 330, 0.92, { rot: -5 });
+  // The inset: inside the cryo deck, two colonists asleep in their pods, HALCYON's amber eye on the wall.
+  const ix = 990;
+  const iy = 396;
+  const iw = 470;
+  const ih = 320;
+  const podPen = pen.relight({ key: [-0.4, -0.8], keyColor: '#e8fbff', rim: [0.9, -0.2], rimColor: '#7fe6ff', depth: 0.6 });
+  const inside =
+    `<path d="M${ix} ${iy}H${ix + iw}V${iy + ih}H${ix}Z" fill="${pen.lin([
+      [0, '#16324c'],
+      [1, '#0a1626'],
+    ])}"/>` +
+    pen.glow(ix + iw / 2, iy + 120, 260, '#7fe6ff', 0.4, 140) +
+    c1.pod(podPen, ix + 120, iy + 420, 0.78, { look: c1.COLONISTS[0], frost: 0.4 }) +
+    c1.pod(podPen, ix + 350, iy + 430, 0.78, { look: c1.COLONISTS[3], frost: 0.5 }) +
+    // HALCYON's eye: an amber lens in a white housing, its light falling on the pods.
+    pen.form(c1.circleD(ix + 236, iy + 60, 26), '#d8dee8', { sh: 10, line: 2.6, rim: 1.4 }) +
+    pen.glow(ix + 236, iy + 60, 60, '#ffb040', 0.8) +
+    `<circle cx="${ix + 236}" cy="${iy + 60}" r="12" fill="#ffb040" stroke="${gn.INK}" stroke-width="2.4"/><circle cx="${ix + 232}" cy="${iy + 56}" r="4" fill="#fff"/>`;
+  // A dotted "cut-away" line from the inset up to the ship's habitat ring.
+  const callout = `<path d="M${ix + 40} ${iy}L812 470" stroke="#f4f6ff" stroke-width="4" stroke-dasharray="10 10" opacity=".75"/><circle cx="812" cy="470" r="10" fill="none" stroke="#f4f6ff" stroke-width="4" opacity=".85"/>`;
+  return pen.svg(
+    gn.layer(0.15, sky) +
+      gn.layer(0.6, ship) +
+      gn.layer(1, callout + inset(pen, ix, iy, iw, ih, inside)) +
+      gn.vignette(pen, 0.5, '#04040e') +
+      gn.grain(pen, 0.08),
   );
 }
 
-/** 2. The pink seed-comet streaking toward the ship; the ship small and surprised. */
+
+/* ---------------- 2. The seed-comet ---------------- */
+
+/** 2. Out of the dark, GaScu's seed streaks toward the ship like a pink comet, sprouts and all; the little SYRACUSIA flashes red. */
 export function ch1Comet(): string {
-  const id = 'ch1-comet';
-  const streaks = [0, 1, 2, 3, 4, 5]
-    .map((i) => `<path d="M${-100 + i * 260} ${-40 + (i % 3) * 120}l${360 + (i % 2) * 120} ${210 + (i % 2) * 70}" stroke="#cfe0ff" stroke-width="${2 + (i % 3)}" opacity=".18" stroke-linecap="round"/>`)
+  const pen = gn.Pen.scene('ch1-comet', { key: [-0.75, -0.55], keyColor: '#ffd6f2', rim: [0.8, 0.4], rimColor: '#8fd8ff', shadow: '#2a2060', depth: 0.6 });
+  const deg = 27;
+  const cx = 700;
+  const cy = 380;
+  const sky =
+    gn.sky(pen, [
+      [0, '#160a30'],
+      [0.6, '#0a0c2a'],
+      [1, '#05061a'],
+    ]) +
+    gn.nebula(pen, 260, 120, 560, ['#ff6fcf', '#a03a9a', '#3a1a6a'], 4, 0.55) +
+    gn.nebula(pen, 1400, 820, 500, ['#3f86d6', '#2a2a80'], 6, 0.5) +
+    gn.starfield(pen, 23, 150, -80, -60, 1760, 1020, '#f4f6ff');
+  // Everything rushes past: focus lines on the seed and streaks along its path.
+  const rush =
+    gn.speedLines(cx, cy, 260, 1400, 46, 5, '#ffd6f2', 0.12) +
+    gn.streaks(pen, 1500, 900, 180 + 90 - deg, 900, 9, 1400, '#cfe0ff', 0.25, 4);
+  // The ship, small and far below, its hull lit pink by the coming seed, alarm lights flashing.
+  const shipX = 1300;
+  const shipY = 690;
+  const alarm =
+    pen.glow(shipX, shipY, 200, '#ff3a4c', 0.35) +
+    pen.brushes(
+      [
+        [
+          [
+            [shipX - 30, shipY - 120],
+            [shipX - 36, shipY - 170],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX + 60, shipY - 110],
+            [shipX + 86, shipY - 150],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX - 120, shipY - 90],
+            [shipX - 150, shipY - 126],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX + 150, shipY - 70],
+            [shipX + 190, shipY - 90],
+          ],
+          9,
+        ],
+      ],
+      '#ffffff',
+      [0.2, 0.2],
+      0.9,
+    );
+  const ship = c1.syracusia(pen.relight({ key: [-0.8, -0.5], keyColor: '#ffb0e0' }), shipX, shipY, 0.3, { rot: 4, line: 2 }) + alarm + pen.glow(shipX - 175, shipY - 30, 26, '#ff3a4c', 1) + pen.glow(shipX + 175, shipY + 6, 22, '#ff3a4c', 1);
+  // The seed itself, big in the frame, and a few shards of ice breaking off it.
+  const seed = c1.seedComet(pen, cx, cy, 1.35, deg, 1100);
+  const shards = [
+    [880, 300, 14],
+    [940, 480, 10],
+    [620, 520, 12],
+    [980, 380, 8],
+  ]
+    .map(([x, y, r]) => gn.spark(pen, x, y, r, '#ffe6f8', 0.9))
     .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#1a0f3a'], [0.6, '#0b1030'], [1, '#060818']]) +
-      `<defs>${rad(id + 'r', [[0, C.pink, 0.35], [1, C.pink, 0]])}</defs><circle cx="1000" cy="520" r="700" fill="url(#${id}r)"/>` +
-      stars(23, 90) +
-      streaks +
-      // The ship, small in the corner, with surprise lines popping off it.
-      syracusia(id + 's', 1330, 770, 0.3) +
-      `<g stroke="#fff" stroke-width="6" stroke-linecap="round"><path d="M1330 650l0 -40M1260 664l-24 -30M1400 664l24 -30M1450 700l36 -16"/></g>` +
-      gascuSeed(id + 'g', 960, 500, 1.55, 33, 760) +
-      sparkle(700, 220, 26) +
-      sparkle(1180, 380, 16, C.pinkLight) +
-      sparkle(560, 420, 12) +
-      vignette(id + 'v', 0.5),
-  );
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.4, rush) + gn.layer(0.6, ship) + gn.layer(1, seed + shards) + gn.vignette(pen, 0.55, '#04030e') + gn.grain(pen, 0.08));
 }
 
-/** A sleeping colonist in a soft pink cocoon hanging from a vine. */
-function cocoon(id: string, x: number, y: number, s: number, skin: string, hair: string): string {
-  return at(
-    x,
-    y,
-    s,
-    `<path d="M0 -260V-90" stroke="#3f7a3a" stroke-width="8"/>${glow(id + 'g', 0, 0, 170)}
-    <path d="M0 -100Q80 -80 76 10Q70 110 0 130Q-70 110 -76 10Q-80 -80 0 -100Z" fill="url(#${id}k)" ${ink(6)}/>
-    <ellipse cx="0" cy="-6" rx="44" ry="46" fill="${skin}" ${ink(4)}/><path d="M-44 -6Q-48 -50 0 -52Q48 -50 44 -8Q30 -30 0 -32Q-30 -30 -44 -6Z" fill="${hair}"/>
-    <g transform="translate(0 4) scale(.8)">${face('sleep', 0.9, 0, hair)}</g>
-    <path d="M-70 40Q0 70 70 40M-74 -10Q-30 20 0 6M74 -10Q30 20 0 6" fill="none" stroke="#ff9ae0" stroke-width="6" opacity=".7"/>
-    <path d="M-50 -70Q-30 -90 0 -92" fill="none" stroke="#fff" stroke-width="7" opacity=".55" stroke-linecap="round"/>`,
+
+/* ---------------- 3. GaScu grows over the ship ---------------- */
+
+/** A ship's corridor seen down its length: wall panels and door frames converging on the far end at (vx, vy), ceiling lights, a grated floor. */
+function corridor(pen: gn.Pen, vx: number, vy: number): string {
+  const far = { x0: vx - 170, x1: vx + 170, y0: vy - 120, y1: vy + 110 };
+  let out = gn.sky(pen, [
+    [0, '#120a26'],
+    [0.5, '#24123e'],
+    [1, '#0e0820'],
+  ]);
+  // The far end: a closed bulkhead door glowing faintly pink through its seams.
+  out += pen.form(`M${far.x0} ${far.y0}H${far.x1}V${far.y1}H${far.x0}Z`, '#3a2a5a', { line: 2, inner: `<path d="M${vx} ${far.y0}V${far.y1}" stroke="#ff6fcf" stroke-width="5"/>` + pen.glow(vx, vy, 160, '#ff6fcf', 0.6) });
+  // Walls, ceiling and floor as four big planes.
+  const wall = (pts: gn.P[], c: string, sh = 0) => pen.form(gn.dPoly(pts), c, { line: 3, sh, hatch: 1 });
+  out += wall(
+    [
+      [-80, -60],
+      [far.x0, far.y0],
+      [far.x0, far.y1],
+      [-80, 960],
+    ],
+    '#2a1e48',
   );
+  out += wall(
+    [
+      [1680, -60],
+      [far.x1, far.y0],
+      [far.x1, far.y1],
+      [1680, 960],
+    ],
+    '#241a40',
+  );
+  out += wall(
+    [
+      [-80, -60],
+      [1680, -60],
+      [far.x1, far.y0],
+      [far.x0, far.y0],
+    ],
+    '#1a1232',
+  );
+  out += wall(
+    [
+      [-80, 960],
+      [far.x0, far.y1],
+      [far.x1, far.y1],
+      [1680, 960],
+    ],
+    '#1e1636',
+  );
+  // Door frames and wall ribs receding, lit ceiling panels (one flickering out).
+  const lerpP = (a: gn.P, b: gn.P, t: number) => gn.lerp(a, b, t);
+  let ribs = '';
+  let lamps = '';
+  for (const t of [0.12, 0.3, 0.5, 0.68, 0.82]) {
+    const tl = lerpP([-80, -60], [far.x0, far.y0], t);
+    const bl = lerpP([-80, 960], [far.x0, far.y1], t);
+    const tr = lerpP([1680, -60], [far.x1, far.y0], t);
+    const br = lerpP([1680, 960], [far.x1, far.y1], t);
+    ribs += `M${gn.r1(bl[0])} ${gn.r1(bl[1])}L${gn.r1(tl[0])} ${gn.r1(tl[1])}L${gn.r1(tr[0])} ${gn.r1(tr[1])}L${gn.r1(br[0])} ${gn.r1(br[1])}`;
+    const lx = lerpP(tl, tr, 0.38);
+    const rx = lerpP(tl, tr, 0.62);
+    const w = (1 - t) * 30 + 6;
+    lamps += t === 0.3 ? '' : pen.brush([lx, rx], w, '#cfe8ff', [0.05, 0.05], 0.75) + pen.glow((lx[0] + rx[0]) / 2, lx[1] + w, (rx[0] - lx[0]) * 0.6, '#cfe8ff', 0.3, w * 2);
+  }
+  out += `<path d="${ribs}" fill="none" stroke="${gn.INK}" stroke-width="18"/><path d="${ribs}" fill="none" stroke="#3a2c60" stroke-width="10"/>` + lamps;
+  // Floor grating lines running toward the end.
+  let grate = '';
+  for (let i = -8; i <= 8; i++) grate += `M${vx + i * 20} ${far.y1}L${vx + i * 200} 960`;
+  out += `<path d="${grate}" stroke="${gn.INK}" stroke-width="2.4" opacity=".45"/>`;
+  return out;
 }
 
-/** 3. Pink glowing vines over the deck walls, colonists asleep in cocoons hanging like lanterns. */
+/** One of the ship's little maintenance robots gone haywire: a boxy body on treads, a domed head with a spinning red eye, arms flailing, sparks flying. Base at (x, y). */
+function haywireBot(pen: gn.Pen, x: number, y: number, s: number): string {
+  const body =
+    pen.form('M-90 -30H90L80 0H-80Z', '#3a3448', { sh: 8, line: 3, inner: `<path d="M-70 -15H70" stroke="${gn.INK}" stroke-width="10" stroke-dasharray="12 8" opacity=".6"/>` }) +
+    // Flailing arms (one bent back over its head, one out with a clamp).
+    pen.brush(
+      [
+        [-60, -150],
+        [-130, -210],
+        [-110, -290],
+      ],
+      26,
+      gn.INK,
+      [0.05, 0.05],
+    ) +
+    pen.brush(
+      [
+        [-60, -150],
+        [-130, -210],
+        [-110, -290],
+      ],
+      15,
+      '#c9d1dc',
+      [0.05, 0.05],
+    ) +
+    pen.form('M-130 -296L-96 -318L-84 -300L-106 -280Z', '#ffb020', { sh: 6, line: 2.6 }) +
+    pen.brush(
+      [
+        [60, -140],
+        [150, -150],
+        [210, -110],
+      ],
+      26,
+      gn.INK,
+      [0.05, 0.05],
+    ) +
+    pen.brush(
+      [
+        [60, -140],
+        [150, -150],
+        [210, -110],
+      ],
+      15,
+      '#c9d1dc',
+      [0.05, 0.05],
+    ) +
+    pen.form('M206 -130L250 -132L246 -116L226 -112L248 -100L244 -86L204 -96Z', '#ffb020', { sh: 6, line: 2.6 }) +
+    pen.form('M-80 -30L-70 -190H70L80 -30Z', '#ffb020', {
+      sh: 50,
+      hatch: 2,
+      line: 3.2,
+      rim: 2.4,
+      inner: `<path d="M-60 -60H60M-62 -150H62" stroke="${gn.INK}" stroke-width="10" stroke-dasharray="18 14" opacity=".75"/><path d="M-36 -130H36V-80H-36Z" fill="#1b2330"/><path d="M-26 -104l10 -12l8 20l10 -26l8 18l10 -6" fill="none" stroke="#ff4a3a" stroke-width="4"/>`,
+    }) +
+    pen.form('M-60 -186Q-60 -280 0 -282Q60 -280 60 -186Z', '#c9d1dc', { sh: 30, hatch: 1, line: 3, rim: 2 }) +
+    // The eye, spinning red.
+    pen.glow(10, -232, 70, '#ff3a4c', 0.8) +
+    pen.form(c1.circleD(10, -232, 24), '#1a1418', { line: 2.6 }) +
+    `<circle cx="10" cy="-232" r="15" fill="#ff3a4c"/><path d="M10 -232m-9 0a9 9 0 1 1 9 9a5 5 0 1 1 -4 -5" fill="none" stroke="#ffe0d0" stroke-width="3"/>` +
+    // A GaScu tendril wound round its neck.
+    c1.vine(
+      pen,
+      [
+        [-90, -170],
+        [-30, -196],
+        [40, -170],
+        [80, -196],
+        [140, -260],
+      ],
+      9,
+      { leaves: 2, buds: 0, curls: 0, seed: 12 },
+    ) +
+    gn.spark(pen, -40, -290, 26, '#fff6b0') +
+    gn.spark(pen, 70, -300, 18, '#7fe6ff') +
+    gn.spark(pen, 120, -230, 14, '#fff6b0') +
+    pen.brushes(
+      [
+        [
+          [
+            [-30, -310],
+            [-40, -350],
+          ],
+          6,
+        ],
+        [
+          [
+            [40, -320],
+            [56, -356],
+          ],
+          6,
+        ],
+        [
+          [
+            [-90, -260],
+            [-128, -282],
+          ],
+          6,
+        ],
+      ],
+      '#ffffff',
+      [0.2, 0.2],
+      0.9,
+    );
+  return gn.at(x, y, s, body);
+}
+
+/** 3. GaScu's vines have grown all down a ship's corridor, glowing pink; the crew sleep in cocoons hanging like lanterns, and a robot goes haywire. */
 export function ch1Grow(): string {
-  const id = 'ch1-grow';
-  const panels = [0, 1, 2, 3, 4, 5, 6]
-    .map((i) => `<rect x="${i * 240 - 20}" y="80" width="220" height="520" rx="16" fill="#241f52" opacity=".9"/><path d="M${i * 240 + 10} 140H${i * 240 + 170}" stroke="#5a5aa0" stroke-width="6" opacity=".5"/>`)
-    .join('');
-  const pink = '#c2389a';
-  const pollen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => sparkle(120 + i * 150, 200 + ((i * 137) % 420), 6 + (i % 3) * 4, i % 2 ? C.pinkLight : '#fff', 0.8)).join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#160f38'], [0.7, '#2a1650'], [1, '#3a1a50']]) +
-      `<defs>${glowDef(id + 'g', C.pink, 0.55)}${rad(id + 'k', [[0, '#fff0fa'], [0.5, '#ffb0e6'], [1, C.pink]], 0.4, 0.35, 0.7)}</defs>` +
-      panels +
-      `<path d="M0 600H1600V900H0Z" fill="#1a1440"/><path d="M0 600H1600" stroke="#5a5aa0" stroke-width="6"/>
-      <path d="M200 900L520 600M1400 900L1080 600M800 900V600" stroke="#2c2560" stroke-width="5"/>` +
-      glow(id + "g", 800, 330, 760, 0.7, 380) + glow(id + "g", 800, 760, 760, 0.85, 160) +
-      vine([[-20, 120], [200, 60], [420, 140], [640, 70], [880, 130], [1100, 60], [1330, 140], [1620, 80]], 26, true, pink, C.pink) +
-      vine([[-20, 520], [120, 400], [90, 240], [200, 140]], 20, true, pink, C.pink) +
-      vine([[1620, 560], [1480, 420], [1520, 260], [1400, 140]], 20, true, pink, C.pink) +
-      vine([[300, 900], [420, 760], [360, 640], [460, 600]], 18, true, pink, C.pink) +
-      vine([[1300, 900], [1180, 760], [1240, 640], [1150, 600]], 18, true, pink, C.pink) +
-      cocoon(id, 360, 380, 0.95, '#e8bf9a', '#5a3a22') +
-      cocoon(id, 800, 420, 1.15, '#8a5a3c', '#1a1210') +
-      cocoon(id, 1230, 370, 0.95, '#f0cfb0', '#c96a2a') +
-      cocoon(id, 580, 250, 0.6, '#c8906c', '#2a1a12') +
-      cocoon(id, 1030, 240, 0.6, '#e0b48e', '#e2c060') +
-      pollen + flower(250, 92, 22, C.pink) + flower(760, 92, 18, '#ffb0e6') + flower(1210, 96, 22, C.pink) + flower(420, 640, 18, '#ffb0e6') + flower(1190, 650, 18, C.pink) +
-      [[560, 720, 1], [700, 800, 0.8], [960, 760, 1.1], [1080, 690, 0.7], [180, 780, 0.9], [1460, 760, 0.9]]
-        .map(([x, y, s]) => glow(id + 'g', x, y, 60 * s) + `<path d="M${x} ${y + 30 * s}V${y}" stroke="#3f7a3a" stroke-width="6"/><circle cx="${x}" cy="${y}" r="${14 * s}" fill="${C.pink}" ${ink(4)}/>`)
-        .join('') +
-      vignette(id + 'v', 0.42),
-  );
+  const pen = gn.Pen.scene('ch1-grow', { key: [0.3, -0.9], keyColor: '#ffd0f0', rim: [-0.9, -0.3], rimColor: '#7fe6ff', shadow: '#3a1a5a', depth: 0.6 });
+  const vx = 820;
+  const vy = 380;
+  const back = corridor(pen, vx, vy);
+  // Vines pouring out of the far end and along the walls and ceiling, glowing.
+  const vines =
+    c1.vine(
+      pen,
+      [
+        [vx - 80, vy - 100],
+        [560, 200],
+        [300, 90],
+        [60, -20],
+      ],
+      26,
+      { leaves: 3, buds: 4, seed: 1 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [vx + 80, vy - 100],
+        [1060, 210],
+        [1300, 110],
+        [1640, 20],
+      ],
+      26,
+      { leaves: 3, buds: 4, seed: 2 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [vx - 120, vy + 80],
+        [560, 560],
+        [360, 640],
+        [100, 860],
+      ],
+      24,
+      { leaves: 3, buds: 5, seed: 3 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [vx + 130, vy + 60],
+        [1040, 520],
+        [1260, 560],
+        [1660, 760],
+      ],
+      24,
+      { leaves: 3, buds: 5, seed: 4 },
+    ) +
+    gn.haze(pen, 260, 520, '#ff6fcf', 0.18);
+  // The cocoons, hanging from the vines like lanterns: small and far, then big and near.
+  const stalk = (x: number, y0: number, y1: number, w: number) =>
+    pen.brush(
+      [
+        [x, y0],
+        [x - 6, (y0 + y1) / 2],
+        [x, y1],
+      ],
+      w + 6,
+      gn.INK,
+      [0.05, 0.05],
+    ) +
+    pen.brush(
+      [
+        [x, y0],
+        [x - 6, (y0 + y1) / 2],
+        [x, y1],
+      ],
+      w,
+      c1.GASCU.stem,
+      [0.05, 0.05],
+    );
+  const far =
+    stalk(690, 150, 262, 6) +
+    stalk(960, 140, 252, 6) +
+    stalk(820, 200, 190, 5) +
+    c1.cocoon(pen, 690, 250, 0.42, c1.COLONISTS[4]) +
+    c1.cocoon(pen, 960, 240, 0.46, c1.COLONISTS[2]) +
+    c1.cocoon(pen, 820, 186, 0.32, c1.COLONISTS[3]);
+  const near = c1.cocoon(pen, 340, 70, 0.95, c1.COLONISTS[1]) + c1.cocoon(pen, 1250, 60, 1.05, c1.COLONISTS[0], { tilt: -8 });
+  const bot = gn.castShadow(pen, 1110, 770, 170, 18, 0.55) + haywireBot(pen.relight({ key: [-0.6, -0.7] }), 1100, 770, 0.8);
+  // Pollen drifting everywhere.
+  const rand = gn.rng(8);
+  let pollen = '';
+  for (let i = 0; i < 18; i++) pollen += gn.spark(pen, 120 + rand() * 1360, 120 + rand() * 600, 4 + rand() * 8, i % 3 ? '#ffd6f2' : '#ffffff', 0.85);
+  const fore =
+    c1.vine(
+      pen,
+      [
+        [-80, 560],
+        [40, 700],
+        [20, 860],
+        [120, 980],
+      ],
+      40,
+      { leaves: 2, buds: 2, seed: 7 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [1700, 400],
+        [1560, 560],
+        [1600, 760],
+        [1500, 980],
+      ],
+      44,
+      { leaves: 2, buds: 2, seed: 8 },
+    );
+  return pen.svg(gn.layer(0.2, back) + gn.layer(0.45, vines + far) + gn.layer(0.8, bot) + gn.layer(1, near + pollen) + gn.layer(1.3, fore) + gn.vignette(pen, 0.55, '#0a0414') + gn.grain(pen, 0.08));
 }
+

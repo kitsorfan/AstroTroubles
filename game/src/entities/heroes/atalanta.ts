@@ -8,6 +8,10 @@
  *   off the same wall, so it's a zig-zag between two walls, not a ladder).
  * - WALL-RUN on marked walls (`wallrun` cells): run at a stripe while in the air and she runs along it
  *   for a moment; jump to kick off.
+ * - CLIMB marked cliffs (`climb` cells, with handholds): push into one, on the ground or in the air, and
+ *   she grabs on. Keep pushing to climb up (pull back to climb down, sideways to shimmy); her grip lasts
+ *   a few seconds and comes back on the ground. At the top she pulls herself onto the ledge; jump to kick
+ *   off the wall instead.
  * - SLIDE (the DASH button): low and fast, under low gaps, tripping enemies. Jump out of it for a long jump.
  * - BOW (the BLAST button): tap for quick arrows, hold for a power arrow (pierces, sets off targets).
  * - KICK (the SPIN button): a spinning kick from the shared spin charges, on the ground or in the air.
@@ -34,6 +38,9 @@ interface WallFace {
   key: string;
 }
 
+/** A cliff face she climbs: the face, the cell it belongs to, and the height of its top. */
+type Climb = WallFace & { cx: number; cz: number; top: number };
+
 const SIDES = [
   [1, 0],
   [-1, 0],
@@ -58,6 +65,13 @@ export class AtalantaMoves {
   private slideCd = 0;
   private slideBuf = 0;
   private slideHit = new Set<unknown>();
+  /** The cliff she is climbing (with the cell it belongs to and its top), and how much grip she has left. */
+  private climb: Climb | null = null;
+  private grip: number = ATALANTA.climbGrip;
+  /** How far her hands have moved on the cliff (the climbing animation follows it). */
+  private climbPhase = 0;
+  /** Pulling herself over the lip: from where to where, and how far along (0..1). */
+  private mantle: { from: THREE.Vector3; to: THREE.Vector3; k: number } | null = null;
   /** Kept low by a ceiling after a slide: she crawls until there is room to stand. */
   private crouched = false;
   private airKicked = false;
@@ -90,9 +104,19 @@ export class AtalantaMoves {
     return this.run !== null;
   }
 
-  /** In the middle of a slide or wall-run (no hero switching then). */
+  /** On a cliff, or pulling herself over its top. */
+  get climbing() {
+    return this.climb !== null || this.mantle !== null;
+  }
+
+  /** True while she crawls under a low ceiling (a follower only copies that if it is Atalanta too). */
+  get crawling() {
+    return this.crouched;
+  }
+
+  /** In the middle of a slide, wall-run or climb (no hero switching then). */
   get busy() {
-    return this.slideT > 0 || this.run !== null;
+    return this.slideT > 0 || this.run !== null || this.climbing;
   }
 
   /** True when a low ceiling (a low gap) is right above her: nobody could stand up here. */
@@ -104,6 +128,8 @@ export class AtalantaMoves {
   reset() {
     this.slideT = 0;
     this.run = null;
+    this.climb = null;
+    this.mantle = null;
     this.sprinting = false;
     this.sprintT = 0;
     this.holdT = 0;
@@ -121,6 +147,7 @@ export class AtalantaMoves {
     this.lastWall = null;
     this.ranOn = null;
     this.run = null;
+    this.climb = null;
     this.cut = true;
   }
 
@@ -154,11 +181,167 @@ export class AtalantaMoves {
     return null;
   }
 
+  /** A climbable cliff face right in front of her (she must be below its top), or null. */
+  private climbFace(): Climb | null {
+    const b = this.p.body;
+    const g = this.world.grid;
+    const climbs = heroWorld(this.world).climbs;
+    if (!climbs.size) return null;
+    const own = Grid.toCell(b.x) + Grid.toCell(b.z) * g.width;
+    for (const [nx, nz] of SIDES) {
+      const cx = Grid.toCell(b.x - nx * (b.r + 0.3));
+      const cz = Grid.toCell(b.z - nz * (b.r + 0.3));
+      const idx = cz * g.width + cx;
+      if (idx === own || !g.inside(cx, cz) || !climbs.has(idx)) continue;
+      const top = g.cell(cx, cz).h;
+      if (top < b.y + 0.4) continue;
+      const plane = nx > 0 ? (cx + 1) * CELL : nx < 0 ? cx * CELL : nz > 0 ? (cz + 1) * CELL : cz * CELL;
+      return { nx, nz, key: `${nx},${nz},${plane}`, cx, cz, top };
+    }
+    return null;
+  }
+
+  /** Grabs a cliff when she pushes into one (from the ground, or in the air if she isn't flying up fast). */
+  private tryClimb(wx: number, wz: number, mag: number) {
+    const b = this.p.body;
+    if (this.grip < 0.4 || mag < 0.3 || b.vy > 7) return;
+    const face = this.climbFace();
+    if (!face) return;
+    if (wx * -face.nx + wz * -face.nz < 0.55) return;
+    // On the ground, a ledge she could simply step or hop up isn't worth climbing.
+    if (b.grounded && face.top - b.y < 1.2) return;
+    this.climb = face;
+    this.run = null;
+    this.sprinting = false;
+    this.p.facing = Math.atan2(-face.nx, -face.nz);
+    this.p.noteMove('climb');
+    b.vy = 0;
+    audio.play('land', 1.4, 0.5);
+    haptic('light');
+    this.world.particles.emit(b.x - face.nx * 0.4, b.y + 1.2, b.z - face.nz * 0.4, { count: 8, color: '#d8d0c0', speed: 1.5, life: 0.35, size: 0.35, gravity: 3 });
+    const hw = heroWorld(this.world);
+    if (!hw.climbHinted) {
+      hw.climbHinted = true;
+      this.world.hooks.toast('Keep pushing at the cliff to CLIMB, sideways to shimmy, JUMP to kick off. Once I’m up, I’ll help the others up!', 'atalanta');
+    }
+  }
+
+  /**
+   * Climbing: pushing into the cliff climbs up, pulling away climbs down, sideways shimmies along it
+   * (only as far as the handholds go). Jump kicks off; at the top she pulls herself over.
+   */
+  private updateClimb(dt: number, input: Input, wx: number, wz: number, mag: number) {
+    const p = this.p;
+    const b = p.body;
+    const c = this.climb;
+    if (!c) return;
+    const g = this.world.grid;
+    if (input.take('jump')) {
+      this.climb = null;
+      this.kickOff(c, false);
+      return;
+    }
+    const tx = -c.nz;
+    const tz = c.nx;
+    const into = mag > 0.2 ? wx * -c.nx + wz * -c.nz : 0;
+    const side = mag > 0.2 ? wx * tx + wz * tz : 0;
+    const up = clamp(into * 1.4, -1, 1);
+    // Only shimmy while there are handholds further along.
+    let along = side * ATALANTA.climbSide;
+    if (Math.abs(along) > 0.01) {
+      const off = Math.sign(along) * (b.r + 0.15);
+      const nx = Grid.toCell(b.x + tx * off - c.nx * (b.r + 0.3));
+      const nz = Grid.toCell(b.z + tz * off - c.nz * (b.r + 0.3));
+      if (!heroWorld(this.world).climbs.has(nz * g.width + nx)) along = 0;
+    }
+    b.vy = up * ATALANTA.climbSpeed;
+    // Pressed lightly against the face so she keeps touching it.
+    p.vx = tx * along - c.nx * 1.2;
+    p.vz = tz * along - c.nz * 1.2;
+    p.facing = dampAngle(p.facing, Math.atan2(-c.nx, -c.nz), 20, dt);
+    this.climbPhase += (Math.abs(b.vy) + Math.abs(along)) * dt;
+    // Her arms tire: faster while climbing, slowly while she just hangs on.
+    this.grip -= dt * (Math.abs(up) > 0.1 || along !== 0 ? 1 : 0.4);
+    if (this.grip <= 0) {
+      // Out of grip: she slips off, and catches her breath on the ground.
+      this.climb = null;
+      b.vy = -1;
+      p.vx = c.nx * 2;
+      p.vz = c.nz * 2;
+      audio.play('hurt', 1.5, 0.35);
+      return;
+    }
+    // Climbed down to the bottom, or off the side of the handholds: let go.
+    const face = this.climbFace();
+    if ((b.grounded && up < -0.1) || !face || face.nx !== c.nx || face.nz !== c.nz) {
+      this.climb = null;
+      return;
+    }
+    this.climb = face;
+    // Chest over the lip and still climbing: pull up onto the top.
+    if (b.y + 1.05 >= face.top && up > 0.2) this.startMantle(face);
+  }
+
+  /** Over the top: an arc from the lip to a step in from the edge, where she stands up. */
+  private startMantle(c: Climb) {
+    const b = this.p.body;
+    const from = new THREE.Vector3(b.x, b.y, b.z);
+    const to = new THREE.Vector3(b.x - c.nx * (b.r + 0.75), c.top + 0.02, b.z - c.nz * (b.r + 0.75));
+    this.mantle = { from, to, k: 0 };
+    this.climb = null;
+    this.p.vx = 0;
+    this.p.vz = 0;
+    audio.play('jump', 0.9, 0.6);
+    haptic('light');
+  }
+
+  private updateMantle(dt: number) {
+    const p = this.p;
+    const b = p.body;
+    const m = this.mantle;
+    if (!m) return;
+    m.k = Math.min(1, m.k + dt / ATALANTA.climbMantle);
+    // Up first (a knee on the lip), then forward onto the top.
+    const up = Math.min(1, m.k * 1.7);
+    const fwd = Math.max(0, (m.k - 0.35) / 0.65);
+    b.x = m.from.x + (m.to.x - m.from.x) * fwd;
+    b.z = m.from.z + (m.to.z - m.from.z) * fwd;
+    b.y = m.from.y + (m.to.y - m.from.y) * up;
+    b.vy = 0;
+    p.vx = 0;
+    p.vz = 0;
+    if (m.k >= 1) {
+      this.mantle = null;
+      this.lastWall = null;
+      this.world.particles.emit(b.x, b.y + 0.1, b.z, { count: 8, color: '#ffffff', speed: 2, life: 0.3, size: 0.35, gravity: 1 });
+    }
+  }
+
   update(dt: number, input: Input) {
     const p = this.p;
     const w = this.world;
     const b = p.body;
     const { wx, wz, mag } = p.moveInput(input);
+    if (b.grounded && !this.climb) this.grip = ATALANTA.climbGrip;
+    if (this.mantle) {
+      this.updateMantle(dt);
+      // The body was placed by hand: only a gentle settle onto the top (no gravity while pulling up).
+      p.stepBody(dt, () => {}, { noGravity: true });
+      this.animate(dt, 0);
+      return;
+    }
+    if (this.climb) {
+      this.updateClimb(dt, input, wx, wz, mag);
+      p.tickSpins(dt);
+      if (this.climb || this.mantle) {
+        if (!p.stepBody(dt, () => {}, { noGravity: true })) {
+          this.reset();
+          return;
+        }
+        this.animate(dt, 0);
+        return;
+      }
+    }
 
     this.coyote = b.grounded ? PLAYER.coyote : this.coyote - dt;
     this.jumpBuf -= dt;
@@ -214,6 +397,7 @@ export class AtalantaMoves {
 
     this.updateJump(input);
     if (!b.grounded && !this.run && this.slideT <= 0) this.tryWallRun(wx, wz, mag);
+    if (!this.run && this.slideT <= 0 && !this.crouched) this.tryClimb(wx, wz, mag);
 
     // Slide (the DASH button), buffered a moment so a press just before landing still counts.
     if (input.take('dash')) this.slideBuf = 0.15;
@@ -286,6 +470,7 @@ export class AtalantaMoves {
     p.facing = Math.atan2(p.vx, p.vz);
     this.lastWall = face.key;
     if (fromRun) this.ranOn = face.key;
+    p.noteMove(fromRun ? 'wallrun' : 'walljump');
     this.run = null;
     this.jumpBuf = 0;
     this.cut = true;
@@ -308,6 +493,7 @@ export class AtalantaMoves {
     const s = Math.sign(along);
     this.run = { ...face, tx: -face.nz * s, tz: face.nx * s, t: ATALANTA.wallRunTime };
     this.ranOn = face.key;
+    p.noteMove('wallrun');
     b.vy = Math.max(b.vy, ATALANTA.wallRunLift);
     this.sprinting = true;
     audio.play('dash', 1.7, 0.6);
@@ -513,6 +699,26 @@ export class AtalantaMoves {
       const side = Math.sign(this.run.tx * this.run.nz - this.run.tz * this.run.nx) || 1;
       m.body.rotation.z = side * 0.35;
       p.phase += dt * 6;
+    }
+    if (this.climb) {
+      // Facing the cliff: hands reaching up in turn, knees stepping up the holds.
+      const c = Math.sin(this.climbPhase * 2.6);
+      m.body.position.y = 0;
+      m.body.rotation.set(-0.12, 0, c * 0.06);
+      m.armL.rotation.set(-2.55 + c * 0.55, 0, -0.3);
+      m.armR.rotation.set(-2.55 - c * 0.55, 0, 0.3);
+      m.legL.rotation.set(-0.85 - c * 0.55, 0, -0.1);
+      m.legR.rotation.set(-0.85 + c * 0.55, 0, 0.1);
+    } else if (this.mantle) {
+      // Pulling over the lip: arms push down, one knee comes up onto the top.
+      const k = this.mantle.k;
+      const arc = Math.sin(k * Math.PI);
+      m.body.position.y = 0;
+      m.body.rotation.set(0.55 * arc, 0, 0);
+      m.armL.rotation.set(-1.9 + k * 1.6, 0, -0.35);
+      m.armR.rotation.set(-1.9 + k * 1.6, 0, 0.35);
+      m.legL.rotation.set(-1.5 * arc, 0, 0);
+      m.legR.rotation.set(-0.3 * arc, 0, 0);
     }
     // The spinning kick: a whirl with one leg out.
     if (p.spinLeft > 0) {

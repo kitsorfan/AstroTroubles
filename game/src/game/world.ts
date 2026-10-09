@@ -27,7 +27,7 @@ import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
 import { Raft, Tide } from '../entities/reef/tide';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
-import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
+import { ArrowTarget, ClimbWall, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
 import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
@@ -505,6 +505,9 @@ export class World {
         break;
       case 'wallrun':
         this.addEntity(new WallRun(this, id, cx, cz, h));
+        break;
+      case 'climb':
+        this.addEntity(new ClimbWall(this, id, cx, cz, h));
         break;
       case 'lowgap':
         this.addEntity(new LowGap(this, id, cx, cz, h, spec.axis));

@@ -145,14 +145,18 @@ export async function holoLog(d: Director, w: World, holo: Holo) {
     await d.cam(mid.clone().addScaledVector(side, 4.5).addScaledVector(dir, -1.5).add(V(0, 2.4, 0)), mid.clone().add(V(0, 1.4, 0)), 1.1, ease.inOut, 44);
     audio.play('zap', 0.6);
     audio.play('blip', 0.5);
-    await d.tween(1, (x) => holo.show(x < 0.6 ? (Math.random() < 0.5 ? x : 0.1) : x), ease.linear);
-    const headY = s.y + 1.9;
-    const close = s.clone().addScaledVector(dir, -2.6).addScaledVector(side, 0.9);
-    close.y = headY + 0.15;
-    void d.cam(close, V(s.x, headY - 0.05, s.z), 1.6, ease.inOut, 34);
-    await d.say(w.dialogue(holo.log));
-    await d.tween(0.7, (x) => holo.show(1 - x), ease.in);
+    // The beam comes on, then the figure is built up from its feet.
+    await d.tween(1.9, (x) => holo.show(x), ease.linear);
+    const headY = s.y + holo.headHeight;
+    const close = s.clone().addScaledVector(dir, -1.35).addScaledVector(side, 0.4);
+    close.y = headY + 0.05;
+    void d.cam(close, V(s.x, headY - 0.07, s.z), 1.6, ease.inOut, 32);
+    // The figure talks with its hands while it has the line, and listens while anyone else talks.
+    await d.say(w.dialogue(holo.log), (line) => (holo.talking = line.who === holo.who));
+    holo.talking = false;
+    await d.tween(1.2, (x) => holo.show(1 - x), ease.inOut);
   } finally {
+    holo.talking = false;
     holo.show(0);
   }
 }

@@ -8,19 +8,29 @@ import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { Grid } from '../world/grid';
 import type { Ability, HeroId } from '../world/levelTypes';
-import { makeBody, moveBody, type Body } from '../world/physics';
+import { makeBody, moveBody, type Body, type MoveOpts } from '../world/physics';
 import { dressJason, makeJason, type HeroModel, type JasonModel } from './models';
 import type { Target } from './entity';
 import { Arrows } from './heroes/arrows';
 import { AtalantaMoves } from './heroes/atalanta';
 import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
-import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, switchBlock, type SwitchBlock, type TrailMove } from './heroes/heroes';
 import { MechMoves } from './heroes/mech';
 import { makeMirrorShield, stoneSkin, type MirrorShieldModel } from './labyrinth/stone';
 import { JasonFx } from './moveFx';
 import { FlameJet, burnCone } from './flame';
 import { SPREAD, WEAPONS, WEAPON_ORDER, FLAME, chargedDamageOf, clipOf, cooldownOf, damageOf, equippedWeapon, nextWeapon, ownedWeapons, reloadOf, stepTank, type Tank, type WeaponId } from './weapons';
+
+/** Kneeling at the lip, one hand reaching down: the pose while helping someone up a ledge. */
+const HAND_POSE = (m: HeroModel) => {
+  m.body.position.y = -0.4;
+  m.body.rotation.x = 0.7;
+  m.legL.rotation.x = -1.4;
+  m.legR.rotation.x = 0.3;
+  m.armR.rotation.set(-0.6, 0, -0.2);
+  m.armL.rotation.set(-0.9, 0, 0.2);
+};
 
 /** How long Jason hangs in the air (and flips) before a ground pound slams down. */
 const POUND_HANG = 0.18;
@@ -119,6 +129,11 @@ export class Player {
   private safeT = 0;
   private wasGrounded = true;
   airTime = 0;
+  /** Special moves used since the hero last stood on the ground (a follower only copies the ones its hero can do). */
+  private airMoves = new Set<TrailMove>();
+  /** The moves that got the hero to where they last landed, and a count of landings (so a follower notices a new one). */
+  landMoves: ReadonlySet<TrailMove> = new Set();
+  landSeq = 0;
   /** Horizontal velocity the hero is steering (the body's own is reset by collisions). */
   vx = 0;
   vz = 0;
@@ -129,6 +144,11 @@ export class Player {
   sinceHurt = 99;
   /** Lets a cutscene pose the playing hero's model (called after the normal animation each frame). */
   pose: ((m: HeroModel, dt: number) => void) | null = null;
+  /** The follower being helped up a ledge right now: the playing hero holds still, reaching down. */
+  private helping: Follower | null = null;
+  private helpPosed = false;
+  /** Followers whose "I can't get past here" line was already said, while they wait. */
+  private warned = new Set<HeroId>();
   /** Jason's Mirror Shield (from Medusa's Labyrinth on): raised while SPIN is held on the ground. */
   mirrorUp = false;
   /** Seconds SPIN has been held on the ground so far (a tap spins, a hold raises the shield), or -1. */
@@ -319,16 +339,78 @@ export class Player {
     return this.followers.find((f) => f.hero === hero);
   }
 
+  /** True while the playing hero is helping someone up a ledge. */
+  get busyHelping() {
+    return this.helping !== null;
+  }
+
+  /**
+   * Starts (or, with null, ends) a hand-up: the playing hero holds still facing the follower at `at`,
+   * kneeling at the lip with a hand (or a rope) reaching down.
+   */
+  lendHand(f: Follower | null, at?: THREE.Vector3) {
+    this.helping = f;
+    if (f && at) {
+      this.facing = Math.atan2(at.x - this.body.x, at.z - this.body.z);
+      this.vx = 0;
+      this.vz = 0;
+      if (!this.pose) {
+        this.pose = HAND_POSE;
+        this.helpPosed = true;
+      }
+    } else if (this.helpPosed) {
+      this.pose = null;
+      this.helpPosed = false;
+    }
+  }
+
+  /**
+   * While a follower waits behind something it can't get past, the playing hero may only scout a short
+   * way ahead of it (to reach a switch or open a door for it): walking further out is held back, and the
+   * waiting hero calls out once.
+   */
+  private tether(px: number, pz: number) {
+    // A grapple zip always finishes (it can land past the tether; from there the way is only back).
+    if (this.down || this.world.cutscene || this.zip) return;
+    const b = this.body;
+    let anyWaiting = false;
+    for (const f of this.followers) {
+      if (!f.waiting) continue;
+      anyWaiting = true;
+      const s = f.spot;
+      const d = Math.hypot(b.x - s.x, b.z - s.z);
+      if (d <= HERO_SWITCH.tether || d <= Math.hypot(px - s.x, pz - s.z)) continue;
+      b.x = px;
+      b.z = pz;
+      this.vx = 0;
+      this.vz = 0;
+      if (!this.warned.has(f.hero)) {
+        this.warned.add(f.hero);
+        this.world.hooks.toast('I can’t get past here! Find me a way: a switch, a door, a bridge... or help me up from above!', HEROES[f.hero].speaker);
+      }
+    }
+    if (!anyWaiting) this.warned.clear();
+  }
+
   /** Why switching heroes isn't possible right now (null: it is). */
   switchBlocked(): SwitchBlock | null {
     const b = this.body;
+    const next = this.nextHero;
     return switchBlock({
       roster: this.roster,
       current: this.hero,
       cooldown: this.swapCd,
       grounded: b.grounded || this.coyote > 0,
       locked: this.down || this.world.cutscene,
-      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false) || (this.mech?.busy ?? false),
+      busy:
+        this.zip !== null ||
+        this.dashT > 0 ||
+        this.pounding ||
+        this.helping !== null ||
+        (this.ata?.busy ?? false) ||
+        (this.bren?.busy ?? false) ||
+        (this.mech?.busy ?? false) ||
+        (next ? (this.followerOf(next)?.busy ?? false) : false),
       cramped: this.ata?.cramped ?? false,
     });
   }
@@ -344,8 +426,9 @@ export class Player {
   }
 
   /**
-   * Switches to the next hero, right where the current one stands, in a flash of light. The hero who
-   * was playing steps aside and follows along. Hearts, bolts, armor and spins are shared.
+   * Switches to the next hero, wherever that hero is standing (the camera swings over), in a flash of
+   * light. The hero who was playing stays put and follows from there. Hearts, bolts, armor and spins
+   * are shared.
    */
   switchHero(): boolean {
     const next = this.nextHero;
@@ -356,6 +439,8 @@ export class Player {
     const w = this.world;
     const b = this.body;
     const was = this.hero;
+    const there = this.followerOf(next)?.spot;
+    const here = { x: b.x, y: b.y, z: b.z, facing: this.facing };
     this.cancelCharge();
     this.mirrorUp = false;
     this.spinHold = -1;
@@ -367,8 +452,18 @@ export class Player {
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
     this.showHero();
-    // The hero who was playing steps aside; anyone else following stays where they are.
-    this.followerOf(was)?.placeNear(b.x, b.y, b.z, this.facing);
+    if (there) {
+      // Control goes over to the other hero where they stand; the one who was playing stays right here.
+      b.x = there.x;
+      b.y = there.y + 0.02;
+      b.z = there.z;
+      b.vy = 0;
+      this.vx = 0;
+      this.vz = 0;
+      this.facing = there.facing;
+      this.safe.set(there.x, there.y, there.z);
+      this.followerOf(was)?.place(here.x, here.y, here.z, here.facing);
+    } else this.followerOf(was)?.placeNear(b.x, b.y, b.z, this.facing);
     this.refreshGear();
     const color = HEROES[next].color;
     w.particles.emit(b.x, b.y + 1, b.z, { count: 40, color: '#ffffff', speed: 6, life: 0.55, size: 0.55, up: 1.5 });
@@ -406,7 +501,10 @@ export class Player {
     const b = this.body;
     const from = new THREE.Vector3(b.x, b.y, b.z);
     const to = land.clone().add(new THREE.Vector3(0, 0.05, 0));
+    this.noteMove('grapple');
     this.zip = { from, to, hook: hook.clone(), k: 0, time: (GRAPPLE.time + from.distanceTo(to) * GRAPPLE.timePerUnit) * (this.world.save.upgrades.grapple ? GEAR.grappleZip : 1) };
+    // Anyone following close behind grabs on and zips along too.
+    for (const f of this.followers) f.tandem(to, hook, this.zip.time, this);
     this.facing = Math.atan2(to.x - b.x, to.z - b.z);
     this.pounding = false;
     this.dashT = 0;
@@ -779,6 +877,8 @@ export class Player {
 
   /** The stick turned into a world direction (relative to the camera) and how hard it is pushed. */
   moveInput(input: Input): { wx: number; wz: number; mag: number } {
+    // Holding still while helping someone up a ledge.
+    if (this.helping) return { wx: 0, wz: 0, mag: 0 };
     const yaw = this.world.cameraYaw;
     const mx = input.moveX;
     const mz = input.moveZ;
@@ -897,8 +997,14 @@ export class Player {
     for (const f of this.followers) f.placeNear(x, y, z, this.facing);
   }
 
+  /** Notes a special move on the way to the next landing (see `landMoves`). */
+  noteMove(m: TrailMove) {
+    this.airMoves.add(m);
+  }
+
   /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */
   launch(vy: number) {
+    this.noteMove('launch');
     this.body.vy = vy;
     this.body.grounded = false;
     this.pounding = false;
@@ -942,7 +1048,11 @@ export class Player {
 
   update(dt: number, input: Input) {
     this.flaming = false;
+    const px = this.body.x;
+    const pz = this.body.z;
+    if (this.helping) for (const k of ['jump', 'dash', 'spin', 'swap'] as const) input.take(k);
     this.step(dt, input);
+    this.tether(px, pz);
     this.updateJet(dt);
   }
 
@@ -1057,6 +1167,7 @@ export class Player {
       } else if (!b.grounded && this.jumps < 2 && this.has('doubleJump')) {
         b.vy = PLAYER.doubleJumpV;
         this.jumps = 2;
+        this.noteMove('double');
         this.jumpBuf = 0;
         this.cut = true;
         audio.play('djump');
@@ -1070,6 +1181,7 @@ export class Player {
     }
     this.gliding = !b.grounded && b.vy < 0 && input.isHeld('jump') && this.has('glide') && !this.pounding && this.dashT <= 0;
     if (this.gliding) {
+      this.noteMove('glide');
       b.vy = Math.max(b.vy, -PLAYER.glideFall);
       if (Math.random() < 0.15) audio.play('glide');
     }
@@ -1085,7 +1197,10 @@ export class Player {
         this.dashT = PLAYER.dashTime;
         this.dashCd = PLAYER.dashCooldown;
         this.dashHit.clear();
-        if (!b.grounded) this.airDashed = true;
+        if (!b.grounded) {
+          this.airDashed = true;
+          this.noteMove('dash');
+        }
         if (mag > 0.1) this.facing = Math.atan2(wx, wz);
         audio.play('dash');
         haptic('light');
@@ -1167,7 +1282,7 @@ export class Player {
    * `onLand` with the impact speed), floor effects, hazards, the last safe spot and falling off the
    * world. Returns false if the hero fell or touched a hazard (and was put back).
    */
-  stepBody(dt: number, onLand: (impact: number) => void): boolean {
+  stepBody(dt: number, onLand: (impact: number) => void, opts?: MoveOpts): boolean {
     const w = this.world;
     const b = this.body;
     // Ride moving platforms.
@@ -1180,7 +1295,7 @@ export class Player {
     b.vx = this.vx;
     b.vz = this.vz;
     const vyBefore = b.vy;
-    moveBody(b, dt, w.grid, w.boxes);
+    moveBody(b, dt, w.grid, w.boxes, opts);
     this.vx = b.vx;
     this.vz = b.vz;
 
@@ -1188,6 +1303,9 @@ export class Player {
     if (b.grounded && !this.wasGrounded) {
       onLand(-vyBefore);
       this.airTime = 0;
+      this.landMoves = new Set(this.airMoves);
+      this.airMoves.clear();
+      this.landSeq++;
       const fx = w.floorEffect(b.ground);
       fx?.land?.(this);
     }

@@ -120,6 +120,12 @@ export type Spec = Base &
     | { type: 'target'; flag: string }
     /** A wall cell with a glowing running stripe: Atalanta can wall-run along its faces. The cell is a wall. */
     | { type: 'wallrun' }
+    /**
+     * A cliff face Atalanta can CLIMB: put it on the high cell (with its `h`). Every face that drops to a lower
+     * neighbour gets handholds; she climbs up hand over hand and pulls herself onto the top, then helps the
+     * others up after her.
+     */
+    | { type: 'climb' }
     /** A wall with a low crawl hole: only Atalanta's slide fits under it. `axis` is the way through (guessed from the walls beside it). */
     | { type: 'lowgap'; axis?: 'x' | 'z' }
     /* General Brennus's puzzles (his own levels). */
