@@ -149,14 +149,14 @@ export function ch3Mech(): string {
   const heroes =
     scan +
     gn.castShadow(pen, 310, 884, 150, 16, 0.55) +
-    gn.jason(pen, 310, 888, 1.1, {
+    gn.jason(pen.relight({ key: [0.95, -0.3], keyColor: '#d8fff0', rim: [-0.9, -0.4], rimColor: '#ffa060' }), 310, 888, 1.1, {
       pose: { turn: 0.45, lean: -4, tilt: -12, hipTilt: 5, armN: [-12, 8], armF: [124, 132], legN: { to: [-0.24, 0.94] }, legF: { to: [0.28, 0.93] }, handN: 'fist', handF: 'point' },
       mood: 'grin',
       look: [2.6, -3],
     }) +
     gn.lux(pen, 196, 560, 0.95, 'scared', { look: [8, -4] }) +
     gn.castShadow(pen, 1310, 884, 150, 16, 0.55) +
-    gn.atalanta(pen, 1310, 888, 1.1, {
+    gn.atalanta(pen.relight({ key: [-0.95, -0.3] }), 1310, 888, 1.1, {
       flip: true,
       pose: { turn: 0.38, tilt: -8, hipTilt: 7, armN: [-160, -176], armF: { to: [0.62, 1.4], bend: -1 }, legN: { to: [-0.08, 0.98] }, legF: { to: [0.24, 0.95] }, handN: 'open', handF: 'fist' },
       mood: 'grin',

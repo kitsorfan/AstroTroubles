@@ -61,6 +61,8 @@ export interface DolphinOpts {
   luxEye?: string;
   luxLook?: P;
   luxAt?: P;
+  /** Where the light on Jason's face comes from, if not the panel's key (a side light keeps his face clear). */
+  crewKey?: P;
   /** The canopy is swung open and Jason stands up out of the cockpit. */
   open?: boolean;
   /** The headlight in the beak (with a beam reaching forward). */
@@ -228,7 +230,7 @@ function cockpitCrew(pen: Pen, o: DolphinOpts): { jason: string; lux: string } {
   // Head centre inside the bubble (higher when he stands up out of the open cockpit).
   const head: P = o.open ? [bx - 6, by - bry * 1.02] : [bx - 20, by - bry * 0.47];
   const feet: P = [head[0] - r.head[0] * js, head[1] - r.head[1] * js];
-  const j = jason(pen, feet[0], feet[1], js, { pose, mood: o.mood ?? 'determined', look: o.look, blaster: false, rim: 1.2 });
+  const j = jason(o.crewKey ? pen.relight({ key: o.crewKey }) : pen, feet[0], feet[1], js, { pose, mood: o.mood ?? 'determined', look: o.look, blaster: false, rim: 1.2 });
   const la = o.luxAt ?? (o.open ? [180, -300] : [84, -34]);
   const l = o.lux ? lux(pen, bx + la[0], by + la[1], o.open ? 1.1 : 0.68, o.lux, { look: o.luxLook, eye: o.luxEye }) : '';
   return { jason: j, lux: l };
@@ -613,6 +615,8 @@ export interface MechOpts {
   jason?: Mood;
   jasonLook?: P;
   jasonPose?: keyof typeof POSES | Pose;
+  /** Where the light on Jason's face comes from, if not the panel's key (a side light keeps his face clear). */
+  jasonKey?: P;
   /** Raise the far fist in a wave. */
   wave?: boolean;
   rim?: number;
@@ -749,7 +753,7 @@ export function mech(pen: Pen, x: number, y: number, s: number, o: MechOpts = {}
     const head: P = [6, -990];
     const clip = pen.uid();
     pen.def(clip, `<clipPath id="${clip}"><path d="M-200 -860V-884A200 210 0 0 1 200 -884V-860Z"/></clipPath>`);
-    crew = `<g clip-path="url(#${clip})">${jason(pen, head[0] - r.head[0] * js, head[1] - r.head[1] * js, js, { pose, mood: o.jason, look: o.jasonLook, blaster: false, rim: 1.4 })}</g>`;
+    crew = `<g clip-path="url(#${clip})">${jason(o.jasonKey ? pen.relight({ key: o.jasonKey }) : pen, head[0] - r.head[0] * js, head[1] - r.head[1] * js, js, { pose, mood: o.jason, look: o.jasonLook, blaster: false, rim: 1.4 })}</g>`;
   }
   const bubbleBack = `<path d="M-200 -884A200 210 0 0 1 200 -884Z" fill="#2a5060" opacity=".45"/>` + pen.glow(0, -960, 170, '#8fe8ff', 0.3);
   const crest = pen.form('M-22 -1086Q-36 -1170 8 -1236Q40 -1168 24 -1086Z', C.patina, { sh: 16, hatch: 1, line: 3, rim, inner: pen.brush([[2, -1092], [6, -1160], [8, -1220]], 3, INK, [0.2, 0.3], 0.6) });

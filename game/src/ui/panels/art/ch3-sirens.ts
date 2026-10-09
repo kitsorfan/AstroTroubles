@@ -166,7 +166,7 @@ export function ch3Sirens(): string {
     gn.spark(pen, 760, 450, 14, '#bff8ff', 0.9);
   const heroes =
     bubbles(pen, 40, 560, 9, 50, 8) +
-    dolphin(pen, 440, 560, 1.2, { mood: 'determined', look: [2.6, -1.2], lux: 'glow', luxEye: '#ff8ad0', luxLook: [8, -3], lamp: true, rot: -3 }) +
+    dolphin(pen, 440, 560, 1.2, { mood: 'determined', look: [2.6, -1.2], lux: 'glow', luxEye: '#ff8ad0', luxLook: [8, -3], lamp: true, rot: -3, crewKey: [1, -0.25] }) +
     pen.glow(880, 560, 140, '#ff6fb0', 0.25) +
     song;
   const fore =
@@ -355,7 +355,7 @@ export function ch3Surface(): string {
       0.7,
     );
   const heroes =
-    dolphin(pen, subX, subY - 70, 1.06, { open: true, mood: 'grin', look: [2.2, -1.6], pose: 'wave', lux: 'happy', luxAt: [190, -250], luxLook: [-4, 2], rot: -11 }) +
+    dolphin(pen, subX, subY - 70, 1.06, { open: true, mood: 'grin', look: [2.2, -1.6], pose: 'wave', lux: 'happy', luxAt: [190, -250], luxLook: [-4, 2], rot: -11, crewKey: [0.95, -0.3] }) +
     front +
     pen.brush(
       [
