@@ -590,7 +590,8 @@ export class Player {
     w.shake(0.15);
     if (!this.stoneHinted) {
       this.stoneHinted = true;
-      w.hooks.toast(this.nextHero ? 'Turned to stone! It wears off in a moment, or tap SWITCH to play the other hero.' : 'Turned to stone! Hold still, it wears off in a moment.', 'bolt');
+      if (this.nextHero) w.hooks.toast('Turned to stone! It wears off in a moment, or tap SWITCH to play the other hero.', 'bolt');
+      else w.hooks.toast('Turned to stone! Hold still, it wears off in a moment.', 'bolt');
     }
     w.hooks.hud();
     return true;
