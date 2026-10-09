@@ -803,9 +803,12 @@ export function saucer(pen: Pen, x: number, y: number, s: number, o: { flip?: bo
 export function hologram(pen: Pen, body: string, box: [number, number, number, number], color = '#7fe6ff', op = 0.82): string {
   const [x0, y0, w, h] = box;
   const id = pen.shared('scan', (id) => `<pattern id="${id}" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 1H8" stroke="#000" stroke-width="3" opacity=".55"/></pattern>`);
+  // Everything is clipped to the box, so only what is inside it is tinted and shown.
+  const clip = pen.uid();
+  pen.def(clip, `<clipPath id="${clip}"><rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}"/></clipPath>`);
   return (
     pen.glow(x0 + w / 2, y0 + h / 2, Math.max(w, h) * 0.6, color, 0.35) +
-    `<g opacity="${op}" style="isolation:isolate">${body}<rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="${color}" style="mix-blend-mode:color"/><rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="${color}" opacity=".18" style="mix-blend-mode:screen"/><rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="url(#${id})" style="mix-blend-mode:multiply"/></g>`
+    `<g opacity="${op}" clip-path="url(#${clip})" style="isolation:isolate">${body}<rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="${color}" style="mix-blend-mode:color"/><rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="${color}" opacity=".18" style="mix-blend-mode:screen"/><rect x="${r1(x0)}" y="${r1(y0)}" width="${r1(w)}" height="${r1(h)}" fill="url(#${id})" style="mix-blend-mode:multiply"/></g>`
   );
 }
 
@@ -814,6 +817,13 @@ export function torsoPoint(b: Build, pose: Pose, x: number, y: number, s: number
   const r = rig(b, pose);
   const p = r.tf(tx, ty);
   return [x + (flip ? -p[0] : p[0]) * s, y + p[1] * s];
+}
+
+/** A wrist (0 near, 1 far) of a posed figure in panel coordinates, and its forearm's angle (as `dir` measures it, mirrored when flipped). */
+export function wristPoint(b: Build, pose: Pose, x: number, y: number, s: number, flip: boolean, i: 0 | 1): { p: P; deg: number } {
+  const r = rig(b, pose);
+  const w = r.wr[i];
+  return { p: [x + (flip ? -w[0] : w[0]) * s, y + w[1] * s], deg: flip ? -r.foreA[i] : r.foreA[i] };
 }
 
 /** The head centre of a posed figure in panel coordinates (for aiming glows and props). */
