@@ -1294,7 +1294,7 @@ export class Player {
     m.armL.rotation.z = this.gliding ? -1.3 : air ? -0.3 : 0.05;
     m.armR.rotation.z = this.gliding ? 1.3 : 0;
     m.armR.rotation.x = this.shootPose > 0 || this.charge > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
-    // The Mirror Shield: slung on his back, or held out in front while SPIN is held.
+    // The Mirror Shield: hung at his side, or held out in front while SPIN is held.
     if (!this.mirror && this.has('mirror')) this.raiseMirror(false);
     if (this.mirror) {
       const g = this.mirror.group;
@@ -1305,9 +1305,10 @@ export class Player {
         g.rotation.set(0, 0, 0);
         g.scale.setScalar(1);
       } else {
-        g.position.set(0, 1.12, -0.3);
-        g.rotation.set(0.15, Math.PI, 0);
-        g.scale.setScalar(0.8);
+        // Hung at his left side, edge-on to the camera behind him, so it never hides him.
+        g.position.set(-0.4, 0.92, -0.02);
+        g.rotation.set(0, -Math.PI / 2, 0.12);
+        g.scale.setScalar(0.55);
       }
       this.mirror.face.emissiveIntensity = 0.3 + this.mirrorFlash * 2.5;
       this.mirror.glow.material.opacity = this.mirrorFlash * 0.9;

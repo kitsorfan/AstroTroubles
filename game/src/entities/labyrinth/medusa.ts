@@ -411,7 +411,7 @@ export class Medusa extends Boss implements Target, BeamCatcher {
     if (this.defeated) m.iris.emissive.set('#5ec8ff');
     m.eyeGlow.material.opacity = this.defeated ? 0.15 : st === 'gaze' ? 0.95 : st === 'charge' ? 0.3 + charge * 0.6 : 0.25;
     m.eye.rotation.z = st === 'dazed' ? this.t * 4 : 0;
-    m.stars.visible = st === 'dazed';
+    m.stars.visible = st === 'dazed' && !this.defeated;
     m.stars.rotation.y = this.t * 3;
     m.gold.emissive.set(this.flashT > 0 ? '#ffffff' : '#3a2a00');
     this.flashT -= dt;
