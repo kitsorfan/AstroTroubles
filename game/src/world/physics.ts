@@ -44,7 +44,7 @@ export function makeBody(x: number, y: number, z: number, r: number, h: number):
   return { x, y, z, vx: 0, vy: 0, vz: 0, r, h, grounded: false, ground: null, bumped: false };
 }
 
-interface MoveOpts {
+export interface MoveOpts {
   gravity?: number;
   maxFall?: number;
   stepUp?: number;
