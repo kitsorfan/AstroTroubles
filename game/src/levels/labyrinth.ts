@@ -70,8 +70,8 @@ export const labyrinth: LevelDef = {
    #...........o...o...o...o...o...........#
    ####################E####################
          #.......................99+.# #######
- #########.h.....................9O9.# #..$..#
- #k.....k#.........J.......J.....999.# #.....#
+ #########.h.....................9Oκ.# #..$..#
+ #k.....k#.........J.......J.....99κ.# #.....#
  #.......#....j......................#####I####
  #..V....#.....................j.....#........#
  #.....................d.............#.m....}.#
@@ -171,6 +171,7 @@ export const labyrinth: LevelDef = {
     U: { type: 'upgrade', ability: 'mirror', id: 'mirror' },
     // Hero puzzles: a low gap and a bullseye for Atalanta, a grapple ring for Jason.
     l: { type: 'lowgap', axis: 'x' },
+    'κ': { type: 'climb', h: 4.5 },
     t: { type: 'target', flag: 'tB' },
     O: { type: 'anchor' },
     // The rune room: IRIS's rainbow, from the outside edge in.

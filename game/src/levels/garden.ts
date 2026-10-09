@@ -86,7 +86,7 @@ export const garden: LevelDef = {
      #3:33333333333333333333:3333:33333j333#
      #33333333m333333:3o3o3:33q3333p33333=3#
      #3=33333333o3333333333333333333*933333#
-     #333V3333333333333333333333o3339933333#
+     #333V3333333333333333333333o333%933333#
      #3333333m3333333333M333-333333333:x333#
      #3/3333/333333-3333333333333333/333333#
      ###################3###################
@@ -178,6 +178,7 @@ export const garden: LevelDef = {
     T: { type: 'target', flag: 'tA' },
     P: { type: 'switch', flag: 'sw1', h: 4.5 },
     W: { type: 'wallrun' },
+    '%': { type: 'climb', h: 4.5 },
     l: { type: 'lowgap', axis: 'x' },
     // Aeëtes's saboteurs: weeder drones, harpy drones and his gold-painted scrap robots.
     q: { type: 'enemy', enemy: 'weeder' },
