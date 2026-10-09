@@ -1,4 +1,6 @@
 /** Chapter 2 panels, part 1: arriving at Gaia Nova, Brennus's broadcast, and the drones' raid. */
+import * as gn from '../gn';
+import { gaiaNova, syracusia } from '../gn/ch2a';
 import {
   at,
   backdrop,
@@ -16,37 +18,46 @@ import {
   panel,
   planet,
   rad,
-  sparkle,
   stars,
-  syracusia,
+  sparkle,
   vignette,
 } from '../kit';
 
-/** 9. The Syracusia in orbit over the big green-and-blue planet, with sunrise on its edge. */
+/** 9. The Syracusia in orbit over the great green-and-blue curve of Gaia Nova, the sun rising ahead of it. */
 export function ch2Arrival(): string {
-  const id = 'ch2-arrival';
-  // The planet's centre and radius, and the sun rising on its edge.
-  const [px, py, pr] = [820, 1320, 780];
-  const sx = 400;
-  const sy = Math.round(py - Math.sqrt(pr * pr - (sx - px) ** 2));
-  const top = Math.round(py - Math.sqrt(pr * pr - 380 * 380));
-  const limbArc = `M${px - pr} ${py}A${pr} ${pr} 0 0 1 ${px + 380} ${top}`;
-  return panel(
-    backdrop(id + 'b', [[0, '#070a24'], [0.5, '#141a4a'], [1, '#2a3a7a']]) +
-      `<defs>${glowDef(id + 's', '#ffd9a0', 0.95)}${rad(id + 'h', [[0, '#ffd166', 0.6], [1, '#ffd166', 0]])}</defs>` +
-      stars(77, 120, 0, 0, 1600, 560) +
-      planet(id + 'p', px, py, pr, 0.3, 50) +
-      `<path d="${limbArc}" fill="none" stroke="#ffd166" stroke-width="48" opacity=".25"/><path d="${limbArc}" fill="none" stroke="#ffe7b0" stroke-width="12" opacity=".9"/>` +
-      `<ellipse cx="${sx}" cy="${sy}" rx="720" ry="320" fill="url(#${id}h)"/>` +
-      glow(id + 's', sx, sy, 300) +
-      `<circle cx="${sx}" cy="${sy}" r="46" fill="#fffbea"/>` +
-      sparkle(sx, sy, 110, '#fff6dc', 0.9) +
-      `<g fill="#ffe7b0" opacity=".4"><circle cx="${sx + 200}" cy="${sy - 110}" r="22"/><circle cx="${sx + 330}" cy="${sy - 180}" r="12"/></g>` +
-      syracusia(id + 'h', 1090, 230, 0.5) +
-      sparkle(1460, 90, 16) +
-      sparkle(160, 140, 12, '#cfe0ff') +
-      vignette(id + 'v', 0.35),
-  );
+  const pen = gn.Pen.scene('ch2-arrival', { key: [0.85, -0.45], keyColor: '#fff0cc', rim: [-0.6, 0.8], rimColor: '#8fd8ff', shadow: '#3a3a8a', depth: 0.6 });
+  // The sun is just rising over the planet's edge, ahead of the ship.
+  const [sunX, sunY] = [1440, 486];
+  const sky =
+    gn.sky(pen, [
+      [0, '#03041a'],
+      [0.35, '#0a1238'],
+      [0.55, '#1a2a62'],
+    ]) +
+    gn.nebula(pen, 420, 140, 560, ['#7a4ab8', '#2a6ab0', '#1a2a6a'], 4, 0.4) +
+    gn.starfield(pen, 21, 160, -80, -60, 1760, 560, '#eef2ff') +
+    gn.halftone(pen, 'M-80 -60H1680V280H-80Z', '#9ab0ff', 10, 0.08) +
+    gn.gasGiant(pen, 196, 150, 40, { lightDir: [0.9, 0.2], haze: 0.45, sky: '#14204a' }) +
+    gn.godRays(pen, sunX, sunY, [-160, -135, -115, -95, -75, -55, 200, 225], 4, 1500, '#fff0c8', 0.22) +
+    gn.bloom(pen, sunX, sunY, 150, '#fff2d0', 1);
+  const planet = gaiaNova(pen, 760, 2830, 2400, { sun: [0.9, -0.4], seed: 5 }) + pen.glow(sunX - 40, sunY + 46, 420, '#ffe6b0', 0.7, 60) + pen.glow(sunX, sunY + 40, 160, '#ffffff', 0.9, 26);
+  const ship = syracusia(pen, 700, 318, 0.8, { rot: -3 });
+  // The sun's glint, and lens flares strung back from it across the picture.
+  const flare =
+    pen.brush(
+      [
+        [sunX - 620, sunY + 6],
+        [sunX, sunY],
+        [sunX + 400, sunY - 4],
+      ],
+      7,
+      '#fff6e0',
+      [0.5, 0.5],
+      0.75,
+    ) +
+    gn.spark(pen, sunX, sunY, 110, '#ffffff', 0.95) +
+    gn.spark(pen, sunX, sunY, 40, '#fff6d8', 1);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.3, planet) + gn.layer(0.8, ship) + gn.layer(1.15, flare) + gn.vignette(pen, 0.5, '#02030e') + gn.grain(pen, 0.07));
 }
 
 /** 10. The Bridge: Brennus scowling on the big screen; the Captain, Jason and LUX watching in shock. */
