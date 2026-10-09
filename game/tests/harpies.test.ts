@@ -52,8 +52,10 @@ describe('the Harpy Isles', () => {
     const jason = reach(level, [...ALL], ['jason']).missing.filter((e) => !isCollectible(e.spec)).map((e) => e.spec.type);
     const atalanta = reach(level, [...ALL], ['atalanta']).missing.filter((e) => !isCollectible(e.spec)).map((e) => e.spec.type);
     expect(jason).toContain('target');
+    // The tower's red switch: only Atalanta climbs up, then she pulls Jason up after her.
+    expect(jason).toContain('switch');
+    // The switch out on the rock: only Jason's grapple gets there (she rides along if she's close).
     expect(atalanta).toContain('switch');
-    expect(atalanta).toContain('boss');
     expect(reach(level, [...ALL]).missing.filter((e) => !isCollectible(e.spec))).toEqual([]);
   });
 
@@ -62,6 +64,7 @@ describe('the Harpy Isles', () => {
     expect(count('target')).toBeGreaterThanOrEqual(2);
     expect(count('switch')).toBeGreaterThanOrEqual(2);
     expect(count('wallrun')).toBeGreaterThan(0);
+    expect(count('climb')).toBeGreaterThan(0);
     expect(count('lowgap')).toBeGreaterThan(0);
     expect(count('anchor')).toBeGreaterThan(2);
     expect(count('wind')).toBeGreaterThan(1);
