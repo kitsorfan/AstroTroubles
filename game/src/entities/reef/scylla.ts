@@ -538,11 +538,13 @@ export class Scylla extends Boss implements Target {
   }
 
   /** Shows a hint once (by key). */
-  private hint(key: string, text: string, who: 'bolt' | 'atalanta' | 'iris' | 'jason' = 'bolt') {
-    if (this.hinted.has(key)) return;
+  /** True the first time a hint key comes up (each hint shows once per fight). */
+  private once(key: string) {
+    if (this.hinted.has(key)) return false;
     this.hinted.add(key);
-    this.world.hooks.toast(text, who);
+    return true;
   }
+
 
   /** Something bounced off her gold (a joint that isn't glowing, a closed plate, her armour). */
   ping(at: THREE.Vector3, kind: HitKind, jointOpen: boolean) {
@@ -551,10 +553,15 @@ export class Scylla extends Boss implements Target {
     audio.play('zap', 1.8);
     w.particles.emit(at.x, at.y, at.z, { count: 6, color: '#ffe08a', speed: 3, life: 0.25, size: 0.35 });
     if (kind === 'zap' || kind === 'pulse') return;
-    if (jointOpen && w.player.hero === 'atalanta') this.hint('bow', 'Plain arrows just bounce off! Hold BOW to charge a POWER ARROW, then let go at the glowing joint.', 'iris');
-    else if (jointOpen) this.hint('jason', 'That glowing joint needs Atalanta’s POWER ARROW! Switch to her and jam it.', 'bolt');
-    else if (kind === 'pound') this.hint('plate', 'The plates are shut tight. Jam two of her arms first, and they’ll pop open!', 'bolt');
-    else this.hint('armour', 'Her gold armour is too thick! Watch her elbows: when one glows blue, a POWER ARROW can jam it.', 'bolt');
+    if (jointOpen && w.player.hero === 'atalanta') {
+      if (this.once('bow')) w.hooks.toast('Plain arrows just bounce off! Hold BOW to charge a POWER ARROW, then let go at the glowing joint.', 'iris');
+    } else if (jointOpen) {
+      if (this.once('jason')) w.hooks.toast('That glowing joint needs Atalanta’s POWER ARROW! Switch to her and jam it.', 'bolt');
+    } else if (kind === 'pound') {
+      if (this.once('plate')) w.hooks.toast('The plates are shut tight. Jam two of her arms first, and they’ll pop open!', 'bolt');
+    } else if (this.once('armour')) {
+      w.hooks.toast('Her gold armour is too thick! Watch her elbows: when one glows blue, a POWER ARROW can jam it.', 'bolt');
+    }
   }
 
   /** Her body: everything bounces off. */
@@ -569,7 +576,7 @@ export class Scylla extends Boss implements Target {
     const w = this.world;
     if (!a.joint.open) {
       this.ping(a.joint.aim, 'shot', false);
-      this.hint('wait', 'Not yet! Wait until her elbow glows blue, then shoot.', 'iris');
+      if (this.once('wait')) w.hooks.toast('Not yet! Wait until her elbow glows blue, then shoot.', 'iris');
       return true;
     }
     a.state = 'jammed';
@@ -587,8 +594,8 @@ export class Scylla extends Boss implements Target {
     w.flash(j.x, j.y, j.z, '#7fe6ff', 50, 0.3);
     w.particles.emit(j.x, j.y, j.z, { count: 30, color: '#bff4ff', speed: 8, life: 0.6, size: 0.5 });
     const left = Math.min(JAMS, this.working.length) - this.jammed;
-    if (left > 0) this.hint(`jam${this.round}`, 'Jammed! One more arm, and she’ll overload!', 'atalanta');
-    else this.overload();
+    if (left <= 0) this.overload();
+    else if (this.once(`jam${this.round}`)) w.hooks.toast('Jammed! One more arm, and she’ll overload!', 'atalanta');
     return true;
   }
 
@@ -610,7 +617,7 @@ export class Scylla extends Boss implements Target {
     audio.play('explode', 0.9);
     w.shake(0.6);
     w.flash(this.aim.x, this.aim.y, this.aim.z, '#ff9a3a', 70, 0.5);
-    this.hint(`open${this.round}`, 'She’s overloaded! Switch to Jason and GROUND-POUND a glowing plate by her base!', 'atalanta');
+    if (this.once(`open${this.round}`)) w.hooks.toast('She’s overloaded! Switch to Jason and GROUND-POUND a glowing plate by her base!', 'atalanta');
   }
 
   /** Jason pounded an open plate: a third of her health, and her two jammed arms are broken for good. */
