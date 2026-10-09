@@ -14,6 +14,7 @@ import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
 import { makeHarpy } from './isles/harpy';
 import { makeRobot } from './robots';
+import { makeRamling } from './stand/ramling';
 
 const v3 = new THREE.Vector3();
 const WHITE = new THREE.Color('#ffffff');
@@ -906,6 +907,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'harpy':
       e = makeHarpy(world, id, x, h, z);
+      break;
+    case 'ramling':
+      e = makeRamling(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

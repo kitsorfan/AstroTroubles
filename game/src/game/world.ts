@@ -26,6 +26,8 @@ import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { DockGun } from '../entities/stand/dockgun';
+import { Hold, resetHolds } from '../entities/stand/holds';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -496,6 +498,12 @@ export class World {
         break;
       case 'plate':
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'dockgun':
+        this.addEntity(new DockGun(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'hold':
+        this.addEntity(new Hold(this, id, cx, cz, h, spec));
         break;
       case 'decor':
         this.decorItems.push({
@@ -1176,6 +1184,8 @@ export class World {
     const lw = legionWorld(this);
     for (const a of lw.allies) a.remove();
     lw.allies.length = 0;
+    // A line Brennus was holding starts again when he gets back to it.
+    resetHolds(this);
     this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();

@@ -39,6 +39,9 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // Brennus's Last Stand: the old general on the sky-dock as the gold fleet comes, and his salute to the Argo.
+  'ch3-stand',
+  'ch3-salute',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];
