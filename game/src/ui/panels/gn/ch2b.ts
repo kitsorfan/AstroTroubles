@@ -4,9 +4,9 @@
  * on Mars, Dr. Hypatia, the colony shuttles and a Green Legion robot. Built from the kit's marks and
  * `figure`, like the cast in cast.ts.
  */
-import { add, at, dir, dPoly, dSmooth, INK, lerp, mul, type P, type Pen, perp, r1, sub, unit } from './core';
-import { type Pose, rig, STOCKY } from './body';
-import { brennus } from './cast';
+import { add, at, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, sub, unit } from './core';
+import { bandD, type Build, faceFrame, type HeadOpts, type Pose, rig, type Rig, STOCKY, U } from './body';
+import { brennus, type CastOpts, figure, headPt, type Outfit } from './cast';
 
 /** A filled circle path (for `Pen.form`). */
 export const circleD = (x: number, y: number, r: number) => `M${r1(x - r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x + r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x - r)} ${r1(y)}Z`;
@@ -230,5 +230,346 @@ export function colossusPilot(pen: Pen, k = 0.9): string {
   const hx = -r.head[0] * k;
   const hy = r.head[1] * k;
   return brennus(pen, -hx + 4, -592 - hy, k, { pose, flip: true, mood: 'angry', shield: false, cannon: false, look: [2.4, 2], rim: 2.2 });
+}
+
+/* ---------------- props ---------------- */
+
+/** A ripe tomato centred at (x, y), radius r: shaded red, a green star of sepals on top, a shine. */
+export function tomato(pen: Pen, x: number, y: number, r: number, color = '#e8402a'): string {
+  const sepals: [P[], number][] = [-150, -100, -40, 20, 70].map((a) => {
+    const d = dir(a + 180);
+    return [[[x, y - r * 0.82], add([x, y - r * 0.82], mul(d, r * 0.55))], r * 0.2];
+  });
+  return (
+    pen.form(`M${r1(x - r)} ${r1(y)}Q${r1(x - r)} ${r1(y - r * 0.95)} ${r1(x)} ${r1(y - r * 0.85)}Q${r1(x + r)} ${r1(y - r * 0.95)} ${r1(x + r)} ${r1(y)}Q${r1(x + r * 0.9)} ${r1(y + r)} ${r1(x)} ${r1(y + r)}Q${r1(x - r * 0.9)} ${r1(y + r)} ${r1(x - r)} ${r1(y)}Z`, color, {
+      sh: r * 0.5,
+      hatch: 1,
+      line: r > 16 ? 2.4 : 1.6,
+      rim: r > 16 ? 1.8 : 0,
+      inner: `<ellipse cx="${r1(x - r * 0.35)}" cy="${r1(y - r * 0.38)}" rx="${r1(r * 0.24)}" ry="${r1(r * 0.14)}" fill="#fff" opacity=".75" transform="rotate(-30 ${r1(x - r * 0.35)} ${r1(y - r * 0.38)})"/>`,
+    }) +
+    pen.brushes(sepals, '#2f6a2a', [0.05, 0.6]) +
+    pen.brush([[x, y - r * 0.8], [x + 1, y - r * 1.15], [x + r * 0.2, y - r * 1.3]], r * 0.14, '#2f6a2a', [0.1, 0.3])
+  );
+}
+
+/** A watering can whose handle is held at (0, 0) (local coordinates, can below, spout toward +x). */
+export function wateringCan(pen: Pen, x: number, y: number, s: number, color: string, o: { flip?: boolean; rot?: number } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  const body = 'M-36 22L36 22L32 86Q0 94 -32 86Z';
+  let out = lp.brush([[-30, 26], [-26, -4], [0, -10], [26, -4], [30, 26]], 9, INK, [0.05, 0.05]) + lp.brush([[-30, 26], [-26, -4], [0, -10], [26, -4], [30, 26]], 4.5, mix(color, '#ffffff', 0.3), [0.05, 0.05]);
+  out += lp.brush([[28, 70], [62, 46], [92, 14]], 16, INK, [0.05, 0.05]) + lp.brush([[28, 70], [62, 46], [92, 14]], 9, color, [0.05, 0.05]);
+  out += lp.form('M84 4L104 -10L112 20L94 28Z', mix(color, '#000000', 0.2), { sh: 6, line: 2.2 });
+  out += lp.form(body, color, { sh: 22, hatch: 1, line: 2.6, rim: 2, inner: `<path d="M-34 40Q0 46 34 40" stroke="${INK}" stroke-width="2" opacity=".5" fill="none"/>` + lp.brush([[-24, 34], [-22, 60], [-18, 80]], 4, '#ffffff', [0.3, 0.3], 0.6) });
+  out += lp.form('M-38 18Q0 10 38 18L36 26Q0 20 -36 26Z', mix(color, '#ffffff', 0.25), { line: 2.2 });
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/**
+ * One tomato plant on its cane, for reusing with `<use>`: a stake, twine, a leafy bush and ripe and
+ * green tomatoes. Defined once per variant (0 or 1); returns its id. Base at (0, 0), about 260 tall.
+ */
+export function tomatoPlantDef(pen: Pen, variant: 0 | 1): string {
+  return pen.shared(`tomato${variant}`, (id) => {
+    const flip = variant ? -1 : 1;
+    const leaf = (x: number, y: number, a: number, l: number, c: string) => {
+      const d = dir(a);
+      const n = perp(d);
+      const tip = add([x, y], mul(d, l));
+      const m = add([x, y], mul(d, l * 0.45));
+      const pts: P[] = [[x, y], add(m, mul(n, l * 0.3)), add(add([x, y], mul(d, l * 0.78)), mul(n, l * 0.16)), tip, add(add([x, y], mul(d, l * 0.78)), mul(n, -l * 0.18)), add(m, mul(n, -l * 0.3))];
+      return pen.form(dSmooth(pts), c, { sh: l * 0.18, hatch: 1, line: 2, rim: 1.4, inner: pen.brush([[x, y], m, add([x, y], mul(d, l * 0.85))], 2, INK, [0.2, 0.6], 0.45) });
+    };
+    let out = pen.brush([[4, 6], [6, -130], [8, -262]], 9, INK, [0.02, 0.02]) + pen.brush([[4, 6], [6, -130], [8, -262]], 5, '#a8804a', [0.02, 0.02]);
+    out += pen.brushes(
+      [
+        [[[0, 0], [-6 * flip, -90], [4, -170], [0, -236]], 9],
+        [[[-4 * flip, -70], [-40 * flip, -110], [-62 * flip, -150]], 6],
+        [[[2, -120], [40 * flip, -150], [64 * flip, -186]], 6],
+        [[[2, -170], [-34 * flip, -200], [-50 * flip, -230]], 5],
+      ],
+      '#2f6a2a',
+      [0.05, 0.7],
+    );
+    const L: [number, number, number, number, string][] = [
+      [-6, -60, -120, 70, '#3f7a3a'],
+      [2, -80, 110, 74, '#4a8a3a'],
+      [-30, -110, -150, 66, '#5f9a3a'],
+      [30, -140, 140, 70, '#3f7a3a'],
+      [-8, -150, -160, 64, '#4a8a3a'],
+      [50, -170, 165, 56, '#5f9a3a'],
+      [-40, -190, -140, 60, '#3f7a3a'],
+      [4, -200, 175, 58, '#5f9a3a'],
+      [-10, -230, -170, 50, '#4a8a3a'],
+      [20, -236, 150, 48, '#3f7a3a'],
+      [-56, -146, -100, 48, '#4a8a3a'],
+      [62, -186, 120, 44, '#4a8a3a'],
+    ];
+    for (const [lx, ly, la, ll, lc] of L) out += leaf(lx * flip, ly, la * flip, ll, lc);
+    const T: [number, number, number, string][] = [
+      [-30, -96, 17, '#e8402a'],
+      [-12, -84, 15, '#e8402a'],
+      [38, -126, 16, '#ff6a2a'],
+      [22, -112, 13, '#e8402a'],
+      [-44, -170, 14, '#e8402a'],
+      [44, -200, 12, '#9ac04a'],
+      [-14, -206, 13, '#ff8a3a'],
+    ];
+    for (const [tx, ty, tr, tc] of T) out += tomato(pen, tx * flip, ty, tr, tc);
+    out += pen.brushes(
+      [
+        [[[-4, -60], [12, -64]], 3],
+        [[[-2, -150], [14, -154]], 3],
+      ],
+      '#d8c090',
+      [0.1, 0.1],
+    );
+    return `<g id="${id}">${out}</g>`;
+  });
+}
+
+/** A little hand-written name tag hung on a plant's cane at (x, y). */
+export function nameTag(pen: Pen, x: number, y: number, s: number, name: string, rot = -6): string {
+  const card = pen.form('M-34 -14H34L40 0L34 14H-34Z', '#fff8e8', { sh: 6, line: 2, inner: `<circle cx="30" cy="0" r="3" fill="${INK}"/>` });
+  const text = `<text x="-26" y="6" font-family="Fredoka, sans-serif" font-weight="600" font-size="17" fill="#7a3a24">${name}</text>`;
+  return at(x, y, s, pen.brush([[30, 0], [40, -12], [46, -24]], 2, '#8a6a3a', [0.1, 0.1]) + card + text, false, rot);
+}
+
+/* ---------------- little Brennus and his grandmother ---------------- */
+
+/** A child of about ten: about 4 heads tall, a big head on a small body. */
+export const CHILD: Build = {
+  neck: 0.12,
+  spine: 1.02,
+  shoulder: 0.5,
+  hips: 0.26,
+  upperArm: 0.7,
+  foreArm: 0.64,
+  hand: 0.52,
+  thigh: 0.8,
+  shin: 0.72,
+  ankle: 0.14,
+  foot: 0.68,
+  arm: [0.34, 0.27, 0.22],
+  leg: [0.5, 0.34, 0.25],
+  chest: 1.06,
+  waist: 0.94,
+  hipW: 0.96,
+  neckW: 0.38,
+};
+
+/** An old lady: about 6.3 heads tall, narrow shoulders and a soft, round figure. */
+export const GRANNY: Build = {
+  neck: 0.16,
+  spine: 1.82,
+  shoulder: 0.74,
+  hips: 0.4,
+  upperArm: 1.3,
+  foreArm: 1.16,
+  hand: 0.64,
+  thigh: 1.56,
+  shin: 1.48,
+  ankle: 0.18,
+  foot: 0.86,
+  arm: [0.42, 0.33, 0.26],
+  leg: [0.52, 0.36, 0.26],
+  chest: 1.62,
+  waist: 1.5,
+  hipW: 1.7,
+  neckW: 0.44,
+};
+
+/** Little Brennus's mop of dark hair with a cowlick sticking up (head coordinates). */
+function boyHair(pen: Pen): string {
+  const hair = '#3b2416';
+  const d = dSmooth([
+    [-36, 8],
+    [-46, -14],
+    [-44, -38],
+    [-26, -56],
+    [0, -62],
+    [24, -58],
+    [42, -42],
+    [46, -22],
+    [38, -18],
+    [32, -30],
+    [24, -18],
+    [16, -30],
+    [6, -20],
+    [-4, -30],
+    [-12, -18],
+    [-22, -22],
+    [-28, -8],
+    [-30, 6],
+  ]);
+  const strands: [P[], number][] = [
+    [[[-32, -46], [-10, -52], [14, -48]], 2.4],
+    [[[-40, -22], [-30, -36], [-14, -42]], 2.2],
+    [[[10, -54], [28, -46], [38, -32]], 2.2],
+  ];
+  return (
+    pen.form(d, hair, { sh: 16, hatch: 2, rim: 2.4, line: 2.4, shade: '#160c08', inner: pen.brushes(strands, INK, [0.2, 0.6], 0.85) + pen.brushes(strands.map(([p, w]) => [p.map((q) => add(q, [2, -3])), w * 0.6] as [P[], number]), mix(hair, '#ffffff', 0.35), [0.3, 0.6], 0.5) }) +
+    pen.form('M-10 -58Q-10 -74 6 -78Q0 -70 2 -60Z', hair, { sh: 4, line: 2.2, rim: 1.6, shade: '#160c08' })
+  );
+}
+
+export interface BoyOpts extends CastOpts {
+  /** Hold a big ripe tomato up in both hands (default yes). */
+  tomato?: boolean;
+}
+
+/** Little Brennus at about ten, on Mars: dark hair, Brennus's grey-blue eyes, a striped red sweater and rosy cheeks. */
+export function boyBrennus(pen: Pen, x: number, y: number, s: number, o: BoyOpts = {}): string {
+  const lp = pen.local(!!o.flip);
+  const skin = '#e6b494';
+  const pose: Pose =
+    typeof o.pose === 'object'
+      ? o.pose
+      : { turn: 0.42, lean: -5, tilt: -8, hipTilt: 4, armN: { to: [0.92, 0.22] }, armF: { to: [1.02, 0.06] }, legN: { to: [-0.12, 0.98] }, legF: { to: [0.18, 0.96] }, handN: 'grip', handF: 'grip', wristN: -60, wristF: -70 };
+  const F = faceFrame(pose.turn ?? 0.4);
+  // Rosy cheeks.
+  const blush = `<g fill="#ff8a7a" opacity=".35"><ellipse cx="${r1(F.eyeN[0] - 3)}" cy="17" rx="8" ry="4.5"/><ellipse cx="${r1(F.eyeF[0] + 3)}" cy="16" rx="${r1(6 * (1 - 0.4 * F.k))}" ry="4"/></g>`;
+  const head: HeadOpts = { skin, mood: o.mood ?? 'grin', eye: '#4a5a6a', brow: '#3b2416', jaw: 0.86, chin: 0.78, nose: 0.7, eyeSize: 1.3, look: o.look, front: boyHair(lp), skinMarks: blush };
+  const outfit: Outfit = { build: CHILD, skin, top: '#c0392b', pants: '#3a5a8a', boots: '#5a3a24', bootTop: 0.2, cuff: '#a02a22', topBottom: 0.88, rim: o.rim };
+  const { svg } = figure(lp, pose, outfit, head, {
+    torso: (r) => {
+      // The sweater's two pale stripes, its ribbed hem and collar.
+      let t = lp.form(bandD(r, 0.3, 0.37), '#f08a6a', { line: 1.6, sh: 4 }) + lp.form(bandD(r, 0.44, 0.5), '#f08a6a', { line: 1.6, sh: 4 });
+      t += lp.form(bandD(r, 0.8, 0.9), '#a02a22', { sh: 5, line: 2, inner: '' });
+      const nb = add(r.N, mul(r.u, 2));
+      const rw = r.b.neckW * U * 1.1;
+      t += lp.form(`M${r1(nb[0] - rw)} ${r1(nb[1])}A${r1(rw)} ${r1(rw * 0.45)} 0 0 0 ${r1(nb[0] + rw)} ${r1(nb[1])}L${r1(nb[0] + rw * 0.85)} ${r1(nb[1] - 9)}A${r1(rw * 0.85)} ${r1(rw * 0.3)} 0 0 1 ${r1(nb[0] - rw * 0.85)} ${r1(nb[1] - 9)}Z`, '#a02a22', { sh: 5, line: 2 });
+      // The tomato he holds up, between his hands.
+      if (o.tomato !== false) {
+        const c = add(lerp(r.wr[0], r.wr[1], 0.5), [r.b.hand * U * 0.55, -r.b.hand * U * 0.35]);
+        t += lp.glow(c[0], c[1], 70, '#fff2c0', 0.5) + tomato(lp, c[0], c[1], 36);
+      }
+      return t;
+    },
+  });
+  return at(x, y, s, svg, o.flip);
+}
+
+/** Grandma's white hair, swept up into a bun, and her round gold glasses (head coordinates, for a turn). */
+function grannyHead(pen: Pen, turn: number): { front: string; back: string } {
+  const hair = '#f2f0f4';
+  const F = faceFrame(turn);
+  // Soft white waves swept back from the face over the ear, full at the temples.
+  const cap = dSmooth([
+    [-34, 18],
+    [-50, 8],
+    [-54, -18],
+    [-46, -44],
+    [-22, -62],
+    [10, -64],
+    [36, -54],
+    [50, -36],
+    [50, -18],
+    [42, -12],
+    [36, -24],
+    [26, -20],
+    [16, -30],
+    [2, -24],
+    [-10, -26],
+    [-18, -14],
+    [-24, -4],
+    [-24, 8],
+  ]);
+  const waves: [P[], number][] = [
+    [[[-40, -32], [-20, -50], [6, -54]], 2.2],
+    [[[-46, -8], [-36, -30], [-16, -42]], 2],
+    [[[12, -50], [30, -44], [42, -30]], 2],
+    [[[-44, 8], [-40, -6], [-30, -16]], 1.8],
+    [[[18, -36], [30, -30], [36, -22]], 1.6],
+  ];
+  const front = pen.form(cap, hair, { sh: 12, hatch: 1, rim: 2, line: 2.2, shade: '#a8a4c0', inner: pen.brushes(waves, '#9a96b0', [0.2, 0.6], 0.9) });
+  const back = pen.form('M-58 -56a24 22 0 1 0 48 0a24 22 0 1 0 -48 0Z', hair, { sh: 10, hatch: 1, rim: 2, line: 2.2, shade: '#a8a4c0', inner: pen.brush([[-52, -60], [-34, -72], [-18, -62]], 1.8, '#9a96b0', [0.2, 0.4]) }) + pen.brush([[-40, -78], [-24, -86]], 3, '#e8b84a', [0.1, 0.1]);
+  // Round glasses: two gold rims, the far one foreshortened, a bridge, the arm back to the ear, and a glint.
+  const [nx, ny] = F.eyeN;
+  const [fx, fy] = F.eyeF;
+  const fr = 12 * (1 - 0.5 * F.k);
+  const rims = `M${r1(nx - 13)} ${ny}a13 13 0 1 0 26 0a13 13 0 1 0 -26 0ZM${r1(fx - fr)} ${fy}a${r1(fr)} 12.5 0 1 0 ${r1(fr * 2)} 0a${r1(fr)} 12.5 0 1 0 ${r1(-fr * 2)} 0ZM${r1(nx + 13)} ${ny - 2}Q${r1((nx + fx) / 2 + 1)} ${ny - 5} ${r1(fx - fr)} ${fy - 2}M${r1(nx - 13)} ${ny - 2}L${r1(F.ear[0] + 4)} ${F.ear[1] - 6}`;
+  const glasses = `<path d="${rims}" fill="#d8f4ff" fill-opacity=".12" stroke="${INK}" stroke-width="4.4"/><path d="${rims}" fill="none" stroke="#d8a840" stroke-width="2"/>` + pen.brush([[nx - 7, ny - 6], [nx - 2, ny - 9]], 2.4, '#ffffff', [0.3, 0.3], 0.9);
+  const earring = `<circle cx="${r1(F.ear[0] - 1)}" cy="${r1(F.ear[1] + 15)}" r="3.6" fill="#fff8ee" stroke="${INK}" stroke-width="1.6"/>`;
+  return { front: front + glasses + earring, back };
+}
+
+export interface GrannyOpts extends CastOpts {
+  /** What her near hand holds (default a watering can). */
+  can?: boolean;
+}
+
+/** Grandma: white hair in a bun, round glasses, a flowery purple dress, a cream apron with a pink pocket (and a seed packet in it), green gardening gloves. */
+export function grandma(pen: Pen, x: number, y: number, s: number, o: GrannyOpts = {}): string {
+  const lp = pen.local(!!o.flip);
+  const pose: Pose =
+    typeof o.pose === 'object'
+      ? o.pose
+      : { turn: 0.4, lean: 6, tilt: 10, hipTilt: 4, armN: [-4, 14], armF: { to: [0.95, 0.75] }, legN: { to: [-0.08, 0.98] }, legF: { to: [0.16, 0.97] }, handN: 'grip', handF: 'open', wristF: -30 };
+  const skin = '#e8b898';
+  const dress = '#8a5aa8';
+  const h = grannyHead(lp, pose.turn ?? 0.4);
+  const head: HeadOpts = { skin, mood: o.mood ?? 'smile', eye: '#5a7a9a', brow: '#c8c4d4', jaw: 0.94, chin: 0.92, nose: 1.0, age: 0.85, soft: true, eyeSize: 0.95, look: o.look, front: h.front, back: h.back };
+  const outfit: Outfit = { build: GRANNY, skin, top: dress, pants: '#e2c8bc', boots: '#6a4030', bootTop: 0.14, gloves: '#5f9a3a', cuff: '#4a7a2a', rim: o.rim };
+  // Little cream-and-pink flowers on the dress.
+  const flowers = lp.shared('granny-print', (id) => `<pattern id="${id}" width="44" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(12)"><g fill="#f4c8e8"><circle cx="8" cy="6" r="3.4"/><circle cx="14" cy="8" r="3.4"/><circle cx="12" cy="14" r="3.4"/><circle cx="6" cy="13" r="3.4"/></g><circle cx="10" cy="10" r="2.2" fill="#ffd166"/><g fill="#fff4e0" opacity=".8"><circle cx="30" cy="28" r="2.6"/><circle cx="35" cy="30" r="2.6"/><circle cx="33" cy="35" r="2.6"/><circle cx="28" cy="34" r="2.6"/></g></pattern>`);
+  const print = (d: string) => `<path d="${d}" fill="url(#${flowers})" opacity=".55"/>`;
+  const { svg } = figure(lp, pose, outfit, head, {
+    torso: (r: Rig) => {
+      // The dress's skirt, flaring to below the knees.
+      const kn0 = r.kn[0];
+      const kn1 = r.kn[1];
+      const hy = Math.max(kn0[1], kn1[1]) + r.b.shin * U * 0.3;
+      const x0 = Math.min(kn0[0], kn1[0]) - r.b.leg[1] * U * 1.1;
+      const x1 = Math.max(kn0[0], kn1[0]) + r.b.leg[1] * U * 1.1;
+      const skirt = dSmooth([
+        r.ts(-r.b.waist * 0.5, 0.64),
+        r.ts(-r.b.hipW * 0.6, 0.98),
+        [x0 - 6, hy - 14],
+        [x0 + 10, hy + 6],
+        [lerp([x0, 0], [x1, 0], 0.3)[0], hy + 12],
+        [lerp([x0, 0], [x1, 0], 0.55)[0], hy + 4],
+        [lerp([x0, 0], [x1, 0], 0.8)[0], hy + 12],
+        [x1 + 6, hy - 4],
+        r.ts(r.b.hipW * 0.6, 0.98),
+        r.ts(r.b.waist * 0.5, 0.64),
+      ]);
+      const folds: [P[], number][] = [0.25, 0.5, 0.75].map((k) => [[r.tf(-0.8 + k * 1.6, 0.9), [lerp([x0, 0], [x1, 0], k)[0], hy]], 3]);
+      let t = lp.form(skirt, dress, { sh: r.b.hipW * U * 0.32, hatch: 2, rim: o.rim ?? 1.8, line: 2.6, axis: r.u, inner: print(skirt) + lp.brushes(folds, INK, [0.1, 0.5], 0.7) });
+      // The apron: a bib on straps, a skirt panel, ties at the waist, and the pink pocket with Grandma's seed packet.
+      const ay = lerp(r.ts(0, 0.7), [0, hy], 0.78)[1];
+      const a0 = r.tf(-0.62, 0.68);
+      const a1 = r.tf(0.72, 0.68);
+      const apronSkirt = dSmooth([a0, a1, [a1[0] + 16, ay - 10], [lerp(a0, a1, 0.5)[0], ay + 8], [a0[0] - 16, ay - 10]]);
+      const pk = lerp([a0[0], ay], [a1[0], ay], 0.58);
+      const pocket = `M${r1(pk[0] - 26)} ${r1(pk[1] - 72)}H${r1(pk[0] + 26)}L${r1(pk[0] + 22)} ${r1(pk[1] - 30)}H${r1(pk[0] - 22)}Z`;
+      const packet = `<path d="M${r1(pk[0] - 14)} ${r1(pk[1] - 66)}l4 -30h24l-2 30Z" fill="#fff4d8" stroke="${INK}" stroke-width="2"/><circle cx="${r1(pk[0] + 2)}" cy="${r1(pk[1] - 84)}" r="6" fill="#e8402a"/>`;
+      t += lp.form(apronSkirt, '#fff4e4', { sh: 16, hatch: 1, rim: 1.6, line: 2.4, axis: r.u, inner: packet + `<path d="${pocket}" fill="#ffc8dc" stroke="${INK}" stroke-width="2.2"/><path d="M${r1(pk[0] - 24)} ${r1(pk[1] - 64)}H${r1(pk[0] + 24)}" stroke="#ffffff" stroke-width="2" stroke-dasharray="4 3"/>` });
+      t += lp.form(dPoly([r.tf(-0.5, 0.12), r.tf(0.6, 0.12), r.tf(0.56, 0.68), r.tf(-0.46, 0.68)]), '#fff4e4', { sh: 10, line: 2.2, rim: 1.4 });
+      t += lp.form(bandD(r, 0.64, 0.71), '#fff4e4', { sh: 4, line: 2 });
+      t += lp.brushes(
+        [
+          [[r.tf(-0.48, 0.13), r.ts(-0.18, -0.02)], 5],
+          [[r.tf(0.58, 0.13), r.ts(0.22, -0.02)], 5],
+        ],
+        '#fff4e4',
+        [0.1, 0.1],
+      );
+      // A lace collar and a little cameo brooch.
+      const nb = add(r.N, mul(r.u, 4));
+      t += lp.form(`M${r1(nb[0] - 30)} ${r1(nb[1] - 4)}Q${r1(nb[0] - 22)} ${r1(nb[1] + 18)} ${r1(nb[0])} ${r1(nb[1] + 14)}Q${r1(nb[0] + 22)} ${r1(nb[1] + 18)} ${r1(nb[0] + 30)} ${r1(nb[1] - 4)}Z`, '#fffaf2', { sh: 4, line: 2 });
+      t += `<circle cx="${r1(nb[0] + 2)}" cy="${r1(nb[1] + 12)}" r="6" fill="#e8b84a" stroke="${INK}" stroke-width="1.8"/>`;
+      // The watering can hangs from her near hand (drawn under the hand, over the dress).
+      if (o.can !== false) t += wateringCan(lp, r.wr[0][0] + 4, r.wr[0][1] + 30, 0.9, '#9aa6ba');
+      return t;
+    },
+  });
+  return at(x, y, s, svg, o.flip);
+}
+
+/** A point on a figure's face placed in the panel (for tears, sweat drops): `p` in head coordinates. */
+export function facePoint(r: Rig, x: number, y: number, s: number, p: P, flip = false): P {
+  const q = headPt(r, p);
+  return [x + (flip ? -q[0] : q[0]) * s, y + q[1] * s];
 }
 
