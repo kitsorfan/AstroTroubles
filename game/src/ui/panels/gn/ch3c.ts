@@ -668,3 +668,316 @@ export function dockGun(pen: Pen, x: number, y: number, s: number, o: { flip?: b
   out += lp.glow(-40, -176, 18, '#3dff8a', 0.9) + `<circle cx="-40" cy="-176" r="6" fill="#3dff8a"/>`;
   return at(x, y, s, out, o.flip);
 }
+
+/* ---------------- The Garden of Colchis ---------------- */
+
+/** The garden's colours. */
+export const GARDEN = { crystal: '#9fe8ff', violet: '#c9a0ff', mint: '#7dffc8', bark: '#e8e0f4', leaf: '#4fae4a', leafDark: '#2a6a36', gold: '#ffd166' };
+
+/**
+ * A tapered, shaded stalk or branch along the points (thick at the root): an ink silhouette, the colour,
+ * a shadow band on the side away from the light and a lit line on the other side.
+ */
+export function stalk(pen: Pen, pts: P[], w: number, color: string, o: { line?: number; taper?: [number, number]; lit?: string } = {}): string {
+  const tp = o.taper ?? [0.02, 0.7];
+  const L = pen.L;
+  return (
+    pen.brush(pts, w + (o.line ?? 3) * 2, INK, tp) +
+    pen.brush(pts, w, color, tp) +
+    pen.brush(
+      pts.map((p) => add(p, mul(L, -w * 0.24))),
+      w * 0.45,
+      pen.dark(color, 0.7),
+      tp,
+    ) +
+    pen.brush(
+      pts.map((p) => add(p, mul(L, w * 0.28))),
+      w * 0.14,
+      o.lit ?? mix(color, '#ffffff', 0.45),
+      [0.1, 0.6],
+      0.8,
+    )
+  );
+}
+
+/** A big leaf from `base` toward `tip`, `w` wide, with a midrib and veins. */
+export function leaf(pen: Pen, base: P, tip: P, w: number, color: string, o: { line?: number; curl?: number } = {}): string {
+  const d = sub(tip, base);
+  const n = perp(unit(d));
+  const c = o.curl ?? 0.15;
+  const m1 = add(add(base, mul(d, 0.35)), mul(n, w / 2));
+  const m2 = add(add(base, mul(d, 0.35)), mul(n, -w / 2));
+  const t = add(tip, mul(n, c * w));
+  const path = `M${pt(base)}Q${pt(add(m1, mul(d, 0.25)))} ${pt(t)}Q${pt(add(m2, mul(d, 0.25)))} ${pt(base)}Z`;
+  const mid = lerp(base, t, 0.5);
+  const veins: [P[], number][] = [0.3, 0.5, 0.7].flatMap((k) => {
+    const p = lerp(base, t, k);
+    return [
+      [[p, add(add(p, mul(d, 0.12)), mul(n, w * 0.3))], 2.2] as [P[], number],
+      [[p, add(add(p, mul(d, 0.12)), mul(n, -w * 0.3))], 2.2] as [P[], number],
+    ];
+  });
+  const inner = pen.brush([base, add(mid, mul(n, c * w * 0.4)), t], 3, pen.dark(color, 0.8), [0.05, 0.6], 0.8) + pen.brushes(veins, pen.dark(color, 0.8), [0.1, 0.6], 0.6);
+  return pen.form(path, color, { sh: w * 0.3, hatch: 1, line: o.line ?? 2.6, rim: 1.8, inner });
+}
+
+/** "x y" for path data. */
+const pt = (p: P) => `${r1(p[0])} ${r1(p[1])}`;
+
+/**
+ * A Gardener flower taller than a house: a curving stem with two big leaves and a great bloom of petals
+ * round a glowing gold heart, facing us and tilted a little. Root at (x, y), bloom centre `h` above it.
+ */
+export function giantFlower(pen: Pen, x: number, y: number, h: number, petal: string, o: { bend?: number; r?: number; n?: number; tilt?: number; line?: number; seed?: number } = {}): string {
+  const bend = o.bend ?? 0.15;
+  const r = o.r ?? h * 0.26;
+  const n = o.n ?? 8;
+  const line = o.line ?? 3;
+  const rand = rng(o.seed ?? 2);
+  const top: P = [x + h * bend, y - h];
+  const stem: P[] = [
+    [x, y + 20],
+    [x - h * bend * 0.4, y - h * 0.35],
+    [x + h * bend * 0.4, y - h * 0.7],
+    top,
+  ];
+  let out = stalk(pen, stem, Math.max(14, h * 0.045), GARDEN.leaf, { line: line * 0.9, taper: [0.02, 0.15] });
+  const s1 = lerp(stem[1], stem[2], 0.1);
+  const s2 = lerp(stem[2], stem[3], 0.2);
+  out += leaf(pen, s1, add(s1, [-h * 0.3, -h * 0.12]), h * 0.11, '#5fbf5a', { line, curl: -0.3 }) + leaf(pen, s2, add(s2, [h * 0.28, -h * 0.16]), h * 0.1, GARDEN.leaf, { line, curl: 0.3 });
+  // The bloom: back petals (darker), then front petals, then the heart.
+  const tilt = o.tilt ?? 0;
+  const lp = pen.local(false, tilt);
+  const petalD = (len: number, w: number) => `M0 0Q${r1(-w)} ${r1(-len * 0.4)} ${r1(-w * 0.45)} ${r1(-len * 0.92)}Q0 ${r1(-len * 1.05)} ${r1(w * 0.45)} ${r1(-len * 0.92)}Q${r1(w)} ${r1(-len * 0.4)} 0 0Z`;
+  let bloom = '';
+  for (let layer = 0; layer < 2; layer++) {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 360 + layer * (180 / n) + (rand() - 0.5) * 10;
+      const len = r * (layer ? 0.82 : 1) * (0.9 + rand() * 0.2);
+      const ppen = lp.local(false, a);
+      const c = layer ? petal : lp.dark(petal, 0.35);
+      const vein = `<path d="M0 ${r1(-len * 0.1)}Q${r1(len * 0.04)} ${r1(-len * 0.5)} 0 ${r1(-len * 0.85)}" fill="none" stroke="${mix(petal, '#ffffff', 0.5)}" stroke-width="${r1(len * 0.025)}" opacity=".7"/>`;
+      bloom += at(0, 0, 1, ppen.form(petalD(len, len * 0.36), c, { sh: len * 0.12, hatch: layer ? 0 : 1, line, rim: 1.6, inner: vein }), false, a);
+    }
+  }
+  const seeds = Array.from({ length: 9 }, (_, i) => {
+    const a = i * 2.4;
+    const rr = r * 0.16 * Math.sqrt((i + 1) / 9);
+    return `<circle cx="${r1(Math.cos(a) * rr)}" cy="${r1(Math.sin(a) * rr)}" r="${r1(r * 0.022)}" fill="#a86a10"/>`;
+  }).join('');
+  bloom += lp.glow(0, 0, r * 0.6, '#fff2b0', 0.8) + lp.form(circD(0, 0, r * 0.22), '#ffc94a', { sh: r * 0.07, line, rim: 1.6, inner: seeds });
+  return out + at(top[0], top[1], 1, bloom, false, tilt);
+}
+
+/**
+ * A tree of living crystal: a pale twisting trunk forking into branches, each tipped with a cluster of
+ * glowing shards. Roots at (x, y), about 420 tall at scale 1.
+ */
+export function crystalTree(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; seed?: number; glow?: number } = {}): string {
+  const lp = pen.local(!!o.flip);
+  const trunk: P[] = [
+    [0, 10],
+    [-14, -120],
+    [10, -230],
+    [-6, -300],
+  ];
+  const branches: [P[], number][] = [
+    [
+      [
+        [-4, -220],
+        [-80, -270],
+        [-130, -340],
+      ],
+      20,
+    ],
+    [
+      [
+        [6, -250],
+        [80, -300],
+        [120, -380],
+      ],
+      18,
+    ],
+    [
+      [
+        [-6, -290],
+        [-20, -360],
+        [-4, -430],
+      ],
+      18,
+    ],
+    [
+      [
+        [-60, -258],
+        [-120, -250],
+        [-170, -280],
+      ],
+      12,
+    ],
+  ];
+  let out = lp.glow(0, -330, 230, GARDEN.crystal, o.glow ?? 0.55);
+  for (const [p, w] of branches) out += stalk(lp, p, w, GARDEN.bark, { line: 2.6 });
+  out += stalk(lp, trunk, 40, GARDEN.bark, { line: 3, taper: [0.02, 0.3] });
+  // Roots.
+  out += lp.brushes(
+    [
+      [
+        [
+          [-10, 0],
+          [-50, 14],
+          [-80, 12],
+        ],
+        14,
+      ],
+      [
+        [
+          [10, 0],
+          [46, 12],
+          [74, 16],
+        ],
+        12,
+      ],
+    ],
+    INK,
+    [0.05, 0.8],
+  );
+  const tips: [P, string, number][] = [
+    [[-130, -340], GARDEN.crystal, 0],
+    [[120, -380], GARDEN.violet, 1],
+    [[-4, -430], GARDEN.crystal, 2],
+    [[-170, -280], GARDEN.violet, 3],
+  ];
+  for (const [p, c, i] of tips) out += crystals(lp, p[0], p[1] + 30, 0.8, c, { seed: (o.seed ?? 1) * 7 + i, n: 4, spread: 90, glow: 0.8, line: 2.4 });
+  return at(x, y, s, out, o.flip);
+}
+
+/** A seed-sprite, the Gardeners' little helper: a glowing seed with a leaf on its head, leaf wings and two dot eyes. Centred at (x, y). */
+export function seedSprite(pen: Pen, x: number, y: number, s: number, color: string = GARDEN.mint, o: { flip?: boolean; rot?: number } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  let out = lp.glow(0, 0, 70, color, 0.75);
+  out += lp.form('M-26 -6Q-60 -36 -70 -2Q-50 12 -26 -6Z', '#8fe07a', { sh: 6, line: 2.2, rim: 1.4 }) + lp.form('M26 -6Q60 -36 70 -2Q50 12 26 -6Z', '#8fe07a', { sh: 6, line: 2.2, rim: 1.4 });
+  out += lp.form(ellD(0, 0, 28, 34), '#f4ffe8', { sh: 10, line: 2.6, rim: 1.6, inner: `<ellipse cx="0" cy="8" rx="20" ry="20" fill="${color}" opacity=".45"/>` });
+  out += `<circle cx="-9" cy="-4" r="4.6" fill="${INK}"/><circle cx="11" cy="-4" r="4.6" fill="${INK}"/><circle cx="-8" cy="-6" r="1.6" fill="#fff"/><circle cx="12" cy="-6" r="1.6" fill="#fff"/>`;
+  out += lp.brush(
+    [
+      [-7, 9],
+      [1, 14],
+      [9, 9],
+    ],
+    3,
+    INK,
+    [0.2, 0.2],
+  );
+  out += lp.form('M0 -34Q22 -70 40 -56Q26 -38 0 -34Z', '#5fbf5a', { sh: 5, line: 2.2 });
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/** One of Aeëtes's weeder drones: a gold dome on a rotor, a red eye, garden shears and a tank of gold weed-killer. Centred at (x, y), facing right. */
+export function weeder(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; rot?: number; snip?: boolean } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  let out = '';
+  // The rotor: a blurred disc and its hub.
+  out += `<ellipse cx="0" cy="-74" rx="96" ry="12" fill="#ffffff" opacity=".35"/><path d="M-90 -74H90" stroke="${INK}" stroke-width="5" opacity=".5"/>`;
+  out += lp.form('M-6 -74H6V-40H-6Z', '#6a5a3a', { line: 2.2 });
+  // The tank underneath, sloshing gold weed-killer.
+  out += lp.form(ellD(-6, 34, 26, 20), '#cfe86a', { sh: 8, line: 2.4, inner: `<path d="M-30 34Q-6 26 20 34" stroke="#f6ff9a" stroke-width="4" fill="none"/>` }) + lp.glow(-6, 40, 40, '#e8ff7a', 0.5);
+  // The shears: two blades from a pivot, open or snapping shut.
+  const open = o.snip ? 8 : 22;
+  out += lp.brushes(
+    [
+      [
+        [
+          [36, 8],
+          [96, 8 - open],
+        ],
+        10,
+      ],
+      [
+        [
+          [36, 12],
+          [96, 12 + open],
+        ],
+        10,
+      ],
+    ],
+    INK,
+    [0.05, 0.8],
+  );
+  out += lp.brushes(
+    [
+      [
+        [
+          [36, 8],
+          [94, 8 - open],
+        ],
+        5,
+      ],
+      [
+        [
+          [36, 12],
+          [94, 12 + open],
+        ],
+        5,
+      ],
+    ],
+    '#e8eef6',
+    [0.05, 0.8],
+  );
+  out += `<circle cx="38" cy="10" r="6" fill="#6a5a3a" stroke="${INK}" stroke-width="2"/>`;
+  // The dome body and its rim.
+  out += lp.form('M-52 2Q-52 -46 0 -46Q52 -46 52 2Z', '#e8b440', { sh: 22, hatch: 2, line: 2.8, rim: 2, inner: `<path d="M-44 -18Q0 -30 44 -18" stroke="${INK}" stroke-width="2" fill="none" opacity=".5"/>` });
+  out += lp.form('M-58 0H58V14H-58Z', '#b8862a', { sh: 6, line: 2.6 });
+  out += lp.glow(22, -16, 26, '#ff3a4c', 0.85) + `<circle cx="22" cy="-16" r="9" fill="#ff4a5a" stroke="${INK}" stroke-width="2.4"/><circle cx="20" cy="-18" r="3" fill="#ffd0d0"/>`;
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/** A Gardener light-word fountain: a carved stone bowl on a stem, ribbons of coloured light rising out of its glowing water. Feet at (x, y). */
+export function lightFountain(pen: Pen, x: number, y: number, s: number): string {
+  let out = pen.glow(0, -170, 190, GARDEN.mint, 0.55);
+  out += pen.form('M-36 0L-24 -70H24L36 0Z', '#d8c8a8', { sh: 16, hatch: 1, line: 2.6, rim: 1.6 });
+  out += pen.form('M-130 -66Q-120 -112 0 -112Q120 -112 130 -66Q70 -40 0 -40Q-70 -40 -130 -66Z', '#e8dcc0', {
+    sh: 22,
+    hatch: 1,
+    line: 3,
+    rim: 2,
+    inner: [-70, -20, 30, 80].map((rx, i) => `<path d="${GLYPHS[i]}" fill="none" stroke="${GARDEN.mint}" stroke-width="5" transform="translate(${rx} -70) scale(.6)"/>`).join(''),
+  });
+  out += `<ellipse cx="0" cy="-100" rx="104" ry="12" fill="${GARDEN.mint}" opacity=".85"/>`;
+  const ribbons = ['#5ec8ff', '#7dff9a', '#ff6fcf', '#ffd166'];
+  ribbons.forEach((c, i) => {
+    const p: P[] = [
+      [-36 + i * 24, -100],
+      [-70 + i * 46, -190],
+      [-24 + i * 16, -280],
+      [-60 + i * 40, -360],
+    ];
+    out += pen.brush(p, 16, c, [0.05, 0.9], 0.3) + pen.brush(p, 7, mix(c, '#ffffff', 0.3), [0.05, 0.9], 0.95);
+  });
+  out += spark(pen, -50, -250, 14, '#ffffff') + spark(pen, 44, -320, 10, '#ffffff');
+  return at(x, y, s, out);
+}
+
+/**
+ * The Gardeners' great tree-temple far away: a vast pale trunk with a glowing door, its round crown of
+ * lilac leaves lit up from inside and dusted with crystal lights. Flat and hazy (it is miles off). Base at (x, y).
+ */
+export function treeTemple(pen: Pen, x: number, y: number, s: number, haze: string): string {
+  const rand = rng(14);
+  let out = pen.glow(0, -330, 420, '#ffe8b0', 0.55);
+  out += `<path d="M-80 0Q-50 -120 -70 -260H70Q50 -120 80 0Z" fill="#b8a8d8"/><path d="M-26 0V-80Q0 -110 26 -80V0Z" fill="#fff2c0"/>`;
+  const puffs: [number, number, number][] = [
+    [-150, -300, 110],
+    [150, -300, 110],
+    [0, -360, 150],
+    [-90, -430, 110],
+    [100, -440, 110],
+    [0, -500, 90],
+  ];
+  out += puffs.map(([px, py, r]) => `<circle cx="${px}" cy="${py}" r="${r}" fill="#a890d8"/>`).join('');
+  out += puffs.map(([px, py, r]) => `<circle cx="${px + r * 0.2}" cy="${py - r * 0.2}" r="${r * 0.7}" fill="#c8b8f0" opacity=".7"/>`).join('');
+  let dots = '';
+  for (let i = 0; i < 26; i++) dots += `M${r1((rand() - 0.5) * 360)} ${r1(-260 - rand() * 300)}h0`;
+  out += `<path d="${dots}" stroke="${GARDEN.crystal}" stroke-width="8" stroke-linecap="round"/>`;
+  out += pen.glow(0, -300, 380, haze, 0.55, 360);
+  return at(x, y, s, out);
+}
