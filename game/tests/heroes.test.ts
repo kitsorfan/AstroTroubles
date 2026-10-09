@@ -20,7 +20,8 @@ describe('hero table', () => {
       expect(HEROES[id].speed).toBeGreaterThan(0);
       expect(HEROES[id].color).toMatch(/^#[0-9a-f]{6}$/);
     }
-    expect(HERO_IDS).toEqual(['jason', 'atalanta', 'brennus']);
+    // The bronze mech of Talos's Forge is a hero too (a vehicle the others ride inside).
+    expect(HERO_IDS).toEqual(['jason', 'atalanta', 'brennus', 'mech']);
   });
 
   it('makes all three heroes playable', () => {

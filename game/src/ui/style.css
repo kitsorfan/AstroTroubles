@@ -2692,10 +2692,29 @@ canvas#game {
 
 /* ---------------- heroes: Atalanta's buttons and the switch-hero button ---------------- */
 
-/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta, `hb` General Brennus. */
+/* Each hero's icon and label on the shared buttons: `hj` Jason, `ha` Atalanta, `hb` General Brennus, `hm` the bronze mech. */
 .buttons:not([data-hero='jason']) .hj,
 .buttons:not([data-hero='atalanta']) .ha,
-.buttons:not([data-hero='brennus']) .hb {
+.buttons:not([data-hero='brennus']) .hb,
+.buttons:not([data-hero='mech']) .hm {
+  display: none;
+}
+
+/* The bronze mech (Talos's Forge): a bronze CANNON, a copper PUNCH and a fiery THRUST; no spin charges. */
+.buttons[data-hero='mech'] .btn.shoot {
+  background: radial-gradient(circle at 35% 30%, #ffe0a0, #a8692a);
+}
+
+.buttons[data-hero='mech'] .btn.spin {
+  background: radial-gradient(circle at 35% 30%, #ffd8a0, #c8862e);
+}
+
+.buttons[data-hero='mech'] .btn.dash {
+  background: radial-gradient(circle at 35% 30%, #ffd080, #e05a1a);
+}
+
+.buttons[data-hero='mech'] .btn.spin .charges,
+.buttons[data-hero='mech'] .btn.spin .cd-ring {
   display: none;
 }
 

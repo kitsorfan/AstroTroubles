@@ -165,6 +165,37 @@ export const BRENNUS = {
   stompSpeed: 24,
 } as const;
 
+/**
+ * The Gardeners' bronze mech suit (Talos's Forge): Jason pilots it, Atalanta rides on its shoulder. Big,
+ * heavy and a little slow, with one strong hydraulic jump, a forward THRUST (its jets) for gaps, a
+ * PUNCH that breaks bronze gates, a SLAM that breaks cracked floors, and a slow cannon.
+ */
+export const MECH = {
+  speed: 6.4,
+  /** A wider, taller body than Jason's: corridors in the forge are at least one cell wide. */
+  radius: 0.75,
+  height: 3,
+  /** One strong jump: apex about 2.4 units (four floor steps, with a little to spare). */
+  jumpV: 12.4,
+  /** THRUST (the DASH button): a burst of its back jets, on the ground or once per jump; gravity pauses while it lasts. */
+  thrustSpeed: 16,
+  thrustTime: 0.3,
+  thrustCooldown: 0.7,
+  /** PUNCH (the SPIN button on the ground): a one-two of bronze fists, each a heavy `smash` just in front. */
+  punchTime: 0.3,
+  punchCooldown: 0.12,
+  punchDamage: 3,
+  punchRadius: 1.5,
+  punchReach: 1.5,
+  /** SLAM (SPIN in the air): straight down, like a ground pound; it smashes cracked floors. */
+  slamSpeed: 26,
+  /** A landing at least this fast (falling) counts as a heavy landing: it also cracks brittle floors. */
+  heavyLanding: 17,
+  /** The cannon (BLAST): no heat, just a slower rhythm than Brennus's. */
+  shellCooldown: 0.75,
+  aimRange: 15,
+} as const;
+
 /** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */
 export const HERO_SWITCH = {
   cooldown: 1,

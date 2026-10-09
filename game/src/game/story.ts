@@ -61,6 +61,7 @@ export const FLYOVER: Record<DeckId, string> = {
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
   sirens: 'The <b>Sirens’ Sea</b>. Deep under the waves of a water moon lies a sunken Gardener gate... and Aeëtes’s gold buoys are singing a very strange song.',
+  forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -175,6 +176,14 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'bolt', text: 'Oh good. A giant. I was worried today would be boring.' },
     { who: 'jason', text: 'The map says the way to Colchis goes right across that island. Let’s go and say hello. Politely.' },
   ],
+  // Talos rests; the labyrinth gate leads under Colchis, to Medusa's Labyrinth.
+  forge: [
+    { who: 'iris', text: 'The labyrinth gate. The Gardeners built a maze under Colchis to keep the Fleece safe.' },
+    { who: 'halcyon', text: 'I am detecting a security system down there. One of Aeëtes’s. It calls itself... MEDUSA.' },
+    { who: 'bolt', text: 'Medusa? Like the old story? The one who turns people into STONE?' },
+    { who: 'atalanta', text: 'Then we don’t look her in the eye. Easy. ...Is it easy?' },
+    { who: 'jason', text: 'Talos is resting, the gate is open, and Colchis is right under our feet. Come on, Argonauts!' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -268,6 +277,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
   organ: { sub: 'Aeëtes’s singing trap · the loudest thing under the sea', color: '#ff6fb0' },
   scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
+  talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
 };
 
 /**
@@ -291,6 +301,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   piranha: { name: 'Piranha Drone', tip: 'Little gold fish robots that swim in a school and nibble the hull. PING stuns the whole school, then torpedo them!' },
   crab: { name: 'Crab-Drone', tip: 'Its big claws block shots from the front. When it snaps, the claws hang open: blast it then, or from the side!' },
   jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
+  anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

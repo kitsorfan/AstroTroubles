@@ -4,6 +4,7 @@ import { EL_DESERT } from './el/desert';
 import { EL_HARPIES } from './el/harpies';
 import { EL_BRENNUS3 } from './el/brennus3';
 import { EL_REEF } from './el/reef';
+import { EL_FORGE } from './el/forge';
 import { EL_HEROES } from './el/heroes';
 import { EL_JUNGLE } from './el/jungle';
 import { EL_PLAINS } from './el/plains';
@@ -678,4 +679,5 @@ export const EL: Record<string, string> = {
   ...EL_BRENNUS3,
   ...EL_SIRENS,
   ...EL_REEF,
+  ...EL_FORGE,
 };

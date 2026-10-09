@@ -17,6 +17,7 @@ import { Driller } from './gaia/driller';
 import { Hydra } from './gaia/hydra';
 import { RogueLux } from './gaia/rogue';
 import { Excavator } from './ch3/excavator';
+import { Talos } from './forge/talos';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
@@ -1581,6 +1582,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
     case 'organ':
       // The Siren Organ is fought from the submarine: see vehicles/sub (it never stands on a map).
       throw new Error('THE SIREN ORGAN is fought from the Dolphin submarine (vehicles/sub/organ.ts)');
+    case 'talos':
+      return new Talos(world, id, cx, cz, h);
   }
 }
 

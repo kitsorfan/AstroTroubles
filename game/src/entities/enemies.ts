@@ -15,6 +15,7 @@ import { Shockwave } from './hazards';
 import { makeHarpy } from './isles/harpy';
 import { makeCrab } from './reef/crab';
 import { makeJelly } from './reef/jelly';
+import { makeAnvilDrone } from './forge/anvil';
 import { makeRobot } from './robots';
 
 const v3 = new THREE.Vector3();
@@ -985,6 +986,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'jelly':
       e = makeJelly(world, id, x, h, z);
+      break;
+    case 'anvil':
+      e = makeAnvilDrone(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

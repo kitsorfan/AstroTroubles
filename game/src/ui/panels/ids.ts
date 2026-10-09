@@ -45,6 +45,9 @@ export const PANEL_IDS = [
   // Scylla's Reef: Scylla on her rock above Charybdis, and the Argo sailing through the calm strait.
   'ch3-scylla',
   'ch3-strait',
+  // Talos's Forge: the sleeping bronze mech, and Talos sitting down, free.
+  'ch3-mech',
+  'ch3-talos',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

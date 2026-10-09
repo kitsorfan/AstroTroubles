@@ -8,10 +8,11 @@ import type { DiveCourse } from '../vehicles/sub/dive';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
- * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea); the mech suit is planned.
+ * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea). (The mech suit of
+ * Talos's Forge walks the level's own map instead: it is the `mech` hero, see `heroes/mech.ts`.)
  */
 export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
@@ -19,15 +20,17 @@ export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
 export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 /**
  * The playable heroes (see `entities/heroes/heroes.ts` for what each one can do). Jason is the
- * default; chapter 3 adds Atalanta, and General Brennus plays his own levels (3 and 8).
+ * default; chapter 3 adds Atalanta, and General Brennus plays his own levels (3 and 8). `mech` is the
+ * Gardeners' bronze mech suit in Talos's Forge: Jason pilots it, with Atalanta riding on its shoulder.
  */
-export type HeroId = 'jason' | 'atalanta' | 'brennus';
+export type HeroId = 'jason' | 'atalanta' | 'brennus' | 'mech';
 /**
  * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
- * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
+ * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts, and the anvil
+ * drone drops heavy anvils from above (Talos's Forge).
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -132,6 +135,15 @@ export type Spec = Base &
     /* Scylla's Reef. */
     /** A raft of driftwood on the tidal flats: it rests on the sand at low tide and floats up with the sea (see `LevelDef.tide`). */
     | { type: 'raft' }
+    /* Talos's Forge (the bronze mech suit). */
+    /** A bronze gate (the cell under it is floor): only the mech's PUNCH, or a big blast from its cannon, breaks it open. */
+    | { type: 'bronzegate' }
+    /**
+     * A cracked forge floor over a cellar: the cell itself is the cellar floor (at `h`), and a cracked
+     * plate covers it at `lid` (world units). The mech's SLAM, or any heavy landing on it, smashes the
+     * plate and the mech drops into the cellar.
+     */
+    | { type: 'brittle'; lid: number }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 

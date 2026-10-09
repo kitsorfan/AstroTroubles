@@ -11,6 +11,7 @@ import { BOSS_CARD, FLYOVER } from '../game/story';
 import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
+import { talosOutro } from './forgeScenes';
 import { luxTaken, rogueIntro } from './luxScenes';
 import { straitClear } from './reefScenes';
 
@@ -294,6 +295,8 @@ export async function bossIntro(d: Director, w: World, b: Boss) {
 }
 
 export async function bossOutro(d: Director, w: World, b: Boss) {
+  // Talos isn't blown up: he sits down, free, and nods.
+  if (b.kind === 'talos') return talosOutro(d, w, b);
   const c = b.where.clone();
   const f = b.focus.clone();
   const color = BOSS_CARD[b.kind].color;

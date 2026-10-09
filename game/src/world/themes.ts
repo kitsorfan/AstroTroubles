@@ -504,4 +504,34 @@ export const THEMES: Record<ThemeId, Theme> = {
     space: false,
     bloom: 0.3,
   },
+  /*
+   * Talos's Forge: a bronze volcanic island in a teal sea, late afternoon. Black basalt with bronze-green
+   * patina, copper-coloured cliffs, glowing lava channels, a hazy amber sky and the sea far below.
+   */
+  forge: {
+    skyTop: '#2f6f9a',
+    skyBottom: '#ffc88a',
+    fog: '#d8a27a',
+    fogNear: 50,
+    fogFar: 170,
+    floor: '#4a3a34',
+    floorLine: '#2e2420',
+    floorSide: '#2e2420',
+    ice: '#c8e8f0',
+    wall: '#8a5a3a',
+    wallTrim: '#e0a040',
+    edge: '#ffb050',
+    hazard: '#ff7a1a',
+    hazardDeep: '#6a1a04',
+    hemiSky: '#ffe0c0',
+    hemiGround: '#3a2018',
+    hemi: 0.85,
+    sun: '#ffd8a8',
+    sunI: 1.9,
+    accent: '#e0a040',
+    mood: 'embers',
+    space: false,
+    bloom: 0.24,
+    outdoor: { ground: 'basalt', ground2: '#4a5a44', rock: '#9a6440', rockDark: '#5a3424', below: '#1f6a80', sunDisc: '#fff0d0', clouds: '#ffe4c8', hills: '#3a2a2e', stars: false },
+  },
 };

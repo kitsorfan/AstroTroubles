@@ -204,11 +204,11 @@ export class UI {
       <div class="stick-hint">${label('MOVE')}</div>
       <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${ring('charge-ring')}</div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${only(ICON.cannon, 'hm')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${label('CANNON', 'hm')}${ring('charge-ring')}</div>
         <div class="ammo"><div class="pips"></div><div class="fuel"><i></i></div><div class="reload"><i></i></div></div>
         <div class="heat hb"><i></i></div>
-        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${ring('cd-ring')}<div class="charges"></div></div>
-        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}<div class="charges"></div></div>
+        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${only(ICON.punch, 'hm')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${label('PUNCH', 'hm')}${ring('cd-ring')}<div class="charges"></div></div>
+        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${only(ICON.thrust, 'hm')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}${label('THRUST', 'hm')}<div class="charges"></div></div>
         <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
         <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><div class="wname"><b></b><div class="wcard-stats"></div></div></div>
@@ -1216,7 +1216,12 @@ export class UI {
         ${item('#ffd166', tr('CHARGE'), tr('a shoulder charge through crates, cracked walls and robots. Jump while charging for a CHARGE-LEAP over wide gaps.'))}
         ${item('#ff6a5a', tr('COMMAND'), tr('at a Legion command post, give your old robots an order: hold a plate, carry you, or fight on your side.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}</p>
+      <h3 class="help-sub">${tr('THE BRONZE MECH')}</h3>
+      <div class="help-grid">
+        ${item('#e0a040', tr('PUNCH'), tr('big bronze fists: they break bronze gates and knock Talos’s ankle armour off. In the air, SPIN is a SLAM that smashes cracked floors.'))}
+        ${item('#ffb04a', tr('THRUST'), tr('its back jets push it forward, on the ground or once per jump: JUMP, then THRUST to cross wide lava channels.'))}
+      </div>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}<br/>${tr('Mech: J cannon · K punch (in the air: slam) · L thrust')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }
