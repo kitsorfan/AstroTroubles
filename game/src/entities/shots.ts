@@ -43,7 +43,13 @@ const tmp = new THREE.Vector3();
 const tmp2 = new THREE.Vector3();
 
 /** How many of each weapon's shots and charged shots can fly at once. */
-const POOL: Record<WeaponId, [number, number]> = { blaster: [24, 4], spread: [30, 9], frost: [16, 3], thunder: [16, 3], seeker: [14, 4] };
+const POOL: Record<WeaponId, [number, number]> = { blaster: [24, 4], spread: [40, 9], frost: [30, 3], thunder: [12, 3], seeker: [14, 4], flame: [0, 0] };
+
+/** Shots shrink away over their last moments of flight instead of just vanishing. */
+const FADE = 0.12;
+
+/** How far charged shots (fireballs) fly: the weapon's range, but never less than this. */
+const FIREBALL_RANGE = 16;
 
 /** Pooled projectiles: Jason's shots (one look per weapon), his charged shots, and enemy spit. */
 export class Shots {
@@ -82,7 +88,10 @@ export class Shots {
     s.obj.visible = true;
     s.obj.position.copy(origin);
     s.vel.copy(dir).multiplyScalar(speed);
-    s.life = owner === 'enemy' ? 4 : (PLAYER.shotRange * WEAPONS[weapon].range) / speed;
+    // Each weapon's shots fly as far as its range, then fizzle out.
+    const range = owner === 'fireball' ? Math.max(FIREBALL_RANGE, WEAPONS[weapon].range) : WEAPONS[weapon].range;
+    s.life = owner === 'enemy' ? 4 : range / speed;
+    s.obj.scale.setScalar(1);
     s.dmg = dmg;
     s.gravity = gravity;
     s.target = opts.target ?? null;
@@ -129,8 +138,11 @@ export class Shots {
         w.particles.emit(p.x, p.y, p.z, { count: 3, color: Math.random() < 0.5 ? a : b, speed: 1.2, life: 0.45, size: 0.8, gravity: -1 });
       } else if (s.kind === 'player') {
         this.trail(s, dt);
+        if (s.life < FADE) s.obj.scale.setScalar(Math.max(0.05, s.life / FADE));
       }
       if (s.life <= 0) {
+        // A shot at the end of its range fizzles with a little puff.
+        if (s.kind === 'player') w.particles.emit(p.x, p.y, p.z, { count: 3, color: WEAPONS[s.weapon].glow, speed: 1.5, life: 0.25, size: 0.3, gravity: 0 });
         if (s.kind === 'fireball') this.pop(s, '');
         s.active = false;
         s.obj.visible = false;
@@ -255,7 +267,7 @@ export class Shots {
     const p = s.obj.position;
     if (!s.target?.alive) {
       const ahead = tmp2.copy(s.vel).normalize();
-      s.target = this.world.targetsNear(p, 9).find((t) => tmp.copy(t.aim).sub(p).normalize().dot(ahead) > 0.2) ?? null;
+      s.target = this.world.targetsNear(p, SEEKER.search).find((t) => tmp.copy(t.aim).sub(p).normalize().dot(ahead) > 0.2) ?? null;
       if (!s.target) return;
     }
     const speed = s.vel.length();

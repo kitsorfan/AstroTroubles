@@ -57,6 +57,7 @@ import {
   type FloorFx,
   type Overloadable,
 } from '../entities/props';
+import { Bramble } from '../entities/flame';
 import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
@@ -458,6 +459,9 @@ export class World {
         break;
       case 'breakwall':
         if (!this.taken.has(id)) this.addEntity(new BreakWall(this, id, cx, cz, h));
+        break;
+      case 'bramble':
+        if (!this.taken.has(id)) this.addEntity(new Bramble(this, id, cx, cz, h));
         break;
       case 'boltfind': {
         const who = spec.who ?? 'lux';

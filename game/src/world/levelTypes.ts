@@ -94,6 +94,8 @@ export type Spec = Base &
     | { type: 'dark' }
     | { type: 'exit' }
     | { type: 'breakwall' }
+    /** A wall of thorny brambles filling the cell: only fire (the Flamethrower, a charged fireball, a cannon blast) burns it away. */
+    | { type: 'bramble' }
     /** A droid switched off in a dark corner, waiting for Jason to wake it: LUX (default) or IRIS. */
     | { type: 'boltfind'; who?: 'lux' | 'iris' }
     /** A hologram projector that plays a recorded message (a dialogue key) the first time Jason walks past. */

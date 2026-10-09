@@ -17,7 +17,8 @@ import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
 import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
 import { JasonFx } from './moveFx';
-import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
+import { FlameJet, burnCone } from './flame';
+import { SPREAD, WEAPONS, WEAPON_ORDER, FLAME, chargedDamageOf, clipOf, cooldownOf, damageOf, equippedWeapon, nextWeapon, ownedWeapons, reloadOf, stepTank, type Tank, type WeaponId } from './weapons';
 
 /** How long Jason hangs in the air (and flips) before a ground pound slams down. */
 const POUND_HANG = 0.18;
@@ -79,8 +80,16 @@ export class Player {
   private sinceSpin = 99;
   private shootCd = 0;
   private shootPose = 0;
-  /** Shots left in the clip; the clip refills after a reload. */
-  ammo: number;
+  /** Shots left in each weapon's clip (each keeps its own when Jason switches); a clip refills after a reload. */
+  private clips: Partial<Record<WeaponId, number>> = {};
+  /** The Flamethrower's fuel tank (seconds of flame left), whether it ran dry, and its rest before refilling. */
+  tank: Tank = { fuel: 0, dry: false, rest: 0 };
+  /** True on frames the Flamethrower is burning; the nozzle's way, a tap's short puff, and the damage clock. */
+  flaming = false;
+  private flameDir = new THREE.Vector3(0, 0, 1);
+  private puffT = 0;
+  private flameTickT = 0;
+  private jet: FlameJet | null = null;
   /** Seconds left on the current reload (0 = not reloading). */
   reloadT = 0;
   /** 0..1 fireball charge while BLAST is held. */
@@ -139,7 +148,7 @@ export class Player {
     this.energy = this.energyMax;
     this.spins = this.spinMax;
     this.armor = this.armorMax;
-    this.ammo = this.clipSize;
+    this.refillArms();
     this.renderY = y;
     this.safe.set(x, y, z);
     world.scene.add(this.jason.root);
@@ -263,9 +272,8 @@ export class Player {
     this.cancelCharge();
     this.ata?.reset();
     this.bren?.reset();
-    // Jason reloads while he follows along, so his clip is full when he's back.
-    this.ammo = this.clipSize;
-    this.reloadT = 0;
+    // Jason reloads (and refuels) while he follows along, so his weapons are full when he's back.
+    this.refillArms();
     this.hero = next;
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
@@ -463,8 +471,31 @@ export class Player {
     }
   }
 
+  /** Shots left in the equipped weapon's clip. */
+  get ammo(): number {
+    return this.clips[this.weapon] ?? this.clipSize;
+  }
+
+  set ammo(n: number) {
+    this.clips[this.weapon] = n;
+  }
+
+  /** The equipped weapon's clip size (with Bigger Clip). */
   get clipSize() {
-    return PLAYER.clip + (this.world.save.upgrades.clip ?? 0) * 2;
+    return clipOf(this.weapon, this.world.save.upgrades);
+  }
+
+  /** Fills every weapon's clip and the fuel tank, and drops any reload in progress. */
+  refillArms() {
+    const up = this.world.save.upgrades;
+    for (const id of WEAPON_ORDER) this.clips[id] = clipOf(id, up);
+    this.tank = { fuel: clipOf('flame', up), dry: false, rest: 0 };
+    this.reloadT = 0;
+  }
+
+  /** 0..1 fuel left in the Flamethrower's tank. */
+  get fuel() {
+    return Math.max(0, Math.min(1, this.tank.fuel / clipOf('flame', this.world.save.upgrades)));
   }
 
   /** Jason's blaster is reloading (enemies take the chance to rush in). Atalanta's bow never reloads. */
@@ -478,7 +509,7 @@ export class Player {
   }
 
   private get reloadTime() {
-    return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
+    return reloadOf(this.weapon, this.world.save.upgrades);
   }
 
   /** True while a ground spin (or Atalanta's spinning kick) is whirling, and guarding the hero. */
@@ -682,8 +713,7 @@ export class Player {
   revive() {
     this.down = false;
     this.hearts = this.world.save.maxHearts;
-    this.ammo = this.clipSize;
-    this.reloadT = 0;
+    this.refillArms();
     this.charge = 0;
     this.energy = this.energyMax;
     this.spins = this.spinMax;
@@ -705,6 +735,12 @@ export class Player {
   }
 
   update(dt: number, input: Input) {
+    this.flaming = false;
+    this.step(dt, input);
+    this.updateJet(dt);
+  }
+
+  private step(dt: number, input: Input) {
     const w = this.world;
     const b = this.body;
     this.invuln = Math.max(0, this.invuln - dt);
@@ -966,6 +1002,10 @@ export class Player {
   }
 
   private updateBlaster(dt: number, input: Input) {
+    if (this.weapon === 'flame') {
+      this.updateFlame(dt, input);
+      return;
+    }
     const held = input.isHeld('shoot');
     this.shootBuf = input.take('shoot') ? PLAYER.shootBuffer : this.shootBuf - dt;
     this.sinceShot += dt;
@@ -995,7 +1035,7 @@ export class Player {
     if (held) {
       this.holdT += dt;
       if (this.holdT > PLAYER.chargeDelay && this.spinT <= 0) {
-        if (this.reloadT <= 0 && this.ammo < PLAYER.fireballCost) this.startReload();
+        if (this.reloadT <= 0 && this.ammo < this.chargeCost) this.startReload();
         if (this.charge === 0) audio.play('charge');
         // The ring stops just short of full until the reload finishes.
         const cap = this.reloadT > 0 ? 0.95 : 1;
@@ -1020,6 +1060,71 @@ export class Player {
       this.chargedFx = false;
     }
     this.wasHeld = held;
+  }
+
+  /** Shots a charged shot uses up from the equipped weapon's clip. */
+  private get chargeCost() {
+    return Math.min(this.clipSize, WEAPONS[this.weapon].chargeCost);
+  }
+
+  /**
+   * The Flamethrower: fire pours out while BLAST is held (a tap gives a short puff), auto-aimed at the
+   * closest enemy in reach. It burns fuel; once the tank runs dry it sputters until it has refilled a bit.
+   */
+  private updateFlame(dt: number, input: Input) {
+    const held = input.isHeld('shoot');
+    if (input.take('shoot')) {
+      this.puffT = FLAME.puff;
+      if (this.tank.dry || this.tank.fuel <= 0) {
+        audio.play('empty');
+        this.jet?.smoke(this.nozzle());
+      }
+    }
+    this.puffT -= dt;
+    this.sinceShot += dt;
+    this.charge = 0;
+    const want = (held || this.puffT > 0) && this.spinT <= 0;
+    if (!want || this.tank.dry || this.tank.fuel <= 0) {
+      this.flameTickT = 0;
+      return;
+    }
+    this.flaming = true;
+    this.sinceShot = 0;
+    this.shootPose = 0.15;
+    const w = this.world;
+    this.flameTickT -= dt;
+    // Turn toward the nearest enemy in reach every tick, then roast everything in the cone.
+    if (this.flameTickT <= 0) {
+      this.flameTickT = cooldownOf('flame', w.save.upgrades);
+      const [origin, dir] = this.aimShot(WEAPONS.flame.aim);
+      this.flameDir.copy(dir);
+      burnCone(w, origin, dir, w.save.upgrades);
+    }
+  }
+
+  /** Where the flames leave the nozzle (a little ahead of the blaster's muzzle). */
+  private nozzle(out = new THREE.Vector3()) {
+    const b = this.body;
+    const f = this.facing;
+    return out.set(b.x + Math.sin(f) * 0.95 + Math.cos(f) * 0.3, b.y + 1.02, b.z + Math.cos(f) * 0.95 - Math.sin(f) * 0.3);
+  }
+
+  /** Every frame: the fuel tank drains or refills, and the flames, their light and their roar follow `flaming`. */
+  private updateJet(dt: number) {
+    const was = this.tank.dry;
+    this.tank = stepTank(this.tank, this.flaming, dt, this.world.save.upgrades);
+    if (this.tank.dry && !was) {
+      audio.play('sputter', 0.6);
+      audio.play('empty');
+      this.jet?.smoke(this.nozzle());
+    }
+    if (this.flaming && !this.jet) this.jet = new FlameJet(this.world);
+    if (this.jet) {
+      // The flames point where Jason faces, tilted toward the target's height.
+      const dir = tmp.set(Math.sin(this.facing), this.flameDir.y, Math.cos(this.facing)).normalize();
+      this.jet.update(dt, this.flaming, this.nozzle(), dir);
+    }
+    audio.flame(this.flaming);
   }
 
   /** Where shots leave the blaster, and which way they fly (auto-aiming at the best target). */
@@ -1052,6 +1157,8 @@ export class Player {
     if (ownedWeapons(s.weapons).length < 2) return;
     s.weapon = nextWeapon(s.weapons, this.weapon);
     this.cancelCharge();
+    // A reload in progress stops; the new weapon has its own clip, just as Jason left it.
+    this.reloadT = 0;
     this.shootCd = Math.max(this.shootCd, 0.15);
     this.refreshGear();
     audio.play('reload', WEAPONS[this.weapon].pitch * 1.2);
@@ -1062,23 +1169,26 @@ export class Player {
   /** The colour of the charge glow at the muzzle (gold once a Blaster fireball is ready). */
   private get chargeColor() {
     const wp = WEAPONS[this.weapon];
-    if (wp.id === 'blaster') return this.charge >= 1 ? '#ffd166' : '#ff9a3d';
+    if (wp.id === 'blaster' || wp.id === 'flame') return this.charge >= 1 ? '#ffd166' : '#ff9a3d';
     return this.charge >= 1 ? wp.core : wp.glow;
   }
 
   /** Shot damage: the Blaster's 1 + Blaster Power, times the weapon's power. */
   private get shotDamage() {
-    return (1 + (this.world.save.upgrades.blaster ?? 0)) * WEAPONS[this.weapon].power;
+    return damageOf(this.weapon, this.world.save.upgrades);
   }
 
   private shoot() {
     const w = this.world;
     const wp = WEAPONS[this.weapon];
-    const rapid = w.save.upgrades.rapid ?? 0;
-    this.shootCd = PLAYER.shootCooldown * Math.max(0.4, 1 - rapid * 0.15) * wp.cooldown;
-    const [origin, dir, target] = this.aimShot(PLAYER.aimRange * (wp.id === 'seeker' ? 1.3 : 1));
-    if (wp.id === 'spread') {
-      for (const k of [-1, 0, 1]) w.shots.fire('player', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle), wp.speed, this.shotDamage, 0, { weapon: wp.id });
+    this.shootCd = cooldownOf(wp.id, w.save.upgrades);
+    const [origin, dir, target] = this.aimShot(wp.aim);
+    if (wp.pellets > 1) {
+      // A fan of pellets, centred on the aim.
+      for (let i = 0; i < wp.pellets; i++) {
+        const k = i - (wp.pellets - 1) / 2;
+        w.shots.fire('player', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle), wp.speed * (0.94 + Math.random() * 0.12), this.shotDamage, 0, { weapon: wp.id });
+      }
     } else {
       w.shots.fire('player', origin, dir, wp.speed, this.shotDamage, 0, { weapon: wp.id, target: wp.id === 'seeker' ? target : null });
     }
@@ -1094,17 +1204,17 @@ export class Player {
   private fireball() {
     const w = this.world;
     const wp = WEAPONS[this.weapon];
-    const [origin, dir, target] = this.aimShot((PLAYER.aimRange + 4) * (wp.id === 'seeker' ? 1.3 : 1));
-    const dmg = (4 + (w.save.upgrades.blaster ?? 0) * 2) * wp.power;
+    const [origin, dir, target] = this.aimShot(wp.aim + 4);
+    const dmg = chargedDamageOf(wp.id, w.save.upgrades);
     const speed = wp.id === 'seeker' ? PLAYER.fireballSpeed * 0.75 : PLAYER.fireballSpeed;
     const opts = { weapon: wp.id, target: wp.id === 'seeker' ? target : null };
     if (wp.id === 'spread') {
       // Three smaller fireballs in a fan.
       let n = 0;
-      for (const k of [-1, 0, 1]) if (w.shots.fire('fireball', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle * 1.3), speed, dmg, 0, opts)) n += 1;
+      for (const k of [-1, 0, 1]) if (w.shots.fire('fireball', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.chargedAngle), speed, dmg, 0, opts)) n += 1;
       if (!n) return;
     } else if (!w.shots.fire('fireball', origin, dir, speed, dmg, 0, opts)) return;
-    this.ammo = Math.max(0, this.ammo - PLAYER.fireballCost);
+    this.ammo = Math.max(0, this.ammo - this.chargeCost);
     this.sinceShot = 0;
     this.shootPose = 0.4;
     this.shootCd = 0.4;
