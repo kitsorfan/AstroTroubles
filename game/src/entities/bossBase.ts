@@ -85,6 +85,14 @@ export abstract class Boss extends Entity {
     return this.center;
   }
 
+  /**
+   * A point the fight camera keeps in view along with the hero (a boss that stays far away, like
+   * MEDUSA on her plinth), or null to just follow the hero.
+   */
+  get frame(): THREE.Vector3 | null {
+    return null;
+  }
+
   /** Where cutscene cameras look: the boss's face. */
   get focus(): THREE.Vector3 {
     const w = this.where;

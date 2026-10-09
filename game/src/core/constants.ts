@@ -260,3 +260,34 @@ export const OUTDOOR = {
   boulderSpeed: 7,
   boulderRadius: 1.15,
 };
+
+/**
+ * Medusa's Labyrinth (chapter 3): MEDUSA's gaze beams, and the Gardeners' Mirror Shield that bounces
+ * them. A gaze never hurts: it turns the hero it touches to stone for a moment.
+ */
+export const GAZE = {
+  /** Seconds a hero stays stone, then how long they are safe from the next gaze (time to step out). */
+  stone: 2.2,
+  safe: 1.6,
+  /** How far a beam travels in all (world units), counting every bounce, and its tracing step. */
+  range: 80,
+  step: 0.25,
+  /** A gaze beam's height above the eye-sentry's floor. */
+  eye: 1.3,
+  /** Seconds of beam a light crystal needs before it lights up. */
+  catchTime: 0.45,
+  /** Seconds an eye-sentry stays shut after its own gaze is bounced back into it. */
+  dazzle: 5,
+  /** A bounced beam snaps onto a crystal, eye or mirror within this angle (radians) of where it was going. */
+  snap: 0.6,
+};
+
+/** The Mirror Shield: hold SPIN (on the ground) this long to raise it; Jason walks slowly behind it. */
+export const MIRROR = {
+  hold: 0.18,
+  speed: 2.8,
+  /** How quickly he turns behind it (so it's easy to aim the bounce). */
+  turn: 6,
+  /** A beam bounces when it hits the shield's front: within this cosine of straight on. */
+  arc: 0.12,
+};

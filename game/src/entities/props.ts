@@ -1512,7 +1512,7 @@ export class Exit extends Entity implements Interactable {
 }
 
 /** A hologram projector that plays a recorded message the first time Jason walks by. */
-const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a', atalanta: '#8ff8e4' };
+const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a', atalanta: '#8ff8e4', aeetes: '#ffd166' };
 
 export class Holo extends Entity implements Interactable {
   readonly spot: THREE.Vector3;

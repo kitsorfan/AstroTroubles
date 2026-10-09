@@ -23,6 +23,7 @@ import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
 import { Aello } from './isles/aello';
 import { Scylla } from './reef/scylla';
+import { Medusa } from './labyrinth/medusa';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 export { Boss };
@@ -1584,6 +1585,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       throw new Error('THE SIREN ORGAN is fought from the Dolphin submarine (vehicles/sub/organ.ts)');
     case 'talos':
       return new Talos(world, id, cx, cz, h);
+    case 'medusa':
+      return new Medusa(world, id, cx, cz, h);
   }
 }
 

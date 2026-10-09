@@ -28,6 +28,7 @@ import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
 import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
+import { GazeSentry, LightCrystal, MirrorPylon } from '../entities/labyrinth/gaze';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -114,6 +115,8 @@ export interface ResumeState {
 /** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Jason. */
 const PITCH = 1.0;
 const PITCH_MAX = 1.5;
+/** A flatter tilt while a far-off boss (MEDUSA) shares the screen with the hero. */
+const FRAME_PITCH = 0.72;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
 const ENV_LIGHT = 0.45;
 const tmpV = new THREE.Vector3();
@@ -518,6 +521,15 @@ export class World {
         break;
       case 'brittle':
         if (!this.taken.has(id)) this.addEntity(new BrittleFloor(this, id, cx, cz, spec.lid));
+        break;
+      case 'gazer':
+        this.addEntity(new GazeSentry(this, id, cx, cz, h, spec.dir, spec.sweep, spec.period, spec.offset, spec.reach));
+        break;
+      case 'mirror':
+        this.addEntity(new MirrorPylon(this, id, cx, cz, h, spec.turn));
+        break;
+      case 'crystal':
+        this.addEntity(new LightCrystal(this, id, cx, cz, h, spec.flag));
         break;
       case 'decor':
         this.decorItems.push({
@@ -1484,18 +1496,21 @@ export class World {
     // The bronze mech is twice Jason's height: the camera looks at its chest, from a little farther back.
     const big = this.player.hero === 'mech';
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + (big ? 2 : 1.2), p.z + p.vz * 0.12);
+    // A boss that keeps its distance (MEDUSA) pulls the view toward itself, so both stay on screen.
+    const frame = this.boss?.started && !this.boss.defeated ? this.boss.frame : null;
+    if (frame) aim.lerp(frame, 0.4);
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
       this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
-    const dist = (this.boss?.started && !this.boss.defeated ? 17 : 13) + (big ? 3 : 0);
+    const dist = frame ? 22 : (this.boss?.started && !this.boss.defeated ? 17 : 13) + (big ? 3 : 0);
     // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;
     for (const eye of [0.15, 1.0]) {
-      for (let a = PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
+      for (let a = frame ? FRAME_PITCH : PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
       if (want >= 0) break;
     }
     if (want < 0) want = PITCH_MAX;

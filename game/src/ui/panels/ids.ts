@@ -48,6 +48,9 @@ export const PANEL_IDS = [
   // Talos's Forge: the sleeping bronze mech, and Talos sitting down, free.
   'ch3-mech',
   'ch3-talos',
+  // Medusa's Labyrinth: the Mirror Shield in the Gardeners' shrine, and MEDUSA asleep by the open gate.
+  'ch3-mirror',
+  'ch3-medusa',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

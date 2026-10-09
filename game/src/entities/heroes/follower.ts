@@ -94,6 +94,8 @@ export class Follower {
 
   update(dt: number, p: Player) {
     this.sample(dt, p);
+    // Still stone from MEDUSA's gaze: a statue stays put.
+    if (p.stoneLeft(this.id) > 0) return;
     const b = p.body;
     const m = this.model;
     const lead = Math.hypot(b.x - this.x, b.z - this.z);

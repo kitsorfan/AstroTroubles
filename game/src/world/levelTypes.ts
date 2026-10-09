@@ -8,7 +8,7 @@ import type { DiveCourse } from '../vehicles/sub/dive';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge' | 'labyrinth';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea). (The mech suit of
@@ -17,7 +17,8 @@ export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bri
 export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
 export type TileKind = 'void' | 'floor' | 'wall' | 'hazard' | 'ice' | 'grate';
-export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
+/** `mirror` is the Gardeners' Mirror Shield, found in Medusa's Labyrinth (chapter 3): Jason holds SPIN to raise it and bounce gaze beams. */
+export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple' | 'mirror';
 /**
  * The playable heroes (see `entities/heroes/heroes.ts` for what each one can do). Jason is the
  * default; chapter 3 adds Atalanta, and General Brennus plays his own levels (3 and 8). `mech` is the
@@ -26,11 +27,12 @@ export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 export type HeroId = 'jason' | 'atalanta' | 'brennus' | 'mech';
 /**
  * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
- * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts, and the anvil
- * drone drops heavy anvils from above (Talos's Forge).
+ * scrap in chapter 3); the harpy is one of AeÃ«tes's gold thief drones that snatch bolts, the anvil
+ * drone drops heavy anvils from above (Talos's Forge), and the coil is one of MEDUSA's cable snakes
+ * in her labyrinth.
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil' | 'coil';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos' | 'medusa';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -144,6 +146,21 @@ export type Spec = Base &
      * plate and the mech drops into the cellar.
      */
     | { type: 'brittle'; lid: number }
+    /* Medusa's Labyrinth (chapter 3): gaze beams, mirrors and light crystals. */
+    /**
+     * One of MEDUSA's eye-sentries: a stone eye that shines a green gaze beam along `dir` (0 north,
+     * 1 east, 2 south, 3 west). A hero it touches turns to stone for a moment (no damage). `sweep`
+     * swings the beam that many degrees to either side and back every `period` seconds. Its own gaze
+     * bounced back into its eye dazzles it shut for a few seconds. `reach` cuts the beam short (in cells).
+     */
+    | { type: 'gazer'; dir: 0 | 1 | 2 | 3; sweep?: number; period?: number; offset?: number; reach?: number }
+    /** A Gardener mirror on a stand: it turns a beam a quarter turn. Any shot, arrow or spin rotates it (`turn` 0 is "/", 1 is "\"). The cell is solid. */
+    | { type: 'mirror'; turn?: 0 | 1 }
+    /**
+     * A light crystal on a pedestal: a gaze beam lights it (bounced off mirrors, or off Jason's Mirror
+     * Shield) and sets `flag` for good. `shield` says the beam can only get there off the Mirror Shield.
+     */
+    | { type: 'crystal'; flag: string; shield?: boolean }
     | { type: 'decor'; kind: DecorKind; rot?: number; scale?: number; solid?: boolean }
   );
 
@@ -192,7 +209,9 @@ export type DecorKind =
   | 'kelp'
   | 'shell'
   | 'lighthouse'
-  | 'tidepost';
+  | 'tidepost'
+  /** One of AeÃ«tes's robots, turned to stone by MEDUSA's gaze long ago (Medusa's Labyrinth). */
+  | 'statue';
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
@@ -205,7 +224,7 @@ export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
 export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops', 'kelp'];
 
 /** Who can appear in a hologram log. */
-export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus' | 'atalanta';
+export type HoloSpeaker = 'captain' | 'rosa' | 'hypatia' | 'brennus' | 'atalanta' | 'aeetes';
 
 /** `glitch` is HALCYON while GaScu pollen scrambles its circuits. */
 export type Speaker =
@@ -230,7 +249,9 @@ export type Speaker =
   /** LUX while Brennus's control chip has hold of him. */
   | 'rogue'
   /** Phineus, the blind old astronomer of the Harpy Isles (chapter 3). */
-  | 'phineus';
+  | 'phineus'
+  /** MEDUSA, Aeëtes's security AI in the labyrinth under Colchis (chapter 3). */
+  | 'medusa';
 
 export interface Line {
   who: Speaker;

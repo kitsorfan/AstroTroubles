@@ -62,6 +62,7 @@ export const FLYOVER: Record<DeckId, string> = {
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
   sirens: 'The <b>Sirens’ Sea</b>. Deep under the waves of a water moon lies a sunken Gardener gate... and Aeëtes’s gold buoys are singing a very strange song.',
   forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
+  labyrinth: '<b>Medusa’s Labyrinth</b>. Under the gate of Colchis winds a maze of green stone... and in the dark, a great green eye is opening.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -184,6 +185,15 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'atalanta', text: 'Then we don’t look her in the eye. Easy. ...Is it easy?' },
     { who: 'jason', text: 'Talos is resting, the gate is open, and Colchis is right under our feet. Come on, Argonauts!' },
   ],
+  // Out of the labyrinth: Aeëtes's gold fleet arrives over Colchis, and Brennus comes to hold the sky-dock.
+  labyrinth: [
+    { who: 'halcyon', text: 'Argonauts, the labyrinth gate is open! The Argo can fly straight up the old shaft to the Gardeners’ sky-dock.' },
+    { who: 'halcyon', text: 'But... I count twenty gold ships coming round the moon. Aeëtes has brought his whole fleet.' },
+    { who: 'aeetes', text: 'You switched off my MEDUSA? Then I will close the sky myself. Nobody reaches the garden but ME!' },
+    { who: 'brennus', text: 'Argus. Brennus here. My lifeboat is right behind you, and my old robots are with me.' },
+    { who: 'brennus', text: 'I will hold the sky-dock. You fly through to the garden. Do not argue, Captain. Just fly.' },
+    { who: 'atalanta', text: 'Holding a whole dock against a whole fleet? Okay. I take back everything I said about grumpy generals.' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -278,6 +288,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   organ: { sub: 'Aeëtes’s singing trap · the loudest thing under the sea', color: '#ff6fb0' },
   scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
   talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
+  medusa: { sub: 'Aeëtes’s security AI · one look turns you to stone', color: '#7dff9a' },
 };
 
 /**
@@ -302,6 +313,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   crab: { name: 'Crab-Drone', tip: 'Its big claws block shots from the front. When it snaps, the claws hang open: blast it then, or from the side!' },
   jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
   anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
+  coil: { name: 'Cable Snake', tip: 'It rears up and hisses, then LUNGES straight ahead. Step aside, then blast it while it lies tangled!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
