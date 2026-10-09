@@ -6,67 +6,152 @@ import {
   backdrop,
   C,
   captain,
-  cloud,
-  fleece,
-  flower,
-  gascuBloom,
+  fleece as kitFleece,
   gasGiant,
   glow,
   glowDef,
-  goldShip,
-  hypatia,
+  goldShip as kitGoldShip,
   ink,
   jason,
-  leaf,
   lin,
   lux,
   panel,
   ridge,
-  ruinStone,
-  saucer,
+  saucer as kitSaucer,
   sparkle,
   stars,
   vignette,
 } from '../kit';
+import * as gn from '../gn';
+import { celestia, fallenPetal, fleece, hypatia, ruinStone } from '../gn/ch3a';
 
-/** Rows of little sprouts in a garden bed. */
-function sprouts(y: number, xs: number[], s: number): string {
-  return xs.map((x, i) => `<path d="M${x} ${y}V${y - 26 * s}" stroke="#3f7a3a" stroke-width="${5 * s}"/>${leaf(x, y - 24 * s, 0.4 * s, i % 2 ? -150 : -160)}${leaf(x, y - 24 * s, 0.4 * s, i % 2 ? -30 : -20)}`).join('');
+/* ---------------- 20. Celestia fading, in the graphic-novel style ---------------- */
+
+/** A raised garden bed seen in perspective: a wooden frame round dark soil with rows of sprouts. Front edge from x0 to x1 at y. */
+function gardenBed(pen: gn.Pen, x0: number, x1: number, y: number, depth: number, seed: number, k = 1): string {
+  const rand = gn.rng(seed);
+  const h = 22 * k;
+  const back = y - depth;
+  const sk = depth * 0.35;
+  const soil = pen.form(gn.dPoly([[x0 + sk, back], [x1 - sk, back], [x1, y], [x0, y]]), '#4a3020', { sh: depth * 0.4, line: 2.2 * k, hatch: 1 });
+  const front = pen.form(gn.dPoly([[x0, y], [x1, y], [x1, y + h], [x0, y + h]]), '#b07a48', { sh: h * 0.5, line: 2.4 * k, rim: 1.4, inner: `<path d="M${x0} ${gn.r1(y + h * 0.5)}H${x1}" stroke="${gn.INK}" stroke-width="${gn.r1(1.6 * k)}" opacity=".5"/>` });
+  const leaves: [gn.P[], number][] = [];
+  const lit: [gn.P[], number][] = [];
+  for (let row = 0; row < 3; row++) {
+    const ry = back + depth * (0.3 + row * 0.28);
+    const t = (ry - back) / depth;
+    const xa = x0 + sk * (1 - t);
+    const xb = x1 - sk * (1 - t);
+    for (let sx = xa + 20 * k; sx < xb - 10 * k; sx += (36 + rand() * 14) * k) {
+      const sz = (14 + t * 10) * k;
+      leaves.push([[[sx, ry], [sx - sz * 0.6, ry - sz * 0.8], [sx - sz * 1.1, ry - sz * 0.7]], 6 * k]);
+      leaves.push([[[sx, ry], [sx + sz * 0.6, ry - sz * 0.9], [sx + sz * 1.1, ry - sz * 0.8]], 6 * k]);
+      lit.push([[[sx, ry], [sx + sz * 0.5, ry - sz * 0.8]], 2.4 * k]);
+    }
+  }
+  return soil + pen.brushes(leaves, '#3f7a3a', [0.1, 0.6]) + pen.brushes(lit, '#b8e088', [0.1, 0.6], 0.8) + front;
 }
 
-/** 20. The colony's first garden: Celestia drooping and pale; Dr. Hypatia reads the glowing ruin stone. */
+/** The colony's domes far off on the plain: pale half-spheres with lit windows, flat in the haze. */
+function colony(pen: gn.Pen, x: number, y: number, s: number): string {
+  const dome = (dx: number, r: number) =>
+    `<path d="M${dx - r} 0A${r} ${r * 0.8} 0 0 1 ${dx + r} 0Z" fill="#dfe6f0"/><path d="M${dx - r * 0.2} ${-r * 0.78}A${r} ${r * 0.8} 0 0 1 ${dx + r} 0H${dx + r * 0.3}Z" fill="#9aa8c8" opacity=".55"/><path d="M${dx - r * 0.6} ${-r * 0.2}h${r * 0.2}M${dx - r * 0.1} ${-r * 0.3}h${r * 0.2}" stroke="#ffd98a" stroke-width="5"/>`;
+  return gn.at(x, y, s, dome(0, 60) + dome(110, 40) + dome(-90, 34) + `<path d="M-140 0H170" stroke="#9aa8c8" stroke-width="4"/><path d="M30 -48V-110" stroke="#9aa8c8" stroke-width="4"/>` + pen.glow(30, -114, 10, '#ff6a6a', 0.9));
+}
+
+/** 20. The colony's first garden at dawn: Celestia droops, pale; Jason reaches for her; Dr. Hypatia reads the Gardeners' stone, its light-words shining up into a picture of the Golden Fleece. */
 export function ch3Fading(): string {
-  const id = 'ch3-fading';
-  return panel(
-    backdrop(id + 'b', [[0, '#8ab4d8'], [0.6, '#cfdde6'], [1, '#e8ece4']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.5)}${glowDef(id + 'p', '#ffd0f0', 0.4)}${lin(id + 'm', [[0, C.gold, 0.55], [1, C.gold, 0]])}</defs>` +
-      gasGiant(id + 'j', 1300, 190, 110) +
-      cloud(260, 170, 0.9, '#fff', 0.8) +
-      cloud(820, 120, 0.7, '#fff', 0.7) +
-      ridge(4, 520, 70, '#94b890', 5) +
-      ridge(9, 600, 50, '#7aa868', 4) +
-      `<path d="M0 690Q800 650 1600 690V900H0Z" fill="#86b84e"/><path d="M40 790Q600 760 1000 790L1020 860Q600 830 20 862Z" fill="#7a4a2a" ${ink(5)}/>` +
-      sprouts(808, [120, 230, 340, 760, 870, 960], 1) +
-      flower(520, 760, 14, C.pink) +
-      flower(600, 730, 11, C.gold) +
-      flower(1480, 760, 13, C.hello) +
-      // Celestia, drooping, her colours washed pale; a few petals have dropped.
-      glow(id + 'p', 700, 390, 260, 0.6) +
-      `<g transform="rotate(16 700 690)">${gascuBloom(id + 'c', 700, 390, 0.9, 300)}<circle cx="700" cy="390" r="140" fill="#9a98a8" opacity=".45"/></g>` +
-      at(560, 800, 1, `<use href="#sbBp" fill="#d8b8d0" transform="rotate(100) scale(.6)"/>`) +
-      at(880, 812, 1, `<use href="#sbBp" fill="#c8c0a0" transform="rotate(-80) scale(.55)"/>`) +
-      jason(360, 905, 1.05, { pose: 'reach', face: 'worried' }) +
-      lux(520, 520, 0.95, 'scared') +
-      // The ruin stone, its light-words shining up into a picture of the Fleece.
-      `<path d="M1300 520L1200 300H1420Z" fill="url(#${id}m)" opacity=".7"/>` +
-      glow(id + 'g', 1310, 290, 170, 0.8) +
-      fleece(id + 'f', 1310, 290, 0.55) +
-      ruinStone(id + 'r', 1300, 880, 0.95) +
-      hypatia(1110, 905, 1.0, { legs: 'kneel', pose: 'point', face: 'shock' }) +
-      sparkle(1200, 220, 12, '#fff6d0') +
-      sparkle(1420, 360, 9, '#fff6d0') +
-      vignette(id + 'v', 0.3, '#2a2040'),
-  );
+  const pen = gn.Pen.scene('ch3-fading', { key: [-0.85, -0.45], keyColor: '#ffe2c0', rim: [0.9, -0.35], rimColor: '#ffd36a', shadow: '#6a6aa8', depth: 0.5 });
+  const sunX = 150;
+  const sunY = 420;
+  const sky =
+    gn.sky(pen, [
+      [0, '#22385e'],
+      [0.32, '#6a88b8'],
+      [0.56, '#e8c4b0'],
+      [0.68, '#ffe0c0'],
+    ]) +
+    gn.starfield(pen, 20, 36, 0, 0, 1600, 200, '#e8f0ff') +
+    gn.gasGiant(pen, 1330, 150, 104, { lightDir: [-0.95, 0.2], haze: 0.4, sky: '#7a90b8' }) +
+    gn.godRays(pen, sunX, sunY, [100, 120, 140, 160, 185], 6, 1300, '#fff0d0', 0.22) +
+    gn.bloom(pen, sunX, sunY, 110, '#fff2d8', 0.9) +
+    gn.cloud(pen, 560, 200, 280, '#fff4ea', '#b8a8c8', { seed: 4 }) +
+    gn.cloud(pen, 1000, 120, 200, '#fff4ea', '#b8a8c8', { seed: 5 });
+  const far =
+    gn.silhouette(
+      [
+        [-80, 560],
+        [120, 490],
+        [360, 520],
+        [560, 470],
+        [800, 510],
+        [1100, 460],
+        [1380, 500],
+        [1680, 470],
+        [1680, 620],
+        [-80, 620],
+      ],
+      '#9aa8c8',
+    ) +
+    colony(pen, 840, 552, 0.7) +
+    gn.silhouette(
+      [
+        [-80, 600],
+        [300, 560],
+        [700, 590],
+        [1000, 556],
+        [1400, 584],
+        [1680, 560],
+        [1680, 680],
+        [-80, 680],
+      ],
+      '#7a9a88',
+    ) +
+    gn.haze(pen, 480, 660, '#ffe8d4', 0.65);
+  // The garden: grassy ground, beds of sprouts, and Celestia's stone planter in the middle.
+  const ground =
+    pen.form('M-80 640Q800 610 1680 640V960H-80Z', '#6aa04a', {
+      sh: 20,
+      line: 0,
+      paint: pen.lin([
+        [0, '#9ac870'],
+        [0.5, '#5a8a40'],
+        [1, '#2a4a2a'],
+      ]),
+    }) +
+    gardenBed(pen, 140, 520, 690, 40, 3, 0.7) +
+    gardenBed(pen, 980, 1300, 680, 36, 4, 0.7) +
+    gn.grass(pen, -40, 1640, 660, 26, 26, '#4a7a3a', '#b8e088', 3) +
+    gn.wash(pen, 760, '#1a2030', 0.55);
+  const planter = pen.form('M560 742Q700 704 840 742L828 790Q700 810 572 790Z', '#c8bca8', { sh: 26, hatch: 1, line: 3, rim: 2, inner: `<path d="M600 760L616 798M670 752L676 806M740 752L736 806M800 760L792 798" stroke="${gn.INK}" stroke-width="2.4" opacity=".45"/>` });
+  const soil = pen.form('M572 744Q700 714 828 744Q700 760 572 744Z', '#3a2618', { line: 2 });
+  const fallen = fallenPetal(pen, 560, 812, 0.8, '#b8a8d8', 20) + fallenPetal(pen, 960, 820, 0.9, '#d8c8a8', -30) + fallenPetal(pen, 690, 846, 0.7, '#c8a8c8', 60);
+  // Celestia, her head hanging toward Jason, colours washed pale; one petal drifting down.
+  const plant = celestia(pen, 700, 744, 1.1, { droop: 0.8, fade: 0.7, side: -1 }) + fallenPetal(pen, 380, 600, 0.8, '#a8b8e0', -50) + gn.spark(pen, 540, 480, 9, '#ffd6f2', 0.8) + gn.spark(pen, 585, 540, 6, '#ffd6f2', 0.6) + gn.spark(pen, 500, 575, 5, '#ffd6f2', 0.45) + soil;
+  // The stone, its light-words beaming up into a hologram of the Fleece.
+  const beam = `<path d="M1040 400L880 150H1120L1120 400Z" fill="${pen.lin([
+    [0, '#ffd166', 0],
+    [1, '#ffd166', 0.5],
+  ])}"/>`;
+  const stone = gn.castShadow(pen, 1120, 776, 120, 14, 0.5) + ruinStone(pen, 1080, 780, 0.95) + beam + fleece(pen, 990, 190, 0.66, { holo: true }) + gn.spark(pen, 1060, 190, 14, '#fff6d0') + gn.spark(pen, 1330, 330, 10, '#fff6d0');
+  const heroes =
+    gn.castShadow(pen, 300, 880, 150, 14, 0.45) +
+    gn.jason(pen, 300, 884, 1.08, {
+      pose: { turn: 0.5, lean: 8, tilt: 8, armN: [-10, 26], armF: { to: [1.6, 0.45] }, legN: { to: [-0.24, 0.95] }, legF: { to: [0.3, 0.93] }, handN: 'fist', handF: 'open', footN: 20, wristF: -70 },
+      mood: 'worried',
+      look: [3, 0],
+    }) +
+    gn.lux(pen, 610, 200, 0.85, 'scared', { look: [-4, 7], flip: true }) +
+    gn.castShadow(pen, 1310, 882, 150, 14, 0.45) +
+    hypatia(pen, 1310, 884, 1.0, {
+      flip: true,
+      pad: true,
+      pose: { turn: 0.5, lean: 8, tilt: -10, armF: [138, 146], armN: [30, 80], legN: { to: [-0.42, 0.55] }, legF: { to: [0.42, 0.56] }, handF: 'point', handN: 'grip', footN: 70 },
+      mood: 'surprised',
+      look: [2, -4],
+    });
+  const fore = gn.grass(pen, -70, 260, 940, 4, 140, '#10281a', '#4a8a4a', 9) + gn.grass(pen, 1440, 1680, 940, 4, 140, '#10281a', '#4a8a4a', 10);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, ground + planter + fallen + plant + stone) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#141028') + gn.grain(pen, 0.08));
 }
 
 /** 21. Captain Argus rebuilds the shuttle into the Argo, at sunset; Jason cheers, LUX welds. */
@@ -110,11 +195,11 @@ export function ch3Aeetes(): string {
       `<defs>${glowDef(id + 'g', C.gold, 0.6)}${glowDef(id + 'h', '#7fe6ff', 0.5)}${lin(id + 'f', [[0, '#5a3a5a'], [1, '#22142a']])}</defs>` +
       stars(31, 140, 0, 0, 1600, 700) +
       gasGiant(id + 'j', 1080, 300, 170) +
-      goldShip(id + 's', 420, 260, 0.55) +
-      goldShip(id + 't', 1450, 520, 0.4) +
-      saucer(760, 180, 0.6) +
-      saucer(900, 120, 0.45, true) +
-      saucer(250, 470, 0.5) +
+      kitGoldShip(id + 's', 420, 260, 0.55) +
+      kitGoldShip(id + 't', 1450, 520, 0.4) +
+      kitSaucer(760, 180, 0.6) +
+      kitSaucer(900, 120, 0.45, true) +
+      kitSaucer(250, 470, 0.5) +
       // The window frame of the flagship's bridge.
       `<path d="M0 0H1600V900H0ZM80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="#2a1a10" fill-rule="evenodd"/>` +
       `<path d="M80 70Q800 -10 1520 70L1560 660Q800 720 40 660Z" fill="none" stroke="${C.gold}" stroke-width="16"/>` +
@@ -125,7 +210,7 @@ export function ch3Aeetes(): string {
       `<path d="M1120 900L1160 760H1400L1440 900Z" fill="#3a2a40" ${ink(5)}/><ellipse cx="1280" cy="760" rx="120" ry="20" fill="#7fe6ff" opacity=".6"/>` +
       `<path d="M1180 760L1220 470H1340L1380 760Z" fill="#7fe6ff" opacity=".18"/>` +
       glow(id + 'h', 1280, 520, 200, 0.7) +
-      `<g opacity=".85">${fleece(id + 'l', 1280, 520, 0.7)}</g>` +
+      `<g opacity=".85">${kitFleece(id + 'l', 1280, 520, 0.7)}</g>` +
       glow(id + 'g', 600, 560, 340, 0.4) +
       aeetes(600, 960, 1.45, { pose: 'spread' }) +
       sparkle(1170, 420, 14, '#fff6d0') +
