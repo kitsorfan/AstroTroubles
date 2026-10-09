@@ -26,6 +26,7 @@ import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -496,6 +497,12 @@ export class World {
         break;
       case 'plate':
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'bronzegate':
+        if (!this.taken.has(id)) this.addEntity(new BronzeGate(this, id, cx, cz, h));
+        break;
+      case 'brittle':
+        if (!this.taken.has(id)) this.addEntity(new BrittleFloor(this, id, cx, cz, spec.lid));
         break;
       case 'decor':
         this.decorItems.push({
@@ -1459,14 +1466,16 @@ export class World {
       return;
     }
     const p = this.player.body;
-    const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
+    // The bronze mech is twice Jason's height: the camera looks at its chest, from a little farther back.
+    const big = this.player.hero === 'mech';
+    const aim = tmpV.set(p.x + p.vx * 0.12, p.y + (big ? 2 : 1.2), p.z + p.vz * 0.12);
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
       this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
-    const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
+    const dist = (this.boss?.started && !this.boss.defeated ? 17 : 13) + (big ? 3 : 0);
     // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;

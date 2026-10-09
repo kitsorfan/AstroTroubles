@@ -39,6 +39,9 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // Talos's Forge: the sleeping bronze mech, and Talos sitting down, free.
+  'ch3-mech',
+  'ch3-talos',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

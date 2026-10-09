@@ -59,6 +59,7 @@ export const FLYOVER: Record<DeckId, string> = {
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -154,6 +155,14 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // Talos rests; the labyrinth gate leads under Colchis, to Medusa's Labyrinth.
+  forge: [
+    { who: 'iris', text: 'The labyrinth gate. The Gardeners built a maze under Colchis to keep the Fleece safe.' },
+    { who: 'halcyon', text: 'I am detecting a security system down there. One of Aeëtes’s. It calls itself... MEDUSA.' },
+    { who: 'bolt', text: 'Medusa? Like the old story? The one who turns people into STONE?' },
+    { who: 'atalanta', text: 'Then we don’t look her in the eye. Easy. ...Is it easy?' },
+    { who: 'jason', text: 'Talos is resting, the gate is open, and Colchis is right under our feet. Come on, Argonauts!' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +254,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
 };
 
 /**
@@ -265,6 +275,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

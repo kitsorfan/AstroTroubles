@@ -17,6 +17,7 @@ import { Driller } from './gaia/driller';
 import { Hydra } from './gaia/hydra';
 import { RogueLux } from './gaia/rogue';
 import { Excavator } from './ch3/excavator';
+import { Talos } from './forge/talos';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
@@ -1572,6 +1573,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Aello(world, id, cx, cz, h);
     case 'excavator':
       return new Excavator(world, id, cx, cz, h);
+    case 'talos':
+      return new Talos(world, id, cx, cz, h);
   }
 }
 

@@ -15,7 +15,8 @@ import { Arrows } from './heroes/arrows';
 import { AtalantaMoves } from './heroes/atalanta';
 import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
-import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { MechMoves } from './heroes/mech';
 import { JasonFx } from './moveFx';
 import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
 
@@ -42,6 +43,8 @@ export class Player {
   readonly ata: AtalantaMoves | null;
   /** General Brennus's moves, model and cannon (built only on his own levels). */
   readonly bren: BrennusMoves | null;
+  /** The bronze mech's moves, model and cannon (built only in Talos's Forge). */
+  readonly mech: MechMoves | null;
   /** Her arrows in flight (they keep flying after a switch). */
   readonly arrows: Arrows | null;
   /** The hero not in control, walking along behind. */
@@ -133,7 +136,9 @@ export class Player {
     this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
     this.arrows = withAtalanta ? new Arrows(world) : null;
     this.bren = this.roster.includes('brennus') ? new BrennusMoves(this, world) : null;
+    this.mech = this.cast.includes('mech') ? new MechMoves(this, world) : null;
     this.body.h = HEROES[this.hero].height;
+    if (this.hero === 'mech' && this.mech) this.body.r = this.mech.radius;
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.energy = this.energyMax;
@@ -145,8 +150,11 @@ export class Player {
     world.scene.add(this.jason.root);
     if (this.ata) world.scene.add(this.ata.model.root);
     if (this.bren) world.scene.add(this.bren.model.root);
+    if (this.mech) world.scene.add(this.mech.model.root);
     this.fx = new JasonFx(world.scene);
     this.showHero();
+    // Back at a checkpoint after climbing into the mech: everyone is already aboard.
+    if (this.hero === 'mech' && this.mech) this.mech.seat(this.jason, this.ata?.model ?? null);
   }
 
   /**
@@ -156,7 +164,8 @@ export class Player {
   get roster(): HeroId[] {
     const joins = this.world.def.joins ?? {};
     if (heroDev.heroes?.length) return this.cast;
-    return this.cast.filter((h) => {
+    // Once the bronze mech has joined, the others ride inside it (see `joinedRoster`).
+    return joinedRoster(this.cast, (h) => {
       const flag = joins[h];
       return !flag || this.world.hasFlag(flag);
     });
@@ -172,6 +181,11 @@ export class Player {
    * or at the given spot. The HUD then shows the switch button.
    */
   heroJoined(at?: THREE.Vector3) {
+    const ride = this.roster.length === 1 && HEROES[this.roster[0]].vehicle ? this.roster[0] : null;
+    if (ride && ride !== this.hero) {
+      this.board(ride);
+      return;
+    }
     this.showHero();
     const b = this.body;
     if (at) this.follower?.place(at.x, at.y, at.z, this.facing);
@@ -203,16 +217,46 @@ export class Player {
 
   private modelOf(id: HeroId): HeroModel {
     if (id === 'brennus' && this.bren) return this.bren.model;
+    if (id === 'mech' && this.mech) return this.mech.model;
     return id === 'atalanta' && this.ata ? this.ata.model : this.jason;
+  }
+
+  /**
+   * Everyone climbs into a vehicle hero (the bronze mech), right where it is parked: from now on it is the
+   * only hero, and the others ride inside it (their models are posed in its cockpit and on its shoulder).
+   */
+  board(ride: HeroId) {
+    const m = this.modelOf(ride).root;
+    this.cancelCharge();
+    this.ata?.reset();
+    this.bren?.reset();
+    this.hero = ride;
+    this.body.h = HEROES[ride].height;
+    for (const id of this.cast) if (id !== ride) this.modelOf(id).root.visible = false;
+    if (ride === 'mech' && this.mech) {
+      this.body.r = this.mech.radius;
+      this.mech.seat(this.jason, this.ata?.model ?? null);
+    }
+    this.teleport(m.position.x, m.position.y, m.position.z);
+    this.facing = m.rotation.y;
+    this.showHero();
+    this.refreshGear();
+    this.world.refreshCompanions();
+    this.world.hooks.hud();
   }
 
   /** Shows the playing hero, and hands the other one (if any) to the follower. */
   private showHero() {
     // Jason's model is always built; on a level without him (General Brennus's own) it stays hidden.
     if (!this.cast.includes('jason')) this.jason.root.visible = false;
-    for (const id of this.cast) this.modelOf(id).root.visible = id === this.hero;
-    const other = nextHero(this.roster, this.hero);
-    if (!other) return;
+    // Heroes who haven't joined yet (or who ride inside the mech) are left where `showWaiting` put them.
+    const now = this.roster;
+    for (const id of this.cast) if (now.includes(id) || id === this.hero) this.modelOf(id).root.visible = id === this.hero;
+    const other = nextHero(now, this.hero);
+    if (!other) {
+      this.follower = null;
+      return;
+    }
     const m = this.modelOf(other);
     m.root.visible = true;
     if (this.follower) this.follower.swap(m, other);
@@ -232,7 +276,7 @@ export class Player {
       cooldown: this.swapCd,
       grounded: b.grounded || this.coyote > 0,
       locked: this.down || this.world.cutscene,
-      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false),
+      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false) || (this.mech?.busy ?? false),
       cramped: this.ata?.cramped ?? false,
     });
   }
@@ -488,7 +532,7 @@ export class Player {
 
   /** Dashing (Jason) or sliding (Atalanta): enemies bumped into don't hurt. */
   get dashing() {
-    return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false);
+    return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false) || (this.mech?.thrusting ?? false);
   }
 
   /** True if General Brennus's raised shield faces a hit coming from (x, z): shots bounce off it. */
@@ -663,6 +707,7 @@ export class Player {
     this.dashT = 0;
     this.ata?.reset();
     this.bren?.reset();
+    this.mech?.reset();
     this.follower?.placeNear(x, y, z, this.facing);
   }
 
@@ -677,6 +722,7 @@ export class Player {
     this.wasGrounded = false;
     this.ata?.launched();
     this.bren?.launched();
+    this.mech?.launched();
   }
 
   revive() {
@@ -719,7 +765,11 @@ export class Player {
       this.ata?.reset();
       this.bren?.reset();
       if (this.ata && this.hero === 'atalanta') this.ata.animate(dt, 0);
-      else if (this.bren && this.hero === 'brennus') {
+      else if (this.mech && this.hero === 'mech') {
+        this.mech.reset();
+        this.mech.cannon.update(dt);
+        this.mech.animate(dt, 0);
+      } else if (this.bren && this.hero === 'brennus') {
         this.bren.cannon.update(dt);
         this.bren.animate(dt, 0);
       } else this.animate(dt, 0);
@@ -736,6 +786,10 @@ export class Player {
     if (input.take('swap')) this.switchHero();
     if (this.ata && this.hero === 'atalanta') {
       this.ata.update(dt, input);
+      return;
+    }
+    if (this.mech && this.hero === 'mech') {
+      this.mech.update(dt, input);
       return;
     }
     if (this.bren && this.hero === 'brennus') {

@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'anvil';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,7 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  anvil: '#ff8a3a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -290,6 +291,38 @@ function glyph(g: G, kind: BadgeKind) {
       g.fillStyle = '#e0142a';
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'anvil': {
+      // A little rotor drone on top, a cable, and a heavy anvil hanging under it.
+      g.lineWidth = 6;
+      g.beginPath();
+      g.moveTo(34, 22);
+      g.lineTo(94, 22);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(64, 36, 18, 11, 0, 0, Math.PI * 2);
+      g.fill();
+      g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(64, 46);
+      g.lineTo(64, 66);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(30, 68);
+      g.lineTo(98, 68);
+      g.quadraticCurveTo(86, 78, 80, 84);
+      g.lineTo(80, 92);
+      g.lineTo(96, 104);
+      g.lineTo(32, 104);
+      g.lineTo(48, 92);
+      g.lineTo(48, 84);
+      g.quadraticCurveTo(40, 76, 30, 68);
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 36, 5, 0, Math.PI * 2);
       g.fill();
       break;
     }

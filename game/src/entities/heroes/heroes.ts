@@ -6,7 +6,7 @@
  * that `Player` hands control to while it is the active hero (see `heroes/atalanta.ts`). Levels list
  * the heroes they allow in `LevelDef.heroes`.
  */
-import { ATALANTA, BRENNUS, PLAYER } from '../../core/constants';
+import { ATALANTA, BRENNUS, MECH, PLAYER } from '../../core/constants';
 import type { HeroId, Speaker } from '../../world/levelTypes';
 
 /**
@@ -34,10 +34,20 @@ export type HeroMove =
   | 'cannon'
   | 'smash'
   | 'stomp'
-  | 'command';
+  | 'command'
+  /* The bronze mech (Talos's Forge): its PUNCH breaks bronze gates, its SLAM cracked floors, its THRUST crosses gaps (plus a cannon) */
+  | 'punch'
+  | 'slam'
+  | 'thrust';
 
 export interface HeroDef {
   id: HeroId;
+  /**
+   * A vehicle the other heroes climb into (the bronze mech): once it joins (see `LevelDef.joins`) it is the
+   * only hero in the roster, with the others riding inside. Until then it stands parked at the marker
+   * named after it.
+   */
+  vehicle?: boolean;
   /** Speaker key for the hero's portrait and name. */
   speaker: Speaker;
   /** The hero's colour (switch button ring, flashes). */
@@ -90,6 +100,19 @@ export const HEROES: Record<HeroId, HeroDef> = {
     buttons: { shoot: 'CANNON', spin: 'SHIELD', dash: 'CHARGE' },
     moves: ['cannon', 'shield', 'smash', 'stomp', 'command'],
   },
+  // The Gardeners' bronze mech suit (see `heroes/mech.ts`): Jason at the controls, Atalanta on its shoulder.
+  mech: {
+    id: 'mech',
+    speaker: 'jason',
+    color: '#d89a3a',
+    playable: true,
+    vehicle: true,
+    speed: MECH.speed,
+    jumpV: MECH.jumpV,
+    height: MECH.height,
+    buttons: { shoot: 'CANNON', spin: 'PUNCH', dash: 'THRUST' },
+    moves: ['cannon', 'punch', 'slam', 'thrust'],
+  },
 };
 
 export const HERO_IDS = Object.keys(HEROES) as HeroId[];
@@ -120,6 +143,17 @@ export function heroRoster(level?: readonly HeroId[], dev: { heroes?: HeroId[]; 
   const list = dev.hero ? [dev.hero, ...base] : [...base];
   const out = list.filter((h, i) => HEROES[h]?.playable && list.indexOf(h) === i);
   return out.length ? out : ['jason'];
+}
+
+/**
+ * Who can play right now, from the level's cast and who has joined: heroes still waiting to join are
+ * left out, and once a vehicle hero (the bronze mech) has joined it is the only one, because everyone
+ * else rides inside it.
+ */
+export function joinedRoster(cast: readonly HeroId[], joined: (h: HeroId) => boolean): HeroId[] {
+  const list = cast.filter(joined);
+  const ride = list.find((h) => HEROES[h].vehicle);
+  return ride ? [ride] : list;
 }
 
 /** The hero a switch changes to (the next one in the roster), or null when there is nobody to switch to. */
