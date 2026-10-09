@@ -1,83 +1,71 @@
 /** Chapter 3 panels for Brennus's Last Stand: the old general on Colchis's sky-dock as the gold fleet comes, and his salute to the Argo. */
-import { at, backdrop, brennus, C, cloud, gascuSprout, gasGiant, glow, glowDef, goldShip, ink, lin, panel, sparkle, stars, vignette } from '../kit';
 import * as gn from '../gn';
+import { dockGun, goldShip, legionBot } from '../gn/ch3c';
 
-const STONE = '#e8dcc4';
-const STONE_DARK = '#b4a48a';
-const RUNE = '#5ee0c8';
+/* ---------------- 25. The stand ---------------- */
 
-/** One of Brennus's old Legion robots, olive again, with a green lens: on his side (feet at x, y). */
-function legionBot(x: number, y: number, s: number, flip = false): string {
-  const body = `<path d="M-30 -10L-34 -60M30 -10L34 -60" stroke="#262e16" stroke-width="18" stroke-linecap="round"/>
-    <path d="M-48 -10H-18M18 -10H48" ${ink(8)}/><path d="M-48 -10H-18M18 -10H48" stroke="#3a4426" stroke-width="12" stroke-linecap="round"/>
-    <ellipse cx="0" cy="-104" rx="62" ry="54" fill="${C.olive}" ${ink(6)}/>
-    <circle cx="0" cy="-96" r="14" fill="${C.red}" ${ink(3)}/>
-    <ellipse cx="-58" cy="-134" rx="20" ry="13" fill="#c9a24a" ${ink(4)}/><ellipse cx="58" cy="-134" rx="20" ry="13" fill="#c9a24a" ${ink(4)}/>
-    <ellipse cx="0" cy="-176" rx="40" ry="34" fill="${C.olive}" ${ink(5)}/>
-    <circle cx="8" cy="-174" r="15" fill="#3dff8a" ${ink(4)}/><circle cx="12" cy="-178" r="5" fill="#fff"/>
-    <path d="M-20 -206V-232" ${ink(4)}/><circle cx="-20" cy="-236" r="6" fill="#3dff8a" ${ink(3)}/>
-    <rect x="30" y="-118" width="70" height="20" rx="7" fill="#2a2c24" ${ink(4)}/>`;
-  return at(x, y, s, body, flip);
-}
-
-/** The Gardeners' great arch of pale stone, glowing with teal light-runes (feet of the pillars at y). */
-function greatArch(id: string, x0: number, x1: number, y: number, top: number): string {
-  const mid = (x0 + x1) / 2;
-  const w = 70;
-  let runes = '';
-  for (let i = 0; i < 6; i++) {
-    for (const px of [x0, x1]) runes += `<circle cx="${px}" cy="${y - 60 - i * ((y - top - 120) / 6)}" r="${i % 2 ? 7 : 10}" fill="${RUNE}"/>`;
-  }
-  return `<defs>${glowDef(id + 'r', RUNE, 0.6)}</defs>${glow(id + 'r', mid, top + 80, (x1 - x0) * 0.55, 0.35)}
-    <path d="M${x0 - w} ${y}V${top + 90}Q${x0 - w} ${top - 40} ${mid} ${top - 70}Q${x1 + w} ${top - 40} ${x1 + w} ${top + 90}V${y}H${x1 - w}V${top + 110}Q${x1 - w} ${top + 30} ${mid} ${top + 10}Q${x0 + w} ${top + 30} ${x0 + w} ${top + 110}V${y}Z" fill="${STONE}" ${ink(6)}/>
-    <path d="M${x0 + w - 18} ${y}V${top + 120}M${x1 + w - 18} ${y}V${top + 100}" stroke="#000" stroke-width="12" opacity=".08"/>
-    ${runes}<circle cx="${mid}" cy="${top - 26}" r="22" fill="${RUNE}" ${ink(4)}/><circle cx="${mid}" cy="${top - 26}" r="9" fill="#fff"/>`;
-}
-
-/** The sky-dock's stone floor in front: a slab with glowing rune lines, its edge dropping to the clouds. */
-function dockFloor(id: string, y: number): string {
-  return `<defs>${lin(id + 'f', [[0, STONE], [1, STONE_DARK]])}</defs>
-    <path d="M-20 ${y}Q800 ${y - 30} 1620 ${y}V920H-20Z" fill="url(#${id}f)" ${ink(6)}/>
-    <path d="M100 ${y + 60}H700M900 ${y + 70}H1500M300 ${y + 130}H1300" stroke="${RUNE}" stroke-width="6" stroke-linecap="round" opacity=".75"/>`;
-}
-
-/** A sea of sunset clouds far below. */
-function cloudSea(y: number): string {
-  return (
-    `<rect x="0" y="${y}" width="1600" height="${900 - y}" fill="#ffd2c0"/>` +
-    [0, 1, 2, 3, 4, 5, 6, 7].map((i) => cloud(80 + i * 210, y + 30 + (i % 2) * 24, 1.1, i % 2 ? '#fff0e6' : '#ffe2d4')).join('')
-  );
-}
-
-/** 25. On Colchis's sky-dock at sunset, Brennus and his Legion stand guard as Aeëtes's gold fleet comes over the clouds. */
+/**
+ * 25. High on Colchis's sky-dock, General Brennus plants himself in front of the great arch with his old
+ * Legion, shield up, as Aeëtes's gold fleet comes glinting out of the afternoon glare.
+ */
 export function ch3Stand(): string {
-  const id = 'ch3-stand';
-  const fleet = (
-    [
-      [300, 250, 0.32],
-      [560, 175, 0.22],
-      [140, 400, 0.24],
-      [720, 330, 0.17],
-      [430, 430, 0.14],
-    ] as const
-  )
-    .map(([x, y, s], i) => at(x, y, 1, goldShip(`${id}g${i}`, 0, 0, s), true))
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#2a2060'], [0.5, '#9a5a9a'], [1, '#ffb487']]) +
-      stars(25, 70, 0, 0, 1600, 300) +
-      gasGiant(id + 'j', 1380, 160, 100, false) +
-      cloudSea(560) +
-      fleet +
-      greatArch(id + 'a', 1180, 1460, 780, 220) +
-      dockFloor(id + 'd', 720) +
-      legionBot(470, 840, 0.95) +
-      legionBot(1050, 850, 0.95, true) +
-      brennus(760, 880, 1.3, { pose: 'hips', face: 'determined' }) +
-      gascuSprout(id + 's', 860, 790, 0.42) +
-      sparkle(870, 690, 10, C.pinkLight) +
-      vignette(id + 'v', 0.35, '#2a1838'),
-  );
+  const pen = gn.Pen.scene('ch3-stand', { key: [-0.8, -0.55], keyColor: '#ffd890', rim: [0.9, -0.3], rimColor: '#9fe8ff', shadow: '#5a4a8a', depth: 0.55, hatchAngle: -35 });
+  const back = pen.relight({ key: [-0.3, -1], rim: [-0.6, -0.8], rimColor: '#fff0d0', depth: 0.7 });
+  const sunX = 250;
+  const sunY = 320;
+  const sky =
+    gn.sky(pen, [
+      [0, '#16224e'],
+      [0.3, '#3a4a8a'],
+      [0.55, '#c88a8a'],
+      [0.7, '#ffd09a'],
+    ]) +
+    gn.halftone(pen, 'M-80 -60H1680V200H-80Z', '#ffffff', 10, 0.08) +
+    gn.starfield(pen, 31, 30, 600, 0, 1000, 160, '#e8f0ff') +
+    gn.gasGiant(pen, 1360, 170, 140, { lightDir: [-0.9, 0.2], haze: 0.3, sky: '#6a6aa0', tilt: 12 }) +
+    gn.godRays(pen, sunX, sunY, [20, 50, 80, 105, 130, 155, 180, 205, 230], 7, 1500, '#ffe8c0', 0.3) +
+    gn.bloom(pen, sunX, sunY, 120, '#fff4d8', 1);
+  // The sea of clouds far below, and the far ships of the fleet coming out of the glare.
+  let clouds = '';
+  [
+    [80, 650, 400, 1],
+    [500, 680, 440, 2],
+    [940, 640, 380, 3],
+    [1380, 670, 460, 4],
+  ].forEach(([cx, cy, cw, seed]) => (clouds += gn.cloud(back, cx, cy, cw, '#ffe0c8', '#9a7aa8', { seed, flat: true })));
+  [
+    [-40, 740, 540, 6],
+    [440, 760, 560, 7],
+    [980, 740, 540, 8],
+    [1500, 760, 560, 9],
+  ].forEach(([cx, cy, cw, seed]) => (clouds += gn.cloud(back, cx, cy, cw, '#ffd4bc', '#7a5a98', { seed, flat: true, rim: 2 })));
+  const fleetFar =
+    goldShip(pen, 120, 400, 0.13, { far: 0.8, haze: '#ffd8b0' }) +
+    goldShip(pen, 420, 430, 0.1, { far: 0.9, haze: '#ffd8b0' }) +
+    goldShip(pen, 760, 330, 0.12, { far: 0.8, haze: '#f0c0b0' }) +
+    goldShip(pen, 960, 250, 0.09, { far: 0.9, haze: '#c8a0b8' });
+  const far = `<rect x="-80" y="640" width="1760" height="320" fill="#9a6a9a"/>` + clouds + gn.haze(pen, 560, 720, '#ffd0b0', 0.6) + fleetFar;
+  // The near ships, big and gleaming, and the great arch behind Brennus.
+  const fleetNear =
+    gn.streaks(pen, 170, 220, -90, 260, 4, 70, '#fff0d0', 0.6, 3) +
+    goldShip(pen, 360, 220, 0.42, { rot: 4 }) +
+    gn.spark(pen, 470, 180, 30, '#ffffff') +
+    gn.streaks(pen, 560, 120, -90, 180, 3, 40, '#fff0d0', 0.5, 5) +
+    goldShip(pen, 700, 128, 0.26, { rot: 3, far: 0.3, haze: '#e8b0a0' }) +
+    gn.spark(pen, 770, 104, 20, '#ffffff');
+  const mid = archGN(back, 1110, 1440, 790, 220) + fleetNear + gn.haze(pen, 700, 820, '#ffd0b0', 0.3);
+  const near = dockGN(pen, 770, 1180) + gn.wash(pen, 780, '#1a0c28', 0.85);
+  // Brennus and his two old Legion robots, all facing the fleet.
+  const hero =
+    gn.castShadow(pen, 980, 826, 110, 12, 0.5) +
+    legionBot(pen, 980, 830, 0.86, { flip: true, aim: 16 }) +
+    gn.castShadow(pen, 300, 846, 110, 12, 0.5) +
+    legionBot(pen, 300, 850, 0.86, { flip: true, aim: 26 }) +
+    gn.longShadow(pen, 620, 900, 58, 380, 150, 0.5) +
+    gn.castShadow(pen, 620, 896, 190, 20, 0.5) +
+    gn.brennus(pen, 620, 900, 1.12, { pose: 'ready', mood: 'determined', flip: true, look: [2.4, -1.4], rim: 2.4 });
+  const fore = dockGun(pen, 1500, 990, 1.15, { flip: true, aim: 24 });
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(0.85, near) + gn.layer(1, hero) + gn.layer(1.25, fore) + gn.vignette(pen, 0.5, '#120a20') + gn.grain(pen, 0.08));
 }
 
 /* ---------------- 26. The salute, in the graphic-novel style ---------------- */

@@ -473,3 +473,198 @@ export function crystals(pen: Pen, x: number, y: number, s: number, color: strin
   }
   return out;
 }
+
+/* ---------------- Brennus's Last Stand ---------------- */
+
+const OLIVE = '#55663a';
+const OLIVE_DARK = '#3a4426';
+
+/**
+ * One of General Brennus's old Legion robots, olive again (no more gold paint): a barrel body with the
+ * red gear on its chest, gold shoulder pads, a dome head with one big green lens and an antenna, a claw
+ * on the far arm and a cannon on the near one. Facing right; feet at (x, y), about 340 tall at scale 1.
+ */
+export function legionBot(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; aim?: number; rim?: number } = {}): string {
+  const lp = pen.local(!!o.flip);
+  const rim = o.rim ?? 2;
+  const farC = lp.dark(OLIVE_DARK, 0.7);
+  let out = '';
+  // The far arm and its claw.
+  out += chain(lp, [64, -210], [96, -156], [108, -104], [34, 28, 24], OLIVE_DARK, { shade: farC, hatch: 2, sh: 0.5, rim: 0 });
+  out += lp.brushes(
+    [
+      [
+        [
+          [104, -104],
+          [96, -80],
+          [104, -66],
+        ],
+        9,
+      ],
+      [
+        [
+          [112, -104],
+          [124, -82],
+          [118, -66],
+        ],
+        9,
+      ],
+    ],
+    INK,
+    [0.05, 0.5],
+  );
+  // Legs and feet.
+  const leg = (h: P, k: P, a: P, far: boolean) =>
+    chain(lp, h, k, a, [44, 36, 32], OLIVE_DARK, { shade: far ? farC : undefined, hatch: far ? 2 : 1, sh: far ? 0.5 : 0.38, side: [-1, 1], rim: far ? 0 : rim }) +
+    lp.form(`M${a[0] - 26} ${a[1] - 8}L${a[0] + 36} ${a[1] - 10}Q${a[0] + 50} ${a[1] + 6} ${a[0] + 42} ${a[1] + 16}H${a[0] - 28}Z`, '#2a2e1c', { sh: 10, line: 2.4, shade: far ? farC : undefined });
+  out += leg([30, -112], [42, -64], [40, -18], true) + leg([-30, -112], [-38, -62], [-36, -18], false);
+  // The barrel body with the red gear, rivets and plate seams.
+  let gear = '';
+  for (let i = 0; i < 8; i++) gear += `<rect x="-6" y="-32" width="12" height="12" fill="#c8282e" transform="translate(14 -168) rotate(${i * 45})"/>`;
+  const bodyInner =
+    `<path d="M-74 -150Q0 -128 80 -150M-60 -212Q0 -226 70 -212" fill="none" stroke="${INK}" stroke-width="2.6" opacity=".55"/>` +
+    gear +
+    `<circle cx="14" cy="-168" r="22" fill="none" stroke="#c8282e" stroke-width="9"/><circle cx="14" cy="-168" r="8" fill="${OLIVE_DARK}"/>` +
+    [-56, -20, 44, 70].map((rx) => `<circle cx="${rx}" cy="${r1(-128 - Math.abs(rx) * 0.06)}" r="3.4" fill="${INK}" opacity=".6"/>`).join('');
+  out += lp.form(ellD(0, -170, 80, 72), OLIVE, { sh: 46, hatch: 2, line: 3, rim, inner: bodyInner });
+  // Head: dome, the green lens, an antenna.
+  out += lp.brush(
+    [
+      [-18, -290],
+      [-22, -316],
+      [-24, -334],
+    ],
+    5,
+    INK,
+    [0.05, 0.05],
+  );
+  out += lp.glow(-24, -338, 16, '#3dff8a', 0.8) + lp.form(circD(-24, -338, 6), '#3dff8a', { line: 2 });
+  out += lp.form(ellD(6, -262, 48, 38), OLIVE, { sh: 22, hatch: 1, line: 2.8, rim, inner: `<path d="M-40 -252Q6 -236 52 -252" fill="none" stroke="${INK}" stroke-width="2.4" opacity=".5"/>` });
+  out += lp.glow(28, -262, 34, '#3dff8a', 0.85) + lp.form(circD(28, -262, 16), '#12301c', { line: 2.6, inner: `<circle cx="30" cy="-262" r="10" fill="#3dff8a"/><circle cx="26" cy="-266" r="3.6" fill="#eaffef"/>` });
+  // Gold shoulder pads.
+  out += lp.form(ellD(70, -214, 24, 15), '#c9a24a', { sh: 8, line: 2.4, rim: 1.4 }) + lp.form(ellD(-68, -216, 28, 17), '#d8b050', { sh: 9, line: 2.6, rim });
+  // The near arm: a short upper arm and a cannon along the forearm, aimed by `aim` (degrees up from level).
+  const aim = o.aim ?? 0;
+  const el: P = [16, -146];
+  const cl = pen.local(!!o.flip, -aim);
+  const barrel =
+    cl.form('M-14 -18H130V18H-14Z', '#3a3a32', { sh: 12, hatch: 1, line: 2.6, rim, inner: [24, 60, 96].map((bx) => `<rect x="${bx}" y="-18" width="10" height="36" fill="#c9a24a"/>`).join('') }) +
+    cl.form('M130 -13H152V13H130Z', '#4a3a30', { sh: 4, line: 2.2 }) +
+    `<circle cx="148" cy="0" r="5" fill="#110c08"/>`;
+  out += chain(lp, [-66, -206], el, add(el, [10, 6]), [34, 30, 30], OLIVE_DARK, { rim }) + at(el[0], el[1], 1, barrel, false, -aim);
+  return at(x, y, s, out, o.flip);
+}
+
+/**
+ * One of Aeëtes's gold warships, facing right, centred on its hull: a long gold hull with a ram's horn
+ * curling off the prow, a violet glass bridge, swept fins, a row of lit windows, orange engines and the
+ * drop-claws it lowers robots with. `far` draws it thin-lined and hazed. About 680 long at scale 1.
+ */
+export function goldShip(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; far?: number; haze?: string; rot?: number } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  const far = o.far ?? 0;
+  const line = (3 - far * 1.6) / Math.max(0.35, s);
+  const gold = '#e8b440';
+  let out = lp.glow(-330, 0, 150, '#ffa030', 0.85, 60) + lp.glow(-318, 0, 50, '#fff0c0', 0.9, 26);
+  out += lp.brushes(
+    [
+      [
+        [
+          [-310, -12],
+          [-470, -20],
+        ],
+        14,
+      ],
+      [
+        [
+          [-310, 18],
+          [-450, 26],
+        ],
+        10,
+      ],
+    ],
+    '#ffd890',
+    [0.05, 0.9],
+    0.7,
+  );
+  // Drop-claws hanging under the hull.
+  const claws: [P[], number][] = [-120, 0, 120].map((cx) => [
+    [
+      [cx, 40],
+      [cx - 14, 92],
+      [cx + 6, 112],
+    ],
+    12,
+  ]);
+  out += lp.brushes(claws, INK, [0.05, 0.3]) + lp.brushes(claws.map(([p]) => [p, 6] as [P[], number]), '#6a5a40', [0.05, 0.3]);
+  // The far fin, the hull, the near fin.
+  out += lp.form('M-170 -60L-280 -150L-230 -150L-80 -70Z', lp.dark(gold, 0.6), { sh: 20, hatch: 2, line });
+  const windows = [-200, -150, -100, -50, 0, 50, 100, 150]
+    .map((wx) => `<rect x="${wx}" y="-8" width="22" height="10" rx="4" fill="#fff2b0"/>`)
+    .join('');
+  const plates = `<path d="M-300 -10Q0 -26 320 -8M-120 -84L-130 54M90 -80L84 52" fill="none" stroke="${INK}" stroke-width="${r1(line)}" opacity=".5"/>`;
+  out += lp.form('M-310 0Q-270 -74 -90 -88L190 -82Q300 -62 336 -6Q306 42 196 56L-80 60Q-262 54 -310 0Z', gold, {
+    sh: 46,
+    hatch: far > 0.5 ? 1 : 2,
+    line,
+    rim: far > 0.5 ? 0 : 2.4,
+    axis: [1, 0],
+    inner: plates + windows + `<path d="M-310 12Q0 30 330 6" stroke="#a8741c" stroke-width="10" fill="none" opacity=".6"/>`,
+  });
+  out += lp.form('M-60 -84Q-30 -150 60 -150Q120 -140 130 -84Z', '#7a4aa8', {
+    sh: 16,
+    line,
+    inner: lp.brush(
+      [
+        [-30, -98],
+        [10, -134],
+        [70, -136],
+      ],
+      8,
+      '#e8d0ff',
+      [0.3, 0.3],
+      0.7,
+    ),
+  });
+  out += lp.form('M-150 20L-270 110L-220 112L-60 40Z', gold, { sh: 20, hatch: 1, line, rim: far > 0.5 ? 0 : 1.8 });
+  // The ram's horn curling off the prow.
+  const horn: P[] = [
+    [250, -60],
+    [290, -120],
+    [356, -112],
+    [372, -56],
+    [336, -24],
+    [306, -48],
+    [326, -72],
+  ];
+  out += lp.brush(horn, 34, INK, [0.05, 0.75]) + lp.brush(horn, 26, '#c8902a', [0.05, 0.75]) + lp.brush(horn.slice(0, 4), 7, '#ffe6a0', [0.2, 0.4], 0.7);
+  // A red eye-light on the prow.
+  out += lp.glow(300, -14, 30, '#ff3a4c', 0.85) + `<circle cx="300" cy="-14" r="8" fill="#ff6a6a"/>`;
+  if (o.haze) out += lp.glow(-40, -10, 470, o.haze, far * 0.9, 190);
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/**
+ * A Legion dock gun on its turret: a stone-and-olive drum on a pedestal with a long twin barrel aimed up
+ * along `aim` (degrees above level, toward +x). Base centred at (x, y), about 300 tall.
+ */
+export function dockGun(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; aim?: number } = {}): string {
+  const lp = pen.local(!!o.flip);
+  const aim = o.aim ?? 20;
+  let out = lp.form('M-120 0L-96 -90H96L120 0Z', '#8a7a6a', { sh: 40, hatch: 2, line: 3.2, rim: 2.4, inner: `<path d="M-108 -46H108" stroke="${INK}" stroke-width="2.6" opacity=".5"/>` });
+  const bp = pen.local(!!o.flip, -aim);
+  const barrels =
+    bp.form('M0 -40H300V-14H0Z', '#3a3a32', { sh: 10, hatch: 1, line: 3, rim: 2, inner: `<rect x="220" y="-42" width="14" height="30" fill="#c9a24a"/>` }) +
+    bp.form('M0 4H300V30H0Z', '#3a3a32', { sh: 10, hatch: 1, line: 3, rim: 2, inner: `<rect x="220" y="2" width="14" height="30" fill="#c9a24a"/>` }) +
+    bp.form('M296 -46H330V-8H296ZM296 -2H330V36H296Z', '#2a2a24', { sh: 6, line: 2.6 });
+  out += at(20, -150, 1, barrels, false, -aim);
+  out += lp.form('M-90 -90Q-96 -200 0 -206Q96 -200 90 -90Z', OLIVE, {
+    sh: 50,
+    hatch: 2,
+    line: 3.2,
+    rim: 2.4,
+    inner: `<path d="M-84 -150H84" stroke="${INK}" stroke-width="2.6" opacity=".55"/><circle cx="10" cy="-150" r="18" fill="none" stroke="#c8282e" stroke-width="8"/>`,
+  });
+  out += lp.glow(-40, -176, 18, '#3dff8a', 0.9) + `<circle cx="-40" cy="-176" r="6" fill="#3dff8a"/>`;
+  return at(x, y, s, out, o.flip);
+}
