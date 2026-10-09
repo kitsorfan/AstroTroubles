@@ -26,8 +26,8 @@ export interface Upgrade {
 export const UPGRADES: Upgrade[] = [
   { id: 'heart', name: 'Heart Plating', desc: '+1 max heart', prices: [150, 300, 500], mk2: [550, 800] },
   { id: 'blaster', name: 'Blaster Power', desc: '+1 damage for blasts, spins, pounds and dashes (fireballs +2)', prices: [250, 600], mk2: [900] },
-  { id: 'clip', name: 'Bigger Clip', desc: '+2 shots before you need to reload', prices: [160, 380], mk2: [480] },
-  { id: 'rapid', name: 'Quick Reload', desc: 'Shoot and reload faster', prices: [200, 450], mk2: [600] },
+  { id: 'clip', name: 'Bigger Clip', desc: 'Bigger clips for every weapon (and a bigger fuel tank)', prices: [160, 380], mk2: [480] },
+  { id: 'rapid', name: 'Quick Reload', desc: 'Shoot, reload and refuel faster', prices: [200, 450], mk2: [600] },
   { id: 'boltZap', name: 'LUX Zapper', desc: 'LUX’s zap hurts instead of just stunning, and his force pulse hits harder', prices: [180, 420], mk2: [550] },
   { id: 'magnet', name: 'Bolt Magnet', desc: 'Pull in bolts from farther away', prices: [120, 300], mk2: [350] },
   { id: 'armor', name: 'Armor Plating', desc: 'Blocks one hit. Comes back at checkpoints, or after a while.', prices: [], mk2: [450, 800] },

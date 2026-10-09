@@ -38,7 +38,7 @@ const PATTERNS = [
 const FIELD_FILES: Record<string, RegExp[]> = {
   'ui.ts': [new RegExp(`\\b(?:name|desc):\\s*${lit}`, 'g')],
   'shop.ts': [new RegExp(`\\b(?:name|desc):\\s*${lit}`, 'g')],
-  'weapons.ts': [new RegExp(`\\b(?:name|desc):\\s*${lit}`, 'g')],
+  'weapons.ts': [new RegExp(`\\b(?:name|desc|special):\\s*${lit}`, 'g')],
   'quests.ts': [new RegExp(`^\\s+\\w+:\\s*${lit},?$`, 'gm')],
   'story.ts': [new RegExp(`\\b(?:p|head)\\(\\s*${lit}`, 'g')],
 };

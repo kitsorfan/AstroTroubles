@@ -365,7 +365,8 @@ export abstract class Enemy extends Entity implements Target {
       maxHp: this.maxHp,
       alarmed: this.alarmT > 0,
       t: this.t,
-      camDist: this.world.camera.position.distanceTo(bg),
+      // (Test worlds have no camera.)
+      camDist: (this.world as Partial<World>).camera?.position.distanceTo(bg) ?? 12,
     });
   }
 

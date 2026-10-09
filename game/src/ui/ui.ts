@@ -22,7 +22,7 @@ import {
 import type { DeckId, EndingKind, HeroId, Line, Speaker } from '../world/levelTypes';
 import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
-import { WEAPONS, type WeaponId } from '../entities/weapons';
+import { WEAPONS, type Weapon, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
 import type { FindKind } from '../game/collectibles';
 import type { Helper } from '../game/companions';
@@ -72,6 +72,18 @@ function h(html: string): HTMLElement {
 
 /** A label that follows the language setting (see `applyLang`). */
 const label = (en: string, cls = '') => `<span${cls ? ` class="${cls}"` : ''} data-t="${en}">${tr(en)}</span>`;
+
+/** A weapon's four stat bars (RANGE, POWER, SPEED, AMMO or FUEL), five segments each, in its colour. */
+export function weaponStats(w: Weapon): string {
+  const rows: [string, number][] = [
+    [tr('RANGE'), w.bars.range],
+    [tr('POWER'), w.bars.power],
+    [tr('SPEED'), w.bars.speed],
+    [w.id === 'flame' ? tr('FUEL') : tr('AMMO'), w.bars.ammo],
+  ];
+  const row = ([name, n]: [string, number]) => `<span><em>${name}</em><b>${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(5 - n)}</b></span>`;
+  return `<div class="wstats" style="--wc:${w.glow}">${rows.map(row).join('')}</div>`;
+}
 
 /** An icon shown only for one hero's buttons (`hj` Jason, `ha` Atalanta; see style.css). */
 const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cls}"`);
@@ -182,7 +194,7 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="chunk"></div><div class="fill"></div><div class="marks"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
@@ -190,13 +202,13 @@ export class UI {
       <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
         <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${ring('charge-ring')}</div>
-        <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
+        <div class="ammo"><div class="pips"></div><div class="fuel"><i></i></div><div class="reload"><i></i></div></div>
         <div class="heat hb"><i></i></div>
         <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${ring('cd-ring')}<div class="charges"></div></div>
         <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}<div class="charges"></div></div>
         <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
-        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
+        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><div class="wname"><b></b><div class="wcard-stats"></div></div></div>
       </div>
       <div class="action clickable hidden"><i class="face">${portrait('bolt')}</i><b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
@@ -335,12 +347,37 @@ export class UI {
     el.classList.toggle('hidden', !text);
   }
 
-  setBoss(name: string | null, frac: number) {
+  private bossFrac = 1;
+  private bossMarks = '';
+
+  /**
+   * The boss bar: the name, the health (a pale chunk trails each hit, and the bar flashes), and a notch
+   * wherever the fight changes phase.
+   */
+  setBoss(name: string | null, frac: number, marks: number[] = []) {
     this.bossName = name;
     this.bossEl.classList.toggle('hidden', !name);
-    if (!name) return;
+    if (!name) {
+      this.bossFrac = 1;
+      return;
+    }
+    const f = Math.max(0, Math.min(1, frac));
     $(this.bossEl, '.name').textContent = tr(name);
-    $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
+    $(this.bossEl, '.fill').style.width = `${f * 100}%`;
+    $(this.bossEl, '.chunk').style.width = `${f * 100}%`;
+    this.bossEl.classList.toggle('low', f <= 0.25);
+    if (f < this.bossFrac - 1e-4) {
+      const track = $(this.bossEl, '.track');
+      track.classList.remove('hit');
+      void track.offsetWidth;
+      track.classList.add('hit');
+    }
+    this.bossFrac = f;
+    const key = marks.join(',');
+    if (key !== this.bossMarks) {
+      this.bossMarks = key;
+      $(this.bossEl, '.marks').innerHTML = marks.map((m) => `<i style="left:${(m * 100).toFixed(1)}%"></i>`).join('');
+    }
   }
 
   /** The clock for timed switches: whole seconds left, and a dot for each switch, lit once it's down. */
@@ -392,8 +429,11 @@ export class UI {
     const first = this.lastWeapon === '';
     this.lastWeapon = id;
     $(btn, '.wicon').innerHTML = WEAPON_ICON[id];
+    // The card that pops up after a switch: the weapon's name and its stat bars.
     const name = $(btn, '.wname');
-    name.textContent = tr(WEAPONS[id].name);
+    $(name, 'b').textContent = tr(WEAPONS[id].name);
+    $(name, '.wcard-stats').innerHTML = weaponStats(WEAPONS[id]);
+    name.style.setProperty('--wc', WEAPONS[id].glow);
     if (first || owned < 2) return;
     name.classList.remove('show');
     void name.offsetWidth;
@@ -500,15 +540,26 @@ export class UI {
 
   private lastAmmo = '';
 
-  /** Ammo pips above BLAST, the reload bar, and the fireball charge ring. */
-  setAmmo(ammo: number, clip: number, reload: number, charge: number) {
-    const key = `${ammo}|${clip}|${Math.round(reload * 20)}|${Math.round(charge * 20)}`;
+  /**
+   * Ammo pips above BLAST (in the weapon's colour), the reload bar, and the fireball charge ring. The
+   * Flamethrower shows a fuel gauge instead (`fuel` 0..1), blinking red while the tank is dry.
+   */
+  setAmmo(ammo: number, clip: number, reload: number, charge: number, fuel: number | null = null, dry = false) {
+    const key = `${ammo}|${clip}|${Math.round(reload * 20)}|${Math.round(charge * 20)}|${fuel === null ? '' : Math.round(fuel * 60)}|${dry}`;
     if (key === this.lastAmmo) return;
     this.lastAmmo = key;
     const box = $(this.hud, '.ammo');
+    box.classList.toggle('tank', fuel !== null);
+    box.classList.toggle('dry', fuel !== null && dry);
+    if (fuel !== null) {
+      $<HTMLElement>(box, '.fuel i').style.width = `${Math.round(fuel * 100)}%`;
+      box.classList.remove('reloading');
+      return;
+    }
     const pips = $(box, '.pips');
     if (pips.childElementCount !== clip) pips.innerHTML = '<i></i>'.repeat(clip);
     pips.classList.toggle('many', clip > 10);
+    pips.classList.toggle('lots', clip > 16);
     pips.querySelectorAll('i').forEach((el, i) => el.classList.toggle('full', i < ammo));
     box.classList.toggle('reloading', reload > 0);
     $<HTMLElement>(box, '.reload i').style.width = `${Math.round(reload * 100)}%`;
@@ -1233,7 +1284,8 @@ export class UI {
             : o.owned
               ? `<button class="buy equip" data-eq="${id}">${tr('EQUIP')}</button>`
               : `<button class="buy" data-wp="${id}" ${save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${price(o.price ?? 0)}</button>`;
-          return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, '', o.weapon.desc, btn);
+          const special = `<small class="wspecial">${ICON.star}${tr(o.weapon.special)}</small>`;
+          return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, weaponStats(o.weapon) + special, o.weapon.desc, btn);
         })
         .join('');
       const tabBar = tabs

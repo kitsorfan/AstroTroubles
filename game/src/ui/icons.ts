@@ -48,6 +48,7 @@ export const WEAPON_ICON: Record<string, string> = {
   frost: `<svg viewBox="0 0 24 24"><g stroke="#bfeeff" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.6 4.2L12 6.6l2.4-2.4M9.6 19.8L12 17.4l2.4 2.4" fill="none"/></g><circle cx="12" cy="12" r="2.4" fill="#7fd4ff"/></svg>`,
   thunder: `<svg viewBox="0 0 24 24"><path d="M14 1.8L5 13.4h5.6L9 22.2l10-12.4h-5.8z" fill="#fff36a" stroke="#c58cff" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   seeker: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="none" stroke="#ff7aa6" stroke-width="2"/><circle cx="12" cy="12" r="3.4" fill="#ff4f8a"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" stroke="#ffd0e0" stroke-width="2" stroke-linecap="round"/></svg>`,
+  flame: `<svg viewBox="0 0 24 24"><path d="M12 1.8c1 3.6 6.6 6.2 6.6 12.2a6.6 6.6 0 0 1-13.2 0c0-3.3 1.9-5 3.2-6.6.3 1.9 1.1 3 2.2 3.4C10.2 7.6 10.9 4.4 12 1.8z" fill="#ff6a1a" stroke="#ffd08a" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 11.6c.6 1.9 3.1 2.9 3.1 5.6a3.1 3.1 0 0 1-6.2 0c0-1.6.9-2.5 1.6-3.3.2.8.6 1.3 1 1.4-.3-1.5.1-2.7.5-3.7z" fill="#fff1c4"/></svg>`,
 };
 
 interface Person {
