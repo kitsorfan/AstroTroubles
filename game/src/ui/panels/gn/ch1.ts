@@ -184,6 +184,175 @@ export function yawn(pen: Pen, turn: number): string {
   return pen.form(d, '#5a1820', { line: 2.2, heavy: 1.2, inner: tongue }) + tear;
 }
 
+/* ---------------- the SYRACUSIA ---------------- */
+
+export interface ShipOpts {
+  /** Tilt (degrees, + noses down). */
+  rot?: number;
+  flip?: boolean;
+  /** How far GaScu's vines have grown over the hull (0 = none, 1 = all over). */
+  vines?: number;
+  /** The vines turned gold and flowering (the happy ending). */
+  gold?: boolean;
+  /** Engines burning (default yes). */
+  engines?: boolean;
+  /** Ink weight (default 3.2; thinner when the ship is far away). */
+  line?: number;
+}
+
+/** Half of an elliptical ring band: the right half (`front`) or the left. */
+function ringHalf(cx: number, RX: number, RY: number, rx: number, ry: number, front: boolean): string {
+  const f = front ? 1 : 0;
+  const b = front ? 0 : 1;
+  return `M${cx} ${-RY}A${RX} ${RY} 0 0 ${f} ${cx} ${RY}L${cx} ${ry}A${rx} ${ry} 0 0 ${b} ${cx} ${-ry}Z`;
+}
+
+/**
+ * The colony ship SYRACUSIA, side-on and facing right: engines at the back, a long white spine with rows
+ * of lit windows and a gold stripe, three great habitat rings, and the Bridge module at the nose with its
+ * cyan window and dome. About 1300 long and 420 tall at scale 1, centred on the spine.
+ */
+export function syracusia(pen: Pen, x: number, y: number, s: number, o: ShipOpts = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  const line = (o.line ?? 3.2) / Math.max(0.3, s);
+  const white = '#e9edf3';
+  const gold = '#ffd166';
+  const rings = [-330, -120, 90];
+  let out = '';
+  if (o.engines !== false) {
+    out += lp.glow(-700, 0, 260, '#8fd8ff', 0.8, 110) + lp.glow(-680, 0, 90, '#ffffff', 0.9, 50);
+    out += lp.brushes(
+      [
+        [
+          [
+            [-680, -26],
+            [-980, -34],
+          ],
+          16,
+        ],
+        [
+          [
+            [-680, 26],
+            [-1000, 34],
+          ],
+          16,
+        ],
+        [
+          [
+            [-680, 0],
+            [-1100, 0],
+          ],
+          10,
+        ],
+      ],
+      '#bff0ff',
+      [0.05, 0.95],
+      0.7,
+    );
+  }
+  // The far halves of the rings, behind the spine.
+  for (const rx of rings) out += lp.form(ringHalf(rx, 80, 206, 36, 150, false), '#b9c4d4', { sh: 30, hatch: 2, line, shade: lp.dark('#b9c4d4', 0.8) });
+  // The engine section: a wide drum with two bell nozzles and radiator fins.
+  out += lp.form('M-640 -36L-690 -58V-6L-640 -14Z', '#5a6274', { sh: 10, line }) + lp.form('M-640 14L-690 6V58L-640 36Z', '#5a6274', { sh: 10, line });
+  // Radiator wings on the engine section: blue-grey panels ruled with cooling channels.
+  const cells = (y0: number, y1: number) => {
+    let d = '';
+    for (let k = 1; k < 6; k++) d += `M-600 ${r1(y0 + ((y1 - y0) * k) / 6)}H-430`;
+    return `<path d="${d}M-540 ${y0}V${y1}" stroke="${INK}" stroke-width="2.6" opacity=".5"/>`;
+  };
+  const fin = (k: number) => lp.form(`M-600 ${k * 300}L-450 ${k * 300}L-470 ${k * 70}H-560Z`, '#7a8aa8', { sh: 30, hatch: 1, line, rim: 1.6, paint: lp.lin([[0, '#a8b8d4'], [1, '#5a6a8a']]), inner: cells(k * 300, k * 70) });
+  out += fin(-1) + fin(1);
+  out += lp.form('M-650 -60Q-656 0 -650 60L-460 76Q-450 0 -460 -76Z', '#c9d1dc', {
+    sh: 40,
+    hatch: 2,
+    rim: 2,
+    line,
+    axis: [1, 0],
+    inner: `<path d="M-600 -66V66M-540 -72V72" stroke="${INK}" stroke-width="3" opacity=".5"/><path d="M-640 -30H-470" stroke="#ff8a3d" stroke-width="10"/>`,
+  });
+  // The long spine, its windows and the gold stripe.
+  const windows = `<path d="M-440 -18H300M-440 2H300" stroke="#ffe2a8" stroke-width="6" stroke-dasharray="7 9"/><path d="M-450 22H310" stroke="${gold}" stroke-width="7" stroke-dasharray="20 8"/>`;
+  const plates = `<path d="M-380 -48V48M-200 -48V48M-20 -48V48M160 -48V48" stroke="${INK}" stroke-width="3" opacity=".45"/>`;
+  out += lp.form('M-470 -48H360Q392 0 360 48H-470Z', white, { sh: 34, hatch: 2, rim: 2.2, line, axis: [1, 0], inner: windows + plates + lp.glow(-80, -10, 400, '#ffe2a8', 0.2, 30) });
+  // Greebles: a docking module and a dish antenna on top, a cargo pod underneath, nav lights.
+  out += lp.form('M190 -48V-74Q230 -86 270 -74V-48Z', '#c9d1dc', { sh: 10, line, inner: `<path d="M206 -62H254" stroke="#7fe6ff" stroke-width="5"/>` });
+  out += lp.brush(
+    [
+      [-410, -48],
+      [-416, -86],
+    ],
+    6,
+    INK,
+    [0.05, 0.05],
+  );
+  out += lp.form('M-456 -104Q-416 -70 -372 -104Q-414 -96 -456 -104Z', '#d8dee8', { sh: 6, line: line * 0.8 });
+  out += lp.form('M-60 48V80Q0 96 60 80V48Z', '#9aa6ba', { sh: 14, hatch: 1, line, inner: `<path d="M-40 64H40" stroke="${INK}" stroke-width="3" opacity=".5"/>` });
+  out += lp.glow(-640, -64, 24, '#ff4a5a', 0.9) + lp.glow(600, 62, 22, '#7dff9a', 0.9);
+  // The Bridge module at the nose: a rounded hull, the long cyan window, the dome on top with its antenna.
+  out += lp.brush([[440, -150], [452, -200], [458, -236]], 5, INK, [0.05, 0.05]) + lp.glow(460, -240, 18, '#ff4a5a', 0.9) + `<circle cx="460" cy="-240" r="5" fill="#ff4a5a"/>`;
+  out += lp.form('M370 -90Q372 -160 430 -164Q490 -160 492 -100Z', '#bfefff', { sh: 18, line, rim: 1.6, paint: lp.lin([[0, '#e8fbff'], [1, '#7fc8e8']]), inner: lp.brush([[392, -112], [408, -140], [436, -152]], 6, '#ffffff', [0.3, 0.3], 0.8) + `<path d="M372 -118H490" stroke="${INK}" stroke-width="3" opacity=".5"/>` });
+  out += lp.form('M330 -80Q500 -120 610 -40Q660 10 600 70Q480 110 330 80Z', white, {
+    sh: 46,
+    hatch: 2,
+    rim: 2.2,
+    line,
+    inner: `<path d="M330 -40Q480 -76 590 -20" fill="none" stroke="${gold}" stroke-width="8"/>`,
+  });
+  out += lp.form('M470 -64Q560 -66 616 -8L520 4Q500 -40 470 -64Z', '#7fe6ff', { line: line * 0.8, warm: 0, inner: lp.brush([[492, -56], [540, -50], [588, -20]], 5, '#ffffff', [0.3, 0.3], 0.85) + lp.glow(560, -30, 60, '#ffffff', 0.4) });
+  // The near halves of the rings, in front of the spine: lit windows all round, gold trim.
+  for (const rx of rings) {
+    out += lp.form(ringHalf(rx, 80, 206, 36, 150, true), white, {
+      sh: 24,
+      hatch: 1,
+      rim: 2.4,
+      line,
+      inner: `<path d="M${rx} -178A58 178 0 0 1 ${rx} 178" fill="none" stroke="#ffe2a8" stroke-width="7" stroke-dasharray="6 10"/><path d="M${rx} -196A72 196 0 0 1 ${rx} 196" fill="none" stroke="${gold}" stroke-width="4"/>`,
+    });
+  }
+  // GaScu's vines, coiling along the spine and round the rings.
+  const v = o.vines ?? 0;
+  if (v > 0) {
+    const color = o.gold ? '#e8a830' : GASCU.stem;
+    const vo: VineOpts = { color, glow: o.gold ? GASCU.gold : GASCU.glow, leaves: 3, buds: o.gold ? 0 : 4, budColor: GASCU.glow, curls: 4, line: line * 0.8 };
+    const along = (x0: number, x1: number, amp: number, ph: number, n = 9): P[] => {
+      const pts: P[] = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        pts.push([x0 + (x1 - x0) * t, Math.sin(t * Math.PI * 3 + ph) * amp]);
+      }
+      return pts;
+    };
+    const mid = -60;
+    const len = 520 * v;
+    out += vine(lp, along(mid - len, mid + len * 0.9, 50, 0), 14, { ...vo, seed: 3 });
+    if (v > 0.4) {
+      out += vine(lp, along(mid - len * 0.8, mid + len * 0.7, 40, 2.2, 7), 11, { ...vo, seed: 4 });
+      for (const rx of rings) {
+        if (Math.abs(rx - mid) > len) continue;
+        out += vine(
+          lp,
+          [
+            [rx - 10, 40],
+            [rx + 50, 110],
+            [rx + 40, 180],
+            [rx - 6, 214],
+          ],
+          9,
+          { ...vo, leaves: 2, curls: 0, seed: rx },
+        );
+      }
+    }
+    if (o.gold) {
+      const rf = rng(77);
+      for (let i = 0; i < 10; i++) {
+        const fx = mid - len + rf() * len * 1.9;
+        out += flower(lp, fx, Math.sin(rf() * 6) * 40, 14 + rf() * 8, ['#ff8ad8', '#ffd166', '#5e9bff', '#ffffff'][i % 4]);
+      }
+    }
+  }
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
 /* ---------------- the Heart of GaScu ---------------- */
 
 export interface HeartOpts {

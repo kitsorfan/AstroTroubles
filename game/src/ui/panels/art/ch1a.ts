@@ -18,56 +18,80 @@ import {
   vignette,
   vine,
 } from '../kit';
+import * as gn from '../gn';
+import * as c1 from '../gn/ch1';
 
-/** Soft nebula clouds: big faint glows. */
-function nebula(id: string, blobs: [number, number, number, number, string][]): string {
-  const cols = [...new Set(blobs.map((b) => b[4]))];
-  const defs = `<defs>${cols.map((c, i) => glowDef(`${id}n${i}`, c, 0.5)).join('')}</defs>`;
-  return defs + blobs.map(([x, y, rx, ry, c]) => glow(`${id}n${cols.indexOf(c)}`, x, y, rx, 1, ry)).join('');
-}
+/* ---------------- 1. The ship in the nebula ---------------- */
 
-/** 1. The Syracusia cruising through a starry nebula, with sleeping colonists in their pods. */
-export function ch1Ship(): string {
-  const id = 'ch1-ship';
-  const pods = [0, 1, 2, 3]
-    .map((i) => {
-      const x = 340 + i * 300;
-      const looks = [
-        { skin: '#e8bf9a', hair: '#5a3a22', hairStyle: 'long' as const },
-        { skin: '#8a5a3c', hair: '#1a1210', hairStyle: 'curly' as const },
-        { skin: '#f0cfb0', hair: '#c96a2a', hairStyle: 'pony' as const },
-        { skin: '#c8906c', hair: '#2a1a12', hairStyle: 'short' as const },
-      ][i];
-      const sleeper = person(x, 925, 0.95, { ...looks, coat: '#c9d6e6', face: 'sleep', legs: 'none' });
-      return `<clipPath id="${id}c${i}"><rect x="${x - 95}" y="640" width="190" height="210" rx="90"/></clipPath>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="#2a3470"/>
-        <g clip-path="url(#${id}c${i})">${sleeper}<rect x="${x - 95}" y="640" width="190" height="210" fill="${C.cyan}" opacity=".18"/></g>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="none" stroke="#d8dee8" stroke-width="12"/>
-        <rect x="${x - 95}" y="640" width="190" height="210" rx="90" fill="none" ${ink(4)}/>
-        <path d="M${x - 60} 672Q${x - 30} 652 ${x + 4} 656" fill="none" stroke="#fff" stroke-width="7" opacity=".6" stroke-linecap="round"/>
-        <circle cx="${x + 74}" cy="${612 - (i % 2) * 14}" r="9" fill="${C.cyan}" opacity=".5"/><circle cx="${x + 92}" cy="${588 - (i % 2) * 14}" r="6" fill="${C.cyan}" opacity=".4"/>`;
-    })
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#0b1030'], [0.55, '#241a5a'], [1, '#3a1f5a']]) +
-      nebula(id, [
-        [1250, 180, 520, 260, '#8a4fff'],
-        [300, 520, 600, 220, '#3f86d6'],
-        [900, 380, 420, 180, C.pink],
-      ]) +
-      stars(11, 110) +
-      `<path d="M120 300Q300 260 560 310" stroke="#8fd8ff" stroke-width="3" opacity=".25" fill="none"/>` +
-      syracusia(id + 's', 780, 300, 0.92) +
-      // The cut-away: a long hull window strip with four sleeping colonists.
-      `<path d="M610 470L210 600M1010 470L1230 600" stroke="#d8dee8" stroke-width="4" stroke-dasharray="12 12" opacity=".7"/>
-      <rect x="190" y="596" width="1210" height="282" rx="60" fill="#c9d1dc" ${ink(7)}/>
-      <rect x="214" y="618" width="1162" height="238" rx="44" fill="#141a44"/>` +
-      pods +
-      sparkle(1460, 120, 18) +
-      sparkle(160, 160, 12, '#cfe0ff') +
-      vignette(id + 'v', 0.45),
+/** Deep space with a nebula: the gradient, glowing clouds of gas with dark dust lanes, and stars. */
+function spaceGN(pen: gn.Pen, seed: number, clouds: [number, number, number, string[]][]): string {
+  return (
+    gn.sky(pen, [
+      [0, '#05081e'],
+      [0.55, '#120e3a'],
+      [1, '#1a0c30'],
+    ]) +
+    clouds.map(([x, y, r, cols], i) => gn.nebula(pen, x, y, r, cols, seed + i, 0.7)).join('') +
+    gn.starfield(pen, seed, 170, -80, -60, 1760, 1020, '#f4f6ff')
   );
 }
+
+/**
+ * A comic inset: a framed window (x, y, w, h) with its own picture inside, clipped, under a white border.
+ * `body` is drawn in panel coordinates.
+ */
+function inset(pen: gn.Pen, x: number, y: number, w: number, h: number, body: string): string {
+  const id = pen.uid();
+  const d = `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+  pen.def(id, `<clipPath id="${id}"><path d="${d}"/></clipPath>`);
+  return (
+    `<path d="${d}" fill="${gn.INK}" transform="translate(10 12)" opacity=".5"/>` +
+    `<g clip-path="url(#${id})">${body}</g>` +
+    `<path d="${d}" fill="none" stroke="${gn.INK}" stroke-width="16"/><path d="${d}" fill="none" stroke="#f4f6ff" stroke-width="8"/>`
+  );
+}
+
+/** 1. The SYRACUSIA cruises through a quiet nebula; in an inset, colonists sleep in their frosted pods while HALCYON's eye keeps watch. */
+export function ch1Ship(): string {
+  const pen = gn.Pen.scene('ch1-ship', { key: [-0.7, -0.6], keyColor: '#fff0e0', rim: [0.85, 0.45], rimColor: '#8fd8ff', shadow: '#2a2a70', depth: 0.6 });
+  const sky =
+    spaceGN(pen, 11, [
+      [1180, 200, 620, ['#d080ff', '#8a4fff', '#3f3aa6']],
+      [260, 620, 560, ['#7ac8ff', '#3f86d6', '#2a2a80']],
+      [820, 460, 380, ['#ff8ad8', '#c04fa8']],
+    ]) +
+    gn.bloom(pen, 110, 90, 60, '#fff4e0', 0.9);
+  // The ship, big and slow, sliding across the frame; a faint wake of light behind it.
+  const ship = c1.syracusia(pen, 900, 330, 0.92, { rot: -5 });
+  // The inset: inside the cryo deck, two colonists asleep in their pods, HALCYON's amber eye on the wall.
+  const ix = 990;
+  const iy = 396;
+  const iw = 470;
+  const ih = 320;
+  const podPen = pen.relight({ key: [-0.4, -0.8], keyColor: '#e8fbff', rim: [0.9, -0.2], rimColor: '#7fe6ff', depth: 0.6 });
+  const inside =
+    `<path d="M${ix} ${iy}H${ix + iw}V${iy + ih}H${ix}Z" fill="${pen.lin([
+      [0, '#16324c'],
+      [1, '#0a1626'],
+    ])}"/>` +
+    pen.glow(ix + iw / 2, iy + 120, 260, '#7fe6ff', 0.4, 140) +
+    c1.pod(podPen, ix + 120, iy + 420, 0.78, { look: c1.COLONISTS[0], frost: 0.4 }) +
+    c1.pod(podPen, ix + 350, iy + 430, 0.78, { look: c1.COLONISTS[3], frost: 0.5 }) +
+    // HALCYON's eye: an amber lens in a white housing, its light falling on the pods.
+    pen.form(c1.circleD(ix + 236, iy + 60, 26), '#d8dee8', { sh: 10, line: 2.6, rim: 1.4 }) +
+    pen.glow(ix + 236, iy + 60, 60, '#ffb040', 0.8) +
+    `<circle cx="${ix + 236}" cy="${iy + 60}" r="12" fill="#ffb040" stroke="${gn.INK}" stroke-width="2.4"/><circle cx="${ix + 232}" cy="${iy + 56}" r="4" fill="#fff"/>`;
+  // A dotted "cut-away" line from the inset up to the ship's habitat ring.
+  const callout = `<path d="M${ix + 40} ${iy}L812 470" stroke="#f4f6ff" stroke-width="4" stroke-dasharray="10 10" opacity=".75"/><circle cx="812" cy="470" r="10" fill="none" stroke="#f4f6ff" stroke-width="4" opacity=".85"/>`;
+  return pen.svg(
+    gn.layer(0.15, sky) +
+      gn.layer(0.6, ship) +
+      gn.layer(1, callout + inset(pen, ix, iy, iw, ih, inside)) +
+      gn.vignette(pen, 0.5, '#04040e') +
+      gn.grain(pen, 0.08),
+  );
+}
+
 
 /** 2. The pink seed-comet streaking toward the ship; the ship small and surprised. */
 export function ch1Comet(): string {
