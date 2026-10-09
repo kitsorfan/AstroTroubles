@@ -4,7 +4,7 @@ import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL, PLAYER } from '../core/constants';
 import { tr } from '../core/i18n';
-import { damp } from '../core/math';
+import { damp, dampAngle } from '../core/math';
 import type { PuzzleKind } from '../game/puzzles';
 import type { World } from '../game/world';
 import { chapterOf } from '../levels';
@@ -12,8 +12,9 @@ import type { Cond, HoloSpeaker, Spec } from '../world/levelTypes';
 import type { Box } from '../world/physics';
 import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
-import { boxG, cyl, glowSprite, makeBolt, makeColonist, makeHoloFigure, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
+import { boxG, cyl, glowSprite, makeBolt, makeColonist, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
 import { makeIris } from './companionModels';
+import { holoUniforms, makeHoloFigure, makeHoloProjector, type HoloFigure, type HoloProjector, type HoloUniforms } from './holoModels';
 import { makeHauler, makeOreCart, railSegment } from './mineModels';
 import type { CompanionSkin } from '../game/companions';
 import type { Player } from './player';
@@ -1513,6 +1514,8 @@ export class Exit extends Entity implements Interactable {
 
 /** A hologram projector that plays a recorded message the first time Jason walks by. */
 const HOLO_COLOR: Record<HoloSpeaker, string> = { captain: '#7fe6ff', rosa: '#ff9a9a', hypatia: '#b8ffb0', brennus: '#ff7a6a', atalanta: '#8ff8e4', aeetes: '#ffd166' };
+/** How high the figure stands above the floor: on the projector's top plate. */
+const HOLO_FEET = 0.32;
 
 export class Holo extends Entity implements Interactable {
   readonly spot: THREE.Vector3;
@@ -1520,10 +1523,15 @@ export class Holo extends Entity implements Interactable {
   played: boolean;
   /** The translucent figure of whoever recorded the message. */
   readonly figure = new THREE.Group();
-  private figMats: THREE.ShaderMaterial[];
-  private beamMat: THREE.MeshBasicMaterial;
-  private ring: THREE.Mesh;
+  /** Set by the log cutscene while this hologram's speaker has the line: they gesture as they talk. */
+  talking = false;
+  private model: HoloFigure;
+  private projector: HoloProjector;
+  private u: HoloUniforms;
   private shown = 0;
+  private talk = 0;
+  /** A burst of interference, fading away. */
+  private burst = 0;
   private t = 0;
 
   constructor(
@@ -1540,23 +1548,25 @@ export class Holo extends Entity implements Interactable {
     const z = cx2x(cz);
     this.spot = new THREE.Vector3(x, h, z);
     this.played = world.taken.has(id);
-    const color = HOLO_COLOR[who];
-    this.obj.add(mesh(cyl(0.7, 0.85, 0.3, 20), mat('#2e3446', { metal: 0.6, rough: 0.4 }), x, h + 0.15, z));
-    this.ring = mesh(torus(0.55, 0.05), mat(color, { emissive: color, ei: 1.8 }), x, h + 0.32, z, false);
-    this.ring.rotation.x = Math.PI / 2;
-    this.obj.add(this.ring);
-    this.beamMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-    this.obj.add(mesh(new THREE.CylinderGeometry(0.45, 0.6, 2.4, 20, 1, true), this.beamMat, x, h + 1.5, z, false));
-    // A figure made of light, with a face and uniform, like an old recording.
-    const holo = makeHoloFigure(who, color);
-    this.figMats = holo.mats;
-    for (const m of this.figMats) m.uniforms.base.value = h + 0.3;
+    this.u = holoUniforms(HOLO_COLOR[who]);
+    this.projector = makeHoloProjector(this.u);
+    this.projector.group.position.copy(this.spot);
+    this.obj.add(this.projector.group);
+    // A figure made of light, with the speaker's face and clothes, like a recording.
+    this.model = makeHoloFigure(who, this.u);
     const f = this.figure;
-    f.add(holo.group);
-    f.position.set(x, h + 0.3, z);
+    f.add(this.model.group);
+    f.position.set(x, h + HOLO_FEET, z);
     f.visible = false;
     this.obj.add(f);
+    this.u.base.value = h + HOLO_FEET;
+    this.u.top.value = h + HOLO_FEET + this.model.height;
     world.addInteractable(this);
+  }
+
+  /** How high the figure's eyes are above the floor the projector stands on (for framing it). */
+  get headHeight() {
+    return HOLO_FEET + this.model.eyes;
   }
 
   label() {
@@ -1567,14 +1577,17 @@ export class Holo extends Entity implements Interactable {
     this.world.playLog(this);
   }
 
-  /** 0 = hidden, 1 = fully projected. */
+  /**
+   * 0 = hidden, 1 = fully projected. On the way up the beam comes on first and the figure is built
+   * from the feet up; on the way down it comes apart from the head, with a burst of interference.
+   */
   show(k: number) {
+    if (k < this.shown - 0.001 && this.shown > 0.98) this.burst = 1;
     this.shown = k;
   }
 
   update(dt: number) {
     this.t += dt;
-    this.ring.rotation.z += dt * 1.5;
     if (!this.played && !this.world.cutscene) {
       const p = this.world.player.body;
       if (Math.hypot(p.x - this.spot.x, p.z - this.spot.z) < 3.4 && Math.abs(p.y - this.spot.y) < 2) {
@@ -1583,19 +1596,29 @@ export class Holo extends Entity implements Interactable {
         this.world.playLog(this);
       }
     }
-    // The projection flickers like an old recording.
-    const flicker = this.shown > 0 ? 0.85 + Math.sin(this.t * 37) * 0.06 + (Math.random() < 0.04 ? -0.45 : 0) : 0;
-    this.figure.visible = this.shown > 0.01;
-    for (const m of this.figMats) {
-      m.uniforms.opacity.value = this.shown * flicker;
-      m.uniforms.time.value = this.t;
-    }
-    // Now and then the recording glitches sideways for a frame.
-    this.figure.position.x = this.spot.x + (Math.random() < 0.03 ? (Math.random() - 0.5) * 0.08 : 0);
-    this.figure.scale.set(1, Math.max(0.01, this.shown), 1);
+    const u = this.u;
+    const k = this.shown;
+    const build = Math.max(0, Math.min(1, (k - 0.12) / 0.88));
+    u.time.value = this.t;
+    u.build.value = build;
+    u.scale.value = window.innerHeight * 0.9;
+    // An unplayed projector hums brightly to draw Jason over; a played one idles low.
+    const idle = this.played ? 0.18 : 0.42 + Math.sin(this.t * 3) * 0.12;
+    u.power.value = Math.max(idle, Math.min(1, k / 0.12));
+    // The recording flickers, and now and then the signal breaks up for a moment.
+    if (k > 0 && Math.random() < dt * 0.35) this.burst = Math.max(this.burst, 0.5 + Math.random() * 0.5);
+    this.burst = Math.max(0, this.burst - dt * 2.5);
+    const building = build > 0 && build < 1 ? 0.35 : 0;
+    u.glitch.value = Math.min(1, 0.04 + building + this.burst);
+    u.opacity.value = 0.9 + Math.sin(this.t * 37) * 0.04 + (Math.random() < 0.03 ? -0.35 : 0) - this.burst * 0.2;
+    this.figure.visible = build > 0.001;
+    this.talk = damp(this.talk, this.talking ? 1 : 0, 3, dt);
+    this.model.pose(this.t, this.talk);
+    // The figure turns to face Jason.
     const p = this.world.player.body;
-    this.figure.rotation.y = Math.atan2(p.x - this.spot.x, p.z - this.spot.z);
-    this.beamMat.opacity = this.shown * 0.09 + (this.played ? 0 : 0.05 + Math.sin(this.t * 3) * 0.03);
+    const face = Math.atan2(p.x - this.spot.x, p.z - this.spot.z);
+    this.figure.rotation.y = k > 0.05 ? dampAngle(this.figure.rotation.y, face, 4, dt) : face;
+    this.projector.update(this.t, dt, HOLO_FEET + (build * 1.25 - 0.12) * this.model.height);
   }
 }
 
