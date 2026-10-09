@@ -609,8 +609,63 @@ export class AudioEngine {
     this.nextTime = this.ctx.currentTime + 0.12;
   }
 
+  /* ---------------- the Flamethrower's roar ---------------- */
+
+  private flameSrc: AudioBufferSourceNode | null = null;
+  private flameGain: GainNode | null = null;
+  private flameOn = false;
+  private flameSeen = 0;
+
+  /**
+   * The Flamethrower's roar: a loop of rumbling, crackling filtered noise. Call it every frame with
+   * whether the flames are burning; it fades in and out, and stops by itself if the calls stop (pause).
+   */
+  flame(on: boolean) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    if (on) this.flameSeen = ctx.currentTime;
+    if (on === this.flameOn) return;
+    this.flameOn = on;
+    const t = ctx.currentTime;
+    if (on) {
+      if (!this.flameSrc) {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noise;
+        src.loop = true;
+        const low = ctx.createBiquadFilter();
+        low.type = 'lowpass';
+        low.frequency.value = 900;
+        low.Q.value = 0.9;
+        // A fast wobble on the filter makes it crackle and flutter like real fire.
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 9;
+        const depth = ctx.createGain();
+        depth.gain.value = 380;
+        lfo.connect(depth).connect(low.frequency);
+        const g = ctx.createGain();
+        g.gain.value = 0.0001;
+        src.connect(low).connect(g).connect(this.sfxBus);
+        src.start(t, Math.random() * 0.5);
+        lfo.start(t);
+        src.onended = () => lfo.stop();
+        this.flameSrc = src;
+        this.flameGain = g;
+      }
+      this.flameGain?.gain.setTargetAtTime(0.42, t, 0.04);
+      // A whoosh as it lights.
+      this.hiss(t, 0.25, 0.25, 'bandpass', 600, 2400, this.sfxBus, 0.02);
+    } else if (this.flameSrc && this.flameGain) {
+      this.flameGain.gain.setTargetAtTime(0.0001, t, 0.07);
+      this.flameSrc.stop(t + 0.5);
+      this.flameSrc = null;
+      this.flameGain = null;
+    }
+  }
+
   private schedule() {
     const ctx = this.ctx;
+    // The roar dies down if nobody keeps it going (the game paused mid-flame).
+    if (ctx && this.flameOn && ctx.currentTime - this.flameSeen > 0.2) this.flame(false);
     if (!ctx || !this.track || ctx.state !== 'running') return;
     const song = SONGS[this.track];
     const stepDur = 60 / song.bpm / 4;

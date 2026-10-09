@@ -822,7 +822,7 @@ export class Game {
         this.refreshHud();
       },
       hud: () => this.refreshHud(),
-      bossBar: (name, frac) => this.ui.setBoss(name, frac),
+      bossBar: (name, frac) => this.ui.setBoss(name, frac, this.world?.boss?.phaseMarks ?? []),
       down: () => {
         this.state = 'down';
         this.input.reset();
@@ -1040,7 +1040,8 @@ export class Game {
           const pl = w.player;
           if (w.vehicle) this.vehicleHud.update(w.vehicle.hud());
           else {
-            this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge);
+            // The Flamethrower shows its fuel gauge instead of a clip.
+            this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge, pl.weapon === 'flame' ? pl.fuel : null, pl.tank.dry);
             if (pl.bren && pl.hero === 'brennus') this.ui.setHeat(pl.bren.heat, pl.bren.overheated);
             this.refreshAbilities(w);
           }

@@ -12,6 +12,7 @@ import { EL_ROCKIES } from './el/rockies';
 import { EL_SNOW } from './el/snow';
 import { EL_VOLCANO } from './el/volcano';
 import { EL_WEAPONS } from './el/weapons';
+import { EL_ARSENAL } from './el/arsenal';
 
 /**
  * Greek translations, keyed by the English text. Written as natural Greek for young players rather
@@ -498,8 +499,8 @@ export const EL: Record<string, string> = {
   "Blaster Power": "Ισχύς Όπλου",
   "+1 damage for blasts, spins, pounds and dashes (fireballs +2)": "+1 ζημιά σε βολές, σβούρες, καρφώματα και ορμές (βολίδες φωτιάς +2)",
   "Bigger Clip": "Μεγαλύτερος Γεμιστήρας",
-  "+2 shots before you need to reload": "+2 βολές πριν χρειαστεί να ξαναγεμίσεις",
-  "Shoot and reload faster": "Ρίχνεις και ξαναγεμίζεις πιο γρήγορα",
+  "Bigger clips for every weapon (and a bigger fuel tank)": "Μεγαλύτερος γεμιστήρας για κάθε όπλο (και μεγαλύτερο ντεπόζιτο καυσίμου)",
+  "Shoot, reload and refuel faster": "Ρίχνεις, ξαναγεμίζεις και ανεφοδιάζεις πιο γρήγορα",
   "LUX’s zap hurts instead of just stunning, and his force pulse hits harder": "Το ηλεκτροσόκ του ΛΟΥΞ πονάει αντί απλώς να ζαλίζει, και ο Παλμός Ισχύος του χτυπάει πιο δυνατά",
   "Pull in bolts from farther away": "Τραβάς βίδες από πιο μακριά",
   "Jason": "Ιάσονας",
@@ -670,6 +671,7 @@ export const EL: Record<string, string> = {
   ...EL_HARPIES,
   ...EL_COMPANIONS,
   ...EL_WEAPONS,
+  ...EL_ARSENAL,
   ...EL_HEROES,
   ...EL_BRENNUS3,
 };

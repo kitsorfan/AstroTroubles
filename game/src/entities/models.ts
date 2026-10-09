@@ -434,11 +434,11 @@ function dressMk2(m: JasonModel, lv: (id: UpgradeId) => number, put: (parent: TH
 /**
  * The equipped weapon shows on the blaster (which points along +Z in the right arm, muzzle near z 0.4):
  * a coloured band, plus three little barrels (Spread Shot), an ice crystal (Frost Ray), two spark
- * prongs (Thunder Arc) or a targeting dome (Seeker).
+ * prongs (Thunder Arc), a targeting dome (Seeker) or a fuel tank and a long nozzle (Flamethrower).
  */
 function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) {
   if (weapon === 'blaster') return;
-  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'] };
+  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'], flame: ['#ffd08a', '#ff6a1a'] };
   const [c, e] = colors[weapon] ?? ['#ffffff', '#ffffff'];
   const glowM = mat(c, { emissive: e, ei: 1.4 });
   const band = mesh(cyl(0.118, 0.118, 0.06, 14), glowM, 0, -0.48, 0.3, false);
@@ -470,6 +470,20 @@ function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) 
     const lens = glowSprite(e, 0.26, 0.9);
     lens.position.set(0, -0.37, 0.3);
     put(lens);
+  } else if (weapon === 'flame') {
+    // A fuel tank slung under the gun, a long flared nozzle and a little blue pilot flame at its tip.
+    const metal = mat('#5a4a40', { metal: 0.6, rough: 0.4 });
+    const tank = mesh(cyl(0.075, 0.075, 0.3, 12), mat('#d8402a', { rough: 0.45 }), 0, -0.62, 0.12, false);
+    tank.rotation.x = Math.PI / 2;
+    const pipe = mesh(cyl(0.035, 0.045, 0.24, 10), metal, 0, -0.48, 0.5, false);
+    pipe.rotation.x = Math.PI / 2;
+    const flare = mesh(cyl(0.085, 0.045, 0.1, 12), metal, 0, -0.48, 0.66, false);
+    flare.rotation.x = Math.PI / 2;
+    const pilot = glowSprite('#7fd4ff', 0.2, 0.9);
+    pilot.position.set(0, -0.48, 0.74);
+    const ember = glowSprite(e, 0.3, 0.7);
+    ember.position.set(0, -0.48, 0.74);
+    put(tank, pipe, flare, pilot, ember);
   }
 }
 

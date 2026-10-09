@@ -1050,6 +1050,8 @@ export class Heart extends Boss implements Target, Interactable {
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 4 * 4 + 16);
+    // The pods first (half the bar), then the core.
+    this.phaseMarks = [0.5];
     this.cx = cx;
     this.cz = cz;
     this.spot = this.center.clone();
@@ -1280,6 +1282,7 @@ export class Reborn extends Boss implements Target, Interactable {
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     // The last fight should be a long one: tougher still for every level of Blaster Power.
     super(world, id, cx, cz, h, 80 + 16 * (world.save.upgrades.blaster ?? 0));
+    this.phaseMarks = [0.66, 0.33];
     this.cx = cx;
     this.cz = cz;
     this.spot = this.center.clone();
