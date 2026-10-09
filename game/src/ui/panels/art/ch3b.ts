@@ -5,7 +5,6 @@ import {
   backdrop,
   C,
   cloud,
-  flower,
   gasGiant,
   glow,
   glowDef,
@@ -17,12 +16,12 @@ import {
   person,
   poly,
   r1,
-  RAINBOW,
   rng,
   sparkle,
   stars,
   vignette,
 } from '../kit';
+import * as gn from '../gn';
 
 const GOLD = '#ffc94a';
 const GOLD_DARK = '#c8901e';
@@ -169,37 +168,6 @@ function harpy(x: number, y: number, s: number, o: { eye?: string; up?: boolean;
   return at(x, y, s, body, o.flip, o.rot ?? 0);
 }
 
-/** A few white whoosh lines trailing behind something flying left (start at x, y). */
-const whoosh = (x: number, y: number, s: number) =>
-  at(x, y, s, `<path d="M0 -20H60M10 0H90M0 20H50" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".7"/>`);
-
-/**
- * Atalanta's little scout skiff (teal and white, gold trim), seen from the front, stripped for parts by
- * the harpy drones: its left wing torn off, panels missing and wires sticking out. Feet at (x, y).
- */
-function skiff(x: number, y: number, s: number): string {
-  const wires = (d: string[]) => d.map((p, i) => `<path d="${p}" fill="none" stroke="${['#ff5e6a', C.gold, '#5ec8ff'][i % 3]}" stroke-width="5" stroke-linecap="round"/>`).join('');
-  const body = `<ellipse cx="0" cy="4" rx="210" ry="14" fill="#000" opacity=".16"/>
-    <path d="M-90 -50L-120 0M90 -50L120 0" ${ink(14)}/><path d="M-90 -50L-120 0M90 -50L120 0" stroke="#9aa6ba" stroke-width="6"/><path d="M-140 0H-100M100 0H140" ${ink(10)}/>
-    <path d="M136 -126L262 -168L282 -112L146 -76Z" fill="${SNOW}" ${ink(5)}/><path d="M150 -102L270 -140" stroke="${SKIFF}" stroke-width="10"/><circle cx="268" cy="-164" r="8" fill="#ff4a5a" ${ink(2)}/>
-    <path d="M-138 -120L-184 -128L-176 -114L-192 -102L-180 -90L-146 -80Z" fill="${SNOW}" ${ink(5)}/>
-    ${wires(['M-186 -118q-24 -8 -30 -36', 'M-190 -102q-30 6 -44 -10', 'M-184 -92q-18 18 -8 38'])}
-    <path d="M-150 -96Q-150 -176 0 -180Q150 -176 150 -96Q150 -44 0 -40Q-150 -44 -150 -96Z" fill="${SKIFF}" ${ink(6)}/>
-    <path d="M108 -162Q152 -130 140 -80Q120 -50 40 -42Q120 -72 108 -162Z" fill="${SKIFF_DARK}" opacity=".6"/>
-    <path d="M-140 -74Q0 -36 140 -74Q130 -46 0 -42Q-130 -46 -140 -74Z" fill="${SNOW}"/>
-    <path d="M-148 -104Q0 -84 148 -104" fill="none" stroke="${GOLD}" stroke-width="6"/>
-    <path d="M-74 -170Q-64 -240 0 -244Q64 -240 74 -170Z" fill="#9fe8ff" fill-opacity=".75" ${ink(5)}/><path d="M-46 -184Q-40 -222 -6 -228" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".8"/>
-    <rect x="-120" y="-152" width="66" height="42" rx="8" fill="#22283a" ${ink(4)}/><path d="M-112 -142H-62M-112 -128H-72" stroke="#5a6274" stroke-width="4"/>
-    <rect x="40" y="-144" width="58" height="36" rx="6" fill="#22283a" ${ink(4)}/><path d="M48 -134H90" stroke="#5a6274" stroke-width="4"/>
-    ${wires(['M-104 -124q-6 26 -26 32', 'M-82 -122q12 28 -2 46', 'M60 -140q6 -26 -12 -40', 'M80 -138q14 -20 34 -18'])}
-    <circle cx="0" cy="-116" r="15" fill="#fff6c0" ${ink(3)}/><path d="M-6 -122L4 -112" stroke="${C.ink}" stroke-width="2"/>
-    <g fill="${C.ink}"><circle cx="-30" cy="-140" r="3"/><circle cx="24" cy="-150" r="3"/><circle cx="-48" cy="-96" r="3"/><circle cx="60" cy="-92" r="3"/></g>
-    <rect x="-70" y="-84" width="44" height="14" rx="3" fill="#f0e0b0" ${ink(2)} transform="rotate(-18 -48 -77)"/>`;
-  return at(x, y, s, body) + sparkle(x - 232 * s, y - 112 * s, 16 * s, '#fff6b0') + sparkle(x - 216 * s, y - 150 * s, 9 * s, C.gold);
-}
-
-const NEAR: Tone = { grass: '#7cc45a', edge: '#4f9a3a', rock: '#b08a66', shade: '#7a5a44', root: '#6a4a30', tree: '#4f9a3a' };
-const HAZE: Tone = { grass: '#b4dca8', edge: '#9cc898', rock: '#d4bcb4', shade: '#b4a0a8', root: '#b49c94', tree: '#94c890' };
 
 /** The big floating isle in the front of the picture: grass to stand on, rock and roots below, a waterfall off its left end. */
 function mainIsle(t: Tone): string {
@@ -216,58 +184,6 @@ function mainIsle(t: Tone): string {
   );
 }
 
-/** A curved rainbow streak trailing behind IRIS as she zooms in (from x, y up to the right). */
-function rainbowTrail(x: number, y: number): string {
-  return `<g fill="none" stroke-linecap="round" opacity=".75">${RAINBOW.map(
-    (c, i) => `<path d="M${x} ${y + (i - 2.5) * 9}Q${x + 150} ${y - 20 + (i - 2.5) * 9} ${x + 300} ${y - 150 + (i - 2.5) * 10}" stroke="${c}" stroke-width="8"/>`,
-  ).join('')}</g>`;
-}
-
-/** 23. On a floating isle, Jason and LUX meet Atalanta beside her skiff, stripped by harpy drones; IRIS zooms in, delighted. */
-export function ch3Atalanta(): string {
-  const id = 'ch3-atalanta';
-  return panel(
-    backdrop(id + 'b', [[0, '#4a90de'], [0.45, '#94c8f0'], [0.72, '#ffe2a8'], [1, '#ffd08a']]) +
-      `<defs>${glowDef(id + 's', '#fff2c0', 0.9)}${glowDef(id + 'i', '#fff6d0', 0.7)}</defs>` +
-      glow(id + 's', 1400, 130, 280) +
-      gasGiant(id + 'j', 1400, 120, 56) +
-      cloud(760, 150, 0.8, '#fff', 0.8) +
-      cloud(160, 120, 0.6, '#fff', 0.7) +
-      cloudSea(4, 600, '#fff8ec', '#f4dcc4') +
-      isle(220, 420, 200, HAZE, { seed: 3, trees: 2, fall: 0.2, inked: false }) +
-      isle(560, 330, 120, HAZE, { seed: 5, trees: 1, inked: false }) +
-      bridge(310, 418, 512, 326, 26, 0.6, '#a08a80', '#d8c0a8') +
-      isle(1000, 460, 240, HAZE, { seed: 7, trees: 3, fall: -0.3, inked: false }) +
-      isle(1420, 380, 180, HAZE, { seed: 9, trees: 2, inked: false }) +
-      bridge(1110, 450, 1338, 372, 30, 0.6, '#a08a80', '#d8c0a8') +
-      mainIsle(NEAR) +
-      flower(560, 860, 12, C.pink) +
-      flower(880, 740, 10, '#fff') +
-      flower(1450, 790, 12, C.gold) +
-      flower(1010, 850, 11, C.hello) +
-      skiff(330, 800, 0.9) +
-      // A dropped wrench and a few loose bolts by the skiff.
-      at(500, 846, 1, `<path d="M-30 6L26 -6" ${ink(12)}/><path d="M-30 6L26 -6" stroke="#9aa6ba" stroke-width="6" stroke-linecap="round"/><circle cx="30" cy="-7" r="10" fill="#9aa6ba" ${ink(4)}/>`) +
-      `<g fill="#9aa6ba" ${ink(2)}><circle cx="470" cy="812" r="6"/><circle cx="540" cy="820" r="5"/></g>` +
-      // The harpy drones flapping away with bits of the skiff.
-      whoosh(390, 250, 0.9) +
-      harpy(300, 250, 0.75, { flip: true, loot: 'wing', rot: -10 }) +
-      whoosh(620, 140, 0.7) +
-      harpy(560, 130, 0.6, { flip: true, loot: 'engine', up: false, eye: '#ff4a5a', rot: -14 }) +
-      harpy(150, 380, 0.5, { flip: true, loot: 'panel', rot: -6 }) +
-      atalanta(690, 835, 1.05, { pose: 'hips', face: 'grin' }) +
-      `<path d="M756 556q-9 15 0 21q9 -6 0 -21Z" fill="${C.cyan}" ${ink(2)}/>` +
-      rainbowTrail(980, 400) +
-      glow(id + 'i', 930, 420, 120, 0.8) +
-      at(930, 420, 1, iris(0, 0, 0.85, 'happy'), false, -14) +
-      sparkle(860, 330, 14, '#fff6d0') +
-      sparkle(1010, 330, 10, RAINBOW[2]) +
-      sparkle(840, 500, 9, RAINBOW[4]) +
-      jason(1190, 850, 1.0, { pose: 'wave', face: 'grin', flip: true }) +
-      lux(1330, 630, 0.8, 'scared', C.cyan, true) +
-      vignette(id + 'v', 0.25, '#3a2a50'),
-  );
-}
 
 const ROBE = '#34407a';
 const BEARD_WHITE = '#f4f4f8';
@@ -413,5 +329,364 @@ export function ch3Phineus(): string {
       sparkle(420, 470, 4, '#fff2a0') +
       vignette(id + 'v', 0.35, '#1a1030'),
   );
+}
+
+/* ---------------- 23. Atalanta, in the graphic-novel style ---------------- */
+
+/** What a harpy drone carries off in its talons. */
+type Haul = 'wing' | 'engine' | 'none';
+
+/**
+ * One of Aeëtes's harpy drones in the graphic-novel style: a gold metal raptor with blade feathers, a
+ * hooked beak and one glowing eye, flying right with a stolen part in its talons. Centred on its body.
+ */
+function harpyGN(pen: gn.Pen, x: number, y: number, s: number, o: { haul?: Haul; rot?: number; eye?: string } = {}): string {
+  const lp = pen.local(false, o.rot ?? 0);
+  const eye = o.eye ?? '#7fe6ff';
+  const wing = (dx: number, dy: number, color: string, far: boolean) =>
+    lp.form(`M${dx} ${dy}L${dx - 40} ${dy - 70}L${dx - 150} ${dy - 150}L${dx - 128} ${dy - 118}L${dx - 170} ${dy - 110}L${dx - 130} ${dy - 86}L${dx - 168} ${dy - 70}L${dx - 120} ${dy - 52}L${dx - 150} ${dy - 30}L${dx - 80} ${dy - 18}L${dx - 60} ${dy + 6}Z`, color, {
+      sh: 22,
+      hatch: far ? 2 : 1,
+      line: 2.6,
+      rim: far ? 0 : 1.8,
+      inner: lp.brushes(
+        [
+          [
+            [
+              [dx - 40, dy - 10],
+              [dx - 120, dy - 96],
+            ],
+            2.4,
+          ],
+          [
+            [
+              [dx - 30, dy - 40],
+              [dx - 140, dy - 66],
+            ],
+            2.4,
+          ],
+        ],
+        gn.INK,
+        [0.2, 0.4],
+        0.7,
+      ),
+    });
+  let out = wing(-6, -16, '#b8861e', true);
+  // Tail feathers.
+  out += lp.form('M-86 0L-170 -18L-150 4L-176 24L-140 22L-160 46L-84 16Z', '#c8901e', { sh: 14, hatch: 1, line: 2.4 });
+  // Talons and the loot.
+  out += lp.brushes(
+    [
+      [
+        [
+          [6, 26],
+          [2, 60],
+        ],
+        8,
+      ],
+      [
+        [
+          [26, 24],
+          [32, 60],
+        ],
+        8,
+      ],
+    ],
+    gn.INK,
+    [0.05, 0.05],
+  );
+  if (o.haul === 'wing') {
+    out += lp.form('M-40 62L120 44L150 80L-10 104Z', '#eef3f6', { sh: 16, hatch: 1, line: 2.6, rim: 1.6, inner: `<path d="M-30 80L136 60" stroke="#2fb7a3" stroke-width="12"/><circle cx="140" cy="62" r="7" fill="#ff4a5a"/>` });
+    out += lp.brushes(
+      [
+        [
+          [
+            [-38, 74],
+            [-60, 88],
+            [-58, 112],
+          ],
+          4,
+        ],
+        [
+          [
+            [-30, 90],
+            [-44, 116],
+          ],
+          4,
+        ],
+      ],
+      '#ff5e6a',
+      [0.1, 0.3],
+    );
+  } else if (o.haul === 'engine') {
+    out += lp.form('M-36 58H48Q70 58 72 82Q70 106 48 106H-36Z', '#9aa6ba', { sh: 18, hatch: 2, line: 2.6, rim: 1.6, inner: `<rect x="-24" y="72" width="40" height="14" fill="#2fb7a3"/><path d="M-30 64H40" stroke="#fff" stroke-width="3" opacity=".6"/>` });
+    out += lp.glow(76, 82, 24, '#7fe6ff', 0.8);
+  }
+  out += lp.brush([[-6, 62], [4, 52], [16, 62]], 4, gn.INK, [0.1, 0.1]) + lp.brush([[22, 62], [32, 52], [42, 62]], 4, gn.INK, [0.1, 0.1]);
+  // The body and the head.
+  out += lp.form('M-96 4Q-66 -24 16 -26Q74 -22 90 -4Q76 20 12 24Q-64 26 -96 4Z', '#e8b440', {
+    sh: 22,
+    hatch: 2,
+    line: 2.8,
+    rim: 2,
+    inner: `<path d="M-40 -22Q-46 2 -38 24M0 -26Q-6 0 2 24" fill="none" stroke="${gn.INK}" stroke-width="2.4" opacity=".55"/>`,
+  });
+  out += lp.form('M74 -36L58 -62L84 -44L88 -70L102 -38Z', '#a8741c', { sh: 6, line: 2.2 });
+  out += lp.form('M68 -20a24 20 0 1 0 48 0a24 20 0 1 0 -48 0Z', '#e8b440', { sh: 12, hatch: 1, line: 2.6, rim: 1.8 });
+  out += lp.form('M110 -28Q142 -24 142 -4Q126 -10 112 -8Z', '#2a2230', { line: 2.2 });
+  out += lp.glow(98, -22, 26, eye, 0.8) + `<circle cx="98" cy="-22" r="9" fill="#1a1630" stroke="${gn.INK}" stroke-width="2"/><circle cx="99" cy="-21" r="5.5" fill="${eye}"/><circle cx="96" cy="-25" r="2" fill="#fff"/>`;
+  out += wing(14, -8, '#f0c050', false);
+  return gn.at(x, y, s, out, false, o.rot ?? 0);
+}
+
+/**
+ * Atalanta's scout skiff (teal and white with gold trim) lying wrecked on the grass, nose to the right:
+ * its near wing torn off at a jagged stump, the engine bay ripped open, wires sparking. Base at (x, y).
+ */
+function skiffGN(pen: gn.Pen, x: number, y: number, s: number): string {
+  const teal = '#2fb7a3';
+  let out = '';
+  // The far wing, still there, angled up behind the hull.
+  out += pen.form('M-40 -96L-150 -230L-110 -236L60 -110Z', '#eef3f6', { sh: 24, hatch: 2, line: 2.8, inner: `<path d="M-30 -100L-128 -222" stroke="${teal}" stroke-width="12"/><circle cx="-128" cy="-226" r="7" fill="#ff4a5a"/>` });
+  // Bent landing struts.
+  out += pen.brushes(
+    [
+      [
+        [
+          [-150, -20],
+          [-176, 6],
+        ],
+        12,
+      ],
+      [
+        [
+          [140, -24],
+          [170, 6],
+        ],
+        12,
+      ],
+    ],
+    gn.INK,
+    [0.05, 0.05],
+  );
+  // The hull.
+  const hull = 'M-280 -30Q-286 -84 -200 -100L110 -120Q250 -112 318 -50Q330 -10 270 -2L-250 4Q-280 0 -280 -30Z';
+  const deck = `<path d="M-270 -60Q0 -96 300 -70L320 -40Q0 -70 -276 -36Z" fill="#eef3f6"/><path d="M-276 -40Q0 -74 316 -46" fill="none" stroke="#ffc94a" stroke-width="6"/>`;
+  const bay = `<path d="M-250 -70L-150 -84L-140 -24L-244 -16Z" fill="#141826"/><path d="M-240 -66L-160 -76M-236 -40L-150 -46" stroke="#3a4258" stroke-width="5"/>`;
+  out += pen.form(hull, teal, { sh: 40, hatch: 2, line: 3, rim: 2.2, axis: [1, 0], inner: deck + bay + `<path d="M-60 -30H40V-10H-60Z" fill="#141826"/>` });
+  // The torn-off near wing: a jagged stump with sparking wires.
+  out += pen.form('M-30 -96L60 -104L76 -76L58 -66L70 -44L44 -52L34 -30L14 -54L-2 -40L-14 -70Z', '#eef3f6', { sh: 14, hatch: 1, line: 2.8, rim: 1.6 });
+  const wires: [gn.P[], number][] = [
+    [
+      [
+        [20, -46],
+        [6, -16],
+        [-20, -4],
+      ],
+      4,
+    ],
+    [
+      [
+        [40, -50],
+        [54, -20],
+        [44, 6],
+      ],
+      4,
+    ],
+    [
+      [
+        [-180, -50],
+        [-210, -10],
+        [-240, 0],
+      ],
+      4,
+    ],
+  ];
+  out += pen.brushes([wires[0]], '#ff5e6a', [0.05, 0.3]) + pen.brushes([wires[1]], '#ffd166', [0.05, 0.3]) + pen.brushes([wires[2]], '#5ec8ff', [0.05, 0.3]);
+  out += gn.spark(pen, -20, -4, 18, '#fff6b0') + gn.spark(pen, 44, 8, 12, '#ffe066') + gn.spark(pen, -240, 0, 14, '#bff4ff');
+  // The cockpit canopy, cracked.
+  out += pen.form('M70 -118Q120 -176 214 -124Z', '#9fe8ff', { sh: 12, line: 2.8, inner: `<path d="M120 -150L140 -132L132 -118M140 -132L160 -138" fill="none" stroke="${gn.INK}" stroke-width="2"/>` + pen.brush([[96, -128], [124, -156], [160, -158]], 6, '#ffffff', [0.3, 0.3], 0.8) });
+  // A wisp of smoke from the engine bay.
+  out += [
+    [-200, -130, 30],
+    [-180, -190, 40],
+    [-210, -260, 52],
+  ]
+    .map(([cx, cy, r], i) => pen.glow(cx, cy, r * 1.5, '#d8d0d8', 0.75 - i * 0.18))
+    .join('');
+  return gn.at(x, y, s, out);
+}
+
+/** A floating sky-isle far off in the haze: a grassy cap over a hanging cone of rock, maybe a thread of waterfall. */
+function farIsle(pen: gn.Pen, x: number, y: number, w: number, haze: string, fall = false, seed = 1): string {
+  const h = w * 0.8;
+  const k = w / 200;
+  const rock = gn.crag(
+    pen,
+    [
+      [x - w / 2, y],
+      [x - w * 0.36, y + h * 0.36],
+      [x - w * 0.16, y + h * 0.62],
+      [x - w * 0.04, y + h],
+      [x + w * 0.1, y + h * 0.66],
+      [x + w * 0.3, y + h * 0.42],
+      [x + w / 2, y],
+    ],
+    '#d0bcb4',
+    { seed, sh: w * 0.3, cracks: 3, hatch: 1, line: 1.4 * k + 0.4, rim: 0 },
+  );
+  const cap = pen.form(
+    `M${gn.r1(x - w * 0.56)} ${gn.r1(y + 4)}Q${gn.r1(x - w * 0.3)} ${gn.r1(y - w * 0.12)} ${gn.r1(x)} ${gn.r1(y - w * 0.13)}Q${gn.r1(x + w * 0.3)} ${gn.r1(y - w * 0.12)} ${gn.r1(x + w * 0.56)} ${gn.r1(y + 4)}Q${gn.r1(x)} ${gn.r1(y + w * 0.08)} ${gn.r1(x - w * 0.56)} ${gn.r1(y + 4)}Z`,
+    '#8ac06a',
+    { sh: w * 0.05, line: 1.4 * k + 0.4 },
+  );
+  let trees = '';
+  for (const t of [-0.28, 0.02, 0.26]) {
+    const tx = x + t * w;
+    const ty = y - w * 0.1 * (1 - t * t * 4);
+    trees += pen.form(`M${gn.r1(tx - 12 * k)} ${gn.r1(ty)}L${gn.r1(tx)} ${gn.r1(ty - 46 * k)}L${gn.r1(tx + 12 * k)} ${gn.r1(ty)}Z`, '#6aa05a', { sh: 8 * k, line: 1.4 * k + 0.4 });
+  }
+  const water = fall ? `<path d="M${gn.r1(x + w * 0.2)} ${gn.r1(y + 4)}V${gn.r1(y + h * 1.5)}" stroke="#f4fbff" stroke-width="${gn.r1(w * 0.035)}" opacity=".8"/>` : '';
+  return rock + cap + trees + water + pen.glow(x, y + h * 0.25, w * 0.8, haze, 0.7, h * 0.9);
+}
+
+/** 23. On a floating isle at golden hour, Jason and LUX meet Atalanta by her wrecked skiff while harpy drones flap off with its wing and engine; IRIS zooms in, delighted. */
+export function ch3Atalanta(): string {
+  const pen = gn.Pen.scene('ch3-atalanta', { key: [-0.75, -0.55], keyColor: '#ffe0a8', rim: [0.9, -0.3], rimColor: '#c8f4ff', shadow: '#7a6ab0', depth: 0.5 });
+  const sunX = 220;
+  const sunY = 190;
+  const sky =
+    gn.sky(pen, [
+      [0, '#2a5aa0'],
+      [0.35, '#6aa8dc'],
+      [0.62, '#ffd8a0'],
+      [0.75, '#ffe8c0'],
+    ]) +
+    gn.halftone(pen, 'M-80 -60H1680V260H-80Z', '#ffffff', 10, 0.1) +
+    gn.gasGiant(pen, 930, 120, 84, { lightDir: [-0.9, 0.2], haze: 0.5, sky: '#8ab8e0' }) +
+    gn.godRays(pen, sunX, sunY, [20, 45, 70, 95, 120, 150, 175], 7, 1300, '#fff2c8', 0.28) +
+    gn.bloom(pen, sunX, sunY, 120, '#fff6d8', 1) +
+    gn.cloud(pen, 600, 210, 300, '#ffffff', '#c8b8d8', { seed: 2 }) +
+    gn.cloud(pen, 1380, 170, 260, '#ffffff', '#c8b8d8', { seed: 3 });
+
+  const back = pen.relight({ key: [-0.8, -0.6], rimColor: '#fff2d0', rim: [-0.6, -0.8] });
+  const far =
+    farIsle(pen, 560, 430, 200, '#f4e6ea', true, 2) +
+    farIsle(pen, 880, 350, 130, '#f4eaf4', false, 3) +
+    farIsle(pen, 1460, 440, 240, '#f4e6ea', true, 4) +
+    `<path d="M640 410Q760 450 812 336" fill="none" stroke="#8a8098" stroke-width="3"/>` +
+    [
+      [100, 640, 420, 1],
+      [520, 660, 460, 2],
+      [980, 640, 420, 3],
+      [1420, 660, 460, 4],
+    ]
+      .map(([cx, cy, cw, seed]) => gn.cloud(back, cx, cy, cw, '#fff6ea', '#d8c0d8', { seed, flat: true }))
+      .join('') +
+    `<rect x="-80" y="640" width="1760" height="320" fill="#f2e0e0"/>` +
+    [
+      [-40, 720, 520, 5],
+      [460, 740, 560, 6],
+      [1000, 720, 520, 7],
+      [1500, 740, 560, 8],
+    ]
+      .map(([cx, cy, cw, seed]) => gn.cloud(back, cx, cy, cw, '#fffaf0', '#e0c8d8', { seed, flat: true }))
+      .join('') +
+    gn.haze(pen, 520, 700, '#fff0d8', 0.6);
+  // The harpies flapping away with the skiff's wing and engine, streaks behind them.
+  const harpies =
+    gn.streaks(pen, 1120, 220, -100, 220, 4, 70, '#ffffff', 0.7, 3) +
+    harpyGN(pen, 1200, 210, 0.85, { haul: 'wing', rot: -12 }) +
+    gn.streaks(pen, 1380, 330, -100, 180, 4, 60, '#ffffff', 0.6, 4) +
+    harpyGN(pen, 1440, 320, 0.7, { haul: 'engine', rot: -18, eye: '#ff6a5a' });
+  // The isle they stand on: a grassy top, its rocky edge dropping away into the clouds on the left.
+  const ground =
+    pen.form('M-80 800Q200 770 600 778Q1100 772 1680 790V960H-80Z', '#6ab04a', {
+      sh: 30,
+      line: 3,
+      rim: 0,
+      paint: pen.lin([
+        [0, '#9ad06a'],
+        [1, '#3a7a3a'],
+      ]),
+      inner: pen.brushes(
+        [
+          [
+            [
+              [120, 820],
+              [130, 790],
+            ],
+            5,
+          ],
+          [
+            [
+              [520, 812],
+              [530, 784],
+            ],
+            5,
+          ],
+          [
+            [
+              [760, 830],
+              [744, 800],
+            ],
+            5,
+          ],
+          [
+            [
+              [1460, 830],
+              [1474, 800],
+            ],
+            5,
+          ],
+          [
+            [
+              [1560, 840],
+              [1550, 806],
+            ],
+            5,
+          ],
+        ],
+        '#2a5a2a',
+        [0.05, 0.9],
+      ),
+    }) +
+    gn.grass(pen, -40, 1640, 794, 30, 30, '#3a7a3a', '#b8e088', 7) +
+    gn.wash(pen, 820, '#1a2a30', 0.6);
+  const props =
+    gn.castShadow(pen, 1230, 806, 330, 24, 0.4) +
+    skiffGN(pen, 1230, 800, 0.95) +
+    // A dropped wrench and loose bolts.
+    pen.brush(
+      [
+        [640, 850],
+        [700, 838],
+      ],
+      12,
+      gn.INK,
+      [0.05, 0.05],
+    ) +
+    pen.brush(
+      [
+        [640, 850],
+        [700, 838],
+      ],
+      6,
+      '#9aa6ba',
+      [0.05, 0.05],
+    ) +
+    `<g fill="#9aa6ba" stroke="${gn.INK}" stroke-width="2"><circle cx="604" cy="862" r="6"/><circle cx="730" cy="866" r="5"/></g>`;
+  // IRIS zooming in on a rainbow streak.
+  const trail = gn.RAINBOW.map((c, i) => pen.brush([[420, 160 + i * 8], [580, 262 + i * 7], [748, 388 + i * 5]], 9, c, [0.9, 0.05], 0.8)).join('');
+  const heroes =
+    gn.castShadow(pen, 1000, 880, 140, 14, 0.45) +
+    gn.atalanta(pen, 1000, 884, 1.1, { pose: 'hips', mood: 'grin', flip: true, look: [2, 1] }) +
+    trail +
+    gn.iris(pen, 776, 408, 0.85, 'happy', { flip: true, rot: 14 }) +
+    gn.castShadow(pen, 330, 900, 150, 14, 0.5) +
+    gn.jason(pen, 330, 904, 1.12, { pose: 'wave', mood: 'smile', look: [2, 0] }) +
+    gn.lux(pen, 150, 470, 0.95, 'normal', { look: [8, -6] });
+  const fore = gn.grass(pen, -70, 230, 930, 4, 150, '#10281a', '#4a8a4a', 9) + gn.grass(pen, 1420, 1680, 930, 4, 150, '#10281a', '#4a8a4a', 10);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, harpies) + gn.layer(0.85, ground + props) + gn.layer(1, heroes) + gn.layer(1.25, fore) + gn.vignette(pen, 0.45, '#1a1030') + gn.grain(pen, 0.08));
 }
 

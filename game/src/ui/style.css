@@ -1358,58 +1358,55 @@ canvas#game {
   transform: none;
 }
 
-/* Storybook illustrations: a framed cartoon picture that fades in over the scene and drifts slowly. */
+/*
+ * Storybook illustrations: full-screen, edge to edge (each layer is cropped like `cover`), fading in
+ * over the scene while the camera drifts slowly across them (see cinePanel.ts).
+ */
 .cine .storypanel {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: calc(11vh + 1.5vh);
-  background: radial-gradient(ellipse at center, rgba(4, 6, 18, 0.55), rgba(2, 3, 10, 0.92));
+  overflow: hidden;
+  background: #03040a;
   opacity: 0;
-  transition: opacity 0.6s;
+  transition: opacity 0.45s ease-in;
 }
 
 .cine .storypanel.show {
   opacity: 1;
+  transition: opacity 0.8s ease-out;
 }
 
-.cine .storypanel .frame {
-  /* As big as fits between the letterbox bar and the caption/dialogue area, keeping 16:9. */
-  height: min(calc(100vh - 22vh - 150px), calc(92vw * 9 / 16));
-  aspect-ratio: 16 / 9;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 5px solid #fff6e0;
-  box-shadow: 0 0 0 3px #1a1630, 0 18px 50px rgba(0, 0, 0, 0.7);
-  transform: rotate(-0.6deg) scale(0.97);
-  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: #0b0f1e;
+.cine .storypanel .art {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.04);
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
 
-.cine .storypanel.show .frame {
-  transform: rotate(-0.6deg) scale(1);
-}
-
-.cine .storypanel .art,
-.cine .storypanel .art svg {
+.cine .storypanel .art > svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+  will-change: transform;
 }
 
-.cine .storypanel .art.drift {
-  animation: panel-drift 14s ease-out forwards;
+/* A soft dark gradient at the bottom (for captions and dialogue) and a light one at the top (for SKIP). */
+.cine .storypanel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgba(3, 4, 12, 0.85) 0%, rgba(3, 4, 12, 0.5) 17%, rgba(3, 4, 12, 0) 36%),
+    linear-gradient(to bottom, rgba(3, 4, 12, 0.4) 0%, rgba(3, 4, 12, 0) 14%);
 }
 
-@keyframes panel-drift {
-  from {
-    transform: scale(1.02) translateX(0);
-  }
-  to {
-    transform: scale(1.1) translateX(var(--dx, 1.6%));
-  }
+/* Over a full-screen panel there are no letterbox bars to clear, so captions sit lower. */
+.cine.paneled .caption {
+  bottom: calc(5vh + 10px + var(--safe-b));
 }
 
 .cine .caption {
