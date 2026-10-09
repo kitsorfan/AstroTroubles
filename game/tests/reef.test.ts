@@ -309,7 +309,7 @@ describe('SCYLLA', () => {
 
   it('takes no damage from shots, closed plates or dark elbows', () => {
     const { w, s, v, from } = setup();
-    s.hit(10, 'shot', from);
+    s.hit(10, 'shot');
     for (const p of v.plates) p.hit(10, 'pound', from);
     const dark = v.arms.find((a) => !a.joint.open)!;
     dark.joint.powerArrow();
