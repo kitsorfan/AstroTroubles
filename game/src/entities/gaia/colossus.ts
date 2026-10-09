@@ -240,6 +240,7 @@ export class Colossus extends Boss implements Target, Interactable {
     this.cz = cz;
     this.t1 = Math.round((this.maxHp * 2) / 3);
     this.t2 = Math.round(this.maxHp / 3);
+    this.phaseMarks = [this.t1 / this.maxHp, this.t2 / this.maxHp];
     this.spot = this.center.clone();
     const c = this.center;
 

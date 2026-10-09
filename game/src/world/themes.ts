@@ -3,7 +3,7 @@ import type { ThemeId } from './levelTypes';
 export type ParticleMood = 'snow' | 'spores' | 'embers' | 'petals' | 'sparks' | 'motes' | 'pollen' | 'dust' | 'snowfall' | 'leaves' | 'ash';
 
 /** How the ground of an outdoor region is painted. */
-export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt';
+export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt' | 'flagstone';
 
 /** The open-air look of a Gaia Nova region: natural ground and cliffs, a sun, clouds and a horizon. */
 export interface Outdoor {
@@ -29,6 +29,8 @@ export interface Outdoor {
    * floating in it), and the far mountains become distant cloud banks.
    */
   cloudSea?: boolean;
+  /** A reef in the open sea: far below is the deep blue seabed, and the horizon stays low and flat. */
+  sea?: boolean;
 }
 
 export interface Theme {
@@ -422,6 +424,33 @@ export const THEMES: Record<ThemeId, Theme> = {
     bloom: 0.14,
     outdoor: { ground: 'grass', ground2: '#9ccc5a', rock: '#a8988a', rockDark: '#6e6052', below: '#f4f6fb', sunDisc: '#fff4dc', clouds: '#ffffff', hills: '#c8d8ee', stars: false, cloudSea: true },
   },
+  /* Scylla's Reef: pale coral sand and dark reef rock in a bright turquoise sea, under a tropical sun. */
+  reef: {
+    skyTop: '#2a8ad8',
+    skyBottom: '#d6f2ff',
+    fog: '#c8ecf8',
+    fogNear: 62,
+    fogFar: 210,
+    floor: '#f0d8bc',
+    floorLine: '#d4b28c',
+    floorSide: '#b88a68',
+    ice: '#c8f0ff',
+    wall: '#8a7c74',
+    wallTrim: '#ff7a8a',
+    edge: '#fff2dc',
+    hazard: '#3fc8e0',
+    hazardDeep: '#0a4a6a',
+    hemiSky: '#eaf8ff',
+    hemiGround: '#5e8a8a',
+    hemi: 1.05,
+    sun: '#fff4dc',
+    sunI: 2.2,
+    accent: '#3fe0d0',
+    mood: 'motes',
+    space: false,
+    bloom: 0.14,
+    outdoor: { ground: 'sand', ground2: '#fbe6cf', rock: '#8c7d74', rockDark: '#5a4e48', below: '#0c4f72', sunDisc: '#fffbe8', clouds: '#ffffff', hills: '#7aa6bc', stars: false, sea: true },
+  },
   /* Aeëtes's Mine: an open-pit gold mine on a dusty moon, under a black sky full of stars, with molten ore glowing at the bottom of the pit. */
   mine: {
     skyTop: '#070614',
@@ -448,5 +477,176 @@ export const THEMES: Record<ThemeId, Theme> = {
     space: false,
     bloom: 0.26,
     outdoor: { ground: 'rock', ground2: '#9a8466', rock: '#6e5c4c', rockDark: '#3e322a', below: '#ff9a20', belowGlow: true, sunDisc: '#fff4e0', clouds: null, hills: '#4a3a48', stars: true },
+  },
+  /* The Sirens' Sea: under the ocean of a water moon, sunlit blue-green above and deep blue below. The sub stages its own sea. */
+  sirens: {
+    skyTop: '#3ab8d8',
+    skyBottom: '#031a30',
+    fog: '#0b4f6e',
+    fogNear: 12,
+    fogFar: 105,
+    floor: '#c8b88a',
+    floorLine: '#8a7a5a',
+    floorSide: '#5a4e3a',
+    ice: '#c8f0ff',
+    wall: '#3a5a6a',
+    wallTrim: '#4ae0d8',
+    edge: '#4ae0d8',
+    hazard: '#ff6fb0',
+    hazardDeep: '#3a0a2a',
+    hemiSky: '#a8f0ff',
+    hemiGround: '#0a2a3a',
+    hemi: 0.85,
+    sun: '#d8f6ff',
+    sunI: 1.35,
+    accent: '#4ae0d8',
+    mood: 'motes',
+    space: false,
+    bloom: 0.3,
+  },
+  /*
+   * Talos's Forge: a bronze volcanic island in a teal sea, late afternoon. Black basalt with bronze-green
+   * patina, copper-coloured cliffs, glowing lava channels, a hazy amber sky and the sea far below.
+   */
+  forge: {
+    skyTop: '#2f6f9a',
+    skyBottom: '#ffc88a',
+    fog: '#d8a27a',
+    fogNear: 50,
+    fogFar: 170,
+    floor: '#4a3a34',
+    floorLine: '#2e2420',
+    floorSide: '#2e2420',
+    ice: '#c8e8f0',
+    wall: '#8a5a3a',
+    wallTrim: '#e0a040',
+    edge: '#ffb050',
+    hazard: '#ff7a1a',
+    hazardDeep: '#6a1a04',
+    hemiSky: '#ffe0c0',
+    hemiGround: '#3a2018',
+    hemi: 0.85,
+    sun: '#ffd8a8',
+    sunI: 1.9,
+    accent: '#e0a040',
+    mood: 'embers',
+    space: false,
+    bloom: 0.24,
+    outdoor: { ground: 'basalt', ground2: '#4a5a44', rock: '#9a6440', rockDark: '#5a3424', below: '#1f6a80', sunDisc: '#fff0d0', clouds: '#ffe4c8', hills: '#3a2a2e', stars: false },
+  },
+  /*
+   * Medusa's Labyrinth: a vast cavern under Colchis, walls of green stone carved by the Gardeners,
+   * glowing crystals in the dark roof like stars, and MEDUSA's green light everywhere.
+   */
+  labyrinth: {
+    skyTop: '#020a08',
+    skyBottom: '#0e2a22',
+    fog: '#0c2620',
+    fogNear: 34,
+    fogFar: 120,
+    floor: '#5e7a68',
+    floorLine: '#3a5244',
+    floorSide: '#2e4036',
+    ice: '#b8f0d8',
+    wall: '#4a6656',
+    wallTrim: '#7dff9a',
+    edge: '#e8b84a',
+    hazard: '#3dff8a',
+    hazardDeep: '#06301c',
+    hemiSky: '#c8ffe0',
+    hemiGround: '#1a2a20',
+    hemi: 0.8,
+    sun: '#e8fff0',
+    sunI: 1.5,
+    accent: '#7dff9a',
+    mood: 'spores',
+    space: false,
+    bloom: 0.3,
+    outdoor: { ground: 'rock', ground2: '#6a8a5a', rock: '#5a7666', rockDark: '#2e4438', below: '#0a2a1a', sunDisc: '#c8ffd8', clouds: null, hills: '#0e221a', stars: true },
+  },
+  /* Brennus's Last Stand: Colchis's ancient sky-dock of pale Gardener stone, high above a sea of sunset clouds, with teal light-runes and the first stars out. */
+  stand: {
+    skyTop: '#33286a',
+    skyBottom: '#ffb487',
+    fog: '#f2cdb8',
+    fogNear: 60,
+    fogFar: 210,
+    floor: '#dccfb6',
+    floorLine: '#b4a48a',
+    floorSide: '#8c7c6a',
+    ice: '#c8ecff',
+    wall: '#cfc2ac',
+    wallTrim: '#5ee0c8',
+    edge: '#ffe6a0',
+    hazard: '#7fd8ff',
+    hazardDeep: '#2a6a9a',
+    hemiSky: '#ffe8da',
+    hemiGround: '#6a5a6e',
+    hemi: 1.0,
+    sun: '#ffd6ae',
+    sunI: 2.0,
+    accent: '#5ee0c8',
+    mood: 'motes',
+    space: false,
+    bloom: 0.2,
+    outdoor: { ground: 'flagstone', ground2: '#e6dac2', rock: '#d6c9b4', rockDark: '#9a8c7a', below: '#ffe0cc', sunDisc: '#ffe2b0', clouds: '#ffd6c6', hills: '#c4a4c8', stars: true, cloudSea: true },
+  },
+  /* The Garden of Colchis: the Gardeners' ancient garden at dusk, lush lawns and mossy hedge-cliffs, glowing ponds, a violet sky turning peach at the horizon. */
+  garden: {
+    skyTop: '#2c2266',
+    skyBottom: '#ffb894',
+    fog: '#d8b4d0',
+    fogNear: 58,
+    fogFar: 195,
+    floor: '#5aa848',
+    floorLine: '#3f8a34',
+    floorSide: '#7a5a44',
+    ice: '#d8f0ff',
+    wall: '#4a7a44',
+    wallTrim: '#ff8ad8',
+    edge: '#ffe066',
+    hazard: '#5ef0d8',
+    hazardDeep: '#1a5a6a',
+    hemiSky: '#ffe8f4',
+    hemiGround: '#3a4a2a',
+    hemi: 0.95,
+    sun: '#ffe2c4',
+    sunI: 1.9,
+    accent: '#ff8ad8',
+    mood: 'petals',
+    space: false,
+    bloom: 0.22,
+    outdoor: { ground: 'grass', ground2: '#7cc85a', rock: '#4f7f46', rockDark: '#2e5230', below: '#3a6a3a', sunDisc: '#fff0d0', clouds: '#ffd8e8', hills: '#6a5a9a', stars: true },
+  },
+  /*
+   * The Golden Fleece: the Gardeners' great tree-temple on Colchis, at golden twilight. Mossy temple
+   * terraces among giant roots, honey-coloured stone with gold veins, a forest canopy far below, the gas
+   * giant hanging in a violet sky, and golden pollen drifting everywhere. The `~` pools are glowing sap.
+   */
+  fleece: {
+    skyTop: '#2a2466',
+    skyBottom: '#ffb98a',
+    fog: '#d8b0a8',
+    fogNear: 56,
+    fogFar: 190,
+    floor: '#7aa24a',
+    floorLine: '#5a8034',
+    floorSide: '#8a7a5a',
+    ice: '#d8f0ff',
+    wall: '#b8a080',
+    wallTrim: '#ffd166',
+    edge: '#ffe08a',
+    hazard: '#ffcf4a',
+    hazardDeep: '#8a5a10',
+    hemiSky: '#ffe8d0',
+    hemiGround: '#4a4030',
+    hemi: 0.95,
+    sun: '#ffd8a8',
+    sunI: 1.9,
+    accent: '#ffd166',
+    mood: 'pollen',
+    space: false,
+    bloom: 0.24,
+    outdoor: { ground: 'jungle', ground2: '#9ab85a', rock: '#b09a78', rockDark: '#6e5c44', below: '#2e5a34', sunDisc: '#ffe6b0', clouds: '#ffc8d8', hills: '#5a4a7a', stars: true },
   },
 };

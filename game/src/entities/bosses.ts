@@ -17,10 +17,16 @@ import { Driller } from './gaia/driller';
 import { Hydra } from './gaia/hydra';
 import { RogueLux } from './gaia/rogue';
 import { Excavator } from './ch3/excavator';
+import { Talos } from './forge/talos';
+import { GoldenRam } from './stand/goldenRam';
+import { GoldenKing } from './ch3/goldenKing';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
 import { Aello } from './isles/aello';
+import { Scylla } from './reef/scylla';
+import { Medusa } from './labyrinth/medusa';
+import { Dragon } from './ch3/dragon';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 export { Boss };
@@ -1050,6 +1056,8 @@ export class Heart extends Boss implements Target, Interactable {
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, 4 * 4 + 16);
+    // The pods first (half the bar), then the core.
+    this.phaseMarks = [0.5];
     this.cx = cx;
     this.cz = cz;
     this.spot = this.center.clone();
@@ -1280,6 +1288,7 @@ export class Reborn extends Boss implements Target, Interactable {
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     // The last fight should be a long one: tougher still for every level of Blaster Power.
     super(world, id, cx, cz, h, 80 + 16 * (world.save.upgrades.blaster ?? 0));
+    this.phaseMarks = [0.66, 0.33];
     this.cx = cx;
     this.cz = cz;
     this.spot = this.center.clone();
@@ -1570,8 +1579,23 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
     // Chapter 3.
     case 'aello':
       return new Aello(world, id, cx, cz, h);
+    case 'scylla':
+      return new Scylla(world, id, cx, cz, h);
     case 'excavator':
       return new Excavator(world, id, cx, cz, h);
+    case 'organ':
+      // The Siren Organ is fought from the submarine: see vehicles/sub (it never stands on a map).
+      throw new Error('THE SIREN ORGAN is fought from the Dolphin submarine (vehicles/sub/organ.ts)');
+    case 'talos':
+      return new Talos(world, id, cx, cz, h);
+    case 'medusa':
+      return new Medusa(world, id, cx, cz, h);
+    case 'ram':
+      return new GoldenRam(world, id, cx, cz, h);
+    case 'dragon':
+      return new Dragon(world, id, cx, cz, h);
+    case 'goldenking':
+      return new GoldenKing(world, id, cx, cz, h);
   }
 }
 

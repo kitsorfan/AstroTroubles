@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, GEAR, GRAPPLE, HERO_SWITCH, OUTDOOR, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GAZE, GEAR, GRAPPLE, HERO_SWITCH, MIRROR, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
@@ -15,15 +15,19 @@ import { Arrows } from './heroes/arrows';
 import { AtalantaMoves } from './heroes/atalanta';
 import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
-import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { MechMoves } from './heroes/mech';
+import { makeMirrorShield, stoneSkin, type MirrorShieldModel } from './labyrinth/stone';
 import { JasonFx } from './moveFx';
-import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
+import { FlameJet, burnCone } from './flame';
+import { SPREAD, WEAPONS, WEAPON_ORDER, FLAME, chargedDamageOf, clipOf, cooldownOf, damageOf, equippedWeapon, nextWeapon, ownedWeapons, reloadOf, stepTank, type Tank, type WeaponId } from './weapons';
 
 /** How long Jason hangs in the air (and flips) before a ground pound slams down. */
 const POUND_HANG = 0.18;
 
 const tmp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
+const MIRROR_N = new THREE.Vector3();
 
 /**
  * The player: one body, one set of hearts, armor and spins, and whichever hero is in control. Jason's
@@ -40,12 +44,14 @@ export class Player {
   private readonly cast: HeroId[];
   /** Atalanta's moves and model (built only on levels where she can play). */
   readonly ata: AtalantaMoves | null;
-  /** General Brennus's moves, model and cannon (built only on his own levels). */
+  /** General Brennus's moves, model and cannon (built only on levels where he can play). */
   readonly bren: BrennusMoves | null;
+  /** The bronze mech's moves, model and cannon (built only in Talos's Forge). */
+  readonly mech: MechMoves | null;
   /** Her arrows in flight (they keep flying after a switch). */
   readonly arrows: Arrows | null;
-  /** The hero not in control, walking along behind. */
-  private follower: Follower | null = null;
+  /** The heroes not in control, walking along behind (one, or two on the Golden Fleece), in switch order. */
+  private followers: Follower[] = [];
   /** Seconds before the next switch is allowed. */
   swapCd = 0;
   facing: number;
@@ -79,8 +85,16 @@ export class Player {
   private sinceSpin = 99;
   private shootCd = 0;
   private shootPose = 0;
-  /** Shots left in the clip; the clip refills after a reload. */
-  ammo: number;
+  /** Shots left in each weapon's clip (each keeps its own when Jason switches); a clip refills after a reload. */
+  private clips: Partial<Record<WeaponId, number>> = {};
+  /** The Flamethrower's fuel tank (seconds of flame left), whether it ran dry, and its rest before refilling. */
+  tank: Tank = { fuel: 0, dry: false, rest: 0 };
+  /** True on frames the Flamethrower is burning; the nozzle's way, a tap's short puff, and the damage clock. */
+  flaming = false;
+  private flameDir = new THREE.Vector3(0, 0, 1);
+  private puffT = 0;
+  private flameTickT = 0;
+  private jet: FlameJet | null = null;
   /** Seconds left on the current reload (0 = not reloading). */
   reloadT = 0;
   /** 0..1 fireball charge while BLAST is held. */
@@ -115,6 +129,17 @@ export class Player {
   sinceHurt = 99;
   /** Lets a cutscene pose the playing hero's model (called after the normal animation each frame). */
   pose: ((m: HeroModel, dt: number) => void) | null = null;
+  /** Jason's Mirror Shield (from Medusa's Labyrinth on): raised while SPIN is held on the ground. */
+  mirrorUp = false;
+  /** Seconds SPIN has been held on the ground so far (a tap spins, a hold raises the shield), or -1. */
+  private spinHold = -1;
+  private mirror: MirrorShieldModel | null = null;
+  private mirrorFlash = 0;
+  private glintT = 0;
+  /** MEDUSA's gaze: seconds each hero has left as stone, and then safe from the next gaze. */
+  private stoneT = new Map<HeroId, number>();
+  private stoneSafe = new Map<HeroId, number>();
+  private stoneHinted = false;
 
   constructor(
     private world: World,
@@ -132,21 +157,27 @@ export class Player {
     const withAtalanta = this.cast.includes('atalanta');
     this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
     this.arrows = withAtalanta ? new Arrows(world) : null;
-    this.bren = this.roster.includes('brennus') ? new BrennusMoves(this, world) : null;
+    // Built for every hero on the level, even one who only joins later (Brennus on the Golden Fleece).
+    this.bren = this.cast.includes('brennus') ? new BrennusMoves(this, world) : null;
+    this.mech = this.cast.includes('mech') ? new MechMoves(this, world) : null;
     this.body.h = HEROES[this.hero].height;
+    if (this.hero === 'mech' && this.mech) this.body.r = this.mech.radius;
     this.facing = facing;
     this.hearts = world.save.maxHearts;
     this.energy = this.energyMax;
     this.spins = this.spinMax;
     this.armor = this.armorMax;
-    this.ammo = this.clipSize;
+    this.refillArms();
     this.renderY = y;
     this.safe.set(x, y, z);
     world.scene.add(this.jason.root);
     if (this.ata) world.scene.add(this.ata.model.root);
     if (this.bren) world.scene.add(this.bren.model.root);
+    if (this.mech) world.scene.add(this.mech.model.root);
     this.fx = new JasonFx(world.scene);
     this.showHero();
+    // Back at a checkpoint after climbing into the mech: everyone is already aboard.
+    if (this.hero === 'mech' && this.mech) this.mech.seat(this.jason, this.ata?.model ?? null);
   }
 
   /**
@@ -156,26 +187,39 @@ export class Player {
   get roster(): HeroId[] {
     const joins = this.world.def.joins ?? {};
     if (heroDev.heroes?.length) return this.cast;
-    return this.cast.filter((h) => {
+    // Once the bronze mech has joined, the others ride inside it (see `joinedRoster`).
+    return joinedRoster(this.cast, (h) => {
       const flag = joins[h];
       return !flag || this.world.hasFlag(flag);
     });
   }
 
-  /** Where the hero who isn't playing stands right now (null on single-hero levels). */
+  /**
+   * Where the hero who isn't playing stands right now (null on single-hero levels): the one whose droid
+   * tags along (Jason's LUX while Atalanta plays, otherwise Atalanta's IRIS), else the first follower.
+   */
   get partner(): { x: number; y: number; z: number; facing: number } | null {
-    return this.nextHero && this.follower ? this.follower.spot : null;
+    if (!this.nextHero) return null;
+    const owner: HeroId = this.hero === 'atalanta' ? 'jason' : 'atalanta';
+    const f = this.followers.find((x) => x.hero === owner) ?? this.followers[0];
+    return f ? f.spot : null;
   }
 
   /**
    * A hero joins (their join flag was just set): they appear beside the playing hero, ready to follow,
    * or at the given spot. The HUD then shows the switch button.
    */
-  heroJoined(at?: THREE.Vector3) {
+  heroJoined(at?: THREE.Vector3, hero?: HeroId) {
+    const ride = this.roster.length === 1 && HEROES[this.roster[0]].vehicle ? this.roster[0] : null;
+    if (ride && ride !== this.hero) {
+      this.board(ride);
+      return;
+    }
     this.showHero();
     const b = this.body;
-    if (at) this.follower?.place(at.x, at.y, at.z, this.facing);
-    else this.follower?.placeNear(b.x, b.y, b.z, this.facing);
+    const f = (hero && this.followers.find((x) => x.hero === hero)) || this.followers[0];
+    if (at) f?.place(at.x, at.y, at.z, this.facing);
+    else f?.placeNear(b.x, b.y, b.z, this.facing);
     this.world.hooks.hud();
   }
 
@@ -203,24 +247,76 @@ export class Player {
 
   private modelOf(id: HeroId): HeroModel {
     if (id === 'brennus' && this.bren) return this.bren.model;
+    if (id === 'mech' && this.mech) return this.mech.model;
     return id === 'atalanta' && this.ata ? this.ata.model : this.jason;
   }
 
-  /** Shows the playing hero, and hands the other one (if any) to the follower. */
+  /**
+   * Everyone climbs into a vehicle hero (the bronze mech), right where it is parked: from now on it is the
+   * only hero, and the others ride inside it (their models are posed in its cockpit and on its shoulder).
+   */
+  board(ride: HeroId) {
+    const m = this.modelOf(ride).root;
+    this.cancelCharge();
+    this.ata?.reset();
+    this.bren?.reset();
+    this.hero = ride;
+    this.body.h = HEROES[ride].height;
+    for (const id of this.cast) if (id !== ride) this.modelOf(id).root.visible = false;
+    // Nobody follows on foot any more (this drops the follower before anyone is seated).
+    this.showHero();
+    this.teleport(m.position.x, m.position.y, m.position.z);
+    this.facing = m.rotation.y;
+    if (ride === 'mech' && this.mech) {
+      this.body.r = this.mech.radius;
+      this.mech.seat(this.jason, this.ata?.model ?? null);
+    }
+    this.refreshGear();
+    this.world.refreshCompanions();
+    this.world.hooks.hud();
+  }
+
+  /**
+   * Shows the playing hero, and hands the others (if any) to the followers, in switch order. Heroes who
+   * haven't joined yet are left alone (they wait at their marker, see `showWaiting`).
+   */
   private showHero() {
     // Jason's model is always built; on a level without him (General Brennus's own) it stays hidden.
     if (!this.cast.includes('jason')) this.jason.root.visible = false;
-    for (const id of this.cast) this.modelOf(id).root.visible = id === this.hero;
-    const other = nextHero(this.roster, this.hero);
-    if (!other) return;
-    const m = this.modelOf(other);
-    m.root.visible = true;
-    if (this.follower) this.follower.swap(m, other);
-    else {
-      this.follower = new Follower(this.world, m, other);
-      const b = this.body;
-      this.follower.placeNear(b.x, b.y, b.z, this.facing);
+    // Heroes who haven't joined yet (or who ride inside the mech) are left where `showWaiting` put them.
+    const roster = this.roster;
+    for (const id of this.cast) if (roster.includes(id) || id === this.hero) this.modelOf(id).root.visible = id === this.hero;
+    const others: HeroId[] = [];
+    for (let id = nextHero(roster, this.hero); id && id !== this.hero && !others.includes(id); id = nextHero(roster, id)) others.push(id);
+    // Nobody left on foot (everyone climbed into the mech): nobody follows.
+    if (!others.length) {
+      this.followers = [];
+      return;
     }
+    // Each follower keeps its own hero; the one who was following the new hero takes the hero who was playing.
+    const free = this.followers.filter((f) => !others.includes(f.hero));
+    others.forEach((other, i) => {
+      const m = this.modelOf(other);
+      m.root.visible = true;
+      let f = this.followers.find((x) => x.hero === other);
+      if (!f) {
+        f = free.shift();
+        if (f) f.swap(m, other);
+        else {
+          f = new Follower(this.world, m, other);
+          this.followers.push(f);
+          const b = this.body;
+          f.slot = i;
+          f.placeNear(b.x, b.y, b.z, this.facing);
+        }
+      }
+      f.slot = i;
+    });
+  }
+
+  /** The follower walking as this hero, if any. */
+  private followerOf(hero: HeroId): Follower | undefined {
+    return this.followers.find((f) => f.hero === hero);
   }
 
   /** Why switching heroes isn't possible right now (null: it is). */
@@ -232,7 +328,7 @@ export class Player {
       cooldown: this.swapCd,
       grounded: b.grounded || this.coyote > 0,
       locked: this.down || this.world.cutscene,
-      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false),
+      busy: this.zip !== null || this.dashT > 0 || this.pounding || (this.ata?.busy ?? false) || (this.bren?.busy ?? false) || (this.mech?.busy ?? false),
       cramped: this.ata?.cramped ?? false,
     });
   }
@@ -261,16 +357,18 @@ export class Player {
     const b = this.body;
     const was = this.hero;
     this.cancelCharge();
+    this.mirrorUp = false;
+    this.spinHold = -1;
     this.ata?.reset();
     this.bren?.reset();
-    // Jason reloads while he follows along, so his clip is full when he's back.
-    this.ammo = this.clipSize;
-    this.reloadT = 0;
+    // Jason reloads (and refuels) while he follows along, so his weapons are full when he's back.
+    this.refillArms();
     this.hero = next;
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
     this.showHero();
-    this.follower?.placeNear(b.x, b.y, b.z, this.facing);
+    // The hero who was playing steps aside; anyone else following stays where they are.
+    this.followerOf(was)?.placeNear(b.x, b.y, b.z, this.facing);
     this.refreshGear();
     const color = HEROES[next].color;
     w.particles.emit(b.x, b.y + 1, b.z, { count: 40, color: '#ffffff', speed: 6, life: 0.55, size: 0.55, up: 1.5 });
@@ -463,8 +561,31 @@ export class Player {
     }
   }
 
+  /** Shots left in the equipped weapon's clip. */
+  get ammo(): number {
+    return this.clips[this.weapon] ?? this.clipSize;
+  }
+
+  set ammo(n: number) {
+    this.clips[this.weapon] = n;
+  }
+
+  /** The equipped weapon's clip size (with Bigger Clip). */
   get clipSize() {
-    return PLAYER.clip + (this.world.save.upgrades.clip ?? 0) * 2;
+    return clipOf(this.weapon, this.world.save.upgrades);
+  }
+
+  /** Fills every weapon's clip and the fuel tank, and drops any reload in progress. */
+  refillArms() {
+    const up = this.world.save.upgrades;
+    for (const id of WEAPON_ORDER) this.clips[id] = clipOf(id, up);
+    this.tank = { fuel: clipOf('flame', up), dry: false, rest: 0 };
+    this.reloadT = 0;
+  }
+
+  /** 0..1 fuel left in the Flamethrower's tank. */
+  get fuel() {
+    return Math.max(0, Math.min(1, this.tank.fuel / clipOf('flame', this.world.save.upgrades)));
   }
 
   /** Jason's blaster is reloading (enemies take the chance to rush in). Atalanta's bow never reloads. */
@@ -478,7 +599,7 @@ export class Player {
   }
 
   private get reloadTime() {
-    return PLAYER.reloadTime * (1 - (this.world.save.upgrades.rapid ?? 0) * 0.2);
+    return reloadOf(this.weapon, this.world.save.upgrades);
   }
 
   /** True while a ground spin (or Atalanta's spinning kick) is whirling, and guarding the hero. */
@@ -488,12 +609,119 @@ export class Player {
 
   /** Dashing (Jason) or sliding (Atalanta): enemies bumped into don't hurt. */
   get dashing() {
-    return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false);
+    return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false) || (this.mech?.thrusting ?? false);
   }
 
-  /** True if General Brennus's raised shield faces a hit coming from (x, z): shots bounce off it. */
+  /** True if General Brennus's raised shield (or Jason's Mirror Shield) faces a hit coming from (x, z): shots bounce off it. */
   shieldBlocks(x: number, z: number): boolean {
+    if (this.hero === 'jason' && this.mirrorUp) {
+      const dx = x - this.body.x;
+      const dz = z - this.body.z;
+      const d = Math.hypot(dx, dz);
+      return d < 0.05 || (dx * Math.sin(this.facing) + dz * Math.cos(this.facing)) / d > 0.3;
+    }
     return this.hero === 'brennus' && !!this.bren?.blocks(x, z);
+  }
+
+  /** A hit blocked by a shield: Brennus's clangs, Jason's Mirror Shield rings and flashes. */
+  clang() {
+    if (this.hero === 'brennus') {
+      this.bren?.clang();
+      return;
+    }
+    this.mirrorFlash = 1;
+    const b = this.body;
+    const f = this.facing;
+    this.world.particles.emit(b.x + Math.sin(f) * 0.8, b.y + 1.1, b.z + Math.cos(f) * 0.8, { count: 12, color: '#bff4ff', speed: 5, life: 0.3, size: 0.4 });
+    audio.play('shield', 1.6);
+  }
+
+  /**
+   * The facing of Jason's raised Mirror Shield as a flat unit vector (gaze beams that hit it from the
+   * front bounce off), or null when it isn't up.
+   */
+  mirrorNormal(): THREE.Vector3 | null {
+    if (this.hero !== 'jason' || !this.mirrorUp || this.stoneLeft() > 0) return null;
+    return MIRROR_N.set(Math.sin(this.facing), 0, Math.cos(this.facing));
+  }
+
+  /** A beam is bouncing off the Mirror Shield: it shines (and rings now and then). */
+  mirrorGlint() {
+    this.mirrorFlash = Math.max(this.mirrorFlash, 0.8);
+    if (this.glintT > 0) return;
+    this.glintT = 0.45;
+    audio.play('charged', 2.2, 0.35);
+  }
+
+  /** Raises the Mirror Shield (or, with `up` false, just straps it on Jason's back). */
+  private raiseMirror(up = true) {
+    if (up) {
+      this.mirrorUp = true;
+      audio.play('shield', 1.3);
+    }
+    if (!this.mirror) {
+      this.mirror = makeMirrorShield();
+      this.mirror.group.position.set(0, 1.05, 0.5);
+      this.jason.body.add(this.mirror.group);
+    }
+  }
+
+  /** Seconds the hero (the playing one by default) has left as stone. */
+  stoneLeft(id: HeroId = this.hero): number {
+    return this.stoneT.get(id) ?? 0;
+  }
+
+  /**
+   * MEDUSA's gaze caught the playing hero: they turn to stone for a moment (no damage), unless they
+   * only just broke free. Returns true if they were petrified.
+   */
+  petrify(): boolean {
+    const id = this.hero;
+    if (this.down || this.world.cutscene || this.zip || this.stoneT.has(id) || this.stoneSafe.has(id)) return false;
+    this.stoneT.set(id, GAZE.stone);
+    this.mirrorUp = false;
+    this.spinHold = -1;
+    this.dashT = 0;
+    this.pounding = false;
+    this.cancelCharge();
+    this.ata?.reset();
+    this.bren?.reset();
+    stoneSkin(this.model.root, true);
+    const b = this.body;
+    const w = this.world;
+    w.particles.emit(b.x, b.y + 1, b.z, { count: 24, color: '#c8d0c8', speed: 4, life: 0.6, size: 0.5, up: 1 });
+    w.rings.burst(b.x, b.y + 0.05, b.z, 2.5, '#7dff9a', 0.3);
+    audio.play('shield', 0.55);
+    haptic('medium');
+    w.shake(0.15);
+    if (!this.stoneHinted) {
+      this.stoneHinted = true;
+      if (this.nextHero) w.hooks.toast('Turned to stone! It wears off in a moment, or tap SWITCH to play the other hero.', 'bolt');
+      else w.hooks.toast('Turned to stone! Hold still, it wears off in a moment.', 'bolt');
+    }
+    w.hooks.hud();
+    return true;
+  }
+
+  /** Counts the stone down for every hero; a hero who breaks free shakes off a shower of stone chips. */
+  private tickStone(dt: number) {
+    this.glintT -= dt;
+    for (const [id, t] of this.stoneSafe) {
+      if (t - dt <= 0) this.stoneSafe.delete(id);
+      else this.stoneSafe.set(id, t - dt);
+    }
+    for (const [id, t] of this.stoneT) {
+      if (t - dt > 0) {
+        this.stoneT.set(id, t - dt);
+        continue;
+      }
+      this.stoneT.delete(id);
+      this.stoneSafe.set(id, GAZE.safe);
+      stoneSkin(this.modelOf(id).root, false);
+      const at = this.modelOf(id).root.position;
+      this.world.particles.emit(at.x, at.y + 1, at.z, { count: 30, color: '#9aa39a', speed: 6, life: 0.6, size: 0.45, up: 3 });
+      audio.play('land', 1.4);
+    }
   }
 
   /**
@@ -609,8 +837,8 @@ export class Player {
       return;
     }
     if (!hazard && fromX !== undefined && fromZ !== undefined && this.shieldBlocks(fromX, fromZ)) {
-      // Brennus's shield takes it: a clang, and he slides back a little.
-      this.bren?.clang();
+      // Brennus's shield (or Jason's Mirror Shield) takes it: a clang, and a little slide back.
+      this.clang();
       const d = Math.hypot(this.body.x - fromX, this.body.z - fromZ) || 1;
       this.vx = ((this.body.x - fromX) / d) * 3;
       this.vz = ((this.body.z - fromZ) / d) * 3;
@@ -661,9 +889,12 @@ export class Player {
     this.safe.set(x, y, z);
     this.pounding = false;
     this.dashT = 0;
+    this.mirrorUp = false;
+    this.spinHold = -1;
     this.ata?.reset();
     this.bren?.reset();
-    this.follower?.placeNear(x, y, z, this.facing);
+    this.mech?.reset();
+    for (const f of this.followers) f.placeNear(x, y, z, this.facing);
   }
 
   /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */
@@ -677,13 +908,13 @@ export class Player {
     this.wasGrounded = false;
     this.ata?.launched();
     this.bren?.launched();
+    this.mech?.launched();
   }
 
   revive() {
     this.down = false;
     this.hearts = this.world.save.maxHearts;
-    this.ammo = this.clipSize;
-    this.reloadT = 0;
+    this.refillArms();
     this.charge = 0;
     this.energy = this.energyMax;
     this.spins = this.spinMax;
@@ -692,6 +923,11 @@ export class Player {
     this.spinReloadT = 0;
     this.invuln = 1.5;
     this.world.hooks.hud();
+  }
+
+  /** Swept off by the sea (a rising tide, a whirlpool): like a fall, one heart and back to the last dry spot. */
+  washBack() {
+    this.fellOff();
   }
 
   private fellOff() {
@@ -705,6 +941,12 @@ export class Player {
   }
 
   update(dt: number, input: Input) {
+    this.flaming = false;
+    this.step(dt, input);
+    this.updateJet(dt);
+  }
+
+  private step(dt: number, input: Input) {
     const w = this.world;
     const b = this.body;
     this.invuln = Math.max(0, this.invuln - dt);
@@ -712,14 +954,22 @@ export class Player {
     this.swapCd -= dt;
     this.updateArmor(dt);
     this.arrows?.update(dt);
-    this.follower?.update(dt, this);
+    for (const f of this.followers) f.update(dt, this);
+    this.tickStone(dt);
+    this.mirrorFlash = Math.max(0, this.mirrorFlash - dt * 3);
     if (this.down || w.cutscene) {
       this.cancelCharge();
+      this.mirrorUp = false;
+      this.spinHold = -1;
       this.zip = null;
       this.ata?.reset();
       this.bren?.reset();
       if (this.ata && this.hero === 'atalanta') this.ata.animate(dt, 0);
-      else if (this.bren && this.hero === 'brennus') {
+      else if (this.mech && this.hero === 'mech') {
+        this.mech.reset();
+        this.mech.cannon.update(dt);
+        this.mech.animate(dt, 0);
+      } else if (this.bren && this.hero === 'brennus') {
         this.bren.cannon.update(dt);
         this.bren.animate(dt, 0);
       } else this.animate(dt, 0);
@@ -734,8 +984,21 @@ export class Player {
     if (this.mudT <= 0) this.sink = Math.max(0, this.sink - dt * 2);
 
     if (input.take('swap')) this.switchHero();
+    // Turned to stone by MEDUSA's gaze: frozen in place (gravity still pulls) until it wears off,
+    // though the player can switch to the other hero meanwhile.
+    if (this.stoneLeft() > 0) {
+      this.vx = 0;
+      this.vz = 0;
+      for (const k of ['jump', 'spin', 'dash', 'shoot', 'weapon'] as const) input.take(k);
+      if (this.stepBody(dt, () => {})) this.placeModel(this.model, dt, this.sink * 0.35);
+      return;
+    }
     if (this.ata && this.hero === 'atalanta') {
       this.ata.update(dt, input);
+      return;
+    }
+    if (this.mech && this.hero === 'mech') {
+      this.mech.update(dt, input);
       return;
     }
     if (this.bren && this.hero === 'brennus') {
@@ -749,7 +1012,7 @@ export class Player {
     const ground = b.grounded ? b.ground : null;
     const onIce = ground?.kind === 'ice';
     const accel = b.grounded ? (onIce ? PLAYER.iceAccel : PLAYER.accel) : PLAYER.airAccel;
-    const speed = PLAYER.speed * (this.carrying ? 0.85 : 1) * (this.mudT > 0 ? OUTDOOR.sandSpeed : 1);
+    const speed = (this.mirrorUp ? MIRROR.speed : PLAYER.speed) * (this.carrying ? 0.85 : 1) * (this.mudT > 0 ? OUTDOOR.sandSpeed : 1);
 
     if (this.dashT > 0) {
       this.dashT -= dt;
@@ -763,7 +1026,10 @@ export class Player {
       this.vx = 0;
       this.vz = 0;
     } else {
+      const before = this.facing;
       this.steer(dt, wx, wz, mag, speed, accel);
+      // Behind the Mirror Shield he turns slowly, so it's easy to aim a bounced beam.
+      if (this.mirrorUp && mag > 0.1) this.facing = dampAngle(before, Math.atan2(wx, wz), MIRROR.turn, dt);
     }
 
     // Timers.
@@ -828,9 +1094,11 @@ export class Player {
     }
 
     // Spin (ground, from a set of three) / ground pound (air, always available for switches).
+    // With the Mirror Shield, a tap of SPIN on the ground still spins, and holding it raises the shield.
     if (input.take('spin') && !this.pounding) {
       if (b.grounded || this.airTime < 0.05) {
-        this.startSpin();
+        if (this.has('mirror')) this.spinHold = 0;
+        else this.startSpin();
       } else if (b.y > this.groundBelow() + 0.9) {
         this.pounding = true;
         this.poundHang = POUND_HANG;
@@ -838,6 +1106,20 @@ export class Player {
         audio.play('spin', 1.4);
       }
     }
+    if (this.spinHold >= 0) {
+      this.spinHold += dt;
+      if (!input.isHeld('spin')) {
+        this.spinHold = -1;
+        this.startSpin();
+      } else if (this.spinHold >= MIRROR.hold) {
+        this.spinHold = -1;
+        this.raiseMirror();
+      }
+    } else if (!this.mirrorUp && input.isHeld('spin') && this.has('mirror') && b.grounded && this.spinT <= 0 && !this.pounding) {
+      // SPIN still held from before (landing, or breaking out of stone): the shield comes straight up.
+      this.raiseMirror();
+    }
+    if (this.mirrorUp && (!input.isHeld('spin') || !b.grounded)) this.mirrorUp = false;
     this.tickSpins(dt);
     if (this.pounding) {
       if (this.poundHang > 0) {
@@ -850,7 +1132,11 @@ export class Player {
 
     // Blaster: tap to shoot (limited clip, then reload); hold to charge a big fireball. X / the weapon button switches weapons.
     if (input.take('weapon')) this.cycleWeapon();
-    this.updateBlaster(dt, input);
+    // Both hands are busy behind the Mirror Shield.
+    if (this.mirrorUp) {
+      this.cancelCharge();
+      input.take('shoot');
+    } else this.updateBlaster(dt, input);
 
     const ok = this.stepBody(dt, (impact) => {
       if (this.pounding) {
@@ -966,6 +1252,10 @@ export class Player {
   }
 
   private updateBlaster(dt: number, input: Input) {
+    if (this.weapon === 'flame') {
+      this.updateFlame(dt, input);
+      return;
+    }
     const held = input.isHeld('shoot');
     this.shootBuf = input.take('shoot') ? PLAYER.shootBuffer : this.shootBuf - dt;
     this.sinceShot += dt;
@@ -995,7 +1285,7 @@ export class Player {
     if (held) {
       this.holdT += dt;
       if (this.holdT > PLAYER.chargeDelay && this.spinT <= 0) {
-        if (this.reloadT <= 0 && this.ammo < PLAYER.fireballCost) this.startReload();
+        if (this.reloadT <= 0 && this.ammo < this.chargeCost) this.startReload();
         if (this.charge === 0) audio.play('charge');
         // The ring stops just short of full until the reload finishes.
         const cap = this.reloadT > 0 ? 0.95 : 1;
@@ -1020,6 +1310,71 @@ export class Player {
       this.chargedFx = false;
     }
     this.wasHeld = held;
+  }
+
+  /** Shots a charged shot uses up from the equipped weapon's clip. */
+  private get chargeCost() {
+    return Math.min(this.clipSize, WEAPONS[this.weapon].chargeCost);
+  }
+
+  /**
+   * The Flamethrower: fire pours out while BLAST is held (a tap gives a short puff), auto-aimed at the
+   * closest enemy in reach. It burns fuel; once the tank runs dry it sputters until it has refilled a bit.
+   */
+  private updateFlame(dt: number, input: Input) {
+    const held = input.isHeld('shoot');
+    if (input.take('shoot')) {
+      this.puffT = FLAME.puff;
+      if (this.tank.dry || this.tank.fuel <= 0) {
+        audio.play('empty');
+        this.jet?.smoke(this.nozzle());
+      }
+    }
+    this.puffT -= dt;
+    this.sinceShot += dt;
+    this.charge = 0;
+    const want = (held || this.puffT > 0) && this.spinT <= 0;
+    if (!want || this.tank.dry || this.tank.fuel <= 0) {
+      this.flameTickT = 0;
+      return;
+    }
+    this.flaming = true;
+    this.sinceShot = 0;
+    this.shootPose = 0.15;
+    const w = this.world;
+    this.flameTickT -= dt;
+    // Turn toward the nearest enemy in reach every tick, then roast everything in the cone.
+    if (this.flameTickT <= 0) {
+      this.flameTickT = cooldownOf('flame', w.save.upgrades);
+      const [origin, dir] = this.aimShot(WEAPONS.flame.aim);
+      this.flameDir.copy(dir);
+      burnCone(w, origin, dir, w.save.upgrades);
+    }
+  }
+
+  /** Where the flames leave the nozzle (a little ahead of the blaster's muzzle). */
+  private nozzle(out = new THREE.Vector3()) {
+    const b = this.body;
+    const f = this.facing;
+    return out.set(b.x + Math.sin(f) * 0.95 + Math.cos(f) * 0.3, b.y + 1.02, b.z + Math.cos(f) * 0.95 - Math.sin(f) * 0.3);
+  }
+
+  /** Every frame: the fuel tank drains or refills, and the flames, their light and their roar follow `flaming`. */
+  private updateJet(dt: number) {
+    const was = this.tank.dry;
+    this.tank = stepTank(this.tank, this.flaming, dt, this.world.save.upgrades);
+    if (this.tank.dry && !was) {
+      audio.play('sputter', 0.6);
+      audio.play('empty');
+      this.jet?.smoke(this.nozzle());
+    }
+    if (this.flaming && !this.jet) this.jet = new FlameJet(this.world);
+    if (this.jet) {
+      // The flames point where Jason faces, tilted toward the target's height.
+      const dir = tmp.set(Math.sin(this.facing), this.flameDir.y, Math.cos(this.facing)).normalize();
+      this.jet.update(dt, this.flaming, this.nozzle(), dir);
+    }
+    audio.flame(this.flaming);
   }
 
   /** Where shots leave the blaster, and which way they fly (auto-aiming at the best target). */
@@ -1052,6 +1407,8 @@ export class Player {
     if (ownedWeapons(s.weapons).length < 2) return;
     s.weapon = nextWeapon(s.weapons, this.weapon);
     this.cancelCharge();
+    // A reload in progress stops; the new weapon has its own clip, just as Jason left it.
+    this.reloadT = 0;
     this.shootCd = Math.max(this.shootCd, 0.15);
     this.refreshGear();
     audio.play('reload', WEAPONS[this.weapon].pitch * 1.2);
@@ -1062,23 +1419,26 @@ export class Player {
   /** The colour of the charge glow at the muzzle (gold once a Blaster fireball is ready). */
   private get chargeColor() {
     const wp = WEAPONS[this.weapon];
-    if (wp.id === 'blaster') return this.charge >= 1 ? '#ffd166' : '#ff9a3d';
+    if (wp.id === 'blaster' || wp.id === 'flame') return this.charge >= 1 ? '#ffd166' : '#ff9a3d';
     return this.charge >= 1 ? wp.core : wp.glow;
   }
 
   /** Shot damage: the Blaster's 1 + Blaster Power, times the weapon's power. */
   private get shotDamage() {
-    return (1 + (this.world.save.upgrades.blaster ?? 0)) * WEAPONS[this.weapon].power;
+    return damageOf(this.weapon, this.world.save.upgrades);
   }
 
   private shoot() {
     const w = this.world;
     const wp = WEAPONS[this.weapon];
-    const rapid = w.save.upgrades.rapid ?? 0;
-    this.shootCd = PLAYER.shootCooldown * Math.max(0.4, 1 - rapid * 0.15) * wp.cooldown;
-    const [origin, dir, target] = this.aimShot(PLAYER.aimRange * (wp.id === 'seeker' ? 1.3 : 1));
-    if (wp.id === 'spread') {
-      for (const k of [-1, 0, 1]) w.shots.fire('player', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle), wp.speed, this.shotDamage, 0, { weapon: wp.id });
+    this.shootCd = cooldownOf(wp.id, w.save.upgrades);
+    const [origin, dir, target] = this.aimShot(wp.aim);
+    if (wp.pellets > 1) {
+      // A fan of pellets, centred on the aim.
+      for (let i = 0; i < wp.pellets; i++) {
+        const k = i - (wp.pellets - 1) / 2;
+        w.shots.fire('player', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle), wp.speed * (0.94 + Math.random() * 0.12), this.shotDamage, 0, { weapon: wp.id });
+      }
     } else {
       w.shots.fire('player', origin, dir, wp.speed, this.shotDamage, 0, { weapon: wp.id, target: wp.id === 'seeker' ? target : null });
     }
@@ -1094,17 +1454,17 @@ export class Player {
   private fireball() {
     const w = this.world;
     const wp = WEAPONS[this.weapon];
-    const [origin, dir, target] = this.aimShot((PLAYER.aimRange + 4) * (wp.id === 'seeker' ? 1.3 : 1));
-    const dmg = (4 + (w.save.upgrades.blaster ?? 0) * 2) * wp.power;
+    const [origin, dir, target] = this.aimShot(wp.aim + 4);
+    const dmg = chargedDamageOf(wp.id, w.save.upgrades);
     const speed = wp.id === 'seeker' ? PLAYER.fireballSpeed * 0.75 : PLAYER.fireballSpeed;
     const opts = { weapon: wp.id, target: wp.id === 'seeker' ? target : null };
     if (wp.id === 'spread') {
       // Three smaller fireballs in a fan.
       let n = 0;
-      for (const k of [-1, 0, 1]) if (w.shots.fire('fireball', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.angle * 1.3), speed, dmg, 0, opts)) n += 1;
+      for (const k of [-1, 0, 1]) if (w.shots.fire('fireball', origin, dir.clone().applyAxisAngle(UP, k * SPREAD.chargedAngle), speed, dmg, 0, opts)) n += 1;
       if (!n) return;
     } else if (!w.shots.fire('fireball', origin, dir, speed, dmg, 0, opts)) return;
-    this.ammo = Math.max(0, this.ammo - PLAYER.fireballCost);
+    this.ammo = Math.max(0, this.ammo - this.chargeCost);
     this.sinceShot = 0;
     this.shootPose = 0.4;
     this.shootCd = 0.4;
@@ -1134,6 +1494,25 @@ export class Player {
     m.armL.rotation.z = this.gliding ? -1.3 : air ? -0.3 : 0.05;
     m.armR.rotation.z = this.gliding ? 1.3 : 0;
     m.armR.rotation.x = this.shootPose > 0 || this.charge > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
+    // The Mirror Shield: hung at his side, or held out in front while SPIN is held.
+    if (!this.mirror && this.has('mirror')) this.raiseMirror(false);
+    if (this.mirror) {
+      const g = this.mirror.group;
+      if (this.mirrorUp) {
+        m.armL.rotation.set(-1.4, 0.35, -0.1);
+        m.armR.rotation.set(-1.2, -0.35, 0.1);
+        g.position.set(0, 1.05, damp(g.position.z, 0.55, 14, dt));
+        g.rotation.set(0, 0, 0);
+        g.scale.setScalar(1);
+      } else {
+        // Hung at his left side, edge-on to the camera behind him, so it never hides him.
+        g.position.set(-0.4, 0.92, -0.02);
+        g.rotation.set(0, -Math.PI / 2, 0.12);
+        g.scale.setScalar(0.55);
+      }
+      this.mirror.face.emissiveIntensity = 0.3 + this.mirrorFlash * 2.5;
+      this.mirror.glow.material.opacity = this.mirrorFlash * 0.9;
+    }
     m.body.position.y = air ? 0 : Math.abs(s) * 0.07 * walk + Math.sin(this.phase * 0.5) * 0.01;
     // Ground pound: a quick front flip while hanging in the air, then feet-first down.
     const flip = this.poundHang > 0 ? (1 - this.poundHang / POUND_HANG) * Math.PI * 2 : 0.2;

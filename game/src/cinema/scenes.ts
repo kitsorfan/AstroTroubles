@@ -7,11 +7,15 @@ import { tr } from '../core/i18n';
 import type { Boss } from '../entities/bosses';
 import type { BoltFind, Exit, Holo } from '../entities/props';
 import type { World } from '../game/world';
-import { BOSS_CARD, FLYOVER } from '../game/story';
+import { BOSS_CARD, FLYOVER, lightStones } from '../game/story';
 import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
+import { talosOutro } from './forgeScenes';
+import { dragonLullaby } from './gardenScenes';
 import { luxTaken, rogueIntro } from './luxScenes';
+import { straitClear } from './reefScenes';
+import { argoThrough } from './standScenes';
 
 export { irisFound, luxReunion, luxTaken } from './luxScenes';
 export { heroJoins } from './islesScenes';
@@ -252,6 +256,15 @@ function bossLines(w: World, b: Boss): Line[] {
         : { who: 'bolt', text: tr('If only we had all 18 journal pages... (we have {n}) then maybe we could reach the man inside that machine.', { n }) },
     );
   }
+  if (b.kind === 'goldenking') {
+    // The game's last fight: with every Gardener light-stone, LUX and IRIS could speak to the Fleece itself.
+    const { n, total } = lightStones(w.save);
+    lines.push(
+      n >= total
+        ? { who: 'iris', text: 'LUX, we know every Gardener word now. When this is over, we can speak to the Fleece itself!' }
+        : { who: 'bolt', text: tr('If only we had every Gardener light-stone... (we have {n} of {total}) then IRIS and I could talk to the Fleece in its own words.', { n, total }) },
+    );
+  }
   return lines;
 }
 
@@ -293,6 +306,10 @@ export async function bossIntro(d: Director, w: World, b: Boss) {
 }
 
 export async function bossOutro(d: Director, w: World, b: Boss) {
+  // Talos isn't blown up: he sits down, free, and nods.
+  if (b.kind === 'talos') return talosOutro(d, w, b);
+  // The Sleepless Dragon isn't beaten: LUX and IRIS sing it to sleep.
+  if (b.kind === 'dragon') return dragonLullaby(d, w, b);
   const c = b.where.clone();
   const f = b.focus.clone();
   const color = BOSS_CARD[b.kind].color;
@@ -330,6 +347,10 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
     await d.wait(1.2);
   }
   await d.say(w.dialogue('bossDown'));
+  // Scylla's Reef: the whirlpool calms, and the Argo sails through the strait.
+  if (w.def.id === 'reef') await straitClear(d, w);
+  // On Colchis's sky-dock, the Argo slips through the arch behind General Brennus.
+  if (w.def.id === 'stand') await argoThrough(d, w);
   // In the tundra, Brennus has one more trick: a snare drone for LUX.
   if (w.def.id === 'snow') {
     await luxTaken(d, w);

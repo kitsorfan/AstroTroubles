@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'sirens' | 'reef' | 'forge' | 'labyrinth' | 'stand' | 'garden' | 'fleece' | 'boss' | 'king' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -293,6 +293,111 @@ const SONGS: Record<Track, Song> = {
     lead: 'square',
     padLevel: 0.65,
   },
+  // The Sirens' Sea: a slow, dreamy minor waltz-ish sway, like the sea rocking the little sub.
+  sirens: {
+    bpm: 92,
+    chords: [
+      [57, 'min'],
+      [53, 'maj'],
+      [50, 'min'],
+      [52, 'sus'],
+    ],
+    bass: '0.....2.....0...',
+    arp: '0.2.3.2.1.2.3.1.',
+    drums: { k: 'x.......x.......', s: '................', h: '....x.......x.x.' },
+    lead: 'bell',
+    padLevel: 1,
+  },
+  // Scylla's Reef: a sunny, bouncy island tune with off-beat steel-drum bells.
+  reef: {
+    bpm: 118,
+    chords: [
+      [60, 'maj'],
+      [65, 'maj'],
+      [67, 'maj'],
+      [64, 'min'],
+    ],
+    bass: '0..0..2.0..0..3.',
+    arp: '.2.1.3.2.2.1.3.0',
+    drums: { k: 'x..x..x.x..x..x.', s: '....x.......x..x', h: '.x.x.x.x.x.x.xx.' },
+    lead: 'bell',
+    padLevel: 0.75,
+  },
+  // Talos's Forge: a big, stomping minor tune with an anvil ringing on every beat (a giant's footsteps).
+  forge: {
+    bpm: 98,
+    chords: [
+      [43, 'min'],
+      [46, 'maj'],
+      [41, 'maj'],
+      [38, 'sus'],
+    ],
+    bass: '0..0..2.0..0..3.',
+    arp: '0.2.3.2.1.2.3.2.',
+    drums: { k: 'x...x...x...x...', s: '....x.......x.x.', h: 'x.x.x.x.x.x.x.x.' },
+    lead: 'bell',
+    padLevel: 0.75,
+  },
+  // Medusa's Labyrinth: a sneaky tiptoe through echoing stone halls, a bell for the green crystals.
+  labyrinth: {
+    bpm: 92,
+    chords: [
+      [50, 'min'],
+      [46, 'maj'],
+      [48, 'sus'],
+      [45, 'min'],
+    ],
+    bass: '0..0..2.0..0..3.',
+    arp: '3.2.0...1.2...0.',
+    drums: { k: 'x.......x..x....', s: '....x.......x...', h: '..x...x...x...x.' },
+    lead: 'bell',
+    padLevel: 0.95,
+  },
+  // Brennus's Last Stand: a brave brass fanfare over a marching snare, an old soldier holding the line.
+  stand: {
+    bpm: 118,
+    chords: [
+      [50, 'maj'],
+      [55, 'maj'],
+      [47, 'min'],
+      [57, 'sus'],
+    ],
+    bass: '0.0.0...2.2.0...',
+    arp: '0.1.2.3.2.1.0.3.',
+    drums: { k: 'x...x...x...x.x.', s: '..x...x...x.xxxx', h: 'xxx.xxx.xxx.xxx.' },
+    lead: 'square',
+    padLevel: 0.8,
+  },
+  // The Garden of Colchis: a gentle, wondering waltz-like tune of bells over soft pads, like a lullaby.
+  garden: {
+    bpm: 92,
+    chords: [
+      [55, 'maj'],
+      [52, 'min'],
+      [48, 'maj'],
+      [50, 'sus'],
+    ],
+    bass: '0.......2.......',
+    arp: '0.1.2.3.2.1.2.1.',
+    drums: { k: 'x.........x.....', s: '........x.......', h: '..x...x...x...x.' },
+    lead: 'bell',
+    padLevel: 0.95,
+  },
+  // The Golden Fleece: the Gardeners' tree-temple at twilight. A slow, glowing sway with bells.
+  fleece: {
+    bpm: 96,
+    chords: [
+      [50, 'maj'],
+      [47, 'min'],
+      [55, 'maj'],
+      [57, 'sus'],
+    ],
+    bass: '0.....2.....0.3.',
+    arp: '0.1.2.3.2.1.3.2.',
+    drums: { k: 'x.....x.........', s: '........x.......', h: '..x..x..x..x..x.' },
+    lead: 'bell',
+    padLevel: 0.9,
+  },
   boss: {
     bpm: 144,
     chords: [
@@ -306,6 +411,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.x.x.x.x.x.x.x.', s: '....x.......x.xx', h: 'x.xxx.xxx.xxx.xx' },
     lead: 'square',
     padLevel: 0.5,
+  },
+  // The very last fight, against Aeëtes, the Golden King: grand, fast and heroic.
+  king: {
+    bpm: 150,
+    chords: [
+      [45, 'min'],
+      [41, 'maj'],
+      [43, 'maj'],
+      [40, 'maj'],
+    ],
+    bass: '0.00.0.20.00.0.3',
+    arp: '0.1.2.3.2.1.2.3.',
+    drums: { k: 'x.x.x.x.x.x.x.x.', s: '....x.......x.xx', h: 'xxxxxxxxxxxxxxxx' },
+    lead: 'bell',
+    padLevel: 0.6,
   },
   ending: {
     bpm: 76,
@@ -609,8 +729,63 @@ export class AudioEngine {
     this.nextTime = this.ctx.currentTime + 0.12;
   }
 
+  /* ---------------- the Flamethrower's roar ---------------- */
+
+  private flameSrc: AudioBufferSourceNode | null = null;
+  private flameGain: GainNode | null = null;
+  private flameOn = false;
+  private flameSeen = 0;
+
+  /**
+   * The Flamethrower's roar: a loop of rumbling, crackling filtered noise. Call it every frame with
+   * whether the flames are burning; it fades in and out, and stops by itself if the calls stop (pause).
+   */
+  flame(on: boolean) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    if (on) this.flameSeen = ctx.currentTime;
+    if (on === this.flameOn) return;
+    this.flameOn = on;
+    const t = ctx.currentTime;
+    if (on) {
+      if (!this.flameSrc) {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noise;
+        src.loop = true;
+        const low = ctx.createBiquadFilter();
+        low.type = 'lowpass';
+        low.frequency.value = 900;
+        low.Q.value = 0.9;
+        // A fast wobble on the filter makes it crackle and flutter like real fire.
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 9;
+        const depth = ctx.createGain();
+        depth.gain.value = 380;
+        lfo.connect(depth).connect(low.frequency);
+        const g = ctx.createGain();
+        g.gain.value = 0.0001;
+        src.connect(low).connect(g).connect(this.sfxBus);
+        src.start(t, Math.random() * 0.5);
+        lfo.start(t);
+        src.onended = () => lfo.stop();
+        this.flameSrc = src;
+        this.flameGain = g;
+      }
+      this.flameGain?.gain.setTargetAtTime(0.42, t, 0.04);
+      // A whoosh as it lights.
+      this.hiss(t, 0.25, 0.25, 'bandpass', 600, 2400, this.sfxBus, 0.02);
+    } else if (this.flameSrc && this.flameGain) {
+      this.flameGain.gain.setTargetAtTime(0.0001, t, 0.07);
+      this.flameSrc.stop(t + 0.5);
+      this.flameSrc = null;
+      this.flameGain = null;
+    }
+  }
+
   private schedule() {
     const ctx = this.ctx;
+    // The roar dies down if nobody keeps it going (the game paused mid-flame).
+    if (ctx && this.flameOn && ctx.currentTime - this.flameSeen > 0.2) this.flame(false);
     if (!ctx || !this.track || ctx.state !== 'running') return;
     const song = SONGS[this.track];
     const stepDur = 60 / song.bpm / 4;

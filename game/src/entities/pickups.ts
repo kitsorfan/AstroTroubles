@@ -390,6 +390,7 @@ const ABILITY_LOOK: Record<Ability, { color: string; name: string }> = {
   glide: { color: '#c6ff7a', name: 'Hover Pack' },
   pulse: { color: '#8ab4ff', name: 'Force Pulse' },
   grapple: { color: '#7fe6ff', name: 'Grapple Hook' },
+  mirror: { color: '#bff4ff', name: 'Mirror Shield' },
 };
 
 export class UpgradePickup extends Floater {

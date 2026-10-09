@@ -12,12 +12,21 @@ import type { Difficulty } from '../game/difficulty';
 import { Badge, type BadgeKind } from './badges';
 import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
+import { makeRingGuard } from './ch3/ringGuard';
 import { makeHarpy } from './isles/harpy';
+import { makeCrab } from './reef/crab';
+import { makeJelly } from './reef/jelly';
+import { makeAnvilDrone } from './forge/anvil';
+import { makeCoil } from './labyrinth/coil';
+import { makeWeeder } from './ch3/weeder';
 import { makeRobot } from './robots';
+import { makeRamling } from './stand/ramling';
 
 const v3 = new THREE.Vector3();
 const WHITE = new THREE.Color('#ffffff');
 const ICE = new THREE.Color('#2f8fff');
+const FIRE = new THREE.Color('#ff6a00');
+const FLAMES = ['#fff1c4', '#ffd166', '#ff9a2a', '#ff5a1a'];
 
 
 function hash01(s: string) {
@@ -55,7 +64,7 @@ export abstract class Enemy extends Entity implements Target {
   bolts = 3;
   heartChance = 0.12;
   private flashBase: { m: THREE.MeshStandardMaterial; e: THREE.Color; i: number }[] = [];
-  /** What the emissive glow shows: 0 normal, 1 hit flash, 2 chilled, 3 frozen. */
+  /** What the emissive glow shows: 0 normal, 1 hit flash, 2 chilled, 3 frozen, 4 burning. */
   private look = 0;
   private badge: Badge | null = null;
   /** Frost Ray: seconds left chilled (slowed to `chillSlow`) and frozen solid, and the ice shell shown while frozen. */
@@ -63,6 +72,10 @@ export abstract class Enemy extends Entity implements Target {
   private freezeT = 0;
   private chillSlow = 1;
   private ice: THREE.Mesh | null = null;
+  /** Flamethrower: seconds left burning, its damage per second, and the clock to its next sting. */
+  private burnT = 0;
+  private burnDps = 0;
+  private burnTick = 0;
 
   constructor(
     world: World,
@@ -160,7 +173,20 @@ export abstract class Enemy extends Entity implements Target {
     }
     this.hp -= dmg;
     if (!this.aggro) this.wake();
-    this.flashT = 0.12;
+    this.flashT = kind === 'burn' ? 0.06 : 0.12;
+    if (kind === 'burn') {
+      // Fire stings without stunning: a small shove, orange sparks.
+      this.world.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 3, color: '#ffb030', speed: 2.5, life: 0.3, size: 0.4, gravity: -2 });
+      if (!this.flying) {
+        const bx = this.body.x - from.x;
+        const bz = this.body.z - from.z;
+        const bd = Math.hypot(bx, bz) || 1;
+        this.body.vx += (bx / bd) * 1.2;
+        this.body.vz += (bz / bd) * 1.2;
+      }
+      if (this.hp <= 0) this.die();
+      return true;
+    }
     // LUX's zap is mostly a stun: it freezes the enemy for a moment. His force pulse stuns for longer.
     this.stagger = kind === 'pulse' ? PULSE.stun : kind === 'zap' ? 1.3 : kind === 'dash' ? 0.75 : kind === 'smash' ? 1.1 : kind === 'shot' ? 0.12 : 0.35;
     const dx = this.body.x - from.x;
@@ -207,6 +233,8 @@ export abstract class Enemy extends Entity implements Target {
    */
   chill(seconds: number, freeze = false, slow = 0.5) {
     if (!this.alive) return;
+    // The cold puts the fire out.
+    this.burnT = 0;
     this.chillSlow = Math.min(this.chillT > 0 ? this.chillSlow : 1, slow);
     if (freeze) this.freezeT = Math.max(this.freezeT, seconds);
     this.chillT = Math.max(this.chillT, seconds + (freeze ? 1.5 : 0));
@@ -214,6 +242,40 @@ export abstract class Enemy extends Entity implements Target {
 
   get frozen() {
     return this.freezeT > 0;
+  }
+
+  /**
+   * Flamethrower: sets this enemy burning for `seconds`, losing `dps` health a second (in small
+   * stings) and flickering orange. Fire melts ice: a chilled or frozen enemy thaws at once.
+   */
+  ignite(seconds: number, dps: number) {
+    if (!this.alive) return;
+    if (this.burnT <= 0) this.burnTick = 0.5;
+    this.burnT = Math.max(this.burnT, seconds);
+    this.burnDps = Math.max(this.burnT > 0 ? this.burnDps : 0, dps);
+    this.freezeT = 0;
+    this.chillT = 0;
+    this.chillSlow = 1;
+  }
+
+  get burning() {
+    return this.burnT > 0;
+  }
+
+  /** Counts the burning down: a sting every half second, and little flames rising off the enemy. */
+  private updateBurn(dt: number) {
+    if (this.burnT <= 0) return;
+    this.burnT -= dt;
+    this.burnTick -= dt;
+    if (Math.random() < dt * 16) {
+      const r = this.radius * this.model.root.scale.y;
+      this.world.particles.emit(this.aim.x + (Math.random() - 0.5) * r * 1.6, this.aim.y + (Math.random() - 0.3) * r, this.aim.z + (Math.random() - 0.5) * r * 1.6, { count: 1, color: FLAMES[(Math.random() * FLAMES.length) | 0], speed: 0.6, life: 0.5, size: 0.55, gravity: -4 });
+    }
+    if (this.burnTick <= 0 && this.burnT > -0.01) {
+      this.burnTick = 0.5;
+      this.hit(this.burnDps * 0.5, 'burn', this.aim);
+    }
+    if (this.burnT <= 0) this.burnDps = 0;
   }
 
   /** How fast this enemy moves and thinks right now: 1 normally, less while chilled, 0 frozen solid. */
@@ -247,6 +309,8 @@ export abstract class Enemy extends Entity implements Target {
     // Chilled enemies think and move slower; frozen ones not at all (they still fall).
     const realDt = dt;
     this.updateChill(realDt);
+    this.updateBurn(realDt);
+    if (!this.alive) return;
     const tempo = this.tempo;
     dt *= tempo;
     this.t += dt;
@@ -278,25 +342,39 @@ export abstract class Enemy extends Entity implements Target {
     }
     if (this.contact && !this.world.cutscene && tempo > 0) this.touchPlayer();
     this.flashT -= realDt;
-    const look = this.flashT > 0 ? 1 : this.freezeT > 0 ? 3 : this.chillT > 0 ? 2 : 0;
-    if (look !== this.look) {
+    const look = this.flashT > 0 ? 1 : this.burnT > 0 ? 4 : this.freezeT > 0 ? 3 : this.chillT > 0 ? 2 : 0;
+    if (look !== this.look || look === 4) {
       this.look = look;
+      // Burning flickers orange every frame.
+      const flicker = 0.55 + Math.sin(this.t * 31) * 0.25 + Math.random() * 0.2;
       for (const f of this.flashBase) {
-        f.m.emissive.copy(look === 1 ? WHITE : look > 1 ? ICE : f.e);
-        f.m.emissiveIntensity = look === 1 ? 1.4 : look === 3 ? 0.75 : look === 2 ? 0.45 : f.i;
+        f.m.emissive.copy(look === 1 ? WHITE : look === 4 ? FIRE : look > 1 ? ICE : f.e);
+        f.m.emissiveIntensity = look === 1 ? 1.4 : look === 4 ? flicker : look === 3 ? 0.75 : look === 2 ? 0.45 : f.i;
       }
     }
     this.model.root.position.set(this.body.x, this.body.y, this.body.z);
     this.model.root.rotation.y = this.yaw;
     this.aim.set(this.body.x, this.body.y + this.aimHeight, this.body.z);
     if (!this.badge) {
-      this.badge = new Badge(this.kind, this.elite);
+      this.badge = new Badge(this.kind, this.elite, this.maxHp);
       this.obj.add(this.badge.group);
     }
     const scale = this.model.root.scale.y;
-    this.badge.group.position.set(this.body.x, this.body.y + this.badgeY * scale, this.body.z);
-    const show = !this.world.cutscene && dist < 16 && (this.aggro || dist < 9) && this.badgeShown();
-    this.badge.update(realDt, show, Math.max(0, this.hp / this.maxHp), this.alarmT > 0, this.t);
+    const bg = this.badge.group.position.set(this.body.x, this.body.y + this.badgeY * scale, this.body.z);
+    // The icon shows when the enemy is close and awake; the health bar once it's hurt (from farther
+    // away), or when it's right next to Jason.
+    const seen = !this.world.cutscene && this.badgeShown();
+    const hurt = this.hp < this.maxHp - 1e-3;
+    this.badge.update(realDt, {
+      icon: seen && dist < 16 && (this.aggro || dist < 9),
+      bar: seen && (dist < 7 || (hurt && dist < 26)),
+      hp: Math.max(0, this.hp),
+      maxHp: this.maxHp,
+      alarmed: this.alarmT > 0,
+      t: this.t,
+      // (Test worlds have no camera.)
+      camDist: (this.world as Partial<World>).camera?.position.distanceTo(bg) ?? 12,
+    });
   }
 
   /** Returns true if Jason got hurt. */
@@ -906,6 +984,27 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'harpy':
       e = makeHarpy(world, id, x, h, z);
+      break;
+    case 'crab':
+      e = makeCrab(world, id, x, h, z);
+      break;
+    case 'jelly':
+      e = makeJelly(world, id, x, h, z);
+      break;
+    case 'anvil':
+      e = makeAnvilDrone(world, id, x, h, z);
+      break;
+    case 'coil':
+      e = makeCoil(world, id, x, h, z);
+      break;
+    case 'ramling':
+      e = makeRamling(world, id, x, h, z);
+      break;
+    case 'weeder':
+      e = makeWeeder(world, id, x, h, z);
+      break;
+    case 'ringguard':
+      e = makeRingGuard(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

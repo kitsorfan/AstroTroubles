@@ -7,11 +7,14 @@
  * along `wallrun` strips, crawling through low gaps, and power arrows for `target` bullseyes),
  * General Brennus on his own levels (a low jump, charge-leaps over wide gaps, and smashing `cracked`
  * walls nobody else gets through), plus bounce pads, vents and moving platforms. Heroes switch anywhere on the ground, so a spot either
- * hero reaches counts for both. Doors are treated as open: the checker proves the geometry works,
+ * hero reaches counts for both. A vehicle hero (the bronze mech of Talos's Forge) is checked on its own,
+ * from the marker where it is parked: once the others climb in, nobody gets out again. Only it gets
+ * through bronze gates, and its SLAM drops it through cracked floor plates (`brittle`) into the cellar below. Doors are treated as open: the checker proves the geometry works,
  * the level's conditions decide the order.
  */
-import { ATALANTA, BRENNUS, CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
-import { heroRoster } from '../src/entities/heroes/heroes';
+import { ATALANTA, BRENNUS, CELL, GAZE, GRAPPLE, GRAVITY, MECH, PLAYER, STEP_UP } from '../src/core/constants';
+import { HEROES, heroRoster } from '../src/entities/heroes/heroes';
+import { RAFT_TOP } from '../src/world/tides';
 import { PASSABLE_DECOR, type Ability, type Cond, type HeroId, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
 type SpotKind = 'floor' | 'plat' | 'pad' | 'vent';
@@ -73,7 +76,8 @@ function maxRise(abilities: Ability[], launch: number) {
   return apex - 0.3;
 }
 
-const SOLID_DECOR = (s: Spec) => s.type === 'decor' && s.solid !== false && !PASSABLE_DECOR.includes(s.kind);
+/** Props nobody can stand in: solid decor, and the eye-sentries, mirrors and crystals of Medusa's Labyrinth. */
+const SOLID_DECOR = (s: Spec) => (s.type === 'decor' && s.solid !== false && !PASSABLE_DECOR.includes(s.kind)) || s.type === 'gazer' || s.type === 'mirror' || s.type === 'crystal';
 
 export interface ReachResult {
   reached: Set<string>;
@@ -121,6 +125,13 @@ export function buildSpots(level: ParsedLevel, abilities: Ability[] = []): Spot[
   for (const e of level.entities) {
     const s = e.spec;
     if (s.type === 'faller') spots.push({ cx: e.cx, cz: e.cz, h: e.h, kind: 'floor', group: -1 });
+    if (s.type === 'raft') {
+      // A raft rides the tide: from resting on the sand up to floating at high tide, like a lift.
+      group += 1;
+      const top = Math.max(e.h + RAFT_TOP, (level.def.tide?.high ?? e.h) + 0.2);
+      for (let h = e.h + RAFT_TOP; h <= top + 1e-6; h += 0.25) spots.push({ cx: e.cx, cz: e.cz, h, kind: 'plat', group });
+      continue;
+    }
     if (s.type !== 'platform') continue;
     group += 1;
     const size = s.size ?? 1;
@@ -198,6 +209,36 @@ interface JumpGraph {
 /** The heroes a level lets the player use (the checker ignores the developer's hash options). */
 export function levelHeroes(level: ParsedLevel): HeroId[] {
   return heroRoster(level.def.heroes);
+}
+
+/** The heroes who walk the level together before anyone climbs into a vehicle hero (all of them, if there is none). */
+export function footHeroes(level: ParsedLevel): HeroId[] {
+  const all = levelHeroes(level);
+  const foot = all.filter((h) => !HEROES[h].vehicle);
+  return foot.length ? foot : all;
+}
+
+/** Where a vehicle hero starts: the marker named after it (where it is parked), or the spawn. */
+export function vehicleStart(level: ParsedLevel, hero: HeroId): [number, number] {
+  const m = level.entities.find((e) => e.spec.type === 'marker' && e.spec.id === hero);
+  return m ? [m.cx, m.cz] : [level.spawn.cx, level.spawn.cz];
+}
+
+/** Cells holding a bronze gate: only the mech's PUNCH opens one. */
+function gateCells(level: ParsedLevel): Set<number> {
+  return new Set(level.entities.filter((e) => e.spec.type === 'bronzegate').map((e) => e.cz * level.width + e.cx));
+}
+
+/**
+ * Largest centre-to-centre distance (in cells) for one of the mech's jumps that ends `dh` higher: its
+ * one jump at walking speed, plus a THRUST in the air (which holds it up while the jets fire).
+ */
+export function mechReach(dh: number, launch: number = MECH.jumpV): number {
+  if (dh > (launch * launch) / (2 * GRAVITY) - 0.3) return 0;
+  const t = flight(launch, dh);
+  if (t === null) return 0;
+  const units = MECH.speed * t + (MECH.thrustSpeed - MECH.speed) * MECH.thrustTime;
+  return Math.min((units * MARGIN + EDGE) / CELL, 9);
 }
 
 /** Cells holding a low gap: only Atalanta's slide fits through, and nobody can jump over or into one. */
@@ -308,12 +349,15 @@ const RUN_CELLS = (ATALANTA.wallRunTime * ATALANTA.sprintSpeed * MARGIN) / CELL;
  * differ when checking what a single ability (the dash) is needed for. `heroes` are the heroes the
  * player can switch between (anywhere on the ground), so a spot either one reaches works for both.
  */
-function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors, heroes: HeroId[] = levelHeroes(level)): JumpGraph {
+function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = doors, heroes: HeroId[] = footHeroes(level), from?: [number, number]): JumpGraph {
   const jason = heroes.includes('jason');
   const atalanta = heroes.includes('atalanta');
   const brennus = heroes.includes('brennus');
-  // Cracked walls only fall to General Brennus's big blast or charge: for anyone else they are walls.
-  const cracked = brennus ? new Set<number>() : crackedCells(level);
+  const mech = heroes.includes('mech');
+  // Cracked walls only fall to General Brennus's big blast or charge (or the mech's punch): for anyone
+  // else they are walls. Bronze gates only open to the mech.
+  const cracked = brennus || mech ? new Set<number>() : crackedCells(level);
+  if (!mech) for (const i of gateCells(level)) cracked.add(i);
   const spots = buildSpots(level, doors).filter((s) => s.kind === 'plat' || !cracked.has(s.cz * level.width + s.cx));
   const shut = shutDoors(level, doors);
   const low = lowGaps(level);
@@ -345,8 +389,9 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     }
     return v;
   };
-  const start = spots.findIndex((s) => s.cx === level.spawn.cx && s.cz === level.spawn.cz && s.kind !== 'plat');
-  if (start < 0) throw new Error('spawn is not on a walkable cell');
+  const [sx, sz] = from ?? [level.spawn.cx, level.spawn.cz];
+  const start = spots.findIndex((s) => s.cx === sx && s.cz === sz && s.kind !== 'plat');
+  if (start < 0) throw new Error(`the start (${sx},${sz}) is not on a walkable cell`);
   // Grapple anchors: with the hook, any spot in range (and in sight) can zip to an anchor's own cell.
   const anchors =
     jason && moves.includes('grapple')
@@ -484,6 +529,31 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     }
   };
 
+  /** The bronze mech: one strong jump, plus a THRUST in the air for distance. */
+  const mechEdges = (ai: number, out: Set<number>) => {
+    const a = spots[ai];
+    const launch = a.kind === 'pad' ? PLAYER.bounceV : MECH.jumpV;
+    const rise = a.kind === 'vent' ? 8 : (launch * launch) / (2 * GRAVITY) - 0.3;
+    const radius = a.kind === 'vent' ? 3 : 6;
+    for (let dz = -radius; dz <= radius; dz++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (const bi of byCell.get(`${a.cx + dx},${a.cz + dz}`) ?? []) {
+          if (bi === ai || out.has(bi)) continue;
+          const b = spots[bi];
+          if (isLow(b)) continue;
+          const dh = b.h - a.h;
+          const d = Math.hypot(dx, dz);
+          let ok = false;
+          if (a.group >= 0 && a.group === b.group) ok = true;
+          else if (Math.abs(dx) + Math.abs(dz) === 1 && dh <= STEP_UP) ok = true;
+          else if (a.kind === 'vent') ok = dh <= 8 && d <= 2.5 && lineClear(level, solid, a, b);
+          else if (dh <= rise) ok = d <= mechReach(dh, launch) && lineClear(level, solid, a, b);
+          if (ok) out.add(bi);
+        }
+      }
+    }
+  };
+
   const edges = new Map<number, number[]>();
   const next = (ai: number) => {
     const known = edges.get(ai);
@@ -492,6 +562,7 @@ function jumpGraph(level: ParsedLevel, doors: Ability[], moves: Ability[] = door
     if (jason && !isLow(spots[ai])) jasonEdges(ai, out);
     if (atalanta) atalantaEdges(ai, out);
     if (brennus && !isLow(spots[ai])) brennusEdges(ai, out);
+    if (mech && !isLow(spots[ai])) mechEdges(ai, out);
     const list = [...out];
     edges.set(ai, list);
     return list;
@@ -538,8 +609,54 @@ function arrowSight(level: ParsedLevel, s: Spot, t: PlacedEntity): boolean {
   return true;
 }
 
+/**
+ * True if a hero standing on `s` has a clear, straight view of the beam-height middle of a gaze-beam
+ * prop (a light crystal or a Gardener mirror) at `t`, within `range` cells.
+ */
+function beamSight(level: ParsedLevel, s: Spot, t: PlacedEntity, range: number): boolean {
+  const d = Math.hypot(t.cx - s.cx, t.cz - s.cz);
+  if (d > range) return false;
+  const y0 = s.h + 1.15;
+  const y1 = t.h + GAZE.eye;
+  const steps = Math.ceil(d * 4);
+  for (let i = 1; i < steps; i++) {
+    const f = i / steps;
+    const cx = Math.round(s.cx + (t.cx - s.cx) * f);
+    const cz = Math.round(s.cz + (t.cz - s.cz) * f);
+    if ((cx === s.cx && cz === s.cz) || (cx === t.cx && cz === t.cz)) continue;
+    const c = level.cells[cz * level.width + cx];
+    if (!c || c.kind === 'wall') return false;
+    if (c.kind !== 'void' && c.kind !== 'hazard' && c.h > y0 + (y1 - y0) * f) return false;
+  }
+  return true;
+}
+
+/** How close (in cells) Jason must stand to bounce a beam onto a `shield` crystal with the Mirror Shield. */
+const SHIELD_CELLS = 8;
+
 export function reach(level: ParsedLevel, abilities: Ability[], heroes: HeroId[] = levelHeroes(level)): ReachResult {
-  const g = jumpGraph(level, abilities, abilities, heroes);
+  const ride = heroes.find((h) => HEROES[h].vehicle);
+  if (!ride) return reachFrom(level, abilities, heroes);
+  const inside = reachFrom(level, abilities, [ride], vehicleStart(level, ride));
+  if (heroes.length === 1) return inside;
+  // On foot first (from the spawn), then in the vehicle (from where it is parked): together they reach
+  // whatever either of them reaches.
+  const foot = reachFrom(level, abilities, heroes.filter((h) => h !== ride));
+  const reached = new Set([...foot.reached, ...inside.reached]);
+  const missing = foot.missing.filter((e) => inside.missing.includes(e));
+  const orphan = new Map<string, [number, number]>();
+  for (const [cx, cz] of [...foot.orphanCells, ...inside.orphanCells]) if (!reached.has(`${cx},${cz}`)) orphan.set(`${cx},${cz}`, [cx, cz]);
+  return {
+    reached,
+    spots: foot.spots,
+    missing,
+    orphanCells: [...orphan.values()],
+    pathTo: (cx, cz) => (foot.reached.has(`${cx},${cz}`) ? foot.pathTo(cx, cz) : inside.pathTo(cx, cz)),
+  };
+}
+
+function reachFrom(level: ParsedLevel, abilities: Ability[], heroes: HeroId[], from?: [number, number]): ReachResult {
+  const g = jumpGraph(level, abilities, abilities, heroes, from);
   const spots = g.spots;
   const f = flood(g, [g.start]);
   const seen = new Uint8Array(spots.length);
@@ -559,7 +676,16 @@ export function reach(level: ParsedLevel, abilities: Ability[], heroes: HeroId[]
   // Arrow targets are hit from afar: by a power arrow, from any spot Atalanta reaches with a clear shot.
   const archer = heroes.includes('atalanta');
   const hit = (e: PlacedEntity) => archer && spots.some((s, i) => seen[i] === 1 && arrowSight(level, s, e));
-  const missing = level.entities.filter((e) => isTarget(e.spec) && (e.spec.type === 'target' ? !hit(e) : !near(e)));
+  // Medusa's Labyrinth: a `shield` crystal needs Jason with the Mirror Shield in sight of it; any other
+  // crystal is lit through mirrors, and a mirror is turned by a blaster shot (11 cells), an arrow (16)
+  // or a spin up close, from a spot in sight of it.
+  const sighted = (e: PlacedEntity, range: number) => spots.some((s, i) => seen[i] === 1 && beamSight(level, s, e, range));
+  const shieldBearer = heroes.includes('jason') && abilities.includes('mirror');
+  const lit = (e: PlacedEntity) => (e.spec.type === 'crystal' && e.spec.shield ? shieldBearer && sighted(e, SHIELD_CELLS) : sighted(e, ATALANTA.arrowRange / CELL));
+  const turned = (e: PlacedEntity) => near(e) || (heroes.includes('jason') && sighted(e, PLAYER.shotRange / CELL)) || (archer && sighted(e, ATALANTA.arrowRange / CELL));
+  const missing = level.entities.filter(
+    (e) => isTarget(e.spec) && (e.spec.type === 'target' ? !hit(e) : e.spec.type === 'crystal' ? !lit(e) : e.spec.type === 'mirror' ? !turned(e) : !near(e)),
+  );
   const orphanCells: [number, number][] = [];
   for (const s of spots) if (s.kind !== 'plat' && !reached.has(`${s.cx},${s.cz}`)) orphanCells.push([s.cx, s.cz]);
   const pathTo = (cx: number, cz: number) => {
@@ -590,6 +716,8 @@ export const TARGET_TYPES = [
   'prize',
   'rune',
   'target',
+  'crystal',
+  'mirror',
 ] as const;
 
 function isTarget(s: Spec) {
@@ -689,7 +817,7 @@ function moveTime(level: ParsedLevel, blocked: Set<number>, a: Spot, b: Spot, he
  * platforms are left out: timed puzzles shouldn't make you wait for one.
  */
 export function travelTimes(level: ParsedLevel, abilities: Ability[], from: [number, number]): (cx: number, cz: number) => number {
-  const heroes = levelHeroes(level);
+  const heroes = footHeroes(level);
   const g = jumpGraph(level, abilities, abilities, heroes);
   const blocked = shutDoors(level, abilities);
   for (const i of lowGaps(level)) blocked.add(i);

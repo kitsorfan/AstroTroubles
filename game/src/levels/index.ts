@@ -4,25 +4,32 @@ import { bridge } from './bridge';
 import { cryo } from './cryo';
 import { desert } from './desert';
 import { engine } from './engine';
+import { forge } from './forge';
+import { garden } from './garden';
 import { habitat } from './habitat';
 import { hydro } from './hydro';
 import { jungle } from './jungle';
+import { labyrinth } from './labyrinth';
 import { mine } from './mine';
+import { stand } from './stand';
 import { plains } from './plains';
+import { reef } from './reef';
+import { fleece } from './fleece';
 import { harpies } from './harpies';
 import { rocks } from './rocks';
 import { rockies } from './rockies';
 import { security } from './security';
+import { sirens } from './sirens';
 import { snow } from './snow';
 import { volcano } from './volcano';
 
 /**
  * Every playable level in play order: the ship's six decks, the six regions of Gaia Nova, then the
- * chapter 3 levels built so far (the rest of chapter 3 is listed in `CHAPTER_PLAN`).
+ * ten levels of chapter 3 (the Argonauts), which end the game.
  */
-export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine'];
+export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine', 'sirens', 'reef', 'forge', 'labyrinth', 'stand', 'garden', 'fleece'];
 
-export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine };
+export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine, sirens, reef, forge, labyrinth, stand, garden, fleece };
 
 /** Chapter 1 is the colony ship, chapter 2 the planet Gaia Nova, chapter 3 the Argonauts' voyage to Colchis. */
 export type Chapter = 1 | 2 | 3;
@@ -68,11 +75,18 @@ export function chapterIndex(id: DeckId): number {
 }
 
 /**
+ * The level that ends the whole game: the Golden Fleece, chapter 3's last level (it ends with the final
+ * endings, whichever levels of the chapter have been built before it).
+ */
+export const GAME_FINALE: DeckId = 'fleece';
+
+/**
  * The last level of a chapter ends with the chapter's finale instead of an exit. A chapter still being
- * built has no finale yet: its last level so far ends normally, and the next one is "coming soon".
+ * built has no finale yet: its last level so far ends normally, and the next one is "coming soon"
+ * (chapter 3's finale is always the Golden Fleece).
  */
 export function isFinale(id: DeckId): boolean {
-  return chapterIndex(id) === chapterSize(chapterOf(id));
+  return id === GAME_FINALE || (chapterOf(id) !== chapterOf(GAME_FINALE) && chapterIndex(id) === chapterSize(chapterOf(id)));
 }
 
 /** The first deck of the next chapter, if there is one. */

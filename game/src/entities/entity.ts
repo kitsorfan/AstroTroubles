@@ -4,9 +4,10 @@ import type { World } from '../game/world';
 
 /**
  * `blast` is the charged fireball's explosion, `dash` a ram with the Dash Thrusters, `pulse` LUX's force pulse,
- * `smash` General Brennus's shoulder charge or shield bash (heavy: it knocks robots over and shields away).
+ * `smash` General Brennus's shoulder charge or shield bash (heavy: it knocks robots over and shields away),
+ * `burn` the Flamethrower's fire and burning (small, steady hits that never stun).
  */
-export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse' | 'smash';
+export type HitKind = 'shot' | 'spin' | 'pound' | 'zap' | 'blast' | 'dash' | 'pulse' | 'smash' | 'burn';
 
 export abstract class Entity {
   alive = true;

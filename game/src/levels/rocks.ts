@@ -4,9 +4,10 @@ import type { LevelDef } from '../world/levelTypes';
 /**
  * Chapter 3, level 1 — The Clashing Rocks, flown in the Argo. A warm-up through the glittering belt
  * (steer, rings, crystals, boost), Aeëtes's gold salvage drones, then the Clashing Rocks themselves:
- * the Argo waits at each pair until LUX's dove shows the timing, then BOOSTs through. The finale is a
- * row of three slamming pairs right before the gate of the moons. Three checkpoint beacons split it
- * into four sections; losing all the hull hearts restarts the section.
+ * twenty slamming pairs. The Argo waits at each hold line and BOOSTs through when the rocks open. LUX's
+ * dove shows the timing at the very first pair only; after that Jason reads the rocks himself, with
+ * three ROCKETs for the pairs he'd rather blow up. Four checkpoint beacons split it into five sections;
+ * losing all the hull hearts restarts the section (and gives back the rockets fired in it).
  */
 
 /** The intended route: rings and bolts follow it, asteroid fields keep clear of it, the dove flies it. */
@@ -42,12 +43,28 @@ const GUIDE: Lane = [
   [3180, 0, 0],
   [3250, 3, 2],
   [3300, 0, 0],
-  [3400, -3, 1],
-  [3500, 3, -1.5],
-  [3600, 0, 0],
-  [3790, 0, 0],
-  [3850, 0, 1.5],
-  [3900, 0, 0],
+  [3380, -3, 1],
+  [3460, 3, -1.5],
+  [3520, 0, 0],
+  [3650, 0, 0],
+  [3700, 3, 1.5],
+  [3780, 0, 0],
+  [3940, 0, 0],
+  [4000, -3, -1],
+  [4060, 0, 0],
+  [4230, 0, 0],
+  [4290, 3, 1],
+  [4370, -3, -1],
+  [4440, 0, 0],
+  [4600, 0, 0],
+  [4650, -3, 1.5],
+  [4700, 0, 0],
+  [4820, 0, 0],
+  [4870, 3, -1],
+  [4930, 0, 0],
+  [5100, 0, 0],
+  [5150, 0, 1.5],
+  [5200, 0, 0],
 ];
 
 const things: CourseThing[] = [
@@ -100,18 +117,50 @@ const things: CourseThing[] = [
   ...boltsAlong(GUIDE, 3190, 3290, 6),
   { kind: 'checkpoint', s: 3300, id: 'cp3' },
 
-  /* 4. The last gauntlet: three slamming pairs in a row, then the gate of the moons. */
-  { kind: 'radio', s: 3320, dialogue: 'gauntlet' },
+  /* 4. The rock field: eight more pairs, in rows of two and three, and no dove to show the timing. */
+  { kind: 'radio', s: 3320, dialogue: 'field' },
   { kind: 'drones', s: 3390, n: 5, formation: 'vee', elite: true },
-  { kind: 'drones', s: 3510, n: 4, formation: 'circle' },
-  ...ringsAlong(GUIDE, 3340, 3600, 52),
-  ...crystalsNear(8, GUIDE, [3420, 3540]),
-  ...boltsAlong(GUIDE, 3445, 3520, 6),
-  ...asteroidField(41, 3340, 3610, 16, GUIDE, 1, 2.8, 3.4),
-  { kind: 'hold', s: 3640, dialogue: 'last' },
-  ...clashRow(3680, ['x', 'y', 'x'], 40, 5.6, 0.4),
-  ...ringsAlong(GUIDE, 3800, 3880, 20),
-  { kind: 'gate', s: 3900 },
+  ...ringsAlong(GUIDE, 3340, 3500, 40),
+  ...crystalsNear(8, GUIDE, [3420]),
+  ...boltsAlong(GUIDE, 3445, 3500, 6),
+  ...asteroidField(41, 3340, 3500, 16, GUIDE, 1, 2.8, 3.4),
+  { kind: 'hold', s: 3540, dialogue: 'hold4' },
+  ...clashRow(3580, ['y', 'x'], 36, 5.2, 0.9),
+  { kind: 'drones', s: 3720, n: 4, formation: 'circle' },
+  ...ringsAlong(GUIDE, 3660, 3770, 36),
+  ...crystalsNear(9, GUIDE, [3730]),
+  ...asteroidField(42, 3660, 3770, 18, GUIDE, 1, 2.4, 3.4),
+  { kind: 'hold', s: 3800, dialogue: 'hold5' },
+  ...clashRow(3840, ['y', 'x', 'y'], 38, 5.6, 0.2),
+  { kind: 'drones', s: 4000, n: 3, formation: 'line', y: 1 },
+  ...ringsAlong(GUIDE, 3950, 4050, 33),
+  ...boltsAlong(GUIDE, 3960, 4040, 6),
+  ...asteroidField(43, 3950, 4050, 18, GUIDE, 1, 2.4, 3.4),
+  { kind: 'hold', s: 4080, dialogue: 'hold6' },
+  ...clashRow(4120, ['x', 'x', 'y'], 38, 5.6, 1.6),
+  { kind: 'checkpoint', s: 4240, id: 'cp4' },
+
+  /* 5. The last gauntlet: eight more pairs, the trickiest rows of all, then the gate of the moons. */
+  { kind: 'radio', s: 4250, dialogue: 'gauntlet' },
+  { kind: 'drones', s: 4320, n: 5, formation: 'vee', elite: true },
+  ...ringsAlong(GUIDE, 4270, 4420, 50),
+  ...crystalsNear(10, GUIDE, [4340, 4400]),
+  ...asteroidField(51, 4270, 4420, 15, GUIDE, 1, 2.8, 3.4),
+  { kind: 'hold', s: 4460, dialogue: 'hold7' },
+  ...clashRow(4500, ['x', 'y', 'x'], 38, 5.6, 0.7),
+  { kind: 'drones', s: 4660, n: 4, formation: 'circle', elite: true },
+  ...ringsAlong(GUIDE, 4610, 4690, 40),
+  ...asteroidField(52, 4610, 4690, 16, GUIDE, 1, 2.4, 3.4),
+  { kind: 'hold', s: 4720, dialogue: 'hold8' },
+  ...clashRow(4760, ['y', 'y'], 36, 4.9, 1.1),
+  { kind: 'drones', s: 4880, n: 3, formation: 'column', x: 2 },
+  ...ringsAlong(GUIDE, 4840, 4920, 40),
+  ...crystalsNear(11, GUIDE, [4890]),
+  ...asteroidField(53, 4840, 4920, 16, GUIDE, 1, 2.4, 3.4),
+  { kind: 'hold', s: 4950, dialogue: 'last' },
+  ...clashRow(4990, ['x', 'y', 'x'], 40, 5.6, 0.4),
+  ...ringsAlong(GUIDE, 5110, 5180, 20),
+  { kind: 'gate', s: 5200 },
 ];
 
 export const rocks: LevelDef = {
@@ -134,8 +183,9 @@ export const rocks: LevelDef = {
   objectives: [
     { until: { flag: 'argo:cp1' }, text: 'Fly the Argo through the glittering belt' },
     { until: { flag: 'argo:cp2' }, text: 'Blast Aeëtes’s salvage drones' },
-    { until: { flag: 'argo:cp3' }, text: 'Get through the Clashing Rocks: follow the dove!' },
-    { until: { flag: 'argo:gate' }, text: 'Three more Clashing Rocks, then the gate of the moons!' },
+    { until: { flag: 'argo:cp3' }, text: 'Get through the Clashing Rocks: go the moment they open!' },
+    { until: { flag: 'argo:cp4' }, text: 'Cross the field of Clashing Rocks' },
+    { until: { flag: 'argo:gate' }, text: 'The last Clashing Rocks, then the gate of the moons!' },
     { until: { flag: 'never' }, text: 'On to the Harpy Isles' },
   ],
   dialogues: {
@@ -179,17 +229,30 @@ export const rocks: LevelDef = {
     doveSafe: [
       { who: 'jason', text: 'It made it! It only lost one tail feather.' },
       { who: 'bolt', text: 'Dovey went a little late. The trick is to go the moment the rocks OPEN. Never while they rumble and glow!' },
-      { who: 'captain', text: 'Dovey will fly again every time they open. When the dove goes, you go: press BOOST!' },
+      { who: 'captain', text: 'That was Dovey’s only practice run, Jason. From here on you’re on your own: watch the rocks, and BOOST the moment they OPEN.' },
+      { who: 'bolt', text: 'And if a pair looks too scary, we have three ROCKETS. Press ROCKET and... KA-BOOM! Only three, though. Save them!' },
     ],
-    hold2: [{ who: 'bolt', text: 'This pair slams from the top and the bottom! Same trick: follow Dovey.' }],
-    hold3: [{ who: 'halcyon', text: 'Two pairs in a row, and their rhythm is lined up. Launch with the dove and keep going!' }],
+    hold2: [{ who: 'bolt', text: 'This pair slams from the top and the bottom! No dove this time: watch the glow, and go when they open.' }],
+    hold3: [{ who: 'halcyon', text: 'Two pairs in a row, and their rhythm is lined up. Launch when they open and keep going!' }],
+    field: [
+      { who: 'captain', text: 'More Clashing Rocks ahead. A whole field of them, Jason.' },
+      { who: 'aeetes', text: 'Still flying, little boat? My rocks have only just warmed up.' },
+    ],
+    hold4: [{ who: 'bolt', text: 'Two more! Top and bottom first, then the sides. You can do it!' }],
+    hold5: [{ who: 'halcyon', text: 'Three pairs in a row. Count the rhythm: rumble, slam... open. GO!' }],
+    hold6: [
+      { who: 'jason', text: 'Three more. Breathe, Jason. Breathe.' },
+      { who: 'bolt', text: 'Breathing is a good idea. I would do it too, if I had lungs.' },
+    ],
     gauntlet: [
-      { who: 'captain', text: 'The gate of the moons is right behind the last three rocks. Steady, Jason.' },
+      { who: 'captain', text: 'The gate of the moons is just past the last eight pairs. Steady, Jason.' },
       { who: 'aeetes', text: 'Go on, then. If the rocks don’t squash you, I will see you on Colchis.' },
     ],
+    hold7: [{ who: 'bolt', text: 'Sides, then top and bottom, then sides again. Wait for them to open...' }],
+    hold8: [{ who: 'halcyon', text: 'Two pairs, both slamming from above and below, and faster. Nearly there!' }],
     last: [
-      { who: 'bolt', text: 'Three pairs. THREE! Dovey, you are the bravest bird I know.' },
-      { who: 'jason', text: 'Wait for the dove... wait for it...' },
+      { who: 'bolt', text: 'The last three pairs! Dovey is watching from the window, cheering for you.' },
+      { who: 'jason', text: 'No dove, no problem. Wait for it... wait for it...' },
     ],
     finish: [
       { who: 'captain', text: 'We made it! The gate of the moons... and look: the whole ring of moons.' },

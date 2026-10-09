@@ -434,11 +434,11 @@ function dressMk2(m: JasonModel, lv: (id: UpgradeId) => number, put: (parent: TH
 /**
  * The equipped weapon shows on the blaster (which points along +Z in the right arm, muzzle near z 0.4):
  * a coloured band, plus three little barrels (Spread Shot), an ice crystal (Frost Ray), two spark
- * prongs (Thunder Arc) or a targeting dome (Seeker).
+ * prongs (Thunder Arc), a targeting dome (Seeker) or a fuel tank and a long nozzle (Flamethrower).
  */
 function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) {
   if (weapon === 'blaster') return;
-  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'] };
+  const colors: Record<string, [string, string]> = { spread: ['#ffd36a', '#ff9a1a'], frost: ['#d6f6ff', '#5ec8ff'], thunder: ['#fff36a', '#b07aff'], seeker: ['#ffb0c8', '#ff3f7a'], flame: ['#ffd08a', '#ff6a1a'] };
   const [c, e] = colors[weapon] ?? ['#ffffff', '#ffffff'];
   const glowM = mat(c, { emissive: e, ei: 1.4 });
   const band = mesh(cyl(0.118, 0.118, 0.06, 14), glowM, 0, -0.48, 0.3, false);
@@ -470,6 +470,20 @@ function dressWeapon(weapon: string, put: (...parts: THREE.Object3D[]) => void) 
     const lens = glowSprite(e, 0.26, 0.9);
     lens.position.set(0, -0.37, 0.3);
     put(lens);
+  } else if (weapon === 'flame') {
+    // A fuel tank slung under the gun, a long flared nozzle and a little blue pilot flame at its tip.
+    const metal = mat('#5a4a40', { metal: 0.6, rough: 0.4 });
+    const tank = mesh(cyl(0.075, 0.075, 0.3, 12), mat('#d8402a', { rough: 0.45 }), 0, -0.62, 0.12, false);
+    tank.rotation.x = Math.PI / 2;
+    const pipe = mesh(cyl(0.035, 0.045, 0.24, 10), metal, 0, -0.48, 0.5, false);
+    pipe.rotation.x = Math.PI / 2;
+    const flare = mesh(cyl(0.085, 0.045, 0.1, 12), metal, 0, -0.48, 0.66, false);
+    flare.rotation.x = Math.PI / 2;
+    const pilot = glowSprite('#7fd4ff', 0.2, 0.9);
+    pilot.position.set(0, -0.48, 0.74);
+    const ember = glowSprite(e, 0.3, 0.7);
+    ember.position.set(0, -0.48, 0.74);
+    put(tank, pipe, flare, pilot, ember);
   }
 }
 
@@ -763,6 +777,13 @@ export function makeHoloFigure(who: HoloSpeaker, color: string): { group: THREE.
     add(new THREE.SphereGeometry(0.018, 8, 6), 0, 1.88, 0.125);
     for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.12, 0.018, 0.1), sx * 0.19, 1.49, 0);
     for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(0.012, 6, 4), 0.03, 1.02 + i * 0.1, 0.13);
+  } else if (who === 'aeetes') {
+    // Aeëtes: slicked-back hair, a long coat with wide lapels, and rings that catch the light.
+    const hair = add(new THREE.SphereGeometry(0.122, 22, 14, 0, Math.PI * 2, 0, 1.2), 0, 1.76, -0.02);
+    hair.scale.set(0.95, 1.02, 1.1);
+    const coat = add(lathe([[0.2, 0], [0.24, 0.3], [0.22, 0.62], [0.18, 0.7]]), 0, 0.55, 0);
+    coat.scale.z = 0.72;
+    for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.02, 6, 4), sx * 0.3, 1.1, 0.06);
   } else {
     // Hair drawn back into a bun, and the security vest over the uniform.
     const hair = add(new THREE.SphereGeometry(0.122, 22, 14, 0, Math.PI * 2, 0, 1.45), 0, 1.755, -0.012);

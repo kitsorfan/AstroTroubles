@@ -22,10 +22,11 @@ import {
 import type { DeckId, EndingKind, HeroId, Line, Speaker } from '../world/levelTypes';
 import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
-import { WEAPONS, type WeaponId } from '../entities/weapons';
+import { WEAPONS, type Weapon, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
 import type { FindKind } from '../game/collectibles';
 import type { Helper } from '../game/companions';
+import type { TideGauge } from '../world/tides';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
@@ -73,8 +74,23 @@ function h(html: string): HTMLElement {
 /** A label that follows the language setting (see `applyLang`). */
 const label = (en: string, cls = '') => `<span${cls ? ` class="${cls}"` : ''} data-t="${en}">${tr(en)}</span>`;
 
+/** A weapon's four stat bars (RANGE, POWER, SPEED, AMMO or FUEL), five segments each, in its colour. */
+export function weaponStats(w: Weapon): string {
+  const rows: [string, number][] = [
+    [tr('RANGE'), w.bars.range],
+    [tr('POWER'), w.bars.power],
+    [tr('SPEED'), w.bars.speed],
+    [w.id === 'flame' ? tr('FUEL') : tr('AMMO'), w.bars.ammo],
+  ];
+  const row = ([name, n]: [string, number]) => `<span class="wl">${name}</span><span class="wbar">${'<span class="on"></span>'.repeat(n)}${'<span></span>'.repeat(5 - n)}</span>`;
+  return `<div class="wstats" style="--wc:${w.glow}">${rows.map(row).join('')}</div>`;
+}
+
 /** An icon shown only for one hero's buttons (`hj` Jason, `ha` Atalanta; see style.css). */
 const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cls}"`);
+
+/** The little Argo riding along the approach bar (Brennus's Last Stand): white hull, gold belly, blue sail. */
+const ARGO_ICON = `<svg viewBox="0 0 40 24"><path d="M14 4h12v9H14z" fill="#5ab4ff" stroke="#1a1630" stroke-width="1.5"/><path d="M3 13h34q-2 6-8 7H9q-5-2-6-7z" fill="#fff" stroke="#1a1630" stroke-width="1.5"/><path d="M5 17h30" stroke="#ffd166" stroke-width="2.5"/><circle cx="37" cy="10" r="3" fill="#ffd166" stroke="#1a1630" stroke-width="1.2"/></svg>`;
 
 /** Each shop upgrade's icon. */
 const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
@@ -161,6 +177,10 @@ export class UI {
   private bossEl: HTMLElement;
   private countdownEl: HTMLElement;
   private countdownKey = '';
+  private tideEl: HTMLElement;
+  private tideKey = '';
+  private argoEl: HTMLElement | null = null;
+  private argoKey = '';
   private fpsEl: HTMLElement;
   private lastHearts = -1;
   private lastBolts = -1;
@@ -182,21 +202,21 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="tide hidden"><i class="tube"><i class="sea"></i></i><b></b></div><div class="argobar hidden"><div class="name"></div><div class="track"><div class="fill"></div><i class="ship">${ARGO_ICON}</i></div></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="chunk"></div><div class="fill"></div><div class="marks"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
       <div class="stick-hint">${label('MOVE')}</div>
       <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${ring('charge-ring')}</div>
-        <div class="ammo"><div class="pips"></div><div class="reload"><i></i></div></div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${only(ICON.cannon, 'hm')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${label('CANNON', 'hm')}${ring('charge-ring')}</div>
+        <div class="ammo"><div class="pips"></div><div class="fuel"><i></i></div><div class="reload"><i></i></div></div>
         <div class="heat hb"><i></i></div>
-        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${ring('cd-ring')}<div class="charges"></div></div>
-        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}<div class="charges"></div></div>
+        <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${only(ICON.punch, 'hm')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${label('PUNCH', 'hm')}${ring('cd-ring')}<div class="charges"></div></div>
+        <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${only(ICON.thrust, 'hm')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}${label('THRUST', 'hm')}<div class="charges"></div></div>
         <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
         <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
-        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><b class="wname"></b></div>
+        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><div class="wname"><b></b><div class="wcard-stats"></div></div></div>
       </div>
       <div class="action clickable hidden"><i class="face">${portrait('bolt')}</i><b></b></div>
       <div class="toast"><div class="portrait"></div><div class="t"></div></div>
@@ -231,6 +251,7 @@ export class UI {
     this.wpEl = $(this.hud, '.waypoint');
     this.bossEl = $(this.hud, '.bossbar');
     this.countdownEl = $(this.hud, '.countdown');
+    this.tideEl = $(this.hud, '.tide');
     this.fpsEl = $(this.hud, '.fps');
 
     for (const btn of this.hud.querySelectorAll<HTMLElement>('.btn')) {
@@ -335,12 +356,77 @@ export class UI {
     el.classList.toggle('hidden', !text);
   }
 
-  setBoss(name: string | null, frac: number) {
+  private bossFrac = 1;
+  private bossMarks = '';
+
+  /**
+   * The boss bar: the name, the health (a pale chunk trails each hit, and the bar flashes), and a notch
+   * wherever the fight changes phase.
+   */
+  setBoss(name: string | null, frac: number, marks: number[] = []) {
     this.bossName = name;
     this.bossEl.classList.toggle('hidden', !name);
-    if (!name) return;
+    if (!name) {
+      this.bossFrac = 1;
+      return;
+    }
+    const f = Math.max(0, Math.min(1, frac));
     $(this.bossEl, '.name').textContent = tr(name);
-    $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
+    $(this.bossEl, '.fill').style.width = `${f * 100}%`;
+    $(this.bossEl, '.chunk').style.width = `${f * 100}%`;
+    this.bossEl.classList.toggle('low', f <= 0.25);
+    if (f < this.bossFrac - 1e-4) {
+      const track = $(this.bossEl, '.track');
+      track.classList.remove('hit');
+      void track.offsetWidth;
+      track.classList.add('hit');
+    }
+    this.bossFrac = f;
+    const key = marks.join(',');
+    if (key !== this.bossMarks) {
+      this.bossMarks = key;
+      $(this.bossEl, '.marks').innerHTML = marks.map((m) => `<i style="left:${(m * 100).toFixed(1)}%"></i>`).join('');
+    }
+  }
+
+  /** The tide gauge (Scylla's Reef): how high the sea is, what it's doing next, and when. */
+  setTide(g: TideGauge | null) {
+    const label = !g
+      ? ''
+      : g.warn || g.phase === 'rising'
+        ? tr('TIDE COMING IN!')
+        : g.phase === 'low'
+          ? tr('LOW TIDE · {n}', { n: g.secs })
+          : g.phase === 'high'
+            ? tr('HIGH TIDE · {n}', { n: g.secs })
+            : tr('TIDE GOING OUT');
+    const key = g ? `${label}|${Math.round(g.fill * 20)}|${g.warn}` : '';
+    if (key === this.tideKey) return;
+    this.tideKey = key;
+    this.tideEl.classList.toggle('hidden', !g);
+    if (!g) return;
+    $(this.tideEl, 'b').textContent = label;
+    $(this.tideEl, '.sea').style.height = `${Math.round(8 + g.fill * 92)}%`;
+    this.tideEl.classList.toggle('warn', g.warn || g.phase === 'rising');
+    this.tideEl.classList.toggle('high', g.phase === 'high');
+  }
+
+  /**
+   * Brennus's Last Stand: how close the Argo is (0..1), with a warning while Aeëtes's robots crowd the
+   * line and slow it down. Null hides the bar.
+   */
+  setArgo(a: { frac: number; slowed: boolean } | null) {
+    const key = a ? `${Math.round(a.frac * 200)}|${a.slowed}` : '';
+    if (key === this.argoKey) return;
+    this.argoKey = key;
+    this.argoEl ??= $(this.hud, '.argobar');
+    this.argoEl.classList.toggle('hidden', !a);
+    if (!a) return;
+    const pct = `${Math.max(0, Math.min(1, a.frac)) * 100}%`;
+    this.argoEl.classList.toggle('slowed', a.slowed);
+    $(this.argoEl, '.name').textContent = a.slowed ? tr('CLEAR THE LINE! THE ARGO IS SLOWING DOWN') : tr('THE ARGO IS COMING');
+    $(this.argoEl, '.fill').style.width = pct;
+    $(this.argoEl, '.ship').style.left = pct;
   }
 
   /** The clock for timed switches: whole seconds left, and a dot for each switch, lit once it's down. */
@@ -392,8 +478,11 @@ export class UI {
     const first = this.lastWeapon === '';
     this.lastWeapon = id;
     $(btn, '.wicon').innerHTML = WEAPON_ICON[id];
+    // The card that pops up after a switch: the weapon's name and its stat bars.
     const name = $(btn, '.wname');
-    name.textContent = tr(WEAPONS[id].name);
+    $(name, 'b').textContent = tr(WEAPONS[id].name);
+    $(name, '.wcard-stats').innerHTML = weaponStats(WEAPONS[id]);
+    name.style.setProperty('--wc', WEAPONS[id].glow);
     if (first || owned < 2) return;
     name.classList.remove('show');
     void name.offsetWidth;
@@ -500,15 +589,26 @@ export class UI {
 
   private lastAmmo = '';
 
-  /** Ammo pips above BLAST, the reload bar, and the fireball charge ring. */
-  setAmmo(ammo: number, clip: number, reload: number, charge: number) {
-    const key = `${ammo}|${clip}|${Math.round(reload * 20)}|${Math.round(charge * 20)}`;
+  /**
+   * Ammo pips above BLAST (in the weapon's colour), the reload bar, and the fireball charge ring. The
+   * Flamethrower shows a fuel gauge instead (`fuel` 0..1), blinking red while the tank is dry.
+   */
+  setAmmo(ammo: number, clip: number, reload: number, charge: number, fuel: number | null = null, dry = false) {
+    const key = `${ammo}|${clip}|${Math.round(reload * 20)}|${Math.round(charge * 20)}|${fuel === null ? '' : Math.round(fuel * 60)}|${dry}`;
     if (key === this.lastAmmo) return;
     this.lastAmmo = key;
     const box = $(this.hud, '.ammo');
+    box.classList.toggle('tank', fuel !== null);
+    box.classList.toggle('dry', fuel !== null && dry);
+    if (fuel !== null) {
+      $<HTMLElement>(box, '.fuel i').style.width = `${Math.round(fuel * 100)}%`;
+      box.classList.remove('reloading');
+      return;
+    }
     const pips = $(box, '.pips');
     if (pips.childElementCount !== clip) pips.innerHTML = '<i></i>'.repeat(clip);
     pips.classList.toggle('many', clip > 10);
+    pips.classList.toggle('lots', clip > 16);
     pips.querySelectorAll('i').forEach((el, i) => el.classList.toggle('full', i < ammo));
     box.classList.toggle('reloading', reload > 0);
     $<HTMLElement>(box, '.reload i').style.width = `${Math.round(reload * 100)}%`;
@@ -628,6 +728,8 @@ export class UI {
       who.style.color = SPEAKER_COLOR[speaker];
       box.classList.toggle('glitchy', speaker === 'glitch' || speaker === 'rogue');
       shown = 0;
+      // Clear the last line at once, so it never shows next to the new speaker's face.
+      $(el, '.text').textContent = '';
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
         shown = Math.min(text.length, shown + 2);
@@ -1137,7 +1239,12 @@ export class UI {
         ${item('#ffd166', tr('CHARGE'), tr('a shoulder charge through crates, cracked walls and robots. Jump while charging for a CHARGE-LEAP over wide gaps.'))}
         ${item('#ff6a5a', tr('COMMAND'), tr('at a Legion command post, give your old robots an order: hold a plate, carry you, or fight on your side.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}</p>
+      <h3 class="help-sub">${tr('THE BRONZE MECH')}</h3>
+      <div class="help-grid">
+        ${item('#e0a040', tr('PUNCH'), tr('big bronze fists: they break bronze gates and knock Talos’s ankle armour off. In the air, SPIN is a SLAM that smashes cracked floors.'))}
+        ${item('#ffb04a', tr('THRUST'), tr('its back jets push it forward, on the ground or once per jump: JUMP, then THRUST to cross wide lava channels.'))}
+      </div>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}<br/>${tr('Mech: J cannon · K punch (in the air: slam) · L thrust')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }
@@ -1233,7 +1340,8 @@ export class UI {
             : o.owned
               ? `<button class="buy equip" data-eq="${id}">${tr('EQUIP')}</button>`
               : `<button class="buy" data-wp="${id}" ${save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${price(o.price ?? 0)}</button>`;
-          return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, '', o.weapon.desc, btn);
+          const special = `<small class="wspecial">${ICON.star}${tr(o.weapon.special)}</small>`;
+          return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, weaponStats(o.weapon) + special, o.weapon.desc, btn);
         })
         .join('');
       const tabBar = tabs
@@ -1367,8 +1475,8 @@ export class UI {
    * Nova after chapter 1, the Argonauts' voyage after chapter 2.
    */
   ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void, chapter = 1) {
-    const secret = kind === 'friends' || kind === 'redeemed';
-    const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' ? 'var(--gold)' : 'var(--good)';
+    const secret = kind === 'friends' || kind === 'redeemed' || kind === 'gardeners';
+    const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' || kind === 'fleece' ? 'var(--gold)' : kind === 'gardeners' ? '#7dff9a' : 'var(--good)';
     const title =
       kind === 'friends'
         ? tr('THE GARDEN BETWEEN STARS')
@@ -1376,8 +1484,13 @@ export class UI {
           ? tr('A GARDEN FOR EVERYONE')
           : kind === 'freed'
             ? tr('GAIA NOVA IS FREE!')
-            : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
-    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
+            : kind === 'fleece'
+              ? tr('THE GOLDEN FLEECE COMES HOME')
+              : kind === 'gardeners'
+                ? tr('NOT THE LAST OF HER KIND')
+                : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
+    // The game's final endings (chapter 3) always say THE END, the secret one too.
+    const kicker = secret ? (chapter === 3 ? `${tr('SECRET ENDING')} · ${tr('THE END')}` : tr('SECRET ENDING')) : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
     const nextLabel = chapter === 1 ? tr('Chapter 2: Gaia Nova') : tr('Chapter 3: The Argonauts');
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kicker}</div>

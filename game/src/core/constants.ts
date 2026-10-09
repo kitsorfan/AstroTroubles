@@ -165,6 +165,37 @@ export const BRENNUS = {
   stompSpeed: 24,
 } as const;
 
+/**
+ * The Gardeners' bronze mech suit (Talos's Forge): Jason pilots it, Atalanta rides on its shoulder. Big,
+ * heavy and a little slow, with one strong hydraulic jump, a forward THRUST (its jets) for gaps, a
+ * PUNCH that breaks bronze gates, a SLAM that breaks cracked floors, and a slow cannon.
+ */
+export const MECH = {
+  speed: 6.4,
+  /** A wider, taller body than Jason's: corridors in the forge are at least one cell wide. */
+  radius: 0.75,
+  height: 3,
+  /** One strong jump: apex about 2.4 units (four floor steps, with a little to spare). */
+  jumpV: 12.4,
+  /** THRUST (the DASH button): a burst of its back jets, on the ground or once per jump; gravity pauses while it lasts. */
+  thrustSpeed: 16,
+  thrustTime: 0.3,
+  thrustCooldown: 0.7,
+  /** PUNCH (the SPIN button on the ground): a one-two of bronze fists, each a heavy `smash` just in front. */
+  punchTime: 0.3,
+  punchCooldown: 0.12,
+  punchDamage: 3,
+  punchRadius: 1.5,
+  punchReach: 1.5,
+  /** SLAM (SPIN in the air): straight down, like a ground pound; it smashes cracked floors. */
+  slamSpeed: 26,
+  /** A landing at least this fast (falling) counts as a heavy landing: it also cracks brittle floors. */
+  heavyLanding: 17,
+  /** The cannon (BLAST): no heat, just a slower rhythm than Brennus's. */
+  shellCooldown: 0.75,
+  aimRange: 15,
+} as const;
+
 /** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */
 export const HERO_SWITCH = {
   cooldown: 1,
@@ -228,4 +259,35 @@ export const OUTDOOR = {
   /** Rolling boulders: speed (units per second) and how close they must be to knock Jason over. */
   boulderSpeed: 7,
   boulderRadius: 1.15,
+};
+
+/**
+ * Medusa's Labyrinth (chapter 3): MEDUSA's gaze beams, and the Gardeners' Mirror Shield that bounces
+ * them. A gaze never hurts: it turns the hero it touches to stone for a moment.
+ */
+export const GAZE = {
+  /** Seconds a hero stays stone, then how long they are safe from the next gaze (time to step out). */
+  stone: 2.2,
+  safe: 1.6,
+  /** How far a beam travels in all (world units), counting every bounce, and its tracing step. */
+  range: 80,
+  step: 0.25,
+  /** A gaze beam's height above the eye-sentry's floor. */
+  eye: 1.3,
+  /** Seconds of beam a light crystal needs before it lights up. */
+  catchTime: 0.45,
+  /** Seconds an eye-sentry stays shut after its own gaze is bounced back into it. */
+  dazzle: 5,
+  /** A bounced beam snaps onto a crystal, eye or mirror within this angle (radians) of where it was going. */
+  snap: 0.6,
+};
+
+/** The Mirror Shield: hold SPIN (on the ground) this long to raise it; Jason walks slowly behind it. */
+export const MIRROR = {
+  hold: 0.18,
+  speed: 2.8,
+  /** How quickly he turns behind it (so it's easy to aim the bounce). */
+  turn: 6,
+  /** A beam bounces when it hits the shield's front: within this cosine of straight on. */
+  arc: 0.12,
 };

@@ -2,6 +2,7 @@ import { GAME_NAME } from '../core/brand';
 import { tr, upper } from '../core/i18n';
 import type { SaveData } from '../core/save';
 import { CHAPTER_DECKS, LEVELS, chapterTotals, inChapter, type Chapter } from '../levels';
+import { plannedFinds } from './collectibles';
 import type { BadgeKind } from '../entities/badges';
 import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
 
@@ -57,8 +58,15 @@ export const FLYOVER: Record<DeckId, string> = {
   jungle: 'The <b>Thornwood Jungle</b>. Something is wrong here: the trees are grey, and Celestia’s pollen hangs in the air like fog.',
   volcano: '<b>Mount Atlantas</b>. Brennus built his fortress right inside the volcano. Celestia is in there. So is the end of this.',
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
+  reef: 'The strait of <b>Scylla’s Reef</b>. Coral, sunshine and turquoise water... between a great dark rock and a whirlpool that never stops turning.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  sirens: 'The <b>Sirens’ Sea</b>. Deep under the waves of a water moon lies a sunken Gardener gate... and Aeëtes’s gold buoys are singing a very strange song.',
+  forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
+  labyrinth: '<b>Medusa’s Labyrinth</b>. Under the gate of Colchis winds a maze of green stone... and in the dark, a great green eye is opening.',
+  stand: 'The <b>sky-dock of Colchis</b>, floating above the clouds. Aeëtes’s gold fleet is coming to shut its gate... and one old general is standing in the way.',
+  garden: 'The <b>Garden of Colchis</b>. Flowers as tall as houses, trees of glowing crystal, and fountains that whisper in light... and somewhere in the middle, something very big is <b>not</b> asleep.',
+  fleece: 'The great tree-temple of the <b>Gardeners</b>, taller than any mountain. Somewhere at the top, the <b style="color:#ffd166">Golden Fleece</b> is waiting... and so is Aeëtes.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -145,7 +153,7 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'atalanta', text: 'Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.' },
     { who: 'jason', text: 'Then we keep going, and we listen for his signal. Hang on, General!' },
   ],
-  // Brennus's map reaches the Argo (the next level, the Sirens' Sea, is still being built).
+  // Brennus's map reaches the Argo: the way to Colchis goes under the Sirens' Sea.
   mine: [
     { who: 'captain', text: 'Argo to everyone: a message is coming in. From... the Gorgon’s old lifeboat?' },
     { who: 'brennus', text: 'Argus. It is Brennus. I am sending you a map: the way into the Fleece vault on Colchis. Aeëtes was hiding it in his desk.' },
@@ -154,6 +162,61 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // The Dolphin surfaces at a strait of coral and rock: Scylla's Reef, on foot with Atalanta, is next.
+  sirens: [
+    { who: 'captain', text: 'Dolphin, you are back on the surface! Hold still, the Argo is coming to scoop you up.' },
+    { who: 'atalanta', text: 'Jason! You beat a giant singing ORGAN, and I missed it? Next time I am coming in the sub.' },
+    { who: 'iris', text: 'Look ahead: a strait between a tall rock and a great whirlpool. The coral there grows like a city.' },
+    { who: 'hypatia', text: 'Brennus’s map says that reef is the way to Colchis. But someone has built something very big on that rock...' },
+    { who: 'bolt', text: 'Is it another organ? Please say it is not another organ. My singing voice needs a rest.' },
+    { who: 'jason', text: 'Then this time we go on foot. Atalanta, ready to run?' },
+    { who: 'atalanta', text: 'I was BORN ready.' },
+  ],
+  // Through the strait at last: next comes Talos's bronze island.
+  reef: [
+    { who: 'captain', text: 'Argo to the reef: the strait is clear! Scylla’s arms are folded, and Charybdis is just a gentle swirl. We are sailing through.' },
+    { who: 'halcyon', text: 'Beyond the strait there is an island of black rock and bronze cliffs. Its volcano is smoking... and something enormous is walking along the beach.' },
+    { who: 'atalanta', text: 'Enormous? How enormous?' },
+    { who: 'halcyon', text: 'About as tall as a ten-storey building. And it is made of bronze.' },
+    { who: 'bolt', text: 'Oh good. A giant. I was worried today would be boring.' },
+    { who: 'jason', text: 'The map says the way to Colchis goes right across that island. Let’s go and say hello. Politely.' },
+  ],
+  // Talos rests; the labyrinth gate leads under Colchis, to Medusa's Labyrinth.
+  forge: [
+    { who: 'iris', text: 'The labyrinth gate. The Gardeners built a maze under Colchis to keep the Fleece safe.' },
+    { who: 'halcyon', text: 'I am detecting a security system down there. One of Aeëtes’s. It calls itself... MEDUSA.' },
+    { who: 'bolt', text: 'Medusa? Like the old story? The one who turns people into STONE?' },
+    { who: 'atalanta', text: 'Then we don’t look her in the eye. Easy. ...Is it easy?' },
+    { who: 'jason', text: 'Talos is resting, the gate is open, and Colchis is right under our feet. Come on, Argonauts!' },
+  ],
+  // Out of the labyrinth: Aeëtes's gold fleet arrives over Colchis, and Brennus comes to hold the sky-dock.
+  labyrinth: [
+    { who: 'halcyon', text: 'Argonauts, the labyrinth gate is open! The Argo can fly straight up the old shaft to the Gardeners’ sky-dock.' },
+    { who: 'halcyon', text: 'But... I count twenty gold ships coming round the moon. Aeëtes has brought his whole fleet.' },
+    { who: 'aeetes', text: 'You switched off my MEDUSA? Then I will close the sky myself. Nobody reaches the garden but ME!' },
+    { who: 'brennus', text: 'Argus. Brennus here. My lifeboat is right behind you, and my old robots are with me.' },
+    { who: 'brennus', text: 'I will hold the sky-dock. You fly through to the garden. Do not argue, Captain. Just fly.' },
+    { who: 'atalanta', text: 'Holding a whole dock against a whole fleet? Okay. I take back everything I said about grumpy generals.' },
+  ],
+  // The Argo is through Colchis's Sky Gate; next, the Garden of Colchis.
+  stand: [
+    { who: 'halcyon', text: 'We are through the Sky Gate! Aeëtes’s fleet is turning back. Every single ship.' },
+    { who: 'atalanta', text: 'He held off a whole fleet. On his own. With a SHIELD.' },
+    { who: 'brennus', text: 'Not on my own. My Legion stood with me. And the sprout. She is very brave, for a plant.' },
+    { who: 'jason', text: 'Thank you, General. We’ll find the Fleece. For Celestia.' },
+    { who: 'brennus', text: 'Then go, Argonauts. The garden is waiting. I will catch you up: old soldiers are slow, but we always arrive.' },
+    { who: 'captain', text: 'Taking her down through the clouds. Everyone, look out of the window... the Garden of Colchis.' },
+  ],
+  // The dragon sleeps; the way into the Gardeners' tree-temple and the Fleece vault is open.
+  garden: [
+    { who: 'iris', text: 'Listen. The whole garden is breathing slowly now, in time with the dragon’s snores.' },
+    { who: 'bolt', text: 'It’s smiling in its sleep! I made a dragon SMILE. I am putting that on my list of skills.' },
+    { who: 'atalanta', text: 'The tree-temple doors are open. The Fleece vault is right inside. Last one in is a slow harpy!' },
+    { who: 'captain', text: 'Careful, Argonauts. Aeëtes’s gold ships are circling Colchis. He knows exactly where you are going.' },
+    { who: 'jason', text: 'Then we’d better get to the Fleece first. Celestia is waiting for it. Let’s go!' },
+  ],
+  // The Golden Fleece is the game's finale: it ends with the final endings, not a hop to another level.
+  fleece: [],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +308,13 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  organ: { sub: 'Aeëtes’s singing trap · the loudest thing under the sea', color: '#ff6fb0' },
+  scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
+  talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
+  medusa: { sub: 'Aeëtes’s security AI · one look turns you to stone', color: '#7dff9a' },
+  ram: { sub: 'Aeëtes’s war machine · solid gold, and it butts like a battleship', color: '#ffb43a' },
+  dragon: { sub: 'Guardian of the Golden Fleece · it hasn’t slept in a thousand years', color: '#7dffc8' },
+  goldenking: { sub: 'Aeëtes in the Golden Fleece · he wants every garden for himself', color: '#ffd166' },
 };
 
 /**
@@ -265,6 +335,14 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  piranha: { name: 'Piranha Drone', tip: 'Little gold fish robots that swim in a school and nibble the hull. PING stuns the whole school, then torpedo them!' },
+  crab: { name: 'Crab-Drone', tip: 'Its big claws block shots from the front. When it snaps, the claws hang open: blast it then, or from the side!' },
+  jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
+  anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
+  coil: { name: 'Cable Snake', tip: 'It rears up and hisses, then LUNGES straight ahead. Step aside, then blast it while it lies tangled!' },
+  ramling: { name: 'Ramling', tip: 'It paws the ground, then charges head first! Its gold forehead stops shots. SHIELD it: it bonks its head and gets dizzy.' },
+  weeder: { name: 'Weeder Drone', tip: 'Aeëtes’s garden wrecker: when its tank glows, it sprays gold weed-killer on the ground. Step off the gold circle, then blast it!' },
+  ringguard: { name: 'Ring Guard', tip: 'It hides behind its gold ring, then throws it like a boomerang. Jump over the ring, and hit the guard while its ring is away!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
@@ -294,13 +372,27 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
     'Together, Brennus, the scientists and Celestia turned the Thorn Legion into the <b>Green Legion</b>: robots that plant forests instead of fighting.',
     'On the colony’s first morning, Celestia bloomed across the whole valley. Gaia Nova was home at last, for everyone.',
   ],
+  // Chapter 3, the game's final endings (said over the Argo's journey home and the colony garden).
+  fleece: [
+    'The Golden King’s armour fell away like autumn leaves, and the Fleece floated down, soft and warm, into Jason’s arms.',
+    'The Argo carried it home across the ring of moons, past the Clashing Rocks, all the way back to <b>Gaia Nova</b>.',
+    'In the colony’s garden, the Argonauts laid the Golden Fleece over Celestia, like a blanket made of sunshine.',
+    'Celestia opened her petals and glowed brighter than ever before. She was strong again, and the whole valley bloomed.',
+  ],
+  gardeners: [
+    'LUX and IRIS spoke the Gardeners’ words in light: <b style="color:#5ec8ff">sky</b>, <b style="color:#7dff9a">grow</b>, <b style="color:#ff6fcf">friend</b>, <b style="color:#ffd166">home</b>... and the Fleece answered.',
+    'Every golden seed in the Fleece woke up and began to glow. They had waited a very long time for someone to say hello.',
+    'At home on <b>Gaia Nova</b>, the Fleece settled over Celestia, and its seeds drifted down all around her like golden snow.',
+    'By spring, a hundred little Celestias were blooming across the valley. She was not the last of her kind anymore. She had a family.',
+  ],
 };
 
 /** Which chapter an ending belongs to. */
-export const endingChapter = (kind: EndingKind): Chapter => (kind === 'saved' || kind === 'friends' ? 1 : 2);
+export const endingChapter = (kind: EndingKind): Chapter => (kind === 'saved' || kind === 'friends' ? 1 : kind === 'freed' || kind === 'redeemed' ? 2 : 3);
 
 /** The short epilogue on the final stats card. */
 export function endingText(kind: EndingKind, save: SaveData): string[] {
+  if (endingChapter(kind) === 3) return endingText3(kind, save);
   if (endingChapter(kind) === 2) return endingText2(kind, save);
   const n = inChapter(save.colonists, 1);
   const rosa = save.colonists.includes('security.c1');
@@ -335,6 +427,34 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
   return out;
 }
 
+/** How many Gardener light-stones chapter 3 hides in all (every planned level's), and how many the save has. */
+export function lightStones(save: Pick<SaveData, 'shards'>): { n: number; total: number } {
+  return { n: inChapter(save.shards, 3), total: plannedFinds(3, chapterTotals(3).shards) };
+}
+
+/** With every light-stone, LUX and IRIS know enough Gardener words to wake the Fleece's seeds (the secret ending). */
+export function knowsGardenerWords(save: Pick<SaveData, 'shards'>): boolean {
+  const { n, total } = lightStones(save);
+  return n >= total;
+}
+
+function endingText3(kind: EndingKind, save: SaveData): string[] {
+  const { n, total } = lightStones(save);
+  const out: string[] = [];
+  out.push(
+    kind === 'gardeners'
+      ? tr('Celestia and her hundred little sisters glow together every night. LUX and IRIS teach the colony’s children Gardener words.')
+      : tr('Celestia blooms in the middle of the colony garden. Every evening she glows a little goodnight to everyone.'),
+  );
+  out.push(tr('Aeëtes got tangled in his own gold vines. Now he plants trees for the colony, and grumbles. He has planted four thousand so far.'));
+  out.push(tr('Captain Argus made General Brennus the colony’s Chief Gardener. His Green Legion robots water the new forests every morning.'));
+  out.push(tr('Atalanta still races everyone to the Argo, every single day. She still wins.'));
+  out.push(tr('Jason and LUX got the colony’s brand new medal, the Golden Fleece Star. LUX polishes his every morning.'));
+  out.push(tr('You found {n} of {total} Gardener light-stones.', { n, total }));
+  if (kind === 'fleece' && n < total) out.push(tr('Psst... the Gardeners left more light-stones than that. Find every one, and LUX and IRIS might wake the seeds inside the Fleece.'));
+  return out;
+}
+
 function colonistNames(save: SaveData, ch: Chapter): string[] {
   const names: string[] = [];
   for (const id of CHAPTER_DECKS[ch]) {
@@ -345,9 +465,59 @@ function colonistNames(save: SaveData, ch: Chapter): string[] {
   return names;
 }
 
+/**
+ * The final credits of the whole game (after chapter 3): everyone from all three chapters, every boss,
+ * the things won back on the voyage, the light-stones found, and THE END.
+ */
+function finalCredits(kind: EndingKind, save: SaveData): string {
+  const p = (s: string) => `<p>${tr(s)}</p>`;
+  const head = (s: string) => `<h3>${tr(s)}</h3>`;
+  const won = colonistNames(save, 3);
+  const { n, total } = lightStones(save);
+  return [
+    `<h1>${upper(tr(GAME_NAME))}</h1>`,
+    `<h2>${tr('THE ARGONAUTS')}</h2>`,
+    head('STARRING'),
+    p('Jason, junior engineer'),
+    p('LUX, a very brave little drone'),
+    p('Atalanta, the fastest runner in the colony'),
+    p('IRIS, a droid who speaks in rainbows'),
+    p('General Brennus, the colony’s Chief Gardener'),
+    head('WITH'),
+    p('Captain Argus, who built the Argo'),
+    p('HALCYON, the ship computer'),
+    p('Dr. Hypatia, chief scientist'),
+    p('Aunt Rosa, Security Chief'),
+    p('Phineus, the stargazer of the Harpy Isles'),
+    p('PANDORA, the travelling shop'),
+    kind === 'gardeners' ? p('Celestia, and her hundred little sisters') : p('Celestia, in full bloom'),
+    p('the Gardeners, who wrote in light'),
+    head('AND'),
+    p('Aeëtes, now a tree planter'),
+    head('ON THE SHIP'),
+    p('Frost Warden · Vine Queen · Magma Golem'),
+    p('King Bloblin · CERBERUS · the Heart of GaScu'),
+    head('ON GAIA NOVA'),
+    p('Thresher · Dune Driller · Boreas · Shadow LUX (not really)'),
+    p('Stheno · the Thorn Hydra · the Colossus'),
+    head('ON THE VOYAGE'),
+    p('the Clashing Rocks · AELLO · the Gold Excavator'),
+    p('the Siren Organ · Scylla · Talos'),
+    p('Medusa · the Golden Ram · the Sleepless Dragon'),
+    p('Aeëtes, the Golden King'),
+    head('THINGS YOU WON BACK'),
+    ...(won.length ? won.map(p) : [p('Everything found its way home!')]),
+    head('GARDENER LIGHT-STONES'),
+    `<p>${tr('{n} of {total}', { n, total })}</p>`,
+    `<h2>${tr('THE END')}</h2>`,
+    `<p class="end">${tr('Thank you for playing!')}</p>`,
+  ].join('');
+}
+
 export function creditsHtml(kind: EndingKind, save: SaveData): string {
   const p = (s: string) => `<p>${tr(s)}</p>`;
   const head = (s: string) => `<h3>${tr(s)}</h3>`;
+  if (endingChapter(kind) === 3) return finalCredits(kind, save);
   if (endingChapter(kind) === 2) {
     const rescued = colonistNames(save, 2);
     return [

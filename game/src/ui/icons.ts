@@ -37,6 +37,9 @@ export const ICON = {
   cannon: `<svg viewBox="0 0 24 24"><rect x="3" y="8.5" width="13" height="7" rx="2" fill="#c9a24a" stroke="#fff" stroke-width="1.6"/><rect x="15" y="9.8" width="4" height="4.4" rx="1" fill="#3a3028" stroke="#fff" stroke-width="1.3"/><circle cx="21.2" cy="12" r="1.8" fill="#ffb04a"/><path d="M6 8.5v7M10 8.5v7" stroke="#7a5a20" stroke-width="1.4"/></svg>`,
   guard: `<svg viewBox="0 0 24 24"><path d="M12 2.5l8 3.2v6.2c0 4.8-3.4 8.2-8 9.6-4.6-1.4-8-4.8-8-9.6V5.7z" fill="#4a5632" stroke="#ffd166" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="11.5" r="3.2" fill="none" stroke="#ff4a4a" stroke-width="2"/><circle cx="12" cy="11.5" r="1" fill="#ff4a4a"/></svg>`,
   charge: `<svg viewBox="0 0 24 24"><path d="M5 18c2-6 6-10 13-11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="17" cy="8" r="3.4" fill="#ffb04a" stroke="#fff" stroke-width="1.5"/><path d="M2 12h4M3 16h4M4 20h4" stroke="#ffd166" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  /** The bronze mech's buttons: PUNCH (a big bronze fist) and THRUST (its back jets). */
+  punch: `<svg viewBox="0 0 24 24"><rect x="5" y="7" width="12" height="11" rx="3" fill="#e0a040" stroke="#fff" stroke-width="1.8"/><path d="M8 7v4M11 7v4M14 7v4" stroke="#7a4a1a" stroke-width="1.4"/><rect x="2.5" y="10" width="4" height="6" rx="1.5" fill="#e0a040" stroke="#fff" stroke-width="1.5"/><path d="M19 9h3M19.5 12.5h3M19 16h3" stroke="#ffd166" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  thrust: `<svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="10" rx="2.5" fill="#c8862e" stroke="#fff" stroke-width="1.6"/><path d="M9.5 13h5l-1 2h-3z" fill="#3a3230" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 16c-2.5 2.5-1.5 4.5 0 6 1.5-1.5 2.5-3.5 0-6z" fill="#ffb04a" stroke="#ffd166" stroke-width="1.2"/></svg>`,
   /** The badge on the switch-hero button. */
   swap: `<svg viewBox="0 0 24 24"><path d="M5 9a7 7 0 0 1 12.5-3M19 15a7 7 0 0 1-12.5 3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M18.5 2.5V7H14M5.5 21.5V17H10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
@@ -48,6 +51,7 @@ export const WEAPON_ICON: Record<string, string> = {
   frost: `<svg viewBox="0 0 24 24"><g stroke="#bfeeff" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.6 4.2L12 6.6l2.4-2.4M9.6 19.8L12 17.4l2.4 2.4" fill="none"/></g><circle cx="12" cy="12" r="2.4" fill="#7fd4ff"/></svg>`,
   thunder: `<svg viewBox="0 0 24 24"><path d="M14 1.8L5 13.4h5.6L9 22.2l10-12.4h-5.8z" fill="#fff36a" stroke="#c58cff" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   seeker: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="none" stroke="#ff7aa6" stroke-width="2"/><circle cx="12" cy="12" r="3.4" fill="#ff4f8a"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" stroke="#ffd0e0" stroke-width="2" stroke-linecap="round"/></svg>`,
+  flame: `<svg viewBox="0 0 24 24"><path d="M12 1.8c1 3.6 6.6 6.2 6.6 12.2a6.6 6.6 0 0 1-13.2 0c0-3.3 1.9-5 3.2-6.6.3 1.9 1.1 3 2.2 3.4C10.2 7.6 10.9 4.4 12 1.8z" fill="#ff6a1a" stroke="#ffd08a" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 11.6c.6 1.9 3.1 2.9 3.1 5.6a3.1 3.1 0 0 1-6.2 0c0-1.6.9-2.5 1.6-3.3.2.8.6 1.3 1 1.4-.3-1.5.1-2.7.5-3.7z" fill="#fff1c4"/></svg>`,
 };
 
 interface Person {
@@ -359,6 +363,31 @@ const ROGUE = `<svg viewBox="0 0 80 80">
     ${glass('pr', '#ff3a4c')}
   </svg>`;
 
+/** MEDUSA, Aeëtes's security AI: a gold mask with one great green eye and a crown of cable snakes. */
+const MEDUSA = `<svg viewBox="0 0 80 80">
+    ${screen('pm', '#7dff9a')}
+    <defs>
+      <radialGradient id="pmG" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2b8"/><stop offset=".5" stop-color="#f0c25a"/><stop offset="1" stop-color="#9a6a1a"/></radialGradient>
+      <radialGradient id="pmI" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#e6ffe8"/><stop offset=".45" stop-color="#5dff9a"/><stop offset="1" stop-color="#0e6a32"/></radialGradient>
+    </defs>
+    <g fill="none" stroke="#e8b84a" stroke-width="4.4" stroke-linecap="round">
+      <path d="M22 30Q10 24 14 12"/><path d="M30 22Q24 10 32 4"/><path d="M50 22Q56 10 48 4"/><path d="M58 30Q70 24 66 12"/><path d="M18 42Q6 44 4 34"/><path d="M62 42Q74 44 76 34"/>
+    </g>
+    <g fill="#e8b84a" stroke="#6a4a10" stroke-width=".8">
+      <ellipse cx="14" cy="12" rx="4" ry="3"/><ellipse cx="32" cy="4.5" rx="3.6" ry="3"/><ellipse cx="48" cy="4.5" rx="3.6" ry="3"/><ellipse cx="66" cy="12" rx="4" ry="3"/><ellipse cx="4.5" cy="34" rx="3.4" ry="3"/><ellipse cx="75.5" cy="34" rx="3.4" ry="3"/>
+    </g>
+    <g fill="#7dff9a"><circle cx="13" cy="11" r="1"/><circle cx="31" cy="3.6" r=".9"/><circle cx="49" cy="3.6" r=".9"/><circle cx="67" cy="11" r="1"/><circle cx="4" cy="33" r=".9"/><circle cx="76" cy="33" r=".9"/></g>
+    <path d="M40 20C55 20 63 32 62 46C61 60 52 72 40 74C28 72 19 60 18 46C17 32 25 20 40 20Z" fill="url(#pmG)" stroke="#8a5a10" stroke-width="1.2"/>
+    <path d="M24 34Q32 28 38 31M42 31Q48 28 56 34" fill="none" stroke="#8a5a10" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="40" cy="44" rx="11" ry="8.4" fill="#f2fbf4" stroke="#8a5a10" stroke-width="1.2"/>
+    <circle cx="40" cy="44" r="6.4" fill="url(#pmI)"/>
+    <rect x="38.9" y="39.4" width="2.2" height="9.2" rx="1.1" fill="#08140c"/>
+    <circle cx="37.6" cy="41.8" r="1.3" fill="#fff"/>
+    <circle cx="25.6" cy="52" r="1.8" fill="#7dff9a"/><circle cx="54.4" cy="52" r="1.8" fill="#7dff9a"/>
+    <path d="M34 62Q40 65 46 62" fill="none" stroke="#8a5a10" stroke-width="1.6" stroke-linecap="round"/>
+    ${glass('pm', '#7dff9a')}
+  </svg>`;
+
 /** Jason's wrist computer, the face on the action button while no droid is around. */
 export const WRIST_FACE = `<svg viewBox="0 0 80 80">
     <rect x="8" y="22" width="64" height="36" rx="10" fill="#3a4458" stroke="#cfd6e2" stroke-width="2.4"/>
@@ -419,6 +448,7 @@ const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   </svg>`,
   iris: IRIS,
   rogue: ROGUE,
+  medusa: MEDUSA,
   colonist: COLONIST,
   captain: CAPTAIN,
   rosa: ROSA,
@@ -459,6 +489,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   glitch: 'HALCYON?!',
   iris: 'IRIS',
   rogue: 'LUX?!',
+  medusa: 'MEDUSA',
   colonist: 'Colonist',
   captain: 'Captain Argus',
   rosa: 'Aunt Rosa',
@@ -479,6 +510,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   glitch: '#ff4fd8',
   iris: '#c9a8ff',
   rogue: '#ff3a4c',
+  medusa: '#7dff9a',
   colonist: '#ffd166',
   captain: '#ffd166',
   rosa: '#ff8a8a',

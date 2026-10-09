@@ -74,7 +74,7 @@ export function flightQuests(id: DeckId, def: LevelDef, save: SaveData): FlightQ
     },
     {
       id: `${id}:dove`,
-      text: tr('Follow the dove: fly through every Clashing Rock without getting squished'),
+      text: tr('Fly through all twenty Clashing Rocks without getting squished (rockets allowed!)'),
       done: best.clean,
       progress: best.clean ? tr('done') : tr('not yet'),
       reward: bolts(FLIGHT_QUEST_BOLTS.dove),

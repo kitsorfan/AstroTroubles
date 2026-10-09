@@ -6,6 +6,7 @@ import { HEROES } from '../entities/heroes/heroes';
 import type { World } from '../game/world';
 import type { HeroId } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
+import { boardMech } from './forgeScenes';
 
 /**
  * Chapter 3 cutscenes on foot. `heroJoins`: Jason meets a hero who joins the Argonauts partway through
@@ -21,6 +22,8 @@ function follow(w: World, dist = 13): Rig {
 }
 
 export async function heroJoins(d: Director, w: World, hero: HeroId) {
+  // The bronze mech doesn't walk over to join: everyone climbs aboard it (Talos's Forge).
+  if (hero === 'mech') return boardMech(d, w);
   const flag = w.def.joins?.[hero];
   if (!flag || w.hasFlag(flag)) return;
   const pl = w.player;
@@ -74,8 +77,10 @@ export async function heroJoins(d: Director, w: World, hero: HeroId) {
       );
     }
     w.setFlag(flag);
-    pl.heroJoined(s);
+    pl.heroJoined(s, hero);
     w.refreshCompanions();
+    // General Brennus brings his own squad of Legion robots along.
+    if (hero === 'brennus') w.squadArrives();
     const color = HEROES[hero].color;
     w.rings.burst(s.x, s.y + 0.05, s.z, 4, color, 0.5);
     w.particles.emit(s.x, s.y + 1, s.z, { count: 30, color, speed: 5, life: 0.7, size: 0.5, up: 2 });
@@ -87,8 +92,9 @@ export async function heroJoins(d: Director, w: World, hero: HeroId) {
     // In case the scene was skipped before the join.
     if (!w.hasFlag(flag)) {
       w.setFlag(flag);
-      pl.heroJoined(s);
+      pl.heroJoined(s, hero);
       w.refreshCompanions();
+      if (hero === 'brennus') w.squadArrives();
     }
     w.hooks.checkpoint();
   }

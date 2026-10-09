@@ -27,7 +27,8 @@ beforeAll(() => {
   (globalThis as { navigator?: unknown }).navigator ??= { hardwareConcurrency: 8 };
 });
 
-const FLIGHTS = LEVEL_ORDER.filter((id) => isVehicleLevel(id));
+// The Argo's flights (the submarine's dive has its own tests in sirens.test.ts).
+const FLIGHTS = LEVEL_ORDER.filter((id) => isVehicleLevel(id) && LEVELS[id].vehicle === 'argo');
 
 describe('three chapters', () => {
   it('splits the levels into the ship, Gaia Nova and the Argonauts', () => {
@@ -264,5 +265,66 @@ describe.each(FLIGHTS)('%s course', (id: DeckId) => {
       }
       expect([h.s, safe > 1.2]).toEqual([h.s, true]);
     }
+  });
+});
+
+describe('The Clashing Rocks', () => {
+  const course = LEVELS.rocks.flight as FlightCourse;
+  const things = [...course.things].sort((a, b) => a.s - b.s);
+  const holds = things.filter((t): t is Hold => t.kind === 'hold');
+
+  /** Flies from just before a hold line until the Argo stops at it. */
+  function arriveAt(h: Hold): Flight {
+    const f = new Flight(course);
+    f.restart(h.s - 30);
+    for (let i = 0; i < 60 * 10 && !f.holding; i++) f.step(1 / 60, { steerX: 0, steerY: 0, boost: false });
+    return f;
+  }
+
+  it('has twenty pairs of rocks, in four checkpointed stretches', () => {
+    expect(things.filter((t) => t.kind === 'clash')).toHaveLength(20);
+    expect(things.filter((t) => t.kind === 'checkpoint')).toHaveLength(4);
+  });
+
+  it('only shows the dove at the first pair: every other hold line is up to the player', () => {
+    expect(holds[0].dialogue).toBe('dove');
+    expect(holds.filter((h) => h.dialogue === 'dove')).toHaveLength(1);
+  });
+
+  it('fires one of three rockets at the nearest pair, which blows it up and opens the hold line', () => {
+    const h = holds[1];
+    const f = arriveAt(h);
+    expect(f.holding).toBe(true);
+    const target = holdGroup(things, h)[0];
+    expect(f.rocketTarget()).toBe(target);
+    let blasts = 0;
+    expect(f.fireRocket()).toBe(true);
+    expect(f.rockets).toBe(FLIGHT.rockets - 1);
+    for (let i = 0; i < 60 * 3; i++) f.step(1 / 60, { steerX: 0, steerY: 0, boost: false }, { blast: () => (blasts += 1) });
+    expect(blasts).toBe(1);
+    expect(f.broken.has(target)).toBe(true);
+    // Its only pair is gone: the Argo flies on by itself, straight through where the rocks were.
+    expect(f.holding).toBe(false);
+    expect(f.s).toBeGreaterThan(target.s);
+  });
+
+  it('runs out after three rockets, and gives back the ones fired in a section that is lost', () => {
+    const f = arriveAt(holds[holds.length - 1]);
+    const empty: string[] = [];
+    for (let k = 0; k < 4; k++) f.fireRocket({ noRocket: (why) => empty.push(why) });
+    expect(f.rockets).toBe(0);
+    expect(empty).toEqual(['empty']);
+    const cp4 = things.find((t) => t.kind === 'checkpoint' && t.id === 'cp4');
+    f.restart(cp4?.s ?? 0);
+    expect(f.rockets).toBe(FLIGHT.rockets);
+    expect(f.broken.size).toBe(0);
+  });
+
+  it('only locks on to rocks that are close enough', () => {
+    const f = new Flight(course);
+    const why: string[] = [];
+    expect(f.fireRocket({ noRocket: (w) => why.push(w) })).toBe(false);
+    expect(why).toEqual(['range']);
+    expect(f.rockets).toBe(FLIGHT.rockets);
   });
 });

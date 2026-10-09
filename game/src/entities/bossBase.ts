@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
-import { audio } from '../core/audio';
+import { audio, type Track } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL } from '../core/constants';
 import type { World } from '../game/world';
 import type { BossKind } from '../world/levelTypes';
-import { Entity } from './entity';
+import { Entity, type Target } from './entity';
 
 const tmp = new THREE.Vector3();
 
@@ -85,6 +85,14 @@ export abstract class Boss extends Entity {
     return this.center;
   }
 
+  /**
+   * A point the fight camera keeps in view along with the hero (a boss that stays far away, like
+   * MEDUSA on her plinth), or null to just follow the hero.
+   */
+  get frame(): THREE.Vector3 | null {
+    return null;
+  }
+
   /** Where cutscene cameras look: the boss's face. */
   get focus(): THREE.Vector3 {
     const w = this.where;
@@ -97,6 +105,15 @@ export abstract class Boss extends Entity {
 
   bossKind: BossKind = 'warden';
 
+  /** Where the fight changes phase, as shares of health (notches on the boss bar), highest first. */
+  phaseMarks: number[] = [];
+
+  /** The music the fight plays to (the game's very last boss has its own). */
+  readonly music: Track = 'boss';
+
+  /** How far (0..1) the fight's camera leans from the hero toward the boss (0: it just follows the hero). */
+  readonly camPull: number = 0;
+
   /** Frost Ray: bosses shrug most of the cold off. A chill only slows them a little, and never freezes them. */
   private chillT = 0;
   private chillSlow = 1;
@@ -107,8 +124,43 @@ export abstract class Boss extends Entity {
     this.chillSlow = Math.max(slow, 0.6);
   }
 
-  /** How fast the boss acts right now (the world scales its time by this); counts the chill down. */
+  /** Flamethrower: bosses burn only briefly (and their own rules decide whether the burn hurts). */
+  private burnT = 0;
+  private burnDps = 0;
+  private burnTick = 0;
+
+  ignite(seconds: number, dps: number) {
+    if (this.defeated || !this.started) return;
+    if (this.burnT <= 0) this.burnTick = 0.5;
+    this.burnT = Math.max(this.burnT, seconds);
+    this.burnDps = dps;
+    // Fire melts the frost.
+    this.chillT = 0;
+  }
+
+  get burning() {
+    return this.burnT > 0;
+  }
+
+  /** Burning: little flames and a sting every half second, passed through the boss's own hit rules. */
+  private updateBurn(dt: number) {
+    if (this.burnT <= 0) return;
+    this.burnT -= dt;
+    this.burnTick -= dt;
+    const w = this.where;
+    if (Math.random() < dt * 14) {
+      const a = Math.random() * Math.PI * 2;
+      this.world.particles.emit(w.x + Math.cos(a) * 1.3, w.y + 0.6 + Math.random() * this.focusHeight, w.z + Math.sin(a) * 1.3, { count: 1, color: Math.random() < 0.5 ? '#ffb030' : '#ff5a1a', speed: 0.8, life: 0.5, size: 0.6, gravity: -4 });
+    }
+    if (this.burnTick <= 0) {
+      this.burnTick = 0.5;
+      (this as Partial<Target>).hit?.(this.burnDps * 0.5, 'burn', tmp.set(w.x, w.y + 1, w.z));
+    }
+  }
+
+  /** How fast the boss acts right now (the world scales its time by this); counts the chill (and any burning) down. */
   tempo(dt: number): number {
+    this.updateBurn(dt);
     if (this.chillT <= 0) return 1;
     this.chillT -= dt;
     if (Math.random() < dt * 10) {

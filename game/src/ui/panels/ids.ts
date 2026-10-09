@@ -39,6 +39,30 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // The Sirens' Sea: LUX's counter-song, and the Dolphin surfacing at the coral strait.
+  'ch3-sirens',
+  'ch3-surface',
+  // Scylla's Reef: Scylla on her rock above Charybdis, and the Argo sailing through the calm strait.
+  'ch3-scylla',
+  'ch3-strait',
+  // Talos's Forge: the sleeping bronze mech, and Talos sitting down, free.
+  'ch3-mech',
+  'ch3-talos',
+  // Medusa's Labyrinth: the Mirror Shield in the Gardeners' shrine, and MEDUSA asleep by the open gate.
+  'ch3-mirror',
+  'ch3-medusa',
+  // Brennus's Last Stand: the old general on the sky-dock as the gold fleet comes, and his salute to the Argo.
+  'ch3-stand',
+  'ch3-salute',
+  // The Garden of Colchis: arriving in the Gardeners' garden, and the dragon sung to sleep.
+  'ch3-garden',
+  'ch3-dragon',
+  // The Golden Fleece: Brennus and his squad join the Argonauts, Aeëtes in the Fleece armour, and the
+  // game's final endings (the Fleece over Celestia; the secret one: a valley of little Celestias).
+  'ch3-squad',
+  'ch3-goldenking',
+  'ch3-home',
+  'ch3-gardeners',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

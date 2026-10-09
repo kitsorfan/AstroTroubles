@@ -111,10 +111,16 @@ export class CrackedWall extends Entity implements Target {
 
   hit(_dmg: number, kind: HitKind): boolean {
     if (!this.alive) return false;
-    if (kind !== 'blast' && kind !== 'smash') {
+    // Only General Brennus is strong enough: his big cannon blast or his charge (Jason's fireball just scorches it).
+    const brennus = this.world.player.hero === 'brennus';
+    if (kind !== 'smash' && !(kind === 'blast' && brennus)) {
       this.wobble = 1;
       audio.play('zap', 2.2, 0.5);
-      hintOnce(this.world, 'cracked', () => this.world.hooks.toast('Too tough! HOLD the CANNON for a big blast, or CHARGE into it.', 'bolt'));
+      // (Only when the hero is close by: stray shots from far away, or from his robots, say nothing.)
+      const b = this.world.player.body;
+      if (Math.hypot(b.x - this.aim.x, b.z - this.aim.z) > 12) return true;
+      if (brennus) hintOnce(this.world, 'cracked', () => this.world.hooks.toast('Too tough! HOLD the CANNON for a big blast, or CHARGE into it.', 'bolt'));
+      else hintOnce(this.world, 'crackedHero', () => this.world.hooks.toast('Too tough for us! Only General Brennus can smash cracked rock: his big CANNON blast, or his CHARGE.', 'bolt'));
       return true;
     }
     const w = this.world;
@@ -178,8 +184,10 @@ export class HeavyPlate extends Entity {
   }
 
   private brennusOn(): boolean {
-    const b = this.world.player.body;
-    return b.grounded && Math.abs(b.x - this.spot.x) < CELL * 0.55 && Math.abs(b.z - this.spot.z) < CELL * 0.55 && Math.abs(b.y - this.spot.y) < 0.6;
+    const pl = this.world.player;
+    const b = pl.body;
+    // Only the old general is heavy enough (Jason and Atalanta are far too light).
+    return pl.hero === 'brennus' && b.grounded && Math.abs(b.x - this.spot.x) < CELL * 0.55 && Math.abs(b.z - this.spot.z) < CELL * 0.55 && Math.abs(b.y - this.spot.y) < 0.6;
   }
 
   update(dt: number) {
@@ -221,7 +229,7 @@ export class CommandPost extends Entity implements Interactable {
     cz: number,
     h: number,
     readonly flag: string,
-    readonly order: 'plate' | 'carry' | 'fight',
+    readonly order: 'plate' | 'carry' | 'fight' | 'guns',
     readonly room?: string,
   ) {
     super(world, id);
@@ -283,6 +291,8 @@ export class CommandPost extends Entity implements Interactable {
     haptic('medium');
     if (this.order === 'plate') w.hooks.toast('Legion! Onto that plate, quick march!', 'brennus');
     else if (this.order === 'carry') w.hooks.toast('Hauler! Carry me across. Gently, please.', 'brennus');
+    // Brennus's Last Stand: the Legion's dock guns wake up and hold the line with him.
+    else if (this.order === 'guns') w.hooks.toast('Legion guns! Wake up and hold this line with me!', 'brennus');
     else {
       const n = w.turnRobots(this.room);
       if (n) w.hooks.toast('Legion! You know my voice. Stand with me!', 'brennus');

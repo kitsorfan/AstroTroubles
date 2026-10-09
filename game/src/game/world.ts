@@ -8,10 +8,13 @@ import type { Input } from '../core/input';
 import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
 import type { Director, Rig } from '../cinema/director';
+import * as fleeceScenes from '../cinema/fleeceScenes';
+import type { GoldenKing } from '../entities/ch3/goldenKing';
 import * as scenes from '../cinema/scenes';
 import { Bolt, HelmetLamp, Torch } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
 import { findKind, rescueKind } from './collectibles';
+import { knowsGardenerWords } from './story';
 import { SupplyNet } from '../entities/isles/supplies';
 import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
@@ -21,11 +24,17 @@ import type { PuzzleKind } from './puzzles';
 import { COLONIST_BOLTS, HINTS } from './quests';
 import { chapterOf, chapterTotals, inChapter, isFinale } from '../levels';
 import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
+import { Raft, Tide } from '../entities/reef/tide';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
+import { GazeSentry, LightCrystal, MirrorPylon } from '../entities/labyrinth/gaze';
+import { SkyArch } from '../entities/stand/arch';
+import { DockGun } from '../entities/stand/dockgun';
+import { Hold, resetHolds } from '../entities/stand/holds';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -57,6 +66,7 @@ import {
   type FloorFx,
   type Overloadable,
 } from '../entities/props';
+import { Bramble } from '../entities/flame';
 import { Shots } from '../entities/shots';
 import { buildLevel, type BuiltLevel } from '../world/builder';
 import { buildDecor, type DecorPlacement } from '../world/decor';
@@ -111,6 +121,8 @@ export interface ResumeState {
 /** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Jason. */
 const PITCH = 1.0;
 const PITCH_MAX = 1.5;
+/** A flatter tilt while a far-off boss (MEDUSA) shares the screen with the hero. */
+const FRAME_PITCH = 0.72;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
 const ENV_LIGHT = 0.45;
 const tmpV = new THREE.Vector3();
@@ -210,6 +222,8 @@ export class World {
   private freezeT = 0;
   /** On a vehicle level (the Argo...), the vehicle that runs instead of Jason on foot. */
   readonly vehicle: Vehicle | null = null;
+  /** The rising and falling sea of a tidal level (Scylla's Reef). */
+  readonly tide: Tide | null = null;
 
   constructor(
     def: LevelDef,
@@ -294,8 +308,15 @@ export class World {
     this.lamp = new HelmetLamp(this, this.torch);
     this.refreshCompanions();
 
+    // The sea moves first, so rafts and everything else see this frame's tide.
+    if (def.tide) {
+      this.tide = new Tide(this, def.tide);
+      this.movers.push(this.tide);
+    }
     for (const pe of this.level.entities) this.spawnSpec(pe);
     this.spawnRogue();
+    // Back at a checkpoint after General Brennus joined: his squad is already here.
+    if (def.joins?.brennus && this.flags.has(def.joins.brennus)) this.squadArrives();
     // A hero who joins later waits at the marker named after her (Atalanta by her skiff).
     this.player.showWaiting((id) => this.markers.get(id));
     this.scene.add(buildDecor(this.decorItems, th.accent, this.boxes));
@@ -459,6 +480,9 @@ export class World {
       case 'breakwall':
         if (!this.taken.has(id)) this.addEntity(new BreakWall(this, id, cx, cz, h));
         break;
+      case 'bramble':
+        if (!this.taken.has(id)) this.addEntity(new Bramble(this, id, cx, cz, h));
+        break;
       case 'boltfind': {
         const who = spec.who ?? 'lux';
         if (!this.flags.has(who === 'iris' ? IRIS_FLAG : 'bolt')) this.addEntity(new BoltFind(this, id, cx, cz, h, who));
@@ -496,6 +520,33 @@ export class World {
         break;
       case 'plate':
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'raft':
+        this.movers.push(new Raft(this, id, cx, cz, h));
+        break;
+      case 'bronzegate':
+        if (!this.taken.has(id)) this.addEntity(new BronzeGate(this, id, cx, cz, h));
+        break;
+      case 'brittle':
+        if (!this.taken.has(id)) this.addEntity(new BrittleFloor(this, id, cx, cz, spec.lid));
+        break;
+      case 'gazer':
+        this.addEntity(new GazeSentry(this, id, cx, cz, h, spec.dir, spec.sweep, spec.period, spec.offset, spec.reach));
+        break;
+      case 'mirror':
+        this.addEntity(new MirrorPylon(this, id, cx, cz, h, spec.turn));
+        break;
+      case 'crystal':
+        this.addEntity(new LightCrystal(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'dockgun':
+        this.addEntity(new DockGun(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'hold':
+        this.addEntity(new Hold(this, id, cx, cz, h, spec));
+        break;
+      case 'arch':
+        this.addEntity(new SkyArch(this, id, cx, cz, h, spec.span));
         break;
       case 'decor':
         this.decorItems.push({
@@ -655,12 +706,18 @@ export class World {
     for (const f of flags) this.flags.add(f);
     // A join flag (`&flags=atalanta`) brings that hero in at once.
     if (Object.values(this.def.joins ?? {}).some((f) => flags.includes(f))) this.player.heroJoined();
+    if (this.def.joins?.brennus && flags.includes(this.def.joins.brennus)) this.squadArrives();
     this.refreshCompanions();
     const find = this.entities.find((e): e is BoltFind => e instanceof BoltFind);
     const rogue = this.entities.find((e) => (e as Boss).bossKind === 'rogue') as Boss | undefined;
     if (play === 'taken') void this.hooks.cutscene((d) => scenes.luxTaken(d, this));
     else if (play === 'iris' && find) this.findBolt(find);
     else if (play === 'rogue' && rogue) rogue.begin();
+    // &play=outro plays the deck's boss-defeated scene (e.g. the Argo passing General Brennus's sky-dock).
+    else if (play === 'outro' && this.boss) {
+      const b = this.boss;
+      void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b));
+    }
     else if (play === 'reunion' && rogue) {
       rogue.defeated = true;
       this.luxBack(rogue);
@@ -1001,7 +1058,9 @@ export class World {
       if (progress + 1 === group.length) {
         this.setFlag(r.group);
         audio.play('success');
-        this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+        // Rune pads also spell the Gardeners' light-words that lock gates (the Garden of Colchis).
+        if (r.group === 'vault') this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+        else this.hooks.toast('The light-word glows! The gate is opening!', 'bolt');
       }
     } else {
       for (const x of group) x.setLit(false);
@@ -1176,6 +1235,11 @@ export class World {
     const lw = legionWorld(this);
     for (const a of lw.allies) a.remove();
     lw.allies.length = 0;
+    // A line Brennus was holding starts again when he gets back to it.
+    resetHolds(this);
+    // General Brennus's own squad (on the Golden Fleece) is always his: it lines up again at its posts.
+    const bren = this.def.joins?.brennus;
+    if (bren && this.flags.has(bren)) this.squadArrives();
     this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();
@@ -1194,14 +1258,14 @@ export class World {
   /** The boss's entrance: a full cinematic the first time, straight into the fight on a retry. */
   bossIntro(b: Boss): Promise<void> {
     if (b.introSeen) return Promise.resolve();
-    this.hooks.music('boss');
+    this.hooks.music(b.music);
     return this.hooks.cutscene((d) => scenes.bossIntro(d, this, b));
   }
 
   bossStarted(b: Boss) {
     this.boss = b;
     this.hooks.bossBar(b.title, b.hp / b.maxHp);
-    this.hooks.music('boss');
+    this.hooks.music(b.music);
   }
 
   bossDefeated(b: Boss) {
@@ -1222,9 +1286,30 @@ export class World {
     this.hooks.checkpoint();
     const last = isFinale(this.def.id);
     if (!last) this.hooks.music(this.def.music as Track);
+    const ch = chapterOf(this.def.id);
+    if (last && ch === 3) {
+      // The game's finale: with every light-stone, LUX and IRIS wake the Fleece's seeds (the secret ending).
+      this.hooks.music('ending');
+      const words = knowsGardenerWords(this.save);
+      void this.hooks
+        .cutscene((d) => fleeceScenes.fleeceWon(d, this, b as GoldenKing, words))
+        .then(() => this.hooks.ending(words ? 'gardeners' : 'fleece'));
+      return;
+    }
     void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b)).then(() => {
-      if (last) this.hooks.ending(chapterOf(this.def.id) === 1 ? 'saved' : 'freed');
+      if (last) this.hooks.ending(ch === 1 ? 'saved' : 'freed');
     });
+  }
+
+  /**
+   * General Brennus's squad: when he joins the Argonauts (on the Golden Fleece) his own Legion robots
+   * march in with him and stand guard at the `squad1`..`squad3` markers, fighting for him.
+   */
+  squadArrives() {
+    for (const id of ['squad1', 'squad2', 'squad3']) {
+      const at = this.markers.get(id);
+      if (at) this.addEntity(new AllyBot(this, at.x, at.y, at.z, Math.PI));
+    }
   }
 
   /** The secret ending of a chapter: LUX talks GaScu round (chapter 1), or Jason talks Brennus down (chapter 2). */
@@ -1459,19 +1544,32 @@ export class World {
       return;
     }
     const p = this.player.body;
-    const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
+    // The bronze mech is twice Jason's height: the camera looks at its chest, from a little farther back.
+    const big = this.player.hero === 'mech';
+    const aim = tmpV.set(p.x + p.vx * 0.12, p.y + (big ? 2 : 1.2), p.z + p.vz * 0.12);
+    // A boss that keeps its distance (MEDUSA) pulls the view toward itself, so both stay on screen.
+    const frame = this.boss?.started && !this.boss.defeated ? this.boss.frame : null;
+    if (frame) aim.lerp(frame, 0.4);
+    // A boss that asks for it (the big final one) pulls the camera part of the way toward itself.
+    const bs = this.boss;
+    if (bs?.started && !bs.defeated && bs.camPull > 0) {
+      const w = bs.where;
+      const k = bs.camPull * Math.min(1, 26 / Math.max(1, Math.hypot(w.x - p.x, w.z - p.z)));
+      aim.x += (w.x - aim.x) * k;
+      aim.z += (w.z - aim.z) * k;
+    }
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
       this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
-    const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
+    const dist = frame ? 22 : (this.boss?.started && !this.boss.defeated ? 17 : 13) + (big ? 3 : 0);
     // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;
     for (const eye of [0.15, 1.0]) {
-      for (let a = PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
+      for (let a = frame ? FRAME_PITCH : PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
       if (want >= 0) break;
     }
     if (want < 0) want = PITCH_MAX;

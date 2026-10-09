@@ -278,6 +278,44 @@ function ground(theme: Theme, o: Outdoor, variant: number, seed: number, size = 
       speckle(s, rng, 2000 * k * k, 0.12, 0.25);
       break;
     }
+    case 'flagstone': {
+      // Big pale paving stones of the Gardeners, laid in staggered rows. The grid repeats exactly once
+      // per texture (4 x 4 stones), so it tiles without a seam; some patches glow with teal light-runes.
+      blobs(s, rng, 30, [light, dark], 40 * k, 120 * k, 0.25, 0.05);
+      const n = 4;
+      const size = S / n;
+      const tones = Array.from({ length: n * n }, () => [0.9 + rng.next() * 0.2, 0.6 + rng.next() * 0.15]);
+      for (let row = 0; row < n; row++) {
+        for (let col = -1; col <= n; col++) {
+          const x = col * size + (row % 2 ? size / 2 : 0);
+          const y = row * size;
+          const [tone, hv] = tones[row * n + ((col % n) + n) % n];
+          s.c.fillStyle = shade(base, tone);
+          s.h.fillStyle = grey(hv);
+          for (const ctx of [s.c, s.h]) ctx.fillRect(x + 3 * k, y + 3 * k, size - 6 * k, size - 6 * k);
+        }
+      }
+      if (variant === 1) {
+        // A light-rune: a teal ring with a dot, carved into one stone.
+        s.glowUsed = true;
+        const x = (1 + Math.floor(d.next() * 2)) * size + size / 2;
+        const y = (1 + Math.floor(d.next() * 2)) * size;
+        for (const ctx of [s.c, s.g]) {
+          ctx.strokeStyle = theme.accent;
+          ctx.lineWidth = 5 * k;
+          ctx.beginPath();
+          ctx.arc(x, y + size / 2, size * 0.28, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = theme.accent;
+          ctx.beginPath();
+          ctx.arc(x, y + size / 2, size * 0.08, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (variant === 2) for (let i = 0; i < 3; i++) crack(s, d, d.next() * S, d.next() * S, 5, 18 * k, 'rgba(0,0,0,0.35)');
+      speckle(s, rng, 2000 * k * k, 0.12, 0.2);
+      break;
+    }
     case 'basalt': {
       blobs(s, rng, 40, [light, dark], 40 * k, 120 * k, 0.4, 0.1);
       // The tops of basalt columns: rough hexagons with dark seams. The grid repeats exactly once per
@@ -416,7 +454,7 @@ function cap(theme: Theme, o: Outdoor, seed: number): Surface {
 function side(theme: Theme, o: Outdoor, seed: number): Surface {
   const S = 256;
   const rng = new Rng(seed);
-  const base = o.ground === 'snow' || o.ground === 'rock' || o.ground === 'basalt' ? o.rock : theme.floorSide;
+  const base = o.ground === 'snow' || o.ground === 'rock' || o.ground === 'basalt' || o.ground === 'flagstone' ? o.rock : theme.floorSide;
   const s = new Sheet(S, S, base, 0.5);
   blobs(s, rng, 40, [shade(base, 1.2), shade(base, 0.75)], 15, 50, 0.45, 0.15);
   for (let i = 0; i < 26; i++) pebble(s, rng.next() * S, rng.next() * S, 4 + rng.next() * 9, 3 + rng.next() * 6, shade(o.rock, 0.9 + rng.next() * 0.3), rng.next() * 3);

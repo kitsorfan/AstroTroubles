@@ -158,7 +158,7 @@ export class CourseView {
   }
 
   /** Places everything for the Argo at distance `s` at time `t`; `gone` holds the things already taken or broken. */
-  update(s: number, t: number, gone: Set<number>) {
+  update(s: number, t: number, gone: Set<number>, broken: ReadonlySet<Clash> = new Set()) {
     const things = this.things;
     const counts = [0, 0, 0];
     let nc = 0;
@@ -202,7 +202,8 @@ export class CourseView {
 
     for (const v of this.clashes) {
       const rel = v.c.s - s;
-      v.group.visible = rel > -CLASH.depth - 10 && rel < AHEAD;
+      // A pair blown up by a rocket is gone (its chunks are particles, drawn by the flight).
+      v.group.visible = rel > -CLASH.depth - 10 && rel < AHEAD && !broken.has(v.c);
       if (!v.group.visible) continue;
       const st = clashState(v.c, t);
       // A rumble you can see: the rocks shiver and glow hotter and hotter before they slam.
