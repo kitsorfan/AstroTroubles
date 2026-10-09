@@ -154,7 +154,7 @@ export function ch3Mech(): string {
       mood: 'grin',
       look: [2.6, -3],
     }) +
-    gn.lux(pen, 196, 560, 0.95, 'scared', { look: [8, -4] }) +
+    gn.lux(pen, 210, 470, 0.95, 'scared', { look: [8, -4] }) +
     gn.castShadow(pen, 1310, 884, 150, 16, 0.55) +
     gn.atalanta(pen.relight({ key: [-0.95, -0.3] }), 1310, 888, 1.1, {
       flip: true,
@@ -350,7 +350,7 @@ export function ch3Talos(): string {
     mech(mechPen, mx, my, ms, { jason: 'grin', jasonLook: [2.4, -2], rim: 3 }) +
     gn.atalanta(mechPen, seat[0] - sitRig.P[0] * atS, seat[1] - sitRig.P[1] * atS, atS, { pose: sitPose, mood: 'grin', look: [2.4, -2.2], wind: 0.6 }) +
     gn.lux(pen, 700, 300, 0.85, 'happy', { flip: true }) +
-    gn.iris(pen, 120, 230, 0.72, 'happy', { rot: 12 });
+    gn.iris(pen, 176, 200, 0.72, 'happy', { rot: 12 });
   const fore = gn.crag(
     mechPen,
     [

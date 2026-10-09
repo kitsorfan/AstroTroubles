@@ -564,10 +564,10 @@ export function ch3Strait(): string {
     ) +
     gn.argoTrail(pen, 640, 488, 260, -86, '#e8fbff') +
     gn.argo(pen, 820, 470, 0.34, { rot: -2 }) +
-    whirlpool(pen, 930, 640, 220, 46, { calm: true, seed: 3, water: '#2ab0c0', deep: '#1a7a9a' }) +
-    leapingFish(pen, 840, 590, 0.9, -34, '#ff9a4a') +
-    leapingFish(pen, 1030, 580, 0.75, 28, '#ff7a9a') +
-    coral(pen, 640, 660, 0.45, 'stag', '#ff8a8a', { seed: 2 }) +
+    whirlpool(pen, 870, 590, 210, 40, { calm: true, seed: 3, water: '#2ab0c0', deep: '#1a7a9a' }) +
+    leapingFish(pen, 720, 556, 0.9, -34, '#ff9a4a') +
+    leapingFish(pen, 990, 566, 0.75, 28, '#ff7a9a') +
+    coral(pen, 640, 600, 0.45, 'stag', '#ff8a8a', { seed: 2 }) +
     gn.haze(pen, 620, 740, '#e8fbff', 0.3);
   // The pier at the foot of the reef: Atalanta points at the swirl and the fish, Jason waves to the Argo.
   let planks = '';
@@ -598,16 +598,16 @@ export function ch3Strait(): string {
   const heroPen = pen.relight({ key: [-0.95, -0.3] });
   const heroes =
     pier +
-    gn.castShadow(pen, 1150, 868, 130, 14, 0.45) +
-    gn.atalanta(heroPen, 1150, 872, 1.04, {
+    gn.castShadow(pen, 1130, 868, 130, 14, 0.45) +
+    gn.atalanta(heroPen, 1130, 872, 1.04, {
       flip: true,
-      pose: { turn: 0.45, lean: 6, hipTilt: 6, armN: [-12, 6], armF: [72, 76], legN: { to: [-0.22, 0.95] }, legF: { to: [0.26, 0.94] }, handN: 'fist', handF: 'point' },
+      pose: { turn: 0.45, lean: 6, hipTilt: 6, armN: [-12, 6], armF: [74, 78], legN: { to: [-0.22, 0.95] }, legF: { to: [0.26, 0.94] }, handN: 'fist', handF: 'point' },
       mood: 'grin',
       look: [2.4, 1.4],
       wind: 0.8,
     }) +
-    gn.castShadow(pen, 1440, 868, 140, 14, 0.45) +
-    gn.jason(heroPen, 1440, 872, 1.08, { flip: true, pose: 'wave', mood: 'grin', look: [2.2, -1] }) +
+    gn.castShadow(pen, 1410, 868, 140, 14, 0.45) +
+    gn.jason(heroPen, 1410, 872, 1.08, { flip: true, pose: 'wave', mood: 'grin', look: [2.2, -1] }) +
     gn.lux(pen, 1300, 250, 0.85, 'happy', { flip: true }) +
     gn.iris(pen, 1010, 250, 0.72, 'happy', { flip: true, rot: -10 });
   const fore = coral(pen, -20, 960, 1.4, 'stag', '#ff7a8a', { seed: 6 }) + coral(pen, 160, 960, 1, 'fan', '#ffb84a', { seed: 5 });
