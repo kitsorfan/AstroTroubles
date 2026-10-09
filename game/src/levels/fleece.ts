@@ -182,9 +182,9 @@ export const fleece: LevelDef = {
     '!': { type: 'shard', id: 's1' },
     '?': { type: 'shard', id: 's2' },
     '>': { type: 'shard', id: 's3' },
-    '(': { type: 'cocoon', id: 'c1', name: 'a Gardener seed jar', line: 'Seeds older than the moon itself, still warm.' },
-    ')': { type: 'cocoon', id: 'c2', name: 'a Gardener sky-harp', line: 'It plays a little tune all by itself.' },
-    '[': { type: 'cocoon', id: 'c3', name: 'a Gardener star-lantern', line: 'It glows in every colour at once.' },
+    '(': { type: 'cocoon', id: 'c1', name: 'The Gardeners’ seed jar', line: 'Seeds older than the moon itself, still warm.' },
+    ')': { type: 'cocoon', id: 'c2', name: 'The Gardeners’ sky-harp', line: 'It plays a little tune all by itself.' },
+    '[': { type: 'cocoon', id: 'c3', name: 'The Gardeners’ star-lantern', line: 'It glows in every colour at once.' },
     '+': { type: 'canister', id: 'hc' },
     // Aeëtes's crew: ring guards, gold drones and harpies, and the Legion robots he painted gold.
     R: { type: 'enemy', enemy: 'ringguard' },
@@ -229,7 +229,7 @@ export const fleece: LevelDef = {
   dialogues: {
     intro: [
       { who: 'captain', text: 'Argonauts, this is it: the Gardeners’ great tree-temple. The Fleece is somewhere at the very top.' },
-      { who: 'iris', text: 'The Sleeping Dragon is snoring behind us. It sounds like a very happy volcano.' },
+      { who: 'iris', text: 'The Sleepless Dragon is snoring away behind us. It sounds like a very happy volcano.' },
       { who: 'bolt', text: 'And THAT sounds like gold drones. Lots of them. Aeëtes got here first!' },
       { who: 'atalanta', text: 'First doesn’t mean fastest. Race you to the top, Jason!' },
       { who: 'jason', text: 'Not yet! Together, remember? Come on, LUX. Let’s bring Celestia her Fleece.' },

@@ -124,11 +124,12 @@ describe('hero roster and switching', () => {
     expect(heroRoster(LEVELS.harpies.heroes)).toEqual(['jason', 'atalanta']);
     // She only joins when Jason meets her by her skiff.
     expect(LEVELS.harpies.joins?.atalanta).toBe('atalanta');
-    // General Brennus is never switched with anyone on his own levels.
+    // General Brennus is never switched with anyone on his own levels; on the Golden Fleece all three play.
     for (const id of LEVEL_ORDER) {
       const roster = heroRoster(LEVELS[id].heroes);
-      if (roster.includes('brennus')) expect(roster).toEqual(['brennus']);
+      if (roster.includes('brennus') && id !== 'fleece') expect(roster).toEqual(['brennus']);
     }
+    expect(heroRoster(LEVELS.fleece.heroes)).toEqual(['jason', 'atalanta', 'brennus']);
     expect(heroRoster(LEVELS.mine.heroes)).toEqual(['brennus']);
     expect(nextHero(['brennus'], 'brennus')).toBeNull();
   });

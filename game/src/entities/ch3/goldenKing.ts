@@ -5,7 +5,6 @@ import { haptic } from '../../core/bridge';
 import { damp, dampAngle } from '../../core/math';
 import type { World } from '../../game/world';
 import { Grid } from '../../world/grid';
-import type { Speaker } from '../../world/levelTypes';
 import { Boss } from '../bossBase';
 import type { Enemy } from '../enemies';
 import type { HitKind, Target } from '../entity';
@@ -108,7 +107,7 @@ class VineKnot implements Target {
     if (!this.alive) return false;
     audio.play('zap', 1.9, 0.6);
     this.king.world.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 5, color: '#ffe08a', speed: 3, life: 0.25, size: 0.35 });
-    if (kind !== 'zap' && kind !== 'pulse') this.king.hint('knot', 'These gold vines are too tough for that! Switch to Atalanta and cut the glowing knots with POWER ARROWS: hold BOW.', 'bolt');
+    if (kind !== 'zap' && kind !== 'pulse') this.king.hint('knot', () => this.king.world.hooks.toast('These gold vines are too tough for that! Switch to Atalanta and cut the glowing knots with POWER ARROWS: hold BOW.', 'bolt'));
     return true;
   }
 }
@@ -200,10 +199,11 @@ export class GoldenKing extends Boss implements Target {
     return new THREE.Vector3(this.center.x, this.floorY + 1, this.center.z);
   }
 
-  hint(key: string, text: string, who: Speaker = 'bolt') {
+  /** Shows a hint toast once per fight. */
+  hint(key: string, show: () => void) {
     if (this.hinted.has(key)) return;
     this.hinted.add(key);
-    this.world.hooks.toast(text, who);
+    show();
   }
 
   private set(state: State, t: number) {
@@ -222,7 +222,7 @@ export class GoldenKing extends Boss implements Target {
       this.set('hover', 2.5);
       this.orbit = Math.atan2(this.pos.z - this.center.z, this.pos.x - this.center.x);
       this.raiseDrones();
-      this.hint('p1', 'His gold bubble is held up by three spinning rings! Shoot the rings down, then hit Aeëtes!', 'bolt');
+      this.hint('p1', () => this.world.hooks.toast('His gold bubble is held up by three spinning rings! Shoot the rings down, then hit Aeëtes!', 'bolt'));
     } else if (this.phase === 2) this.set('walk', 2.5);
     else this.rootDown();
     audio.play('roar', 0.9);
@@ -271,7 +271,7 @@ export class GoldenKing extends Boss implements Target {
     w.flash(this.pos.x, this.pos.y + 1, this.pos.z, '#ffd166', 60, 0.4);
     w.shake(0.4);
     this.set('dizzy', 6.5);
-    this.hint('dizzy', 'His bubble popped! He’s dizzy: hit him now, everybody!', 'atalanta');
+    this.hint('dizzy', () => this.world.hooks.toast('His bubble popped! He’s dizzy: hit him now, everybody!', 'atalanta'));
   }
 
   /** Gold drones he calls in phase 1 (never more than three about). */
@@ -300,7 +300,7 @@ export class GoldenKing extends Boss implements Target {
     }
     this.slump = 0;
     this.set('rooted', 3);
-    this.hint('p3', 'Gold vines hold him to the floor! Atalanta: cut the three glowing knots with POWER ARROWS!', 'iris');
+    this.hint('p3', () => this.world.hooks.toast('Gold vines hold him to the floor! Atalanta: cut the three glowing knots with POWER ARROWS!', 'iris'));
   }
 
   /** One of his vines is cut; with all three cut he slumps forward, his chest clasp in reach. */
@@ -313,13 +313,13 @@ export class GoldenKing extends Boss implements Target {
     audio.play('break', 0.8);
     haptic('medium');
     if (this.knots.some((x) => x.alive)) {
-      this.hint('knot1', 'Snip! That vine is cut. Two more knots!', 'atalanta');
+      this.hint('knot1', () => this.world.hooks.toast('Snip! That vine is cut. Two more knots!', 'atalanta'));
       return;
     }
     audio.play('roar', 0.7, 0.8);
     w.shake(0.5);
     this.set('bare', 15);
-    this.hint('bare', 'He’s slumped down! Now General Brennus: CHARGE into the crystal clasp on his chest!', 'brennus');
+    this.hint('bare', () => this.world.hooks.toast('He’s slumped down! Now General Brennus: CHARGE into the crystal clasp on his chest!', 'brennus'));
   }
 
   /** Brennus cracks the crystal clasp: the seed-core inside is open, for Jason. */
@@ -332,7 +332,7 @@ export class GoldenKing extends Boss implements Target {
     w.particles.emit(this.aim.x, this.aim.y, this.aim.z, { count: 36, color: '#fff6c8', speed: 8, life: 0.6, size: 0.5 });
     this.windowDmg = 0;
     this.set('open', 9);
-    this.hint('open', 'The clasp cracked! Jason: BLAST the glowing seed-core, or jump up and GROUND-POUND it!', 'brennus');
+    this.hint('open', () => this.world.hooks.toast('The clasp cracked! Jason: BLAST the glowing seed-core, or jump up and GROUND-POUND it!', 'brennus'));
   }
 
   private get hero() {
@@ -369,13 +369,13 @@ export class GoldenKing extends Boss implements Target {
         if (kind === 'smash' || (kind === 'blast' && this.hero === 'brennus')) this.crackClasp();
         else {
           ping();
-          if (!quiet) this.hint('clasp', 'The crystal clasp is too hard for that! Switch to General Brennus and CHARGE into it: the DASH button.', 'bolt');
+          if (!quiet) this.hint('clasp', () => this.world.hooks.toast('The crystal clasp is too hard for that! Switch to General Brennus and CHARGE into it: the DASH button.', 'bolt'));
         }
         return true;
       case 'open': {
         if (this.hero !== 'jason' || quiet) {
           ping();
-          if (!quiet) this.hint('core', 'Only Jason’s blaster can reach the seed-core! Switch to Jason: BLAST it, or POUND it!', 'bolt');
+          if (!quiet) this.hint('core', () => this.world.hooks.toast('Only Jason’s blaster can reach the seed-core! Switch to Jason: BLAST it, or POUND it!', 'bolt'));
           return true;
         }
         const n = Math.min(kind === 'pound' ? dmg + 3 : kind === 'blast' ? dmg + 2 : dmg, 11 - this.windowDmg);
@@ -387,9 +387,9 @@ export class GoldenKing extends Boss implements Target {
       default:
         ping();
         if (quiet) return true;
-        if (this.phase === 1) this.hint('shield1', 'Shots bounce off his gold bubble! Shoot the three spinning rings around him first!', 'bolt');
-        else if (this.phase === 2) this.hint('armour', 'The Fleece armour is too strong! Stop his charge with General Brennus’s SHIELD, or make him crash into a pillar!', 'bolt');
-        else this.hint('rooted', 'Cut his gold vines first: Atalanta’s POWER ARROWS on the glowing knots!', 'bolt');
+        if (this.phase === 1) this.hint('shield1', () => this.world.hooks.toast('Shots bounce off his gold bubble! Shoot the three spinning rings around him first!', 'bolt'));
+        else if (this.phase === 2) this.hint('armour', () => this.world.hooks.toast('The Fleece armour is too strong! Stop his charge with General Brennus’s SHIELD, or make him crash into a pillar!', 'bolt'));
+        else this.hint('rooted', () => this.world.hooks.toast('Cut his gold vines first: Atalanta’s POWER ARROWS on the glowing knots!', 'bolt'));
         return true;
     }
   }
@@ -532,8 +532,8 @@ export class GoldenKing extends Boss implements Target {
     w.shake(0.7);
     w.flash(this.pos.x, this.pos.y + 2, this.pos.z, '#ffd166', 60, 0.4);
     w.particles.emit(this.pos.x + this.dir.x * 1.5, this.pos.y + 1.5, this.pos.z + this.dir.y * 1.5, { count: 30, color: '#ffe08a', speed: 7, life: 0.6, size: 0.6 });
-    if (why === 'shield') this.hint('shielded', 'CLANG! He bounced right off General Brennus’s shield! His armour is cracked: hit him now!', 'bolt');
-    else this.hint('crashed', 'He crashed into the pillar! His armour is cracked: hit him now!', 'bolt');
+    if (why === 'shield') this.hint('shielded', () => this.world.hooks.toast('CLANG! He bounced right off General Brennus’s shield! His armour is cracked: hit him now!', 'bolt'));
+    else this.hint('crashed', () => this.world.hooks.toast('He crashed into the pillar! His armour is cracked: hit him now!', 'bolt'));
   }
 
   private phase2(dt: number) {
@@ -559,7 +559,7 @@ export class GoldenKing extends Boss implements Target {
           } else {
             this.set('rev', this.angry ? 1.0 : 1.3);
             audio.play('roar', 0.8, 0.8);
-            this.hint('rev', 'He’s lowering his horns to charge! General Brennus: hold up your SHIELD toward him!', 'bolt');
+            this.hint('rev', () => this.world.hooks.toast('He’s lowering his horns to charge! General Brennus: hold up your SHIELD toward him!', 'bolt'));
           }
         }
         break;
