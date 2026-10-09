@@ -112,6 +112,8 @@ export interface ResumeState {
 /** Usual camera tilt above the horizon (radians), and the steepest it tips to when walls would hide Jason. */
 const PITCH = 1.0;
 const PITCH_MAX = 1.5;
+/** A flatter tilt while a far-off boss (MEDUSA) shares the screen with the hero. */
+const FRAME_PITCH = 0.72;
 /** Strength of the studio reflections; the game assigns the environment map itself. */
 const ENV_LIGHT = 0.45;
 const tmpV = new THREE.Vector3();
@@ -1472,19 +1474,19 @@ export class World {
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
     // A boss that keeps its distance (MEDUSA) pulls the view toward itself, so both stay on screen.
     const frame = this.boss?.started && !this.boss.defeated ? this.boss.frame : null;
-    if (frame) aim.lerp(frame, 0.3);
+    if (frame) aim.lerp(frame, 0.4);
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
       this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
-    const dist = frame ? 21 : this.boss?.started && !this.boss.defeated ? 17 : 13;
+    const dist = frame ? 22 : this.boss?.started && !this.boss.defeated ? 17 : 13;
     // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;
     for (const eye of [0.15, 1.0]) {
-      for (let a = PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
+      for (let a = frame ? FRAME_PITCH : PITCH; a <= PITCH_MAX + 0.001 && want < 0; a += 0.05) if (!this.viewBlocked(a, dist, eye)) want = a;
       if (want >= 0) break;
     }
     if (want < 0) want = PITCH_MAX;
