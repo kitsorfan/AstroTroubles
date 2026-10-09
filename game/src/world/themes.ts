@@ -477,6 +477,6 @@ export const THEMES: Record<ThemeId, Theme> = {
     mood: 'embers',
     space: false,
     bloom: 0.24,
-    outdoor: { ground: 'basalt', ground2: '#4a5a44', rock: '#9a6440', rockDark: '#5a3424', below: '#1f6a80', sunDisc: '#fff0d0', clouds: '#ffe4c8', hills: '#5a3a3a', stars: false },
+    outdoor: { ground: 'basalt', ground2: '#4a5a44', rock: '#9a6440', rockDark: '#5a3424', below: '#1f6a80', sunDisc: '#fff0d0', clouds: '#ffe4c8', hills: '#3a2a2e', stars: false },
   },
 };

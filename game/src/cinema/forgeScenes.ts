@@ -43,7 +43,7 @@ export async function boardMech(d: Director, w: World) {
         b.x = k.x + (stand.x - k.x) * x;
         b.z = k.z + (stand.z - k.z) * x;
       }),
-      d.cam(s.clone().addScaledVector(fwd, 8).addScaledVector(side, 4).add(V(0, 1.4, 0)), s.clone().add(V(0, 2.2, 0)), 1.6, ease.inOut, 46),
+      d.cam(s.clone().addScaledVector(fwd, 9).addScaledVector(side, 6.5).add(V(0, 3.4, 0)), s.clone().add(V(0, 2, 0)), 1.6, ease.inOut, 46),
     ]);
     await d.say(w.dialogue('meet:mech'));
     const beats = w.def.stories?.['meet:mech'];

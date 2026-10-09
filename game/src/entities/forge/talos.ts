@@ -519,8 +519,9 @@ export class Talos extends Boss implements Target, Interactable {
       armR = -0.6;
       elbowR = -0.5;
     } else if (st === 'sit') {
-      armR = -0.35;
-      elbowR = -0.9;
+      // The hammer laid down in front of him.
+      armR = 0.15;
+      elbowR = 0;
       armL = -0.2;
     }
     m.armR.rotation.x = damp(m.armR.rotation.x, armR, st === 'slam' ? 18 : 5, dt);
