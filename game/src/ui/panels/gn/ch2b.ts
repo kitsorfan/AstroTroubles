@@ -4,9 +4,10 @@
  * on Mars, Dr. Hypatia, the colony shuttles and a Green Legion robot. Built from the kit's marks and
  * `figure`, like the cast in cast.ts.
  */
-import { add, at, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, sub, unit } from './core';
-import { bandD, type Build, faceFrame, type HeadOpts, type Pose, rig, type Rig, STOCKY, U } from './body';
-import { brennus, type CastOpts, figure, headPt, type Outfit } from './cast';
+import { add, at, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, sub, unit } from './core';
+import { ADULT, bandD, type Build, faceFrame, type HeadOpts, type Pose, rig, type Rig, STOCKY, U } from './body';
+import { brennus, type CastOpts, coatSkirt, figure, headPt, type Outfit, POSES } from './cast';
+import { spark } from './fx';
 
 /** A filled circle path (for `Pen.form`). */
 export const circleD = (x: number, y: number, r: number) => `M${r1(x - r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x + r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x - r)} ${r1(y)}Z`;
@@ -484,14 +485,18 @@ function grannyHead(pen: Pen, turn: number): { front: string; back: string } {
   ];
   const front = pen.form(cap, hair, { sh: 12, hatch: 1, rim: 2, line: 2.2, shade: '#a8a4c0', inner: pen.brushes(waves, '#9a96b0', [0.2, 0.6], 0.9) });
   const back = pen.form('M-58 -56a24 22 0 1 0 48 0a24 22 0 1 0 -48 0Z', hair, { sh: 10, hatch: 1, rim: 2, line: 2.2, shade: '#a8a4c0', inner: pen.brush([[-52, -60], [-34, -72], [-18, -62]], 1.8, '#9a96b0', [0.2, 0.4]) }) + pen.brush([[-40, -78], [-24, -86]], 3, '#e8b84a', [0.1, 0.1]);
-  // Round glasses: two gold rims, the far one foreshortened, a bridge, the arm back to the ear, and a glint.
+  const earring = `<circle cx="${r1(F.ear[0] - 1)}" cy="${r1(F.ear[1] + 15)}" r="3.6" fill="#fff8ee" stroke="${INK}" stroke-width="1.6"/>`;
+  return { front: front + roundGlasses(pen, turn, '#d8a840') + earring, back };
+}
+
+/** Round glasses for a head at a turn: two rims (the far one foreshortened), a bridge, the arm back to the ear and a glint. */
+export function roundGlasses(pen: Pen, turn: number, rim: string, r = 13): string {
+  const F = faceFrame(turn);
   const [nx, ny] = F.eyeN;
   const [fx, fy] = F.eyeF;
-  const fr = 12 * (1 - 0.5 * F.k);
-  const rims = `M${r1(nx - 13)} ${ny}a13 13 0 1 0 26 0a13 13 0 1 0 -26 0ZM${r1(fx - fr)} ${fy}a${r1(fr)} 12.5 0 1 0 ${r1(fr * 2)} 0a${r1(fr)} 12.5 0 1 0 ${r1(-fr * 2)} 0ZM${r1(nx + 13)} ${ny - 2}Q${r1((nx + fx) / 2 + 1)} ${ny - 5} ${r1(fx - fr)} ${fy - 2}M${r1(nx - 13)} ${ny - 2}L${r1(F.ear[0] + 4)} ${F.ear[1] - 6}`;
-  const glasses = `<path d="${rims}" fill="#d8f4ff" fill-opacity=".12" stroke="${INK}" stroke-width="4.4"/><path d="${rims}" fill="none" stroke="#d8a840" stroke-width="2"/>` + pen.brush([[nx - 7, ny - 6], [nx - 2, ny - 9]], 2.4, '#ffffff', [0.3, 0.3], 0.9);
-  const earring = `<circle cx="${r1(F.ear[0] - 1)}" cy="${r1(F.ear[1] + 15)}" r="3.6" fill="#fff8ee" stroke="${INK}" stroke-width="1.6"/>`;
-  return { front: front + glasses + earring, back };
+  const fr = (r - 1) * (1 - 0.5 * F.k);
+  const rims = `M${r1(nx - r)} ${ny}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0ZM${r1(fx - fr)} ${fy}a${r1(fr)} ${r - 0.5} 0 1 0 ${r1(fr * 2)} 0a${r1(fr)} ${r - 0.5} 0 1 0 ${r1(-fr * 2)} 0ZM${r1(nx + r)} ${ny - 2}Q${r1((nx + fx) / 2 + 1)} ${ny - 5} ${r1(fx - fr)} ${fy - 2}M${r1(nx - r)} ${ny - 2}L${r1(F.ear[0] + 4)} ${F.ear[1] - 6}`;
+  return `<path d="${rims}" fill="#d8f4ff" fill-opacity=".12" stroke="${INK}" stroke-width="4.4"/><path d="${rims}" fill="none" stroke="${rim}" stroke-width="2"/>` + pen.brush([[nx - 7, ny - 6], [nx - 2, ny - 9]], 2.4, '#ffffff', [0.3, 0.3], 0.9);
 }
 
 export interface GrannyOpts extends CastOpts {
@@ -571,5 +576,236 @@ export function grandma(pen: Pen, x: number, y: number, s: number, o: GrannyOpts
 export function facePoint(r: Rig, x: number, y: number, s: number, p: P, flip = false): P {
   const q = headPt(r, p);
   return [x + (flip ? -q[0] : q[0]) * s, y + q[1] * s];
+}
+
+/* ---------------- Dr. Hypatia ---------------- */
+
+/** A grown woman: about 6.8 heads tall, slimmer than the ADULT build. */
+export const WOMAN: Build = { ...ADULT, shoulder: 0.8, hips: 0.42, arm: [0.42, 0.33, 0.26], leg: [0.62, 0.4, 0.28], chest: 1.52, waist: 1.12, hipW: 1.5, neckW: 0.44, foot: 0.86 };
+
+/** Dr. Hypatia: dark hair in a bun with a gold pin, round glasses, a white lab coat over a blue top. */
+export function hypatia(pen: Pen, x: number, y: number, s: number, o: CastOpts = {}): string {
+  const lp = pen.local(!!o.flip);
+  const pose: Pose = typeof o.pose === 'string' ? POSES[o.pose] : (o.pose ?? POSES.stand);
+  const skin = '#c8906c';
+  const hair = '#1c1410';
+  const coat = '#f2f5fa';
+  const turn = pose.turn ?? 0.4;
+  const cap = dSmooth([
+    [-34, 16],
+    [-48, 0],
+    [-50, -26],
+    [-38, -50],
+    [-12, -62],
+    [16, -60],
+    [38, -48],
+    [48, -28],
+    [44, -14],
+    [32, -26],
+    [18, -30],
+    [4, -24],
+    [-8, -30],
+    [-20, -16],
+    [-26, 0],
+  ]);
+  const strands: [P[], number][] = [
+    [[[-40, -36], [-20, -52], [8, -54]], 2.2],
+    [[[-44, -12], [-34, -32], [-14, -44]], 2],
+    [[[14, -50], [32, -42], [40, -28]], 2],
+  ];
+  const front =
+    lp.form(cap, hair, { sh: 14, hatch: 2, rim: 2.2, line: 2.4, shade: '#0a0604', inner: lp.brushes(strands, mix(hair, '#ffffff', 0.3), [0.3, 0.6], 0.6) }) +
+    lp.brush([[40, -16], [44, 6], [40, 22]], 3, hair, [0.1, 0.6]) +
+    roundGlasses(lp, turn, '#2a2a3a', 12);
+  const back = lp.form('M-64 -50a24 24 0 1 0 48 0a24 24 0 1 0 -48 0Z', hair, { sh: 12, hatch: 2, line: 2.2, rim: 2, shade: '#0a0604' }) + lp.brush([[-70, -40], [-40, -54], [-10, -74]], 4, '#e8b84a', [0.05, 0.05]);
+  const head: HeadOpts = { skin, mood: o.mood ?? 'smile', eye: '#3a2418', brow: '#1c1410', jaw: 0.9, chin: 0.96, nose: 0.95, soft: true, eyeSize: 1.0, look: o.look, front, back };
+  const outfit: Outfit = { build: WOMAN, skin, top: coat, pants: '#3a4058', boots: '#2a2430', bootTop: 0.18, rim: o.rim };
+  const { svg } = figure(lp, pose, outfit, head, {
+    torso: (r) => {
+      let t = coatSkirt(lp, r, coat, 0.7, { open: true, rim: o.rim });
+      t += lp.form(dPoly([r.tf(-0.3, -0.02), r.tf(0.58, -0.02), r.tf(0.16, 0.44)]), '#3a6ab0', { sh: 6, line: 2 });
+      t += lp.brushes(
+        [
+          [[r.tf(-0.32, 0.0), r.tf(-0.06, 0.4), r.tf(0.02, 0.86)], 3],
+          [[r.tf(0.6, 0.0), r.tf(0.38, 0.42), r.tf(0.4, 0.86)], 3],
+        ],
+        INK,
+        [0.1, 0.3],
+        0.75,
+      );
+      // A pocket with two pens in it, and her ID badge.
+      const pk = r.tf(-0.62, 0.34);
+      t += lp.brushes(
+        [
+          [[[pk[0] - 6, pk[1] + 2], [pk[0] - 7, pk[1] - 16]], 4],
+          [[[pk[0] + 4, pk[1] + 2], [pk[0] + 5, pk[1] - 14]], 4],
+        ],
+        '#3a6ab0',
+        [0.1, 0.1],
+      );
+      t += lp.form(`M${r1(pk[0] - 16)} ${r1(pk[1])}h32v24h-32Z`, coat, { sh: 4, line: 1.8 });
+      const bd = r.tf(0.62, 0.3);
+      t += lp.form(`M${r1(bd[0] - 9)} ${r1(bd[1])}h18v24h-18Z`, '#5ec8ff', { line: 1.8, inner: `<rect x="${r1(bd[0] - 6)}" y="${r1(bd[1] + 4)}" width="12" height="8" fill="#ffffff"/>` });
+      return t;
+    },
+  });
+  return at(x, y, s, svg, o.flip);
+}
+
+/* ---------------- Gaia Nova in bloom ---------------- */
+
+/** Celestia's petal colours when she blooms: hello-blue, gold, pink and green. */
+export const BLOOM = ['#5e9bff', '#ffd166', '#ff6fcf', '#7dff9a'];
+
+/**
+ * Celestia in full bloom: a tall curving stem with big leaves, and her glowing bulb in a ring of bright
+ * petals. Base at (x, y); the flower's centre is `stem` above it. `gold` turns her light gold.
+ */
+export function celestiaBloom(pen: Pen, x: number, y: number, s: number, o: { stem?: number; gold?: boolean } = {}): string {
+  const stem = o.stem ?? 420;
+  const tint = o.gold ? '#ffc94a' : '#ff6fcf';
+  const glow = o.gold ? '#ffd166' : '#ff9ad8';
+  const pts: P[] = [
+    [0, 0],
+    [-26, -stem * 0.3],
+    [18, -stem * 0.62],
+    [0, -stem * 0.9],
+  ];
+  let out = pen.glow(0, -stem, 360, glow, 0.6) + pen.glow(0, -stem, 180, '#ffffff', 0.3);
+  out += pen.brush(pts, 40, INK, [0.02, 0.3]) + pen.brush(pts, 30, '#3f7a3a', [0.02, 0.3]) + pen.brush(pts.map((p) => add(p, [-6, 0])), 7, '#86c85e', [0.1, 0.4], 0.9);
+  const leaf = (at0: P, a: number, l: number, c: string) => {
+    const d = dir(a);
+    const n = perp(d);
+    const tip = add(at0, mul(d, l));
+    const q: P[] = [at0, add(add(at0, mul(d, l * 0.4)), mul(n, l * 0.28)), add(add(at0, mul(d, l * 0.8)), mul(n, l * 0.14)), tip, add(add(at0, mul(d, l * 0.75)), mul(n, -l * 0.16)), add(add(at0, mul(d, l * 0.35)), mul(n, -l * 0.24))];
+    return pen.form(dSmooth(q), c, { sh: l * 0.16, hatch: 1, line: 2.6, rim: 2, inner: pen.brush([at0, add(at0, mul(d, l * 0.5)), add(at0, mul(d, l * 0.9))], 3, INK, [0.2, 0.6], 0.5) });
+  };
+  out += leaf([-20, -stem * 0.22], -120, 170, '#4a8a3a') + leaf([10, -stem * 0.5], 115, 150, '#5f9a3a') + leaf([4, -stem * 0.74], -140, 110, '#86b84e');
+  out += celestiaBulb(pen, 0, -stem, 62, { tint, light: o.gold ? '#fff2c4' : '#ffe6a0', deep: o.gold ? '#e09a20' : '#c2389a', petals: BLOOM });
+  out += spark(pen, -110, -stem - 120, 16, '#ffffff') + spark(pen, 130, -stem - 60, 12, '#fff6d0') + spark(pen, 90, -stem + 140, 10, '#ffffff');
+  return at(x, y, s, out);
+}
+
+/** One small meadow flower, defined once per colour (five round petals and a centre); returns its id. */
+function flowerDef(pen: Pen, color: string): string {
+  return pen.shared(`fl${color.slice(1)}`, (id) => {
+    let p = '';
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      p += `<circle cx="${r1(Math.cos(a) * 6.2)}" cy="${r1(Math.sin(a) * 6.2)}" r="5"/>`;
+    }
+    return `<g id="${id}"><g fill="${color}" stroke="${INK}" stroke-width="1.6">${p}</g><circle r="3.6" fill="#ffd166" stroke="${INK}" stroke-width="1.4"/><circle cx="-2" cy="-5" r="2" fill="#ffffff" opacity=".7"/></g>`;
+  });
+}
+
+/** Flowers scattered over a band of meadow (bigger toward the bottom), in the given colours. */
+export function meadow(pen: Pen, seed: number, n: number, x0: number, x1: number, y0: number, y1: number, colors: string[], size: [number, number] = [0.6, 1.8]): string {
+  const rand = rng(seed);
+  const ids = colors.map((c) => flowerDef(pen, c));
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    const t = rand();
+    const y = y0 + t * (y1 - y0);
+    const k = size[0] + t * (size[1] - size[0]);
+    out += `<use href="#${ids[i % ids.length]}" transform="translate(${Math.round(x0 + rand() * (x1 - x0))} ${Math.round(y)}) scale(${r1(k * 10) / 10})"/>`;
+  }
+  return out;
+}
+
+/** A colony shuttle: white hull, orange stripe, cyan canopy, blue engines. Centred on its hull; `landed` puts down legs and a ramp. */
+export function shuttle(pen: Pen, x: number, y: number, s: number, o: { rot?: number; flip?: boolean; landed?: boolean } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  let out = '';
+  if (!o.landed) {
+    out += lp.glow(-170, 0, 110, '#8fd8ff', 0.8, 40) + lp.brushes([[[[-150, -8], [-330, -20]], 16], [[[-150, 20], [-300, 26]], 12]], '#dff6ff', [0.05, 0.9], 0.6);
+  } else {
+    out += lp.brushes(
+      [
+        [[[-80, 40], [-104, 92]], 10],
+        [[[90, 36], [112, 92]], 10],
+      ],
+      INK,
+      [0.05, 0.05],
+    );
+    out += lp.form('M-30 44L-80 96H20L30 44Z', '#c9d1dc', { sh: 10, hatch: 1, line: 2.4, rim: 1.6 });
+  }
+  out += lp.form('M-110 -30L-150 -86H-112L-70 -34Z', '#e4e8f0', { sh: 10, hatch: 1, line: 2.6, rim: 1.8, inner: `<path d="M-140 -76H-114" stroke="#ff8a3d" stroke-width="7"/>` });
+  const hull = 'M-140 -30Q-152 4 -140 46H60Q150 38 166 8Q152 -28 60 -40H-100Z';
+  out += lp.form(hull, '#f4f6fb', { sh: 26, hatch: 1, line: 3, rim: 2.2, axis: [1, 0], inner: `<path d="M-150 12H170" stroke="#ff8a3d" stroke-width="13"/><g fill="#4a5a74"><circle cx="-60" cy="-8" r="6"/><circle cx="-30" cy="-8" r="6"/><circle cx="0" cy="-8" r="6"/></g>` + (o.landed ? `<path d="M-30 44V18H30V44Z" fill="#ffd98a"/>` : '') });
+  out += lp.form('M70 -34Q130 -28 150 -6L80 -2Z', '#9fe8ff', { sh: 6, line: 2.4, inner: lp.brush([[86, -14], [112, -26], [136, -18]], 4, '#ffffff', [0.3, 0.3], 0.8) });
+  out += lp.form('M-160 -24H-136V2H-160Z', '#5a6274', { sh: 6, line: 2.2 }) + lp.form('M-160 14H-136V40H-160Z', '#5a6274', { sh: 6, line: 2.2 });
+  if (!o.landed) out += lp.glow(-164, -10, 26, '#ffffff', 0.9) + lp.glow(-164, 28, 26, '#ffffff', 0.9);
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/** A tiny far-off colonist (simple flat shapes): coat colour, skin, and whether they wave. Feet at (x, y), about 60 tall at scale 1. */
+export function colonist(pen: Pen, x: number, y: number, s: number, coat: string, skin: string, wave = false, flip = false): string {
+  const arm = wave ? 'M6 -40L16 -62' : 'M6 -40L10 -22';
+  const body = `<path d="M-4 0V-20M4 0V-20" stroke="#3a4058" stroke-width="6"/><path d="M-9 -20Q-10 -44 0 -46Q10 -44 9 -20Z" fill="${coat}" stroke="${INK}" stroke-width="2"/><path d="${arm}M-6 -40L-10 -22" stroke="${coat}" stroke-width="5"/><circle cx="0" cy="-53" r="7" fill="${skin}" stroke="${INK}" stroke-width="2"/>`;
+  return at(x, y, s, body, flip);
+}
+
+/** A little colony house: round white walls, an orange dome roof, a round window and a door. Base centre at (x, y). */
+export function colonyHouse(pen: Pen, x: number, y: number, s: number): string {
+  let out = pen.form('M-70 0V-84Q-70 -96 -58 -96H58Q70 -96 70 -84V0Z', '#f4f0e8', { sh: 30, hatch: 1, line: 2.8, rim: 1.8, inner: `<path d="M-70 -20H70" stroke="#c8c0b0" stroke-width="3"/>` });
+  out += pen.form('M-82 -88Q-80 -176 0 -180Q80 -176 82 -88Z', '#ff8a3d', { sh: 40, hatch: 2, line: 2.8, rim: 2, inner: `<path d="M-40 -96Q-44 -150 0 -178M40 -96Q44 -150 0 -178" stroke="${INK}" stroke-width="2" opacity=".45" fill="none"/>` + pen.brush([[-60, -110], [-50, -146], [-20, -168]], 7, '#ffffff', [0.3, 0.3], 0.45) });
+  out += pen.form('M-44 -64a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z', '#7fe6ff', { line: 2.4, inner: `<path d="M-26 -82V-46M-44 -64H-8" stroke="${INK}" stroke-width="2"/>` });
+  out += pen.form('M16 0V-56Q16 -66 30 -66Q44 -66 44 -56V0Z', '#8a5a34', { sh: 8, line: 2.4 });
+  return at(x, y, s, out);
+}
+
+/**
+ * A robot of the Green Legion: one of Brennus's old olive Thorn Legion robots, a leaf painted over its
+ * red gear and a green lens, now carrying a sapling in a pot to plant. Feet at (x, y), about 260 tall.
+ */
+export function greenBot(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean } = {}): string {
+  const lp = pen.local(!!o.flip);
+  const olive = '#6a7a42';
+  let out = lp.brushes(
+    [
+      [[[-30, -10], [-34, -70]], 22],
+      [[[30, -10], [34, -70]], 22],
+    ],
+    INK,
+    [0.05, 0.05],
+  );
+  out += lp.brushes(
+    [
+      [[[-30, -10], [-34, -70]], 14],
+      [[[30, -10], [34, -70]], 14],
+    ],
+    '#3a4426',
+    [0.05, 0.05],
+  );
+  out += lp.form('M-56 0Q-56 -18 -36 -18H-14Q2 -18 2 0ZM-2 0Q-2 -18 18 -18H40Q58 -18 58 0Z', '#3a4426', { sh: 6, line: 2.4 });
+  out += lp.form('M-64 -110Q-64 -170 0 -172Q64 -170 64 -110Q60 -60 0 -58Q-60 -60 -64 -110Z', olive, {
+    sh: 30,
+    hatch: 2,
+    line: 3,
+    rim: 2.4,
+    inner: lp.form('M-14 -104Q-2 -132 22 -128Q16 -100 -14 -104Z', '#5fd06a', { line: 2, inner: `<path d="M-10 -106L16 -124" stroke="${INK}" stroke-width="1.6"/>` }),
+  });
+  out += lp.form('M-36 -176Q-36 -224 0 -226Q36 -224 36 -176Z', olive, { sh: 16, hatch: 1, line: 2.8, rim: 2, inner: `<circle cx="10" cy="-196" r="14" fill="#3dff8a" stroke="${INK}" stroke-width="2.6"/><circle cx="14" cy="-200" r="5" fill="#ffffff"/>` });
+  out += lp.glow(10, -196, 34, '#3dff8a', 0.7) + lp.brush([[-16, -222], [-20, -250]], 4, INK, [0.05, 0.05]) + lp.glow(-20, -254, 14, '#3dff8a', 0.9);
+  // The sapling in its pot, held out in front in two pincer hands.
+  out += lp.form('M40 -92H96L88 -46H48Z', '#c8643a', { sh: 12, hatch: 1, line: 2.4, rim: 1.6 }) + lp.form('M36 -100H100V-88H36Z', '#e07a48', { line: 2.2 });
+  out += lp.brush([[68, -100], [64, -150], [72, -200]], 6, '#5a3a24', [0.05, 0.4]);
+  out += lp.form('M72 -260Q20 -250 30 -200Q46 -168 72 -176Q110 -170 116 -206Q118 -250 72 -260Z', '#5f9a3a', { sh: 22, hatch: 1, line: 2.6, rim: 2, inner: lp.brush([[50, -230], [70, -240], [96, -230]], 3, '#86c85e', [0.3, 0.3], 0.9) });
+  out += lp.brushes(
+    [
+      [[[44, -120], [30, -84], [44, -70]], 12],
+      [[[-40, -120], [10, -76], [44, -76]], 12],
+    ],
+    INK,
+    [0.05, 0.05],
+  ) + lp.brushes(
+    [
+      [[[44, -120], [30, -84], [44, -70]], 6],
+      [[[-40, -120], [10, -76], [44, -76]], 6],
+    ],
+    '#9aa6ba',
+    [0.05, 0.05],
+  );
+  return at(x, y, s, out, o.flip);
 }
 
