@@ -418,6 +418,10 @@ export const EL: Record<string, string> = {
   "Everyone woke up safe and sound!": "Όλοι ξύπνησαν σώοι και αβλαβείς!",
   "MEMORY SHARDS": "ΘΡΑΥΣΜΑΤΑ ΜΝΗΜΗΣ",
   "Lasers overloaded! Go, go, go!": "Τα λέιζερ υπερφορτώθηκαν! Πάμε, πάμε, πάμε!",
+  "Keep pushing at the cliff to CLIMB, sideways to shimmy, JUMP to kick off. Once I’m up, I’ll help the others up!":
+    "Συνέχισε να σπρώχνεις προς τον βράχο για να ΣΚΑΡΦΑΛΩΣΩ, στο πλάι για να πάω δεξιά ή αριστερά, ΑΛΜΑ για να πηδήξω μακριά. Μόλις ανέβω, θα βοηθήσω και τους άλλους να ανέβουν!",
+  "I can’t get past here! Find me a way: a switch, a door, a bridge... or help me up from above!":
+    "Δεν μπορώ να περάσω από εδώ! Βρες μου έναν δρόμο: έναν διακόπτη, μια πόρτα, μια γέφυρα... ή βοήθησέ με να ανέβω από ψηλά!",
   "Area clear!": "Η περιοχή καθάρισε!",
   "Code accepted! The vault is open!": "Σωστός κωδικός! Το θησαυροφυλάκιο άνοιξε!",
   "Wrong order! The code reset. Try again!": "Λάθος σειρά! Ο κωδικός μηδενίστηκε. Ξαναπροσπάθησε!",

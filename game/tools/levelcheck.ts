@@ -5,7 +5,7 @@ import { LEVELS, LEVEL_ORDER } from '../src/levels';
 import { parseLevel } from '../src/world/grid';
 import type { Ability, DeckId } from '../src/world/levelTypes';
 import { deckAbilities } from './deckAbilities';
-import { isCollectible, levelHeroes, reach, refillGaps, renderReach, timedRoutes } from './reach';
+import { isCollectible, levelHeroes, reach, refillGaps, renderReach, timedRoutes, togetherCheck } from './reach';
 
 const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple', 'mirror'];
 
@@ -29,11 +29,13 @@ function check(id: DeckId, showMap: boolean) {
   const heroes = levelHeroes(level);
   if (heroes.length === 1 && heroes[0] !== 'jason') lines.push(`  hero: ${heroes[0]} only (no switching on this level)`);
   else if (heroes.length > 1) {
-    lines.push(`  heroes: ${heroes.join(' + ')} (switching anywhere on the ground)`);
+    lines.push(`  heroes: ${heroes.join(' + ')} (travelling together)`);
     for (const h of heroes) {
       const alone = reach(level, after, [h]).missing.filter((e) => !isCollectible(e.spec));
       lines.push(`  ${h} alone can't reach: ${alone.map((e) => e.id).join(', ') || 'nothing (the other hero is never needed)'}`);
     }
+    const apart = togetherCheck(level, after);
+    lines.push(`  together: ${apart.map((p) => `${p.hero} ${p.why} ${p.what}@${p.cx},${p.cz}`).join(', ') || 'ok (nobody is ever left behind)'}`);
   }
   const upgrade = level.entities.find((e) => e.spec.type === 'upgrade');
   if (upgrade) {

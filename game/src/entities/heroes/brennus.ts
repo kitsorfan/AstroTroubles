@@ -188,6 +188,7 @@ export class BrennusMoves {
       if (this.chargeT > 0) {
         this.chargeT = 0;
         this.leaping = true;
+        p.noteMove('leap');
         p.vx = Math.sin(p.facing) * BRENNUS.leapSpeed;
         p.vz = Math.cos(p.facing) * BRENNUS.leapSpeed;
         audio.play('djump', 0.7);
