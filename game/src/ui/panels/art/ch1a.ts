@@ -93,27 +93,81 @@ export function ch1Ship(): string {
 }
 
 
-/** 2. The pink seed-comet streaking toward the ship; the ship small and surprised. */
+/* ---------------- 2. The seed-comet ---------------- */
+
+/** 2. Out of the dark, GaScu's seed streaks toward the ship like a pink comet, sprouts and all; the little SYRACUSIA flashes red. */
 export function ch1Comet(): string {
-  const id = 'ch1-comet';
-  const streaks = [0, 1, 2, 3, 4, 5]
-    .map((i) => `<path d="M${-100 + i * 260} ${-40 + (i % 3) * 120}l${360 + (i % 2) * 120} ${210 + (i % 2) * 70}" stroke="#cfe0ff" stroke-width="${2 + (i % 3)}" opacity=".18" stroke-linecap="round"/>`)
+  const pen = gn.Pen.scene('ch1-comet', { key: [-0.75, -0.55], keyColor: '#ffd6f2', rim: [0.8, 0.4], rimColor: '#8fd8ff', shadow: '#2a2060', depth: 0.6 });
+  const deg = 27;
+  const cx = 700;
+  const cy = 380;
+  const sky =
+    gn.sky(pen, [
+      [0, '#160a30'],
+      [0.6, '#0a0c2a'],
+      [1, '#05061a'],
+    ]) +
+    gn.nebula(pen, 260, 120, 560, ['#ff6fcf', '#a03a9a', '#3a1a6a'], 4, 0.55) +
+    gn.nebula(pen, 1400, 820, 500, ['#3f86d6', '#2a2a80'], 6, 0.5) +
+    gn.starfield(pen, 23, 150, -80, -60, 1760, 1020, '#f4f6ff');
+  // Everything rushes past: focus lines on the seed and streaks along its path.
+  const rush =
+    gn.speedLines(cx, cy, 260, 1400, 46, 5, '#ffd6f2', 0.12) +
+    gn.streaks(pen, 1500, 900, 180 + 90 - deg, 900, 9, 1400, '#cfe0ff', 0.25, 4);
+  // The ship, small and far below, its hull lit pink by the coming seed, alarm lights flashing.
+  const shipX = 1300;
+  const shipY = 690;
+  const alarm =
+    pen.glow(shipX, shipY, 200, '#ff3a4c', 0.35) +
+    pen.brushes(
+      [
+        [
+          [
+            [shipX - 30, shipY - 120],
+            [shipX - 36, shipY - 170],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX + 60, shipY - 110],
+            [shipX + 86, shipY - 150],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX - 120, shipY - 90],
+            [shipX - 150, shipY - 126],
+          ],
+          9,
+        ],
+        [
+          [
+            [shipX + 150, shipY - 70],
+            [shipX + 190, shipY - 90],
+          ],
+          9,
+        ],
+      ],
+      '#ffffff',
+      [0.2, 0.2],
+      0.9,
+    );
+  const ship = c1.syracusia(pen.relight({ key: [-0.8, -0.5], keyColor: '#ffb0e0' }), shipX, shipY, 0.3, { rot: 4, line: 2 }) + alarm + pen.glow(shipX - 175, shipY - 30, 26, '#ff3a4c', 1) + pen.glow(shipX + 175, shipY + 6, 22, '#ff3a4c', 1);
+  // The seed itself, big in the frame, and a few shards of ice breaking off it.
+  const seed = c1.seedComet(pen, cx, cy, 1.35, deg, 1100);
+  const shards = [
+    [880, 300, 14],
+    [940, 480, 10],
+    [620, 520, 12],
+    [980, 380, 8],
+  ]
+    .map(([x, y, r]) => gn.spark(pen, x, y, r, '#ffe6f8', 0.9))
     .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#1a0f3a'], [0.6, '#0b1030'], [1, '#060818']]) +
-      `<defs>${rad(id + 'r', [[0, C.pink, 0.35], [1, C.pink, 0]])}</defs><circle cx="1000" cy="520" r="700" fill="url(#${id}r)"/>` +
-      stars(23, 90) +
-      streaks +
-      // The ship, small in the corner, with surprise lines popping off it.
-      syracusia(id + 's', 1330, 770, 0.3) +
-      `<g stroke="#fff" stroke-width="6" stroke-linecap="round"><path d="M1330 650l0 -40M1260 664l-24 -30M1400 664l24 -30M1450 700l36 -16"/></g>` +
-      gascuSeed(id + 'g', 960, 500, 1.55, 33, 760) +
-      sparkle(700, 220, 26) +
-      sparkle(1180, 380, 16, C.pinkLight) +
-      sparkle(560, 420, 12) +
-      vignette(id + 'v', 0.5),
-  );
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.4, rush) + gn.layer(0.6, ship) + gn.layer(1, seed + shards) + gn.vignette(pen, 0.55, '#04030e') + gn.grain(pen, 0.08));
 }
+
 
 /** A sleeping colonist in a soft pink cocoon hanging from a vine. */
 function cocoon(id: string, x: number, y: number, s: number, skin: string, hair: string): string {

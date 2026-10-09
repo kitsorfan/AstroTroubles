@@ -353,6 +353,155 @@ export function syracusia(pen: Pen, x: number, y: number, s: number, o: ShipOpts
   return at(x, y, s, out, o.flip, o.rot ?? 0);
 }
 
+/* ---------------- GaScu's seed ---------------- */
+
+/**
+ * GaScu as it arrived: a seed in a husk of dark magenta plates, pink light blazing through its seams, two
+ * little sprouts curling from its tip, flying like a comet toward `deg` (screen degrees, clockwise from
+ * +x) with a long tail of light behind it. Centred on the seed; about 180 long at scale 1, the tail `tail` long.
+ */
+export function seedComet(pen: Pen, x: number, y: number, s: number, deg: number, tail = 900): string {
+  const lp = pen.local(false, deg);
+  const rand = rng(9);
+  let out = '';
+  // The tail: a widening plume fading away behind, a hot core along its axis, trailing sparks.
+  const plume = (w0: number, w1: number, len: number, color: string, op: number) => {
+    const paint = lp.lin(
+      [
+        [0, color, op],
+        [0.5, color, op * 0.4],
+        [1, color, 0],
+      ],
+      0,
+      0,
+      -len,
+      0,
+      true,
+    );
+    return `<path d="M30 ${-w0}Q${r1(-len * 0.5)} ${r1(-w1 * 0.8)} ${-len} ${-w1}L${-len} ${w1}Q${r1(-len * 0.5)} ${r1(w1 * 0.8)} 30 ${w0}Q60 0 30 ${-w0}Z" fill="${paint}"/>`;
+  };
+  for (let i = 0; i < 12; i++) {
+    const t = i / 11;
+    out += lp.glow(-tail * t * 0.92, 0, tail * 0.16, i % 2 ? GASCU.glow : '#ffb0ec', 0.8 * (1 - t * 0.75), 70 + 190 * t);
+  }
+  out += plume(14, 26, tail * 0.75, '#ffffff', 0.75);
+  const trails: [P[], number][] = [];
+  for (let i = 0; i < 10; i++) {
+    const off = (rand() - 0.5) * 2;
+    const k0 = 0.12 + rand() * 0.25;
+    const k1 = k0 + 0.25 + rand() * 0.45;
+    trails.push([
+      [
+        [-tail * k1, off * 220 * k1],
+        [-tail * k0, off * 220 * k0],
+      ],
+      3 + rand() * 4,
+    ]);
+  }
+  out += lp.brushes(trails, '#ffffff', [0.9, 0.1], 0.55);
+  for (let i = 0; i < 8; i++) {
+    const k = 0.15 + rand() * 0.7;
+    out += spark(lp, -tail * k, (rand() - 0.5) * 300 * k, 6 + rand() * 10, '#ffe6f8', 0.8);
+  }
+  out += lp.glow(0, 0, 300, GASCU.glow, 0.7, 220) + lp.glow(10, 0, 140, '#ffffff', 0.45);
+  // The seed: an almond-shaped husk of dark magenta, split along its length, pink light blazing out of the split.
+  const husk = 'M-96 0Q-80 -58 0 -62Q76 -58 104 0Q76 58 0 62Q-80 58 -96 0Z';
+  const split: P[] = [
+    [-88, 4],
+    [-40, -6],
+    [10, 4],
+    [60, -4],
+    [100, 0],
+  ];
+  const plates: [P[], number][] = [
+    [
+      [
+        [-60, -50],
+        [-40, -20],
+        [-48, 10],
+      ],
+      3.4,
+    ],
+    [
+      [
+        [-10, -60],
+        [8, -26],
+        [0, 4],
+      ],
+      3.4,
+    ],
+    [
+      [
+        [44, -50],
+        [56, -22],
+        [50, 0],
+      ],
+      3,
+    ],
+    [
+      [
+        [-30, 56],
+        [-16, 28],
+        [-24, 8],
+      ],
+      3,
+    ],
+    [
+      [
+        [30, 56],
+        [40, 30],
+        [34, 6],
+      ],
+      3,
+    ],
+  ];
+  out += lp.form(husk, '#6a2260', {
+    sh: 34,
+    hatch: 2,
+    rim: 3.4,
+    line: 3.6,
+    inner:
+      lp.brushes(plates, INK, [0.2, 0.5], 0.6) +
+      lp.glow(0, 0, 120, GASCU.glow, 0.55, 40) +
+      lp.brush(split, 22, GASCU.glow, [0.1, 0.1], 0.9) +
+      lp.brush(split, 10, '#ffe6f8', [0.1, 0.1]) +
+      lp.brush(split, 4, '#ffffff', [0.15, 0.15]) +
+      lp.brush(
+        [
+          [-62, -40],
+          [-20, -52],
+          [30, -48],
+        ],
+        8,
+        '#e08ad0',
+        [0.3, 0.3],
+        0.8,
+      ),
+  });
+  // Two sprouts uncurling from the split at its tip, leaves and all: it is alive.
+  const sprout = (pts: P[], leafDeg: number) => lp.brush(pts, 12, INK, [0.05, 0.6]) + lp.brush(pts, 6, GASCU.leafLight, [0.05, 0.6]) + leafAt(lp, pts[pts.length - 1], leafDeg, 0.62, GASCU.leafLight);
+  out += sprout(
+    [
+      [90, -6],
+      [130, -34],
+      [136, -70],
+      [116, -88],
+    ],
+    -150,
+  );
+  out += sprout(
+    [
+      [92, 6],
+      [134, 22],
+      [160, 10],
+      [164, -8],
+    ],
+    -60,
+  );
+  return at(x, y, s, out, false, deg);
+}
+
+
 /* ---------------- the Heart of GaScu ---------------- */
 
 export interface HeartOpts {
