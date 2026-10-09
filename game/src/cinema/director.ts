@@ -125,13 +125,18 @@ export class Director {
     if (fov) this.rig.fov = fov;
   }
 
-  say(lines: Line[]): Promise<void> {
+  /** Shows lines of dialogue until the player has read them all; `onLine` hears each one as it comes up. */
+  say(lines: Line[], onLine?: (line: Line) => void): Promise<void> {
     if (this.skipping || !lines.length) return Promise.resolve();
     return new Promise((resolve) => {
-      this.cancelSpeech = this.ui.dialogue(lines, () => {
-        this.cancelSpeech = null;
-        resolve();
-      });
+      this.cancelSpeech = this.ui.dialogue(
+        lines,
+        () => {
+          this.cancelSpeech = null;
+          resolve();
+        },
+        onLine,
+      );
     });
   }
 

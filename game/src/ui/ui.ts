@@ -704,8 +704,11 @@ export class UI {
     });
   }
 
-  /** Shows lines one at a time; tap to advance. Returns a function that closes it early. */
-  dialogue(lines: Line[], done: () => void): () => void {
+  /**
+   * Shows lines one at a time; tap to advance. `onLine` hears each line as it comes up (so a scene can
+   * animate whoever is speaking). Returns a function that closes it early.
+   */
+  dialogue(lines: Line[], done: () => void, onLine?: (line: Line) => void): () => void {
     if (!lines.length) {
       done();
       return () => {};
@@ -720,6 +723,7 @@ export class UI {
     const box = $(el, '.dialogue');
     const render = () => {
       const line = lines[i];
+      onLine?.(line);
       const speaker = this.voice(line.who, false);
       text = tr(line.text);
       $(el, '.portrait').innerHTML = portrait(speaker);
