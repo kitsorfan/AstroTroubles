@@ -62,7 +62,7 @@ export function makeMedusaModel(): MedusaModel {
   head.add(band);
   const gem = mat('#7dff9a', { emissive: '#3dff8a', ei: 1.5, rough: 0.1 });
   for (const sx of [-1, 1]) {
-    head.add(mesh(sphere(0.16, 10), gem, sx * 1.05, -0.35, 1.38, false));
+    head.add(mesh(sphere(0.09, 8), gem, sx * 1.1, -0.55, 1.3, false));
     const brow = mesh(boxG(0.9, 0.14, 0.2), bronze, sx * 0.62, 0.62, 1.5, false);
     brow.rotation.z = sx * 0.22;
     head.add(brow);
@@ -100,7 +100,7 @@ export function makeMedusaModel(): MedusaModel {
   const snakes: MedusaModel['snakes'] = [];
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
-    const sn = cableSnake(7, 0.2);
+    const sn = cableSnake(9, 0.24);
     const base = new THREE.Euler(Math.cos(a) * 0.9 - 0.5, 0, -Math.sin(a) * 0.9);
     sn.group.position.set(Math.sin(a) * 1.25, 1.35 + Math.cos(a) * 0.25, Math.cos(a) * 0.6 - 0.45);
     sn.group.rotation.copy(base);

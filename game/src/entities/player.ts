@@ -988,6 +988,9 @@ export class Player {
         this.spinHold = -1;
         this.raiseMirror();
       }
+    } else if (!this.mirrorUp && input.isHeld('spin') && this.has('mirror') && b.grounded && this.spinT <= 0 && !this.pounding) {
+      // SPIN still held from before (landing, or breaking out of stone): the shield comes straight up.
+      this.raiseMirror();
     }
     if (this.mirrorUp && (!input.isHeld('spin') || !b.grounded)) this.mirrorUp = false;
     this.tickSpins(dt);

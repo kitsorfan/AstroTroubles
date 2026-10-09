@@ -65,8 +65,8 @@ class SnakeStrike extends Entity {
     this.obj.add(this.disc);
     const gold = mat(LAB.gold, { metal: 0.7, rough: 0.3 });
     const dark = mat('#3a3a2a', { metal: 0.5, rough: 0.5 });
-    for (let i = 0; i < 14; i++) {
-      const b = mesh(sphere(0.3 - i * 0.008, 8), i % 2 ? gold : dark, 0, 0, 0, false);
+    for (let i = 0; i < 26; i++) {
+      const b = mesh(sphere(0.34 - i * 0.004, 8), i % 3 === 2 ? dark : gold, 0, 0, 0, false);
       this.beads.push(b);
       this.obj.add(b);
     }
@@ -148,6 +148,11 @@ export class Medusa extends Boss implements Target, BeamCatcher {
 
   get size() {
     return 3;
+  }
+
+  /** She never leaves her plinth: the fight camera keeps her head in view. */
+  get frame(): THREE.Vector3 {
+    return this.focus;
   }
 
   private get angry() {
@@ -277,7 +282,7 @@ export class Medusa extends Boss implements Target, BeamCatcher {
     this.t += dt;
     const w = this.world;
     if (!this.started) {
-      if (!this.defeated && this.playerDist() < 14 && Math.abs(this.player.body.y - this.floorY) < 4) this.begin();
+      if (!this.defeated && this.playerDist() < 24 && Math.abs(this.player.body.y - this.floorY) < 4) this.begin();
       this.sync(dt);
       return;
     }

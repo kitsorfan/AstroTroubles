@@ -133,9 +133,9 @@ export type Spec = Base &
      * One of MEDUSA's eye-sentries: a stone eye that shines a green gaze beam along `dir` (0 north,
      * 1 east, 2 south, 3 west). A hero it touches turns to stone for a moment (no damage). `sweep`
      * swings the beam that many degrees to either side and back every `period` seconds. Its own gaze
-     * bounced back into its eye dazzles it shut for a few seconds.
+     * bounced back into its eye dazzles it shut for a few seconds. `reach` cuts the beam short (in cells).
      */
-    | { type: 'gazer'; dir: 0 | 1 | 2 | 3; sweep?: number; period?: number; offset?: number }
+    | { type: 'gazer'; dir: 0 | 1 | 2 | 3; sweep?: number; period?: number; offset?: number; reach?: number }
     /** A Gardener mirror on a stand: it turns a beam a quarter turn. Any shot, arrow or spin rotates it (`turn` 0 is "/", 1 is "\"). The cell is solid. */
     | { type: 'mirror'; turn?: 0 | 1 }
     /**

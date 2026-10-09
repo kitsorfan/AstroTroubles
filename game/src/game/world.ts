@@ -499,7 +499,7 @@ export class World {
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
         break;
       case 'gazer':
-        this.addEntity(new GazeSentry(this, id, cx, cz, h, spec.dir, spec.sweep, spec.period, spec.offset));
+        this.addEntity(new GazeSentry(this, id, cx, cz, h, spec.dir, spec.sweep, spec.period, spec.offset, spec.reach));
         break;
       case 'mirror':
         this.addEntity(new MirrorPylon(this, id, cx, cz, h, spec.turn));
@@ -1470,13 +1470,16 @@ export class World {
     }
     const p = this.player.body;
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
+    // A boss that keeps its distance (MEDUSA) pulls the view toward itself, so both stay on screen.
+    const frame = this.boss?.started && !this.boss.defeated ? this.boss.frame : null;
+    if (frame) aim.lerp(frame, 0.3);
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);
       this.camTarget.y = damp(this.camTarget.y, aim.y, 4, dt);
       this.camTarget.z = damp(this.camTarget.z, aim.z, 7, dt);
     }
-    const dist = this.boss?.started && !this.boss.defeated ? 17 : 13;
+    const dist = frame ? 21 : this.boss?.started && !this.boss.defeated ? 17 : 13;
     // Walls never turn see-through: when one would hide Jason, the camera tips up until it can see all
     // of him (or at least his head and shoulders when he is pressed right against a wall).
     let want = -1;

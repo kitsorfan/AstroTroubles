@@ -140,14 +140,14 @@ const end = new THREE.Vector3();
  * frame (`dt` feeds crystals' charge). `source` is the eye it came from (it can't catch its own beam
  * on the way out).
  */
-export function traceBeam(world: World, origin: THREE.Vector3, dir: THREE.Vector3, source: unknown, dt: number): BeamResult {
+export function traceBeam(world: World, origin: THREE.Vector3, dir: THREE.Vector3, source: unknown, dt: number, range: number = GAZE.range): BeamResult {
   const lab = labWorld(world);
   const res: BeamResult = { points: [origin.clone()], stoned: false, shielded: false, caught: null };
   const pl = world.player;
   const b = pl.body;
   p.copy(origin);
   d.copy(dir).normalize();
-  let left = GAZE.range;
+  let left = range;
   let bounced = false;
   let skip: unknown = source;
   let lastMirror = -1;

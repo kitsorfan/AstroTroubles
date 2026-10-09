@@ -28,30 +28,29 @@ export const LAB = {
 /** Yaw (around y) that faces a map direction: 0 north, 1 east, 2 south, 3 west. */
 export const dirYaw = (dir: 0 | 1 | 2 | 3) => [Math.PI, Math.PI / 2, 0, -Math.PI / 2][dir];
 
-/** A little cable snake: a chain of gold beads with a green-eyed head, waving (for heads and hair). */
+/**
+ * A cable snake (for MEDUSA's hair and her eye-sentries' crowns): overlapping beads in gold and dark
+ * bands, so it reads as one ribbed cable, curling forward at the tip into a flat snake head with two
+ * green eyes. It grows up along +Y from the group's origin.
+ */
 export function cableSnake(len: number, r: number): { group: THREE.Group; beads: THREE.Mesh[] } {
   const group = new THREE.Group();
   const gold = mat(LAB.gold, { metal: 0.7, rough: 0.3 });
+  const dark = mat('#4a3a1a', { metal: 0.6, rough: 0.4 });
   const beads: THREE.Mesh[] = [];
   for (let i = 0; i < len; i++) {
-    const b = mesh(sphere(r * (1 - i * 0.06), 8), gold, 0, i * r * 1.5, 0, false);
+    const k = i / len;
+    // Up, then curling forward like a cobra's neck.
+    const b = mesh(sphere(r * (1 - k * 0.3), 10), i % 3 === 2 ? dark : gold, 0, Math.sin(k * 1.4) * len * r * 0.95, (1 - Math.cos(k * 1.4)) * len * r * 0.55, false);
     beads.push(b);
     group.add(b);
   }
-  const head = beads[beads.length - 1];
-  head.scale.set(1.2, 0.9, 1.5);
-  const eye = mat('#c8ffd8', { emissive: LAB.gaze, ei: 2 });
-  head.add(mesh(sphere(r * 0.3, 6), eye, r * 0.45, r * 0.25, r * 0.45, false), mesh(sphere(r * 0.3, 6), eye, -r * 0.45, r * 0.25, r * 0.45, false));
+  const head = mesh(sphere(r * 1.15, 12), dark, 0, 0, r * 0.4, false);
+  head.scale.set(1.15, 0.7, 1.5);
+  const eye = mat('#c8ffd8', { emissive: LAB.gaze, ei: 2.4 });
+  head.add(mesh(sphere(r * 0.3, 6), eye, r * 0.5, r * 0.35, r * 0.6, false), mesh(sphere(r * 0.3, 6), eye, -r * 0.5, r * 0.35, r * 0.6, false));
+  beads[beads.length - 1].add(head);
   return { group, beads };
-}
-
-/** Waves a cable snake's beads like a slow S curve. */
-export function waveSnake(beads: THREE.Mesh[], t: number, amp: number, r: number) {
-  beads.forEach((b, i) => {
-    b.position.x = Math.sin(t * 2.2 + i * 0.9) * amp * (i / beads.length);
-    b.position.z = Math.cos(t * 1.7 + i * 0.7) * amp * 0.5 * (i / beads.length);
-    b.position.y = i * r * 1.5;
-  });
 }
 
 /* ---------------- eye-sentry ---------------- */
@@ -80,8 +79,12 @@ export class GazeSentry extends Entity implements BeamCatcher {
   private origin = new THREE.Vector3();
   private floorY: number;
 
-  constructor(world: World, id: string, cx: number, cz: number, h: number, dir: 0 | 1 | 2 | 3, sweep = 0, period = 6, offset = 0) {
+  /** How far the beam reaches (world units). */
+  private range: number;
+
+  constructor(world: World, id: string, cx: number, cz: number, h: number, dir: 0 | 1 | 2 | 3, sweep = 0, period = 6, offset = 0, reach?: number) {
     super(world, id);
+    this.range = reach ? reach * CELL : GAZE.range;
     const x = center(cx);
     const z = center(cz);
     this.floorY = h;
@@ -165,7 +168,7 @@ export class GazeSentry extends Entity implements BeamCatcher {
       return;
     }
     this.origin.copy(this.head.position).addScaledVector(this.dir, 0.75);
-    const r = traceBeam(w, this.origin, this.dir, this, dt);
+    const r = traceBeam(w, this.origin, this.dir, this, dt, this.range);
     this.beam.show(r.points, r.shielded ? 1 : 0);
   }
 }
@@ -256,7 +259,7 @@ export class MirrorPylon extends Entity implements Target, BeamMirror {
 
 /* ---------------- light crystal ---------------- */
 
-/** A crystal cluster on a carved pedestal: a gaze beam held on it for a moment lights it for good, and sets its flag. */
+/** A crystal cluster on a carved pedestal: a bounced gaze beam held on it for a moment lights it for good, and sets its flag. */
 export class LightCrystal extends Entity implements BeamCatcher {
   readonly pos: THREE.Vector3;
   readonly radius = 1;
@@ -307,7 +310,9 @@ export class LightCrystal extends Entity implements BeamCatcher {
     if (world.hasFlag(flag)) this.setLit();
   }
 
-  catchBeam(dt: number) {
+  /** Only a bounced beam (off a mirror or the Mirror Shield) lights it; a gaze straight from an eye just stops here. */
+  catchBeam(dt: number, bounced: boolean) {
+    if (!bounced) return;
     this.beamT = 0.12;
     if (this.lit) return;
     this.charge += dt;
