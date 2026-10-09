@@ -104,7 +104,7 @@ export const SIRENS_COURSE: DiveThing[] = [
   { kind: 'checkpoint', s: 1700, id: 'cp2' },
 
   /* 3. The sirens' waters: buoys that sing and pull, LUX's counter-song, a fast current. */
-  { kind: 'radio', s: 1720, dialogue: 'sirens' },
+  { kind: 'radio', s: 1720, dialogue: 'buoys' },
   ...sirenSpot('b1', GUIDE, 1880, 1, 31),
   ...ringsAlong(GUIDE, 1940, 2080, 46),
   ...sirenSpot('b2', GUIDE, 2130, -1, 32),

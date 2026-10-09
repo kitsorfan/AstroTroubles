@@ -170,6 +170,12 @@ export class SeaView {
     return m;
   }
 
+  removeBuoy(b: BuoyState) {
+    const m = this.buoys.get(b);
+    if (m) this.group.remove(m.root);
+    this.buoys.delete(b);
+  }
+
   private place(im: THREE.InstancedMesh, i: number, x: number, y: number, z: number, sx: number, sy = sx, sz = sx, rx = 0, ry = 0, rz = 0) {
     this.q.setFromEuler(this.e.set(rx, ry, rz));
     this.m.compose(this.p.set(x, y, z), this.q, this.sc.set(sx, sy, sz));
