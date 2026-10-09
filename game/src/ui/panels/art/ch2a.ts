@@ -1,27 +1,6 @@
 /** Chapter 2 panels, part 1: arriving at Gaia Nova, Brennus's broadcast, and the drones' raid. */
 import * as gn from '../gn';
-import { clipUrl, gaiaNova, gearMark, syracusia } from '../gn/ch2a';
-import {
-  at,
-  backdrop,
-  brennus,
-  C,
-  captain,
-  drone,
-  gascuSprout,
-  glow,
-  glowDef,
-  ink,
-  jason,
-
-  lux,
-  panel,
-  planet,
-  rad,
-  stars,
-  sparkle,
-  vignette,
-} from '../kit';
+import { bigLeaf, celestiaPot, clipUrl, gaiaNova, gearMark, spiderDrone, syracusia } from '../gn/ch2a';
 
 /** 9. The Syracusia in orbit over the great green-and-blue curve of Gaia Nova, the sun rising ahead of it. */
 export function ch2Arrival(): string {
@@ -195,48 +174,192 @@ export function ch2Broadcast(): string {
   return pen.svg(gn.layer(0.3, room) + gn.layer(0.6, screen) + gn.layer(1, crew) + gn.vignette(pen, 0.6, '#06030c') + gn.grain(pen, 0.08));
 }
 
-/** A long pot tether from a drone's legs to the pot rim. */
-const tether = (x1: number, y1: number, x2: number, y2: number) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke="#9aa6ba" stroke-width="4" stroke-dasharray="10 6"/>`;
+/** A jagged hole punched through glass, round (cx, cy), about r across: points of broken glass all round. */
+function holeD(cx: number, cy: number, r: number, seed: number): string {
+  const rand = gn.rng(seed);
+  const pts: gn.P[] = [];
+  const n = 18;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const k = i % 2 ? 0.55 + rand() * 0.3 : 0.9 + rand() * 0.35;
+    pts.push([cx + Math.cos(a) * r * k, cy + Math.sin(a) * r * k * 1.1]);
+  }
+  return gn.dPoly(pts);
+}
 
-/** 11. Night on the garden deck: spider-drones carry GaScu off through a broken window; LUX reaching out. */
+/** A planter box of the garden deck with its leafy plants and a few glowing flowers; box top centre at (x, y), `w` wide. */
+function planter(pen: gn.Pen, x: number, y: number, w: number, seed: number): string {
+  const rand = gn.rng(seed);
+  let leaves = '';
+  for (let i = 0; i < 7; i++) {
+    const lx = x - w * 0.4 + (w * 0.8 * i) / 6 + (rand() - 0.5) * 20;
+    const deg = 180 + (lx - x) * 0.18 + (rand() - 0.5) * 30;
+    leaves += bigLeaf(pen, lx, y + 6, 110 + rand() * 90, deg, i % 2 ? '#3f7a4a' : '#2f6a3e', { line: 2.4, rim: 2 });
+  }
+  let flowers = '';
+  for (let i = 0; i < 4; i++) {
+    const fx = x - w * 0.3 + rand() * w * 0.6;
+    const fy = y - 60 - rand() * 90;
+    const c = ['#7fe6ff', '#ffd166', '#c8a8ff', '#7dff9a'][i];
+    flowers += pen.glow(fx, fy, 30, c, 0.6) + `<circle cx="${gn.r1(fx)}" cy="${gn.r1(fy)}" r="7" fill="${c}" stroke="${gn.INK}" stroke-width="2"/>`;
+  }
+  const box = pen.form(`M${x - w / 2} ${y}H${x + w / 2}L${x + w / 2 - 14} ${y + 120}H${x - w / 2 + 14}Z`, '#5a3a2a', {
+    sh: 40,
+    hatch: 2,
+    line: 3,
+    rim: 2.4,
+    inner: `<path d="M${x - w / 2} ${y + 40}H${x + w / 2}M${x - w / 2} ${y + 80}H${x + w / 2}" stroke="${gn.INK}" stroke-width="2.6" opacity=".5"/>`,
+  });
+  return leaves + flowers + box + pen.form(`M${x - w / 2 - 10} ${y - 8}H${x + w / 2 + 10}V${y + 12}H${x - w / 2 - 10}Z`, '#7a5238', { sh: 8, line: 2.6, rim: 2 });
+}
+
+/** 11. Night on the garden deck: three spider-drones carry Celestia's pot out through a smashed window; LUX races after them. */
 export function ch2Drones(): string {
-  const id = 'ch2-drones';
-  const hole = 'M1250 110L1330 190L1420 160L1400 260L1470 330L1370 360L1390 440L1290 390L1200 430L1210 330L1150 280L1230 230Z';
-  const bush = (x: number, y: number, s: number) =>
-    at(x, y, s, `<g fill="#244a32" ${ink(5)}><circle cx="-50" cy="-30" r="50"/><circle cx="40" cy="-36" r="56"/><circle cx="-4" cy="-80" r="56"/></g><path d="M-80 -60Q-60 -110 -10 -126M20 -120Q70 -110 86 -60" fill="none" stroke="#6a9ad0" stroke-width="6" opacity=".45" stroke-linecap="round"/>`);
-  return panel(
-    backdrop(id + 'b', [[0, '#0a0f2a'], [1, '#1a1f4a']]) +
-      `<defs>${glowDef(id + 'm', '#9ad0ff', 0.5)}${glowDef(id + 'l', C.cyan, 0.7)}</defs>` +
-      // The big window, with a jagged hole where the drones broke in.
-      `<defs><clipPath id="${id}w"><rect x="640" y="50" width="920" height="600" rx="30"/></clipPath></defs>
-      <g clip-path="url(#${id}w)"><rect x="640" y="50" width="920" height="600" fill="#05081c"/>${stars(9, 50, 640, 50, 920, 600)}
-      ${planet(id + 'p', 1420, 600, 220, 0.25)}
-      <path d="M640 50H1560V650H640Z${hole}" fill="#9ad0ff" fill-rule="evenodd" opacity=".2"/></g>
-      <path d="${hole}" fill="none" stroke="#e8f6ff" stroke-width="5" stroke-linejoin="round"/>
-      <path d="M1150 280L1060 240M1210 330L1100 400M1200 430L1180 520M1390 440L1440 540M1470 330L1540 320M1420 160L1490 90M1250 110L1240 60" stroke="#e8f6ff" stroke-width="3" opacity=".8"/>
-      <path d="M950 50V650M1255 50V110M1255 430V650M640 350H1150M1470 350H1560" stroke="#2a3060" stroke-width="18"/>
-      <rect x="640" y="50" width="920" height="600" rx="30" fill="none" stroke="#3a4278" stroke-width="22"/>
-      <g fill="#cfe8ff" opacity=".8" ${ink(3)}><path d="M1500 220l30 -14 -8 34Z"/><path d="M1080 170l26 6 -20 22Z"/><path d="M1460 470l20 -20 6 26Z"/></g>
-      <path d="M640 650L380 900H900L1000 650ZM1150 650L1200 900H1560L1450 650Z" fill="#9ad0ff" opacity=".07"/>` +
-      `<path d="M0 690H1600V900H0Z" fill="#121838"/><path d="M0 690H1600" stroke="#2a3060" stroke-width="6"/>` +
-      `<rect x="30" y="700" width="560" height="110" rx="14" fill="#4a3428" ${ink(5)}/><path d="M50 730H570" stroke="#000" stroke-width="6" opacity=".2"/>` +
-      bush(120, 712, 1.1) +
-      bush(330, 716, 1.3) +
-      bush(520, 712, 0.95) +
-      // The drones carrying the pot off.
-      tether(1100, 360, 1100, 450) +
-      tether(1210, 290, 1150, 450) +
-      tether(1330, 340, 1200, 450) +
-      gascuSprout(id + 'g', 1150, 580, 0.95) +
-      drone(1100, 330, 0.8) +
-      drone(1330, 310, 0.8) +
-      drone(1210, 250, 0.9) +
-      // LUX reaching out with a little arm.
-      glow(id + 'l', 400, 400, 170) +
-      at(400, 400, 1.5, `<path d="M44 0Q100 -16 140 -24" fill="none" ${ink(16)}/><path d="M44 0Q100 -16 140 -24" fill="none" stroke="#9aa6ba" stroke-width="7" stroke-linecap="round"/><circle cx="144" cy="-26" r="11" fill="#9aa6ba" ${ink(4)}/>`) +
-      lux(400, 400, 1.5, 'scared') +
-      sparkle(900, 420, 12, C.pinkLight, 0.8) +
-      sparkle(1000, 560, 8, C.pinkLight, 0.7) +
-      vignette(id + 'v', 0.5),
-  );
+  const pen = gn.Pen.scene('ch2-drones', { key: [-0.45, -0.9], keyColor: '#cfe4ff', rim: [0.9, -0.25], rimColor: '#ff8ad8', shadow: '#2a2a6a', depth: 0.6 });
+  const [hx, hy] = [1230, 250];
+  const hole = holeD(hx, hy, 190, 4);
+  // The deck's great window: space and Gaia Nova outside, the glass panes, a jagged hole and its cracks.
+  const win = 'M520 -60H1680V700H520Z';
+  const cracks: [gn.P[], number][] = [];
+  const rand = gn.rng(12);
+  for (let i = 0; i < 11; i++) {
+    const a = (i / 11) * Math.PI * 2 + rand() * 0.3;
+    const r0 = 150 + rand() * 30;
+    const l = 40 + rand() * 90;
+    const p0: gn.P = [hx + Math.cos(a) * r0, hy + Math.sin(a) * r0 * 1.1];
+    const p1: gn.P = [hx + Math.cos(a + 0.08) * (r0 + l * 0.5), hy + Math.sin(a + 0.08) * (r0 + l * 0.5) * 1.1];
+    const p2: gn.P = [hx + Math.cos(a - 0.05) * (r0 + l), hy + Math.sin(a - 0.05) * (r0 + l) * 1.1];
+    cracks.push([[p0, p1, p2], 1.8 + rand() * 1.4]);
+  }
+  const outside =
+    gn.sky(pen, [
+      [0, '#02030e'],
+      [0.7, '#0a1238'],
+    ]) +
+    gn.starfield(pen, 5, 120, 520, -60, 1160, 620) +
+    gaiaNova(pen, 1080, 2560, 2000, { sun: [0.9, -0.3], seed: 11, band: [0.9, 0.995], lands: 9 });
+  const glass = pen.lin([
+    [0, '#9ad0ff', 0.16],
+    [0.5, '#9ad0ff', 0.04],
+    [1, '#9ad0ff', 0.12],
+  ]);
+  const mullions = [880, 1500].map((mx) => `M${mx - 16} -60H${mx + 16}V700H${mx - 16}Z`).join('') + 'M520 486H1680V510H520Z';
+  const room =
+    gn.sky(pen, [
+      [0, '#0c0e26'],
+      [1, '#1a1838'],
+    ]) +
+    `<g clip-path="${clipUrl(pen, win)}">${outside}</g>` +
+    `<path d="${win}${hole}" fill="${glass}" fill-rule="evenodd"/>` +
+    `<g clip-path="${clipUrl(pen, win)}"><path d="M560 640L760 -60H860L660 640ZM1360 640L1560 -60H1600L1400 640Z" fill="#ffffff" opacity=".05"/></g>` +
+    pen.form(`${mullions}`, '#232848', { sh: 12, hatch: 1, line: 3, rim: 2 }) +
+    pen.brushes(cracks, '#e8f6ff', [0.1, 0.8], 0.85) +
+    `<path d="${hole}" fill="none" stroke="#e8f6ff" stroke-width="4"/><path d="${hole}" fill="none" stroke="${gn.INK}" stroke-width="1.6" opacity=".6"/>` +
+    pen.form('M480 -60H560V720H480Z', '#1a1e3a', { sh: 30, hatch: 2, line: 3, rim: 2 }) +
+    // The deck floor, shining with the window's light.
+    pen.form('M-80 700H1680V960H-80Z', '#1a1c38', {
+      sh: 40,
+      line: 3,
+      inner: `<path d="M-80 760H1680M-80 840H1680M200 700L60 960M600 700L540 960M1000 700L1040 960M1400 700L1520 960" stroke="${gn.INK}" stroke-width="2.4" opacity=".45"/><path d="M560 704L1680 704L1680 900L760 900Z" fill="#9ad0ff" opacity=".07"/>`,
+    }) +
+    gn.haze(pen, 600, 760, '#3a3a7a', 0.4);
+  // The empty pedestal where Celestia stood, its glass bell smashed, and her pollen trailing toward the hole.
+  const sparkles = [
+    [820, 600, 9],
+    [900, 560, 7],
+    [960, 600, 6],
+    [1010, 540, 8],
+    [1080, 560, 6],
+    [1120, 500, 9],
+    [860, 520, 5],
+  ]
+    .map(([sx, sy, sr]) => gn.spark(pen, sx, sy, sr, '#ffd6f2', 0.9))
+    .join('');
+  const deck =
+    planter(pen, 200, 740, 380, 3) +
+    gn.castShadow(pen, 760, 800, 130, 16, 0.5) +
+    // A round pedestal; on it the broken glass bell, and the empty ring where her pot stood.
+    pen.form('M690 650Q760 672 830 650V786Q760 808 690 786Z', '#3a3e5e', { sh: 40, hatch: 2, line: 3, rim: 2.2, axis: [0, 1], inner: `<path d="M690 676Q760 698 830 676M690 760Q760 782 830 760" fill="none" stroke="${gn.INK}" stroke-width="2.4" opacity=".5"/>` }) +
+    pen.form('M676 650Q760 676 844 650Q760 624 676 650Z', '#5a5e80', { line: 2.6, inner: `<ellipse cx="760" cy="650" rx="34" ry="9" fill="none" stroke="#ff8ad8" stroke-width="4" opacity=".8"/>` }) +
+    pen.glow(760, 650, 60, '#ff6fcf', 0.5, 20) +
+    `<path d="M682 652L690 590L704 612L716 570L730 606L736 640M790 640L798 600L810 622L818 580L832 616L840 652" fill="#bfe6ff" fill-opacity=".35" stroke="#e8f8ff" stroke-width="3"/>` +
+    [
+      [690, 690, 20],
+      [840, 694, -30],
+      [870, 708, 60],
+      [660, 712, 120],
+    ]
+      .map(([sx, sy, rot]) => gn.at(sx, sy, 1, `<path d="M-14 6L0 -14L16 4Z" fill="#cfefff" stroke="${gn.INK}" stroke-width="2"/>`, false, rot))
+      .join('') +
+    pen.brush(
+      [
+        [760, 640],
+        [900, 590],
+        [1060, 560],
+        [1190, 470],
+      ],
+      26,
+      '#ff8ad8',
+      [0.2, 0.2],
+      0.3,
+    ) +
+    sparkles +
+    planter(pen, 1460, 760, 360, 5);
+  // The drones, flying the pot out through the hole on tethers.
+  const pot: gn.P = [1180, 520];
+  const drones: [number, number, number, number][] = [
+    [1080, 300, 0.95, -6],
+    [1300, 210, 1.05, -12],
+    [1360, 380, 0.9, -4],
+  ];
+  const tethers = drones.map(([dx, dy, ds], i): [gn.P[], number] => [[[dx, dy + 80 * ds], gn.lerp([dx, dy + 80 * ds], [pot[0] - 40 + i * 40, pot[1] - 96], 0.5), [pot[0] - 40 + i * 40, pot[1] - 96]], 4]);
+  const raid =
+    pen.glow(pot[0], pot[1] - 150, 280, '#ff6fcf', 0.55) +
+    pen.brushes(
+      tethers.map(([p]) => [p, 6] as [gn.P[], number]),
+      gn.INK,
+      [0.02, 0.02],
+    ) +
+    pen.brushes(
+      tethers.map(([p]) => [p, 2.6] as [gn.P[], number]),
+      '#e0e6f4',
+      [0.02, 0.02],
+    ) +
+    celestiaPot(pen, pot[0], pot[1], 0.95, { rot: -10 }) +
+    drones.map(([dx, dy, ds, rot]) => spiderDrone(pen, dx, dy, ds, { rot, legs: 'carry' })).join('') +
+    // Shards of glass blown out into space.
+    [
+      [1420, 120, 30, 1.2],
+      [1460, 300, -40, 0.9],
+      [1360, 60, 70, 0.8],
+      [1500, 200, 10, 1],
+      [1130, 80, -20, 0.7],
+    ]
+      .map(([sx, sy, rot, s]) => gn.at(sx, sy, s, pen.local(false, rot).form('M-20 10L0 -26L24 6L6 18Z', '#cfefff', { sh: 6, line: 2.2, rim: 1.6, warm: 0 }), false, rot))
+      .join('') +
+    gn.spark(pen, 1420, 120, 14, '#ffffff') +
+    gn.spark(pen, 1060, 140, 10, '#ffffff');
+  // LUX racing after them, streaks behind him.
+  const hero = gn.streaks(pen, 400, 430, -95, 300, 5, 90, '#bfefff', 0.6, 3) + gn.lux(pen, 470, 410, 1.7, 'scared', { look: [9, -2], rot: 10 });
+  // Ivy hanging from the deck's ceiling.
+  let ivy = '';
+  [
+    [40, 330, 30],
+    [150, 230, -20],
+    [260, 300, 20],
+    [380, 170, -10],
+  ].forEach(([vx, vl, sway], i) => {
+    const pts: gn.P[] = [
+      [vx, -60],
+      [vx + sway * 0.4, vl * 0.4],
+      [vx + sway, vl],
+    ];
+    ivy += pen.brush(pts, 7, gn.INK, [0.02, 0.6]) + pen.brush(pts, 3.4, '#3f7a4a', [0.02, 0.6]);
+    for (let k = 1; k < 5; k++) {
+      const p = gn.lerp(gn.lerp(pts[0], pts[1], k / 5), gn.lerp(pts[1], pts[2], k / 5), k / 5);
+      ivy += bigLeaf(pen, p[0], p[1], 46 - k * 3, (k + i) % 2 ? 50 : -50, (k + i) % 2 ? '#2f6a3e' : '#3f7a4a', { line: 2, rim: 1.6, hatch: 0 });
+    }
+  });
+  const fore = ivy + bigLeaf(pen, -40, 980, 420, 150, '#14301e', { line: 3, rim: 2.4 }) + bigLeaf(pen, 40, 1000, 360, 120, '#1a3a24', { line: 3, rim: 2.4 }) + bigLeaf(pen, 1660, 990, 400, 205, '#14301e', { line: 3, rim: 2.4 });
+  return pen.svg(gn.layer(0.3, room) + gn.layer(0.7, deck) + gn.layer(0.85, raid) + gn.layer(1, hero) + gn.layer(1.3, fore) + gn.vignette(pen, 0.6, '#04030e') + gn.grain(pen, 0.08));
 }
