@@ -1,6 +1,6 @@
 /** Chapter 3 panels for Medusa's Labyrinth: the Mirror Shield in the Gardeners' shrine, and MEDUSA asleep by the open gate. */
 import * as gn from '../gn';
-import { blockWall, cableSnake, crystals, LAB, medusaAsleep, mirrorShield, rune, stoneBot, zed } from '../gn/ch3c';
+import { blockWall, cableSnake, crystals, LAB, medusaAsleep, mirrorShield, rune, smoothShade, stoneBot, zed } from '../gn/ch3c';
 
 const RUNES = [LAB.gaze, '#5ec8ff', '#ffd166', '#ff8ad8'];
 
@@ -162,15 +162,17 @@ export function ch3Mirror(): string {
   const heroes =
     gn.castShadow(pen, 640, 884, 170, 16, 0.55) +
     gn.lux(jp, 400, 380, 0.95, 'glow', { look: [8, -7] }) +
-    gn.jason(jp, 640, 888, 1.15, {
-      pose: { turn: 0.5, lean: -4, tilt: -10, hipTilt: 4, armN: { to: [0.95, -0.82] }, armF: { to: [2.15, -0.66] }, legN: { to: [-0.22, 0.96] }, legF: { to: [0.26, 0.95] }, handN: 'grip', handF: 'grip', wristN: -60, wristF: 40 },
-      mood: 'grin',
-      look: [3, -3.4],
-      rim: 2.2,
-    }) +
+    smoothShade(jp, 'ch3-mirror-ja', (p) =>
+      gn.jason(p, 640, 888, 1.15, {
+        pose: { turn: 0.5, lean: -4, tilt: -10, hipTilt: 4, armN: { to: [0.95, -0.82] }, armF: { to: [2.15, -0.66] }, legN: { to: [-0.22, 0.96] }, legF: { to: [0.26, 0.95] }, handN: 'grip', handF: 'grip', wristN: -60, wristF: 40 },
+        mood: 'grin',
+        look: [3, -3.4],
+        rim: 2.2,
+      }),
+    ) +
     mirrorShield(pen, sx, sy, 104, { tilt: -14, squash: 0.93, flare: [-0.35, -0.45] }) +
     gn.castShadow(pen, 1150, 884, 150, 14, 0.5) +
-    gn.atalanta(ap, 1160, 888, 1.1, { pose: 'hips', mood: 'grin', flip: true, look: [2.6, -2.2], rim: 2 }) +
+    smoothShade(ap, 'ch3-mirror-at', (p) => gn.atalanta(p, 1160, 888, 1.1, { pose: 'hips', mood: 'grin', flip: true, look: [2.6, -2.2], rim: 2 })) +
     gn.iris(ap, 1300, 360, 0.8, 'normal', { flip: true, rot: -8 });
   const fore =
     crystals(pen, 110, 960, 1.4, '#9dffd0', { seed: 2, n: 5, spread: 70 }) +
@@ -228,6 +230,7 @@ export function ch3Medusa(): string {
   const tiptoe: gn.Pose = {
     turn: 0.55,
     lean: 12,
+    tilt: -12,
     hipTilt: 4,
     armN: [46, 122],
     armF: [16, 118],
@@ -240,12 +243,16 @@ export function ch3Medusa(): string {
     footN: 30,
     footF: 50,
   };
+  // Level keys keep the kit's face hatching off their jaws: Atalanta walks into the daylight; Jason, looking
+  // back, is lit from the front by the hall's runes and rimmed by the gate behind him.
+  const ap = pen.relight({ key: [0.97, -0.24], depth: 0.45 });
+  const jp = pen.relight({ key: [-0.94, -0.34], keyColor: '#d8fff0', rim: [0.9, -0.4], rimColor: '#fff0c8', depth: 0.5 });
   const heroes =
     gn.castShadow(pen, 900, 880, 130, 12, 0.5) +
-    gn.atalanta(pen, 900, 884, 1.04, { pose: tiptoe, mood: 'grin', look: [3, -1], rim: 3 }) +
+    smoothShade(ap, 'ch3-medusa-at', (p) => gn.atalanta(p, 900, 884, 1.04, { pose: tiptoe, mood: 'grin', look: [3, -1], rim: 3 })) +
     gn.iris(pen, 1110, 300, 0.78, 'normal', { flip: true, rot: -6 }) +
     gn.castShadow(pen, 1290, 880, 140, 12, 0.5) +
-    gn.jason(pen, 1290, 884, 1.06, { pose: 'wave', mood: 'smile', flip: true, look: [2.4, -1], rim: 3 }) +
+    smoothShade(jp, 'ch3-medusa-ja', (p) => gn.jason(p, 1290, 884, 1.06, { pose: 'wave', mood: 'smile', flip: true, look: [2.4, -1], rim: 3 })) +
     gn.lux(pen, 1480, 540, 0.85, 'happy', { flip: true });
   // A stray cable snake asleep in the foreground, curled like a cat.
   const fore =

@@ -4,9 +4,22 @@
  * robots and Aeëtes's gold fleet) and the Garden of Colchis (giant flowers, crystal trees, seed-sprites,
  * weeder drones and the Sleepless Dragon). Built from the kit's marks like the rest of `gn`.
  */
-import { add, angle, at, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
+import { add, angle, at, dir, dPoly, INK, lerp, mix, mul, type P, Pen, perp, r1, rng, spline, sub, unit } from './core';
 import { spark } from './fx';
 import { chain, hand, type Hand } from './body';
+
+/**
+ * Draws a character without the single-line hatching (level 1) the kit puts in its shadows: on a young
+ * face that hatching reads as stubble. `draw` gets its own pen (same light, ids prefixed with `id`, which
+ * must be unique on the page); its defs travel with the markup, with the level-1 hatch pattern emptied.
+ * Cel shadows, rims and the cross-hatching on far limbs stay.
+ */
+export function smoothShade(pen: Pen, id: string, draw: (p: Pen) => string): string {
+  const own = Pen.scene(id, pen.light);
+  const body = draw(own);
+  const defs = (own.svg('').match(/<defs>([\s\S]*?)<\/defs>/)?.[1] ?? '').replace(new RegExp(`<pattern id="${id}_h1"[\\s\\S]*?</pattern>`), `<pattern id="${id}_h1" width="1" height="1" patternUnits="userSpaceOnUse"/>`);
+  return `<defs>${defs}</defs>${body}`;
+}
 
 /** A circle as path data (for `Pen.form`). */
 export const circD = (x: number, y: number, r: number) => `M${r1(x - r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x + r)} ${r1(y)}A${r1(r)} ${r1(r)} 0 1 0 ${r1(x - r)} ${r1(y)}Z`;
@@ -980,4 +993,300 @@ export function treeTemple(pen: Pen, x: number, y: number, s: number, haze: stri
   out += `<path d="${dots}" stroke="${GARDEN.crystal}" stroke-width="8" stroke-linecap="round"/>`;
   out += pen.glow(0, -300, 380, haze, 0.55, 360);
   return at(x, y, s, out);
+}
+
+/* ---------------- The Sleepless Dragon ---------------- */
+
+/** The dragon's colours (as in its 3D model): vine green, a pale belly, crystal and minty glow, gold eyes. */
+export const DRAGON = { body: '#3f8f4a', bodyDark: '#2a6a36', belly: '#a8e08a', crystal: '#9fe8ff', violet: '#c9a0ff', glow: '#7dffc8', eye: '#ffcf4a' };
+
+/**
+ * A length of the dragon's body along the points, `ra` thick at the start and `rb` at the end: a shaded,
+ * inked tube with a pale belly along its underside, vine bands wrapped round it, and crystal spikes along
+ * its back (every `spikes` samples; 0 for none).
+ */
+export function tube(pen: Pen, pts: P[], ra: number, rb: number, o: { spikes?: number; line?: number; rim?: number; color?: string; seed?: number } = {}): string {
+  const s = spline(pts, 8);
+  const n = s.length;
+  const cum = [0];
+  for (let i = 1; i < n; i++) cum.push(cum[i - 1] + Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
+  const total = cum[n - 1] || 1;
+  const left: P[] = [];
+  const right: P[] = [];
+  const belly: P[] = [];
+  const bands: [P[], number][] = [];
+  const vines: [P[], number][] = [];
+  let spikes = '';
+  const rand = rng(o.seed ?? 3);
+  const every = o.spikes ?? 0;
+  for (let i = 0; i < n; i++) {
+    const r = ra + (rb - ra) * (cum[i] / total);
+    const tan = unit(sub(s[Math.min(n - 1, i + 1)], s[Math.max(0, i - 1)]));
+    const nrm = perp(tan);
+    left.push(add(s[i], mul(nrm, r)));
+    right.push(add(s[i], mul(nrm, -r)));
+    // The underside is whichever side faces down the screen.
+    const down = nrm[1] >= 0 ? nrm : mul(nrm, -1);
+    belly.push(add(s[i], mul(down, r * 0.55)));
+    if (i % 5 === 2 && i < n - 2) bands.push([[add(s[i], mul(nrm, r * 0.98)), add(add(s[i], mul(tan, r * 0.22)), mul(nrm, r * 0.2)), add(s[i], mul(nrm, -r * 0.98))], Math.max(3, r * 0.1)]);
+    if (i % 5 === 4 && i < n - 3) vines.push([[add(s[i], mul(down, -r * 0.9)), add(add(s[i], mul(tan, r * 0.4)), mul(down, -r * 0.4)), add(add(s[i], mul(tan, r * 0.5)), mul(down, -r * 0.05))], Math.max(2.4, r * 0.07)]);
+    if (every && i % every === Math.floor(every / 2) && i < n - 3) {
+      const up = mul(down, -1);
+      const b = add(s[i], mul(up, r * 0.7));
+      const tip = add(add(b, mul(up, r * (0.9 + rand() * 0.5))), mul(tan, -r * 0.35));
+      const w = r * 0.32;
+      spikes += pen.form(dPoly([add(b, mul(tan, -w)), tip, add(b, mul(tan, w))]), rand() < 0.3 ? DRAGON.violet : DRAGON.crystal, {
+        sh: w * 0.5,
+        line: 2.4,
+        rim: 1.4,
+        warm: 0,
+        inner: `<path d="M${r1(b[0])} ${r1(b[1])}L${r1(tip[0])} ${r1(tip[1])}" stroke="#ffffff" stroke-width="2" opacity=".7"/>`,
+      });
+    }
+  }
+  const outline = dPoly([...left, ...right.reverse()]);
+  const rMax = Math.max(ra, rb);
+  const inner =
+    pen.brush(belly, rMax * 0.5, DRAGON.belly, [0.05, 0.1], 0.95) +
+    pen.brushes(bands, DRAGON.bodyDark, [0.2, 0.2], 0.85) +
+    pen.brushes(vines, '#7ac860', [0.2, 0.5], 0.75);
+  return spikes + pen.form(outline, o.color ?? DRAGON.body, { sh: rMax * 0.62, hatch: 2, line: o.line ?? 3.2, rim: o.rim ?? 2.6, inner });
+}
+
+/**
+ * The Sleepless Dragon's head, facing right, chin resting at (x, y): a long leafy snout, crystal horns
+ * swept back, a glowing gem on the brow, a gold eye under a heavy lid (`lid` = how far shut, 0..1) and
+ * a sleepy smile, a wisp of mint breath from its nose. About 320 long at scale 1.
+ */
+export function dragonHead(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; lid?: number; rot?: number } = {}): string {
+  const lp = pen.local(!!o.flip, o.rot ?? 0);
+  const lid = o.lid ?? 0.7;
+  let out = '';
+  // Crystal horns and the leafy frill behind the head.
+  out += at(50, -116, 1, crystals(lp.local(false, -50), 0, 0, 1.15, DRAGON.crystal, { seed: 9, n: 3, spread: 40, glow: 0.5 }), false, -50);
+  out += at(16, -90, 1, crystals(lp.local(false, -78), 0, 0, 1.1, DRAGON.violet, { seed: 4, n: 2, spread: 30, glow: 0.3 }), false, -78);
+  // Long leafy barbels trailing from the snout and the chin, like a sleepy old sea-dragon's.
+  out += lp.brushes(
+    [
+      [
+        [
+          [250, -30],
+          [230, 30],
+          [180, 70],
+          [130, 70],
+        ],
+        8,
+      ],
+      [
+        [
+          [120, -12],
+          [90, 40],
+          [40, 60],
+          [0, 50],
+        ],
+        7,
+      ],
+    ],
+    INK,
+    [0.05, 0.9],
+  );
+  out += lp.brushes(
+    [
+      [
+        [
+          [250, -30],
+          [230, 30],
+          [180, 70],
+          [130, 70],
+        ],
+        4,
+      ],
+      [
+        [
+          [120, -12],
+          [90, 40],
+          [40, 60],
+          [0, 50],
+        ],
+        3.6,
+      ],
+    ],
+    '#8fd07a',
+    [0.05, 0.9],
+  );
+  out += leaf(lp, [20, -40], [-80, -10], 50, '#5fbf5a', { curl: 0.3 }) + leaf(lp, [24, -70], [-70, -80], 44, DRAGON.body, { curl: -0.3 });
+  // The lower jaw, then the skull and snout over it.
+  out += lp.form('M30 -10Q150 24 268 4Q284 -2 280 -14Q160 -6 40 -34Z', DRAGON.belly, { sh: 10, line: 3, rim: 1.6 });
+  const scales = lp.brushes(
+    [
+      [
+        [
+          [60, -112],
+          [80, -100],
+          [100, -112],
+        ],
+        3,
+      ],
+      [
+        [
+          [100, -120],
+          [120, -108],
+          [140, -120],
+        ],
+        3,
+      ],
+      [
+        [
+          [40, -80],
+          [56, -66],
+          [72, -80],
+        ],
+        3,
+      ],
+    ],
+    DRAGON.bodyDark,
+    [0.2, 0.2],
+    0.8,
+  );
+  const cheek = `<path d="M40 -40Q120 -10 250 -24" fill="none" stroke="${DRAGON.belly}" stroke-width="14" opacity=".8"/>`;
+  const ridge = lp.brush(
+    [
+      [170, -124],
+      [214, -104],
+      [262, -94],
+      [290, -78],
+    ],
+    5,
+    mix(DRAGON.body, '#ffffff', 0.35),
+    [0.2, 0.4],
+    0.8,
+  );
+  out += lp.form('M0 -70Q6 -128 90 -140Q130 -152 168 -126Q200 -110 244 -100Q290 -92 304 -62Q312 -36 294 -22Q200 -18 60 -22Q4 -24 0 -70Z', DRAGON.body, { sh: 18, hatch: 1, line: 3.4, rim: 2.4, inner: cheek + scales + ridge });
+  // The sleepy smile along the jaw, curling up at the corner, a nostril and its breath.
+  out += lp.brush(
+    [
+      [300, -30],
+      [240, -24],
+      [186, -26],
+      [166, -40],
+    ],
+    5,
+    INK,
+    [0.1, 0.3],
+  );
+  out += lp.brush(
+    [
+      [272, -76],
+      [286, -70],
+      [282, -60],
+    ],
+    5,
+    INK,
+    [0.2, 0.2],
+  );
+  out += [
+    [320, -70, 16],
+    [346, -96, 22],
+    [366, -130, 26],
+  ]
+    .map(([cx, cy, r], i) => lp.glow(cx, cy, r * 1.4, DRAGON.glow, 0.7 - i * 0.18))
+    .join('');
+  // The eye: gold under a heavy, drooping lid.
+  const ey = -92;
+  out += lp.glow(136, ey, 40, DRAGON.eye, 0.5);
+  out += lp.form(ellD(136, ey, 32, 19), DRAGON.eye, { line: 2.8, inner: `<ellipse cx="142" cy="${ey + 4}" rx="5" ry="13" fill="${INK}"/><circle cx="128" cy="${ey + 6}" r="3" fill="#fff8d0"/>` });
+  const lidY = ey - 19 + lid * 30;
+  out += lp.form(`M100 ${ey - 2}Q104 ${ey - 26} 136 ${ey - 26}Q168 ${ey - 26} 172 ${ey - 2}L170 ${r1(lidY)}Q136 ${r1(lidY + 8)} 102 ${r1(lidY)}Z`, DRAGON.body, { line: 0 });
+  out += lp.brush(
+    [
+      [100, lidY - 2],
+      [136, lidY + 8],
+      [172, lidY - 3],
+    ],
+    6,
+    INK,
+    [0.15, 0.15],
+  );
+  out += lp.brushes(
+    [
+      [
+        [
+          [112, lidY + 3],
+          [108, lidY + 10],
+        ],
+        2.6,
+      ],
+      [
+        [
+          [160, lidY + 3],
+          [164, lidY + 10],
+        ],
+        2.6,
+      ],
+    ],
+    INK,
+    [0.1, 0.5],
+  );
+  out += lp.brush(
+    [
+      [96, ey - 28],
+      [136, ey - 42],
+      [176, ey - 26],
+    ],
+    7,
+    DRAGON.bodyDark,
+    [0.2, 0.3],
+  );
+  // The brow gem.
+  out += lp.glow(178, -126, 34, DRAGON.glow, 0.9) + lp.form('M178 -142L190 -126L178 -110L166 -126Z', DRAGON.glow, { line: 2.2, warm: 0, inner: `<path d="M172 -130L178 -138" stroke="#fff" stroke-width="2.4"/>` });
+  return at(x, y, s, out, o.flip, o.rot ?? 0);
+}
+
+/** A lullaby pylon: a carved stone post with a glowing crystal on top, beaming its colour straight up into the sky. Base at (x, y). */
+export function pylon(pen: Pen, x: number, y: number, s: number, color: string): string {
+  const top = y - 150 * s;
+  const beam = pen.lin(
+    [
+      [0, color, 0],
+      [0.7, color, 0.35],
+      [1, '#ffffff', 0.7],
+    ],
+    x,
+    -60,
+    x,
+    top,
+    true,
+  );
+  let out = `<path d="M${r1(x - 16 * s)} ${r1(top)}L${r1(x - 46 * s)} -60H${r1(x + 46 * s)}L${r1(x + 16 * s)} ${r1(top)}Z" fill="${beam}"/>`;
+  out += pen.form(`M${r1(x - 30 * s)} ${r1(y)}L${r1(x - 22 * s)} ${r1(top + 30 * s)}H${r1(x + 22 * s)}L${r1(x + 30 * s)} ${r1(y)}Z`, '#d8c8a8', { sh: 12 * s, hatch: 1, line: 2 * s + 0.6, rim: 1.4 });
+  out += pen.glow(x, top, 60 * s, color, 0.9) + pen.form(`M${r1(x)} ${r1(top - 34 * s)}L${r1(x + 18 * s)} ${r1(top)}L${r1(x)} ${r1(top + 22 * s)}L${r1(x - 18 * s)} ${r1(top)}Z`, color, { line: 2 * s + 0.4, warm: 0, sh: 6 * s });
+  return out;
+}
+
+/** A floating music note of light, centred at (x, y), `k` big, tilted `rot` degrees. */
+export function lightNote(pen: Pen, x: number, y: number, k: number, color: string, rot = 0): string {
+  const body =
+    pen.glow(0, 0, 34, color, 0.7) +
+    `<ellipse cx="0" cy="0" rx="15" ry="11" transform="rotate(-20)" fill="${color}" stroke="${INK}" stroke-width="2.6"/>` +
+    pen.brush(
+      [
+        [12, -4],
+        [13, -40],
+        [14, -62],
+      ],
+      5,
+      color,
+      [0.05, 0.05],
+    ) +
+    pen.brush(
+      [
+        [14, -62],
+        [30, -52],
+        [34, -36],
+      ],
+      6,
+      color,
+      [0.05, 0.6],
+    );
+  return at(x, y, k, body, false, rot);
 }
