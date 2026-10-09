@@ -41,11 +41,7 @@ export function makeSub(): SubModel {
   const beak = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.7, 6, 14).rotateX(Math.PI / 2), white);
   beak.position.set(0, -0.12, -2.25);
   body.add(top, belly, beak);
-  // A gold stripe round the middle and a gold ring at the beak.
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(1.03, 0.07, 8, 40), gold);
-  stripe.scale.set(1.02, 0.92, 1);
-  stripe.position.z = 0.4;
-  body.add(stripe);
+  // A gold ring at the beak.
   const band = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.06, 8, 24), gold);
   band.position.set(0, -0.12, -1.86);
   body.add(band);

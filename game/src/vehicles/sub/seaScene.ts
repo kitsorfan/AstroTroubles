@@ -97,6 +97,7 @@ export class Sea {
   private domeTop: THREE.Color;
   private sand: THREE.CanvasTexture;
   private light: THREE.CanvasTexture;
+  private surface: THREE.MeshBasicMaterial;
   private walls: THREE.InstancedMesh;
   private ruins: THREE.InstancedMesh;
   private beams: THREE.Mesh[] = [];
@@ -135,10 +136,8 @@ export class Sea {
     floor.position.set(0, SEABED - 0.6, -140);
     this.light = surfaceTexture();
     this.light.repeat.set(10, 10);
-    const surface = new THREE.Mesh(
-      new THREE.PlaneGeometry(700, 700).rotateX(Math.PI / 2),
-      new THREE.MeshBasicMaterial({ map: this.light, transparent: true, opacity: 0.75, fog: false, depthWrite: false }),
-    );
+    this.surface = new THREE.MeshBasicMaterial({ map: this.light, transparent: true, opacity: 0.75, fog: false, depthWrite: false });
+    const surface = new THREE.Mesh(new THREE.PlaneGeometry(700, 700).rotateX(Math.PI / 2), this.surface);
     surface.position.set(0, 38, -150);
     this.group.add(floor, surface);
 
@@ -215,6 +214,7 @@ export class Sea {
 
     // Sunbeams slant down from the surface, a few ahead at a time.
     this.beamMat.opacity = 0.42 * (1 - dark);
+    this.surface.opacity = 0.75 * (1 - dark * 0.85);
     const b0 = Math.floor(s / 24);
     this.beams.forEach((b, i) => {
       const k = b0 + i;

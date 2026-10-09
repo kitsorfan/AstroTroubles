@@ -73,6 +73,8 @@ export class SubDive implements Vehicle {
   readonly pearlTotal: number;
   readonly events: DiveEvents;
   private lastBeat = -1;
+  /** The world's sun and sky lights, with their usual strength (deep water dims them). */
+  private lights: [THREE.Light, number][] = [];
 
   constructor(readonly world: World) {
     const course = world.def.dive;
@@ -84,6 +86,9 @@ export class SubDive implements Vehicle {
     this.ringTotal = things.filter((t) => t.kind === 'ring').length;
     this.pearlTotal = things.filter((t) => t.kind === 'pearl').length;
     const scene = world.scene;
+    scene.traverse((o) => {
+      if (o instanceof THREE.HemisphereLight || o instanceof THREE.DirectionalLight || o instanceof THREE.AmbientLight) this.lights.push([o, o.intensity]);
+    });
     world.camera.far = 420;
     world.camera.updateProjectionMatrix();
     // The ruins line the canyon where the course has Gardener columns and gates.
@@ -228,15 +233,17 @@ export class SubDive implements Vehicle {
     // Deep, dark stretches: the fog closes in (a PING pushes it back for a while), and the headlight matters.
     this.dark = damp(this.dark, d.dark ? 1 : 0, 1.5, Math.max(dt, 0.0001));
     const lit = Math.min(1, d.reveal / 2);
+    const k0 = this.dark * (1 - lit * 0.6);
     const fog = this.world.scene.fog as THREE.Fog | null;
     if (fog) {
-      const k = this.dark * (1 - lit * 0.6);
+      const k = k0;
       fog.color.copy(FOG).lerp(FOG_DEEP, k);
       fog.near = 12 - k * 6;
       fog.far = 105 - k * 62;
     }
+    for (const [l, i] of this.lights) l.intensity = i * (1 - k0 * 0.7);
     m.lamp.intensity = 6 + this.dark * 70;
-    (m.beam.material as THREE.MeshBasicMaterial).opacity = this.dark * 0.1;
+    (m.beam.material as THREE.MeshBasicMaterial).opacity = this.dark * 0.035;
     m.beam.visible = this.dark > 0.05;
     this.view.update(d.s, this.time, d.gone, Math.min(1, d.reveal / 1.5), d.singer, (s) => d.s >= s);
     this.sea.update(d.s, this.time, this.world.camera.position, this.dark);
