@@ -24,10 +24,12 @@ export const RAM_TUNING = {
   chargeTime: 2.6,
   /** Horns stuck in Brennus's shield: this long to CHARGE into it. */
   locked: 3.4,
-  shove: 13,
-  shoveTime: 1.2,
-  /** How far off a shove may be and still steer into a pillar (cosine of the angle). */
-  steer: 0.55,
+  shove: 16,
+  /** A shove with no pillar behind it only skids this long. */
+  shoveTime: 0.8,
+  /** How far off a shove may be and still steer into a pillar (cosine of the angle), and how far away that pillar may be. */
+  steer: 0.4,
+  steerRange: 30,
   /** The engine hatch stays open this long after a crash (a bit shorter once it's furious). */
   open: 6,
   openAngry: 5,
@@ -159,7 +161,7 @@ export class GoldenRam extends Boss implements Target {
       const pz = p.z - b.z;
       const pd = Math.hypot(px, pz) || 1;
       const dot = (px * dx + pz * dz) / pd;
-      if (dot > bestDot && pd < 16) {
+      if (dot > bestDot && pd < RAM_TUNING.steerRange) {
         bestDot = dot;
         best = p;
       }
@@ -172,7 +174,9 @@ export class GoldenRam extends Boss implements Target {
       dz = pz / pd;
     }
     this.shoveDir.set(dx, dz);
-    this.setState('shoved', RAM_TUNING.shoveTime);
+    // Steered at a pillar, it skids all the way there; with none behind it, it only skids a little.
+    const far = best ? Math.hypot(best.x - this.body.x, best.z - this.body.z) : 0;
+    this.setState('shoved', best ? far / RAM_TUNING.shove + 0.4 : RAM_TUNING.shoveTime);
     audio.play('pound', 0.8);
     haptic('heavy');
     this.world.shake(0.5);
@@ -216,6 +220,13 @@ export class GoldenRam extends Boss implements Target {
     this.called = 0;
     this.downT = 0;
     this.aimable = false;
+  }
+
+  /** It turns to face Brennus as he walks in, horns first. */
+  protected onIntro() {
+    const p = this.player.body;
+    this.yaw = Math.atan2(p.x - this.body.x, p.z - this.body.z);
+    this.sync(0);
   }
 
   protected onStart() {
@@ -361,7 +372,7 @@ export class GoldenRam extends Boss implements Target {
         }
         break;
       case 'shoved': {
-        speed = RAM_TUNING.shove * Math.min(1, this.stateT / RAM_TUNING.shoveTime + 0.3);
+        speed = RAM_TUNING.shove * Math.min(1, this.stateT / 0.5 + 0.3);
         heading = Math.atan2(this.shoveDir.x, this.shoveDir.y);
         if (Math.random() < 0.8) this.world.particles.emit(b.x, b.y + 0.2, b.z, { count: 2, color: '#e8dcc8', speed: 3, up: 1, life: 0.5, size: 1 });
         if (this.pillars.some((q) => Math.hypot(q.x - b.x, q.z - b.z) < RAM_TUNING.crash)) {

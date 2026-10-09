@@ -25,7 +25,7 @@ export function argoPace(alive: number): number {
 }
 
 /** The time between two dropships at the least, and the most robots a hold lets loose at once. */
-export const HOLD_TUNING = { firstDrop: 1.5, gap: 4, maxAlive: 7, retreat: 1.4 };
+export const HOLD_TUNING = { firstDrop: 2, gap: 5, maxAlive: 5, retreat: 1.4 };
 
 interface StandWorld {
   holds: Hold[];

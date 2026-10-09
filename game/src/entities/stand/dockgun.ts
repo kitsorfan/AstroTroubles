@@ -41,14 +41,17 @@ export class DockGun extends Entity {
   ) {
     super(world, id);
     this.spot = new THREE.Vector3(cx * CELL + CELL / 2, h, cz * CELL + CELL / 2);
-    const olive = mat('#4a5632', { rough: 0.55, metal: 0.35 });
-    const dark = mat('#26221e', { rough: 0.6, metal: 0.4 });
-    const brass = mat('#c9a24a', { metal: 0.75, rough: 0.3 });
+    const olive = mat('#62743e', { rough: 0.5, metal: 0.3 });
+    const dark = mat('#3a3630', { rough: 0.5, metal: 0.5 });
+    const brass = mat('#d8b050', { metal: 0.75, rough: 0.3 });
+    const stone = mat('#d6c9b4', { rough: 0.8 });
     const g = new THREE.Group();
     g.position.copy(this.spot);
-    g.add(mesh(cyl(0.9, 1.05, 0.4, 16), dark, 0, 0.2, 0));
-    g.add(mesh(cyl(0.6, 0.7, 0.5, 14), olive, 0, 0.6, 0));
-    this.head.position.y = 1.05;
+    // A Gardener stone plinth with a brass ring, and the gun's olive turntable on top.
+    g.add(mesh(cyl(0.85, 0.95, 0.45, 8), stone, 0, 0.22, 0));
+    g.add(mesh(cyl(0.88, 0.88, 0.08, 20), brass, 0, 0.46, 0));
+    g.add(mesh(cyl(0.55, 0.62, 0.5, 14), olive, 0, 0.7, 0));
+    this.head.position.y = 1.15;
     const dome = mesh(sphere(0.62, 18), olive, 0, 0.1, 0);
     dome.scale.set(1, 0.75, 1);
     this.head.add(dome);
@@ -65,13 +68,13 @@ export class DockGun extends Entity {
     // Twin barrels on a pivot.
     this.barrels.position.set(0, 0.15, 0.2);
     for (const sx of [-0.22, 0.22]) {
-      const b = mesh(cyl(0.11, 0.13, 1.4, 12), dark, sx, 0, 0.7);
+      const b = mesh(cyl(0.11, 0.13, 1.1, 12), dark, sx, 0, 0.6);
       b.rotation.x = Math.PI / 2;
       this.barrels.add(b);
-      this.barrels.add(mesh(cyl(0.15, 0.15, 0.16, 12), brass, sx, 0, 1.36).rotateX(Math.PI / 2));
+      this.barrels.add(mesh(cyl(0.15, 0.15, 0.16, 12), brass, sx, 0, 1.12).rotateX(Math.PI / 2));
     }
     this.flash = glowSprite('#ffd166', 1.4, 0);
-    this.flash.position.set(0, 0, 1.6);
+    this.flash.position.set(0, 0, 1.35);
     this.barrels.add(this.flash);
     this.head.add(this.barrels);
     g.add(this.head);
@@ -114,7 +117,7 @@ export class DockGun extends Entity {
       if (this.cd <= 0) {
         this.cd = DOCK_GUN.every;
         this.side = -this.side;
-        const from = new THREE.Vector3(this.spot.x + Math.sin(this.yaw) * 1.6 + Math.cos(this.yaw) * 0.22 * this.side, this.spot.y + 1.2, this.spot.z + Math.cos(this.yaw) * 1.6 - Math.sin(this.yaw) * 0.22 * this.side);
+        const from = new THREE.Vector3(this.spot.x + Math.sin(this.yaw) * 1.4 + Math.cos(this.yaw) * 0.22 * this.side, this.spot.y + 1.3, this.spot.z + Math.cos(this.yaw) * 1.4 - Math.sin(this.yaw) * 0.22 * this.side);
         const dir = e.aim.clone().sub(from).normalize();
         this.world.shots.fire('player', from, dir, DOCK_GUN.speed, DOCK_GUN.damage);
         this.world.soundAt('enemyShoot', this.spot.x, this.spot.z, 0.8, 22);

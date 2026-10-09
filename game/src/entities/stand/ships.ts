@@ -104,7 +104,8 @@ export class Dropship extends Entity {
     private kind: EnemyKind,
     n: number,
     private variant: string | undefined,
-    private room: string,
+    /** The room its robots belong to (a hold's `room`). */
+    private squad: string,
     private dropped: (e: Enemy) => void,
   ) {
     super(world, `dropship${Math.random()}`);
@@ -166,7 +167,7 @@ export class Dropship extends Entity {
     const w = this.world;
     const [cx, cz] = this.cells[Math.floor(Math.random() * this.cells.length)];
     const e = w.spawnEnemy(this.kind, cx, cz, this.variant);
-    e.room = this.room;
+    e.room = this.squad;
     // It falls from the ship (fliers just start up there).
     e.body.y = Math.max(e.body.y, this.over.y - 1.5);
     e.alert();

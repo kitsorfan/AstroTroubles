@@ -3,7 +3,7 @@ import type { ThemeId } from './levelTypes';
 export type ParticleMood = 'snow' | 'spores' | 'embers' | 'petals' | 'sparks' | 'motes' | 'pollen' | 'dust' | 'snowfall' | 'leaves' | 'ash';
 
 /** How the ground of an outdoor region is painted. */
-export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt';
+export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt' | 'flagstone';
 
 /** The open-air look of a Gaia Nova region: natural ground and cliffs, a sun, clouds and a horizon. */
 export interface Outdoor {
@@ -474,6 +474,6 @@ export const THEMES: Record<ThemeId, Theme> = {
     mood: 'motes',
     space: false,
     bloom: 0.2,
-    outdoor: { ground: 'rock', ground2: '#e6dac2', rock: '#d6c9b4', rockDark: '#9a8c7a', below: '#ffe0cc', sunDisc: '#ffe2b0', clouds: '#ffd6c6', hills: '#c4a4c8', stars: true, cloudSea: true },
+    outdoor: { ground: 'flagstone', ground2: '#e6dac2', rock: '#d6c9b4', rockDark: '#9a8c7a', below: '#ffe0cc', sunDisc: '#ffe2b0', clouds: '#ffd6c6', hills: '#c4a4c8', stars: true, cloudSea: true },
   },
 };

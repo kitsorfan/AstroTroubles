@@ -153,8 +153,12 @@ export function makeRam(big: boolean): RamParts {
   return parts;
 }
 
+export const RAMLING_SCALE = 0.62;
+
 /** The little ramling as an enemy model (the shared enemy code flashes it and hangs its badge). */
 export function makeRamlingModel(): EnemyModel & { ram: RamParts } {
   const ram = makeRam(false);
+  // Knee-high to General Brennus (the Golden Ram is the same model, much bigger).
+  ram.root.scale.setScalar(RAMLING_SCALE);
   return { root: ram.root, body: ram.body, flash: ram.flash, parts: { head: ram.head }, limbs: ram.legs, ram };
 }

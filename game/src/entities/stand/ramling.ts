@@ -54,13 +54,14 @@ function ramlingClass() {
 
     constructor(world: World, id: string, x: number, y: number, z: number) {
       const model = makeRamlingModel();
-      super(world, id, x, y, z, T.hp, 0.7, model);
+      super(world, id, x, y, z, T.hp, 0.6, model);
       this.ram = model.ram;
       this.kind = 'ramling';
       this.bolts = 5;
       this.heartChance = 0.18;
-      this.aimHeight = 1;
-      this.badgeY = 2.2;
+      this.aimHeight = 0.6;
+      // The badge height is scaled with the model: about 1.5 units over its feet.
+      this.badgeY = 2.4;
       laneMat ??= new THREE.MeshBasicMaterial({ color: '#ff3a4c', transparent: true, opacity: 0.35, depthWrite: false });
       this.lane = new THREE.Mesh(new THREE.PlaneGeometry(1.2, T.lane), laneMat);
       this.lane.rotation.x = -Math.PI / 2;

@@ -101,8 +101,8 @@ export const stand: LevelDef = {
      #######........../.......#.........#
      #################G##################
           .]......................].
-          .....e..............e.....
-          ..Q.........d..........Q..
+          .....e....................
+          ..Q....................Q..
           ........R........R........
           ............&.............
     ....  ....|................|....
@@ -118,9 +118,9 @@ export const stand: LevelDef = {
                      ,,,,
                      ,,,,
               #######%%%%#######
-            .]........!.........].
-            ..........d..e........
-            .....R..........R.....
+            .]...R....!.........].
+            ................R.....
+            ......................
             ......................  ....
             ........Z......m....n.  ..S.
             .h....o...............  .o..
@@ -169,9 +169,9 @@ export const stand: LevelDef = {
       d: 13,
       room: 'wave1',
       drops: [
-        { enemy: 'trooper', n: 2, variant: 'gold' },
         { enemy: 'ramling', n: 2 },
-        { enemy: 'harpy', n: 2 },
+        { enemy: 'trooper', n: 1, variant: 'gold' },
+        { enemy: 'harpy', n: 1 },
         { enemy: 'trooper', n: 2, variant: 'gold' },
         { enemy: 'ramling', n: 2 },
       ],
@@ -186,13 +186,13 @@ export const stand: LevelDef = {
       d: 13,
       room: 'wave2',
       drops: [
-        { enemy: 'trooper', n: 3, variant: 'gold' },
+        { enemy: 'trooper', n: 2, variant: 'gold' },
         { enemy: 'ramling', n: 2 },
         { enemy: 'bulwark', n: 1, variant: 'gold' },
-        { enemy: 'harpy', n: 2 },
+        { enemy: 'harpy', n: 1 },
         { enemy: 'trooper', n: 3, variant: 'gold' },
         { enemy: 'mortar', n: 1, variant: 'gold' },
-        { enemy: 'ramling', n: 3 },
+        { enemy: 'ramling', n: 2 },
       ],
     },
     // General Brennus's puzzles.

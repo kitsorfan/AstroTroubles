@@ -60,6 +60,8 @@ export function companionPlan(deck: DeckId, has: (flag: string) => boolean, crew
       return has(LUX_BACK_FLAG) ? { lead: 'lux', tag: 'iris' } : { lead: 'iris', tag: null };
     // Aeëtes's Mine (chapter 3): General Brennus goes alone, with his old Legion wrist computer.
     case 'mine':
+    // Brennus's Last Stand: the same, on Colchis's sky-dock.
+    case 'stand':
       return { lead: null, tag: null };
     default:
       if (crew?.chapter === 3) return voyagePlan(crew);
@@ -73,7 +75,7 @@ export function companionPlan(deck: DeckId, has: (flag: string) => boolean, crew
  */
 export function helperOf(deck: DeckId, plan: CompanionPlan): Helper | null {
   if (plan.lead) return plan.lead;
-  return deck === 'snow' || deck === 'rockies' || deck === 'jungle' || deck === 'volcano' || deck === 'mine' ? 'wrist' : null;
+  return deck === 'snow' || deck === 'rockies' || deck === 'jungle' || deck === 'volcano' || deck === 'mine' || deck === 'stand' ? 'wrist' : null;
 }
 
 /**

@@ -107,7 +107,7 @@ function sleepyRam(x: number, y: number, s: number): string {
 export function ch3Salute(): string {
   const id = 'ch3-salute';
   // A sticking plaster on Brennus's cheek and a dent in his cap: he's fine, just a bit battered.
-  const plaster = at(520, 556, 1.6, `<rect x="-22" y="-8" width="44" height="16" rx="6" fill="#ffd8b0" ${ink(3)} transform="rotate(-20)"/><path d="M-6 -4l12 8M6 -4l-12 8" stroke="#c89a70" stroke-width="2" transform="rotate(-20)"/>`);
+  const plaster = at(432, 584, 1.3, `<rect x="-22" y="-8" width="44" height="16" rx="6" fill="#ffd8b0" ${ink(3)} transform="rotate(-20)"/><path d="M-6 -4l12 8M6 -4l-12 8" stroke="#c89a70" stroke-width="2" transform="rotate(-20)"/>`);
   return panel(
     backdrop(id + 'b', [[0, '#3a2a7a'], [0.55, '#c86a8a'], [1, '#ffc08a']]) +
       stars(26, 50, 0, 0, 1600, 240) +
@@ -117,7 +117,7 @@ export function ch3Salute(): string {
       sparkle(1300, 250, 14, '#fff') +
       sparkle(620, 300, 10, '#fff') +
       dockFloor(id + 'd', 740) +
-      sleepyRam(1180, 860, 0.85) +
+      sleepyRam(1130, 870, 1.0) +
       brennus(470, 900, 1.6, { pose: 'salute', face: 'smile' }) +
       plaster +
       gascuSprout(id + 'p', 600, 800, 0.5) +
