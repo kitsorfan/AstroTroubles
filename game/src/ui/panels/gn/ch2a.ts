@@ -340,7 +340,7 @@ export function gaiaNova(pen: Pen, cx: number, cy: number, r: number, o: { sun?:
  * humming rotors on struts and four jointed legs (curled to grab, or `carry` hanging straight down to a
  * tether point). Faces right; centred on its body, about 140 across at scale 1.
  */
-export function spiderDrone(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; rot?: number; legs?: 'grab' | 'carry' } = {}): string {
+export function spiderDrone(pen: Pen, x: number, y: number, s: number, o: { flip?: boolean; rot?: number; legs?: 'grab' | 'carry' | 'none' } = {}): string {
   const lp = pen.local(!!o.flip, o.rot ?? 0);
   const body = '#2a2636';
   let out = '';
@@ -381,9 +381,10 @@ export function spiderDrone(pen: Pen, x: number, y: number, s: number, o: { flip
         ];
     return [pts, far ? 9 : 11];
   };
+  const legs = o.legs !== 'none';
   const far = [leg(-14, -0.7, true), leg(14, 0.7, true)];
   const near = [leg(-26, -1, false), leg(26, 1, false)];
-  out += lp.brushes(far, INK, [0.05, 0.4]) + lp.brushes(far.map(([p, w]) => [p, w * 0.45] as [P[], number]), '#4a4660', [0.1, 0.5]);
+  if (legs) out += lp.brushes(far, INK, [0.05, 0.4]) + lp.brushes(far.map(([p, w]) => [p, w * 0.45] as [P[], number]), '#4a4660', [0.1, 0.5]);
   // The body: a glossy rounded shell with a plate seam, a gloss highlight and the eye cluster.
   out += lp.form('M-52 2Q-50 -32 -6 -34Q46 -34 56 -2Q54 26 6 30Q-46 30 -52 2Z', body, {
     sh: 20,
@@ -395,25 +396,27 @@ export function spiderDrone(pen: Pen, x: number, y: number, s: number, o: { flip
   out += lp.form('M18 -20Q40 -24 54 -8Q56 12 40 18Q20 18 18 -20Z', '#141220', { line: 2.2 });
   out += lp.glow(38, -2, 34, '#ff3a4c', 0.8);
   out += `<circle cx="40" cy="-4" r="7" fill="#ff3a4c"/><circle cx="28" cy="6" r="4.5" fill="#ff3a4c"/><circle cx="48" cy="9" r="4" fill="#ff3a4c"/><circle cx="38" cy="-7" r="2.4" fill="#ffd0d0"/>`;
-  out += lp.brushes(near, INK, [0.05, 0.4]) + lp.brushes(near.map(([p, w]) => [p, w * 0.45] as [P[], number]), '#5a5670', [0.1, 0.5]);
+  if (legs) out += lp.brushes(near, INK, [0.05, 0.4]) + lp.brushes(near.map(([p, w]) => [p, w * 0.45] as [P[], number]), '#5a5670', [0.1, 0.5]);
   return at(x, y, s, out, o.flip, o.rot ?? 0);
 }
 
 /**
  * Brennus's snare drone: a bigger spider-drone with a cage of red-glowing bars hanging under it, and
- * `inside` (drawn in the cage's coordinates: the cage's centre is at (0, 100)) between the back and
- * front bars. Centred on the drone's body; the cage hangs about 200 below at scale 1.
+ * `inside` (drawn in the cage's coordinates: the cage's centre is at (0, 108), about 120 across inside)
+ * between the back and front bars. The drone flies at (x, y - 40 * s); the cage hangs below (x, y).
  */
 export function snareDrone(pen: Pen, x: number, y: number, s: number, inside = '', o: { rot?: number } = {}): string {
   const lp = pen.local(false, o.rot ?? 0);
   const red = '#ff4a5a';
+  // The cage: a dome-topped barrel of bars from y 40 to 176, 128 across.
   const bars = (xs: number[], w: number, color: string, op = 1) =>
     lp.brushes(
       xs.map((bx): [P[], number] => [
         [
-          [bx * 0.86, 40],
-          [bx, 100],
-          [bx * 0.9, 162],
+          [bx * 0.7, 34],
+          [bx, 70],
+          [bx, 130],
+          [bx * 0.94, 172],
         ],
         w,
       ]),
@@ -422,20 +425,20 @@ export function snareDrone(pen: Pen, x: number, y: number, s: number, inside = '
       op,
     );
   let out = '';
-  // Chains from the drone to the cage's top ring.
+  // Chains from the drone to the cage's top.
   out += lp.brushes(
     [
       [
         [
-          [-30, 20],
-          [-48, 40],
+          [-24, -10],
+          [0, 30],
         ],
         6,
       ],
       [
         [
-          [30, 20],
-          [48, 40],
+          [24, -10],
+          [0, 30],
         ],
         6,
       ],
@@ -443,17 +446,17 @@ export function snareDrone(pen: Pen, x: number, y: number, s: number, inside = '
     INK,
     [0.05, 0.05],
   );
-  // The back of the cage: its far bars and rings, dimmer.
-  out += `<path d="M-56 40A56 12 0 0 1 56 40" fill="none" stroke="${INK}" stroke-width="8"/>`;
-  out += bars([-30, 0, 30], 9, INK) + bars([-30, 0, 30], 3.6, mix(red, '#3a1020', 0.4));
-  out += lp.glow(0, 100, 120, red, 0.35);
+  // The back of the cage: its far bars, dimmer.
+  out += bars([-40, 0, 40], 8, INK) + bars([-40, 0, 40], 3.4, mix(red, '#3a1020', 0.4));
+  out += lp.glow(0, 108, 120, red, 0.35);
   out += inside;
-  // The front of the cage.
-  out += bars([-54, -18, 18, 54], 12, INK) + bars([-54, -18, 18, 54], 5, red) + bars([-50, -14, 22, 58], 1.6, '#ffd0d6', 0.8);
-  out += `<path d="M-56 40A56 12 0 0 0 56 40" fill="none" stroke="${INK}" stroke-width="10"/><path d="M-56 40A56 12 0 0 0 56 40" fill="none" stroke="${red}" stroke-width="4"/>`;
-  out += lp.form('M-54 154Q0 182 54 154L50 170Q0 196 -50 170Z', '#3a3648', { sh: 8, line: 2.6, rim: 1.6 });
-  out += lp.glow(0, 166, 60, red, 0.45, 20);
-  out += spiderDrone(lp, 0, 0, 1.25, { legs: 'carry' });
+  // The front of the cage, its rings and its base.
+  out += bars([-64, -28, 28, 64], 10, INK) + bars([-64, -28, 28, 64], 4.4, red) + bars([-60, -24, 32, 68], 1.4, '#ffd0d6', 0.8);
+  for (const ry of [70, 130]) out += `<path d="M-66 ${ry}Q0 ${ry + 16} 66 ${ry}" fill="none" stroke="${INK}" stroke-width="9"/><path d="M-66 ${ry}Q0 ${ry + 16} 66 ${ry}" fill="none" stroke="${red}" stroke-width="3.6"/>`;
+  out += lp.form('M-26 34Q0 20 26 34L20 42Q0 34 -20 42Z', '#3a3648', { line: 2.4 });
+  out += lp.form('M-64 170Q0 192 64 170L58 186Q0 208 -58 186Z', '#3a3648', { sh: 8, line: 2.6, rim: 1.6 });
+  out += lp.glow(0, 182, 70, red, 0.45, 22);
+  out += spiderDrone(lp, 0, -40, 1.25, { legs: 'none' });
   return at(x, y, s, out, false, o.rot ?? 0);
 }
 
@@ -626,22 +629,32 @@ export function banner(pen: Pen, x: number, y: number, w: number, h: number, col
 export function armourShard(pen: Pen, x: number, y: number, s: number, rot: number, seed = 1): string {
   const rand = rng(seed);
   const lp = pen.local(false, rot);
+  // An angular plate: a smooth outer edge with thorns, and a jagged broken edge on the right.
   const pts: P[] = [
-    [-60, 10],
-    [-46, -18],
-    [-10, -30],
-    [30, -26],
-    [58, -6],
-    [50, 14],
-    [10, 22],
-    [-30, 22],
+    [-64, 16],
+    [-58, -10],
+    [-30, -30],
+    [10, -34],
+    [40, -26],
+    [34, -12],
+    [52, -4],
+    [36, 6],
+    [48, 18],
+    [20, 16],
+    [-20, 24],
   ];
-  const thorns = [0.15, 0.35, 0.55, 0.75].map((t): string => {
-    const i = Math.floor(t * 4) + 1;
-    const p = lerp(pts[i], pts[i + 1], 0.5);
-    const h = 18 + rand() * 16;
-    return lp.form(dPoly([add(p, [-8, 4]), add(p, [rand() * 10 - 5, -h]), add(p, [8, 4])]), '#2a1e2a', { sh: 5, line: 2.2, rim: 1.6 });
+  const thorns = [
+    [1, 2],
+    [2, 3],
+    [3, 4],
+  ].map(([i, j]): string => {
+    const p = lerp(pts[i], pts[j], 0.5);
+    const h = 20 + rand() * 18;
+    return lp.form(dPoly([add(p, [-9, 6]), add(p, [rand() * 8 - 10, -h]), add(p, [9, 6])]), '#3a3048', { sh: 6, line: 2.2, rim: 1.6 });
   });
-  const seam = lp.brush([[-40, 2], [-6, -10], [34, -6]], 5, '#7a1a24', [0.2, 0.2], 0.9);
-  return at(x, y, s, thorns.join('') + lp.form(dSmooth(pts), '#2a1e2a', { sh: 16, hatch: 2, line: 2.8, rim: 2.2, inner: seam }), false, rot);
+  const inner =
+    lp.brush([[-50, 8], [-20, -8], [24, -14]], 6, '#9a2030', [0.2, 0.2], 0.9) +
+    lp.brush([[-46, -6], [-16, -22], [16, -26]], 4, '#8a8aa8', [0.3, 0.4], 0.6) +
+    `<path d="M-6 -30L0 20" stroke="${INK}" stroke-width="2.4" opacity=".6"/>`;
+  return at(x, y, s, thorns.join('') + lp.form(dPoly(pts), '#3a3048', { sh: 18, hatch: 2, line: 2.8, rim: 2.2, inner }), false, rot);
 }
