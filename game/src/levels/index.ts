@@ -14,6 +14,7 @@ import { harpies } from './harpies';
 import { rocks } from './rocks';
 import { rockies } from './rockies';
 import { security } from './security';
+import { sirens } from './sirens';
 import { snow } from './snow';
 import { volcano } from './volcano';
 
@@ -21,9 +22,9 @@ import { volcano } from './volcano';
  * Every playable level in play order: the ship's six decks, the six regions of Gaia Nova, then the
  * chapter 3 levels built so far (the rest of chapter 3 is listed in `CHAPTER_PLAN`).
  */
-export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine', 'reef'];
+export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine', 'sirens', 'reef'];
 
-export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine, reef };
+export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine, sirens, reef };
 
 /** Chapter 1 is the colony ship, chapter 2 the planet Gaia Nova, chapter 3 the Argonauts' voyage to Colchis. */
 export type Chapter = 1 | 2 | 3;

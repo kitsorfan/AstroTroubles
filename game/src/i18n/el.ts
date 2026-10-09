@@ -9,6 +9,7 @@ import { EL_JUNGLE } from './el/jungle';
 import { EL_PLAINS } from './el/plains';
 import { EL_ROBOTS } from './el/robots';
 import { EL_ROCKS } from './el/rocks';
+import { EL_SIRENS } from './el/sirens';
 import { EL_ROCKIES } from './el/rockies';
 import { EL_SNOW } from './el/snow';
 import { EL_VOLCANO } from './el/volcano';
@@ -675,5 +676,6 @@ export const EL: Record<string, string> = {
   ...EL_ARSENAL,
   ...EL_HEROES,
   ...EL_BRENNUS3,
+  ...EL_SIRENS,
   ...EL_REEF,
 };

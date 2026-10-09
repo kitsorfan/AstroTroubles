@@ -60,6 +60,7 @@ export const FLYOVER: Record<DeckId, string> = {
   reef: 'The strait of <b>Scylla’s Reef</b>. Coral, sunshine and turquoise water... between a great dark rock and a whirlpool that never stops turning.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  sirens: 'The <b>Sirens’ Sea</b>. Deep under the waves of a water moon lies a sunken Gardener gate... and Aeëtes’s gold buoys are singing a very strange song.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -154,6 +155,16 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'brennus', text: 'A few dents. My robots and I are flying home. You fly to Colchis. The map says the way goes through the Sirens’ Sea.' },
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
+  ],
+  // The Dolphin surfaces at a strait of coral and rock: Scylla's Reef, on foot with Atalanta, is next.
+  sirens: [
+    { who: 'captain', text: 'Dolphin, you are back on the surface! Hold still, the Argo is coming to scoop you up.' },
+    { who: 'atalanta', text: 'Jason! You beat a giant singing ORGAN, and I missed it? Next time I am coming in the sub.' },
+    { who: 'iris', text: 'Look ahead: a strait between a tall rock and a great whirlpool. The coral there grows like a city.' },
+    { who: 'hypatia', text: 'Brennus’s map says that reef is the way to Colchis. But someone has built something very big on that rock...' },
+    { who: 'bolt', text: 'Is it another organ? Please say it is not another organ. My singing voice needs a rest.' },
+    { who: 'jason', text: 'Then this time we go on foot. Atalanta, ready to run?' },
+    { who: 'atalanta', text: 'I was BORN ready.' },
   ],
   // Through the strait at last: next comes Talos's bronze island.
   reef: [
@@ -255,6 +266,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  organ: { sub: 'Aeëtes’s singing trap · the loudest thing under the sea', color: '#ff6fb0' },
   scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
 };
 
@@ -276,6 +288,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  piranha: { name: 'Piranha Drone', tip: 'Little gold fish robots that swim in a school and nibble the hull. PING stuns the whole school, then torpedo them!' },
   crab: { name: 'Crab-Drone', tip: 'Its big claws block shots from the front. When it snaps, the claws hang open: blast it then, or from the side!' },
   jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },

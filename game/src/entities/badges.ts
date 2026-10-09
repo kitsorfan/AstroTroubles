@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'piranha' | 'crab' | 'jelly';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,7 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  piranha: '#ffb020',
   crab: '#ff9a4a',
   jelly: '#ff8ad8',
 };
@@ -292,6 +293,39 @@ function glyph(g: G, kind: BadgeKind) {
       g.fillStyle = '#e0142a';
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'piranha': {
+      // A round little fish with a forked tail, a big underbite full of teeth and one red eye.
+      g.beginPath();
+      g.ellipse(58, 64, 34, 28, 0, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.moveTo(86, 64);
+      g.lineTo(116, 40);
+      g.lineTo(106, 64);
+      g.lineTo(116, 88);
+      g.closePath();
+      g.fill();
+      g.fillStyle = 'rgba(12,8,20,0.88)';
+      g.beginPath();
+      g.moveTo(24, 66);
+      g.lineTo(52, 72);
+      g.lineTo(26, 86);
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#fff';
+      for (let i = 0; i < 3; i++) {
+        g.beginPath();
+        g.moveTo(30 + i * 8, 70);
+        g.lineTo(34 + i * 8, 78);
+        g.lineTo(38 + i * 8, 71);
+        g.fill();
+      }
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(46, 52, 7, 0, Math.PI * 2);
       g.fill();
       break;
     }

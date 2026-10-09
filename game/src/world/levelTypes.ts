@@ -1,16 +1,17 @@
 import type { PuzzleKind } from '../game/puzzles';
 import type { PanelId } from '../ui/panels/ids';
 import type { FlightCourse } from '../vehicles/course';
+import type { DiveCourse } from '../vehicles/sub/dive';
 
 /**
  * Chapter 1 is the six decks of the colony ship; chapter 2 is six regions of the planet Gaia Nova;
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
- * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
+ * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea); the mech suit is planned.
  */
 export type VehicleKind = 'argo' | 'sub' | 'mech';
 export type ThemeId = DeckId;
@@ -26,7 +27,7 @@ export type HeroId = 'jason' | 'atalanta' | 'brennus';
  * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
  */
 export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -261,6 +262,8 @@ export interface LevelDef {
   vehicle?: VehicleKind;
   /** The Argo's flight course (for `vehicle: 'argo'`). */
   flight?: FlightCourse;
+  /** The little sub Dolphin's dive course (for `vehicle: 'sub'`). */
+  dive?: DiveCourse;
   /**
    * Heroes the player can switch between on this level, the first one starting (default: just
    * Jason). With two or more, the HUD shows the switch button.

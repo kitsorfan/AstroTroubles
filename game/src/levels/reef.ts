@@ -22,7 +22,7 @@ import type { LevelDef } from '../world/levelTypes';
  */
 export const reef: LevelDef = {
   id: 'reef',
-  index: 16,
+  index: 17,
   name: 'Scylla’s Reef',
   subtitle: 'Between the rock and the whirlpool',
   music: 'reef',

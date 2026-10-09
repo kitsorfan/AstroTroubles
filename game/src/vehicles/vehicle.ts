@@ -59,4 +59,13 @@ export interface VehicleHud {
   prompt: string | null;
   /** The prompt is urgent (flashing gold, e.g. "BOOST NOW!"). */
   urgent: boolean;
+  /** What the BOOST button says right now, if it does something else on this vehicle (the sub's PING, or SING). */
+  button?: string;
+  /**
+   * A rhythm strip (the sub's counter-song): the coming beats as seconds from now, and the good notes
+   * so far out of those needed. Tap the button as a beat reaches the ring.
+   */
+  song?: { beats: number[]; got: number; need: number } | null;
+  /** Show the course progress bar (default yes; hidden while a boss bar is up). */
+  track?: boolean;
 }
