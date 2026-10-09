@@ -153,7 +153,7 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'atalanta', text: 'Flying off alone without telling anyone? Who would do something so silly? ...Don’t look at me like that.' },
     { who: 'jason', text: 'Then we keep going, and we listen for his signal. Hang on, General!' },
   ],
-  // Brennus's map reaches the Argo (the next level, the Sirens' Sea, is still being built).
+  // Brennus's map reaches the Argo: the way to Colchis goes under the Sirens' Sea.
   mine: [
     { who: 'captain', text: 'Argo to everyone: a message is coming in. From... the Gorgon’s old lifeboat?' },
     { who: 'brennus', text: 'Argus. It is Brennus. I am sending you a map: the way into the Fleece vault on Colchis. Aeëtes was hiding it in his desk.' },

@@ -25,7 +25,7 @@ import { volcano } from './volcano';
 
 /**
  * Every playable level in play order: the ship's six decks, the six regions of Gaia Nova, then the
- * chapter 3 levels built so far (the rest of chapter 3 is listed in `CHAPTER_PLAN`).
+ * ten levels of chapter 3 (the Argonauts), which end the game.
  */
 export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine', 'sirens', 'reef', 'forge', 'labyrinth', 'stand', 'garden', 'fleece'];
 
