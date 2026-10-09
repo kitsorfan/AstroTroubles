@@ -59,6 +59,7 @@ export const FLYOVER: Record<DeckId, string> = {
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  labyrinth: '<b>Medusa’s Labyrinth</b>. Under the gate of Colchis winds a maze of green stone... and in the dark, a great green eye is opening.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -154,6 +155,15 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // Out of the labyrinth: Aeëtes's gold fleet arrives over Colchis, and Brennus comes to hold the sky-dock.
+  labyrinth: [
+    { who: 'halcyon', text: 'Argonauts, the labyrinth gate is open! The Argo can fly straight up the old shaft to the Gardeners’ sky-dock.' },
+    { who: 'halcyon', text: 'But... I count twenty gold ships coming round the moon. Aeëtes has brought his whole fleet.' },
+    { who: 'aeetes', text: 'You switched off my MEDUSA? Then I will close the sky myself. Nobody reaches the garden but ME!' },
+    { who: 'brennus', text: 'Argus. Brennus here. My lifeboat is right behind you, and my old robots are with me.' },
+    { who: 'brennus', text: 'I will hold the sky-dock. You fly through to the garden. Do not argue, Captain. Just fly.' },
+    { who: 'atalanta', text: 'Holding a whole dock against a whole fleet? Okay. I take back everything I said about grumpy generals.' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +255,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  medusa: { sub: 'Aeëtes’s security AI · one look turns you to stone', color: '#7dff9a' },
 };
 
 /**
@@ -265,6 +276,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  coil: { name: 'Cable Snake', tip: 'It rears up and hisses, then LUNGES straight ahead. Step aside, then blast it while it lies tangled!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

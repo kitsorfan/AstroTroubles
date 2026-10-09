@@ -39,6 +39,9 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // Medusa's Labyrinth: the Mirror Shield in the Gardeners' shrine, and MEDUSA asleep by the open gate.
+  'ch3-mirror',
+  'ch3-medusa',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

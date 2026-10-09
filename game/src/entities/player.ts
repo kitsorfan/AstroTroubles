@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, GEAR, GRAPPLE, HERO_SWITCH, OUTDOOR, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GAZE, GEAR, GRAPPLE, HERO_SWITCH, MIRROR, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
@@ -16,6 +16,7 @@ import { AtalantaMoves } from './heroes/atalanta';
 import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
 import { HEROES, heroDev, heroRoster, nextHero, switchBlock, type SwitchBlock } from './heroes/heroes';
+import { makeMirrorShield, stoneSkin, type MirrorShieldModel } from './labyrinth/stone';
 import { JasonFx } from './moveFx';
 import { SPREAD, WEAPONS, equippedWeapon, nextWeapon, ownedWeapons, type WeaponId } from './weapons';
 
@@ -24,6 +25,7 @@ const POUND_HANG = 0.18;
 
 const tmp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
+const MIRROR_N = new THREE.Vector3();
 
 /**
  * The player: one body, one set of hearts, armor and spins, and whichever hero is in control. Jason's
@@ -115,6 +117,17 @@ export class Player {
   sinceHurt = 99;
   /** Lets a cutscene pose the playing hero's model (called after the normal animation each frame). */
   pose: ((m: HeroModel, dt: number) => void) | null = null;
+  /** Jason's Mirror Shield (from Medusa's Labyrinth on): raised while SPIN is held on the ground. */
+  mirrorUp = false;
+  /** Seconds SPIN has been held on the ground so far (a tap spins, a hold raises the shield), or -1. */
+  private spinHold = -1;
+  private mirror: MirrorShieldModel | null = null;
+  private mirrorFlash = 0;
+  private glintT = 0;
+  /** MEDUSA's gaze: seconds each hero has left as stone, and then safe from the next gaze. */
+  private stoneT = new Map<HeroId, number>();
+  private stoneSafe = new Map<HeroId, number>();
+  private stoneHinted = false;
 
   constructor(
     private world: World,
@@ -261,6 +274,8 @@ export class Player {
     const b = this.body;
     const was = this.hero;
     this.cancelCharge();
+    this.mirrorUp = false;
+    this.spinHold = -1;
     this.ata?.reset();
     this.bren?.reset();
     // Jason reloads while he follows along, so his clip is full when he's back.
@@ -491,9 +506,115 @@ export class Player {
     return this.dashT > 0 || (this.ata?.sliding ?? false) || (this.bren?.charging ?? false);
   }
 
-  /** True if General Brennus's raised shield faces a hit coming from (x, z): shots bounce off it. */
+  /** True if General Brennus's raised shield (or Jason's Mirror Shield) faces a hit coming from (x, z): shots bounce off it. */
   shieldBlocks(x: number, z: number): boolean {
+    if (this.hero === 'jason' && this.mirrorUp) {
+      const dx = x - this.body.x;
+      const dz = z - this.body.z;
+      const d = Math.hypot(dx, dz);
+      return d < 0.05 || (dx * Math.sin(this.facing) + dz * Math.cos(this.facing)) / d > 0.3;
+    }
     return this.hero === 'brennus' && !!this.bren?.blocks(x, z);
+  }
+
+  /** A hit blocked by a shield: Brennus's clangs, Jason's Mirror Shield rings and flashes. */
+  clang() {
+    if (this.hero === 'brennus') {
+      this.bren?.clang();
+      return;
+    }
+    this.mirrorFlash = 1;
+    const b = this.body;
+    const f = this.facing;
+    this.world.particles.emit(b.x + Math.sin(f) * 0.8, b.y + 1.1, b.z + Math.cos(f) * 0.8, { count: 12, color: '#bff4ff', speed: 5, life: 0.3, size: 0.4 });
+    audio.play('shield', 1.6);
+  }
+
+  /**
+   * The facing of Jason's raised Mirror Shield as a flat unit vector (gaze beams that hit it from the
+   * front bounce off), or null when it isn't up.
+   */
+  mirrorNormal(): THREE.Vector3 | null {
+    if (this.hero !== 'jason' || !this.mirrorUp || this.stoneLeft() > 0) return null;
+    return MIRROR_N.set(Math.sin(this.facing), 0, Math.cos(this.facing));
+  }
+
+  /** A beam is bouncing off the Mirror Shield: it shines (and rings now and then). */
+  mirrorGlint() {
+    this.mirrorFlash = Math.max(this.mirrorFlash, 0.8);
+    if (this.glintT > 0) return;
+    this.glintT = 0.45;
+    audio.play('charged', 2.2, 0.35);
+  }
+
+  /** Raises the Mirror Shield (or, with `up` false, just straps it on Jason's back). */
+  private raiseMirror(up = true) {
+    if (up) {
+      this.mirrorUp = true;
+      audio.play('shield', 1.3);
+    }
+    if (!this.mirror) {
+      this.mirror = makeMirrorShield();
+      this.mirror.group.position.set(0, 1.05, 0.5);
+      this.jason.body.add(this.mirror.group);
+    }
+  }
+
+  /** Seconds the hero (the playing one by default) has left as stone. */
+  stoneLeft(id: HeroId = this.hero): number {
+    return this.stoneT.get(id) ?? 0;
+  }
+
+  /**
+   * MEDUSA's gaze caught the playing hero: they turn to stone for a moment (no damage), unless they
+   * only just broke free. Returns true if they were petrified.
+   */
+  petrify(): boolean {
+    const id = this.hero;
+    if (this.down || this.world.cutscene || this.zip || this.stoneT.has(id) || this.stoneSafe.has(id)) return false;
+    this.stoneT.set(id, GAZE.stone);
+    this.mirrorUp = false;
+    this.spinHold = -1;
+    this.dashT = 0;
+    this.pounding = false;
+    this.cancelCharge();
+    this.ata?.reset();
+    this.bren?.reset();
+    stoneSkin(this.model.root, true);
+    const b = this.body;
+    const w = this.world;
+    w.particles.emit(b.x, b.y + 1, b.z, { count: 24, color: '#c8d0c8', speed: 4, life: 0.6, size: 0.5, up: 1 });
+    w.rings.burst(b.x, b.y + 0.05, b.z, 2.5, '#7dff9a', 0.3);
+    audio.play('shield', 0.55);
+    haptic('medium');
+    w.shake(0.15);
+    if (!this.stoneHinted) {
+      this.stoneHinted = true;
+      w.hooks.toast(this.nextHero ? 'Turned to stone! It wears off in a moment, or tap SWITCH to play the other hero.' : 'Turned to stone! Hold still, it wears off in a moment.', 'bolt');
+    }
+    w.hooks.hud();
+    return true;
+  }
+
+  /** Counts the stone down for every hero; a hero who breaks free shakes off a shower of stone chips. */
+  private tickStone(dt: number) {
+    this.glintT -= dt;
+    for (const [id, t] of this.stoneSafe) {
+      if (t - dt <= 0) this.stoneSafe.delete(id);
+      else this.stoneSafe.set(id, t - dt);
+    }
+    for (const [id, t] of this.stoneT) {
+      if (t - dt > 0) {
+        this.stoneT.set(id, t - dt);
+        continue;
+      }
+      this.stoneT.delete(id);
+      this.stoneSafe.set(id, GAZE.safe);
+      stoneSkin(this.modelOf(id).root, false);
+      const at = this.modelOf(id).root.position;
+      this.world.particles.emit(at.x, at.y + 1, at.z, { count: 30, color: '#9aa39a', speed: 6, life: 0.6, size: 0.45, up: 3 });
+      audio.play('land', 1.4);
+    }
   }
 
   /**
@@ -609,8 +730,8 @@ export class Player {
       return;
     }
     if (!hazard && fromX !== undefined && fromZ !== undefined && this.shieldBlocks(fromX, fromZ)) {
-      // Brennus's shield takes it: a clang, and he slides back a little.
-      this.bren?.clang();
+      // Brennus's shield (or Jason's Mirror Shield) takes it: a clang, and a little slide back.
+      this.clang();
       const d = Math.hypot(this.body.x - fromX, this.body.z - fromZ) || 1;
       this.vx = ((this.body.x - fromX) / d) * 3;
       this.vz = ((this.body.z - fromZ) / d) * 3;
@@ -661,6 +782,8 @@ export class Player {
     this.safe.set(x, y, z);
     this.pounding = false;
     this.dashT = 0;
+    this.mirrorUp = false;
+    this.spinHold = -1;
     this.ata?.reset();
     this.bren?.reset();
     this.follower?.placeNear(x, y, z, this.facing);
@@ -713,8 +836,12 @@ export class Player {
     this.updateArmor(dt);
     this.arrows?.update(dt);
     this.follower?.update(dt, this);
+    this.tickStone(dt);
+    this.mirrorFlash = Math.max(0, this.mirrorFlash - dt * 3);
     if (this.down || w.cutscene) {
       this.cancelCharge();
+      this.mirrorUp = false;
+      this.spinHold = -1;
       this.zip = null;
       this.ata?.reset();
       this.bren?.reset();
@@ -734,6 +861,15 @@ export class Player {
     if (this.mudT <= 0) this.sink = Math.max(0, this.sink - dt * 2);
 
     if (input.take('swap')) this.switchHero();
+    // Turned to stone by MEDUSA's gaze: frozen in place (gravity still pulls) until it wears off,
+    // though the player can switch to the other hero meanwhile.
+    if (this.stoneLeft() > 0) {
+      this.vx = 0;
+      this.vz = 0;
+      for (const k of ['jump', 'spin', 'dash', 'shoot', 'weapon'] as const) input.take(k);
+      if (this.stepBody(dt, () => {})) this.placeModel(this.model, dt, this.sink * 0.35);
+      return;
+    }
     if (this.ata && this.hero === 'atalanta') {
       this.ata.update(dt, input);
       return;
@@ -749,7 +885,7 @@ export class Player {
     const ground = b.grounded ? b.ground : null;
     const onIce = ground?.kind === 'ice';
     const accel = b.grounded ? (onIce ? PLAYER.iceAccel : PLAYER.accel) : PLAYER.airAccel;
-    const speed = PLAYER.speed * (this.carrying ? 0.85 : 1) * (this.mudT > 0 ? OUTDOOR.sandSpeed : 1);
+    const speed = (this.mirrorUp ? MIRROR.speed : PLAYER.speed) * (this.carrying ? 0.85 : 1) * (this.mudT > 0 ? OUTDOOR.sandSpeed : 1);
 
     if (this.dashT > 0) {
       this.dashT -= dt;
@@ -763,7 +899,10 @@ export class Player {
       this.vx = 0;
       this.vz = 0;
     } else {
+      const before = this.facing;
       this.steer(dt, wx, wz, mag, speed, accel);
+      // Behind the Mirror Shield he turns slowly, so it's easy to aim a bounced beam.
+      if (this.mirrorUp && mag > 0.1) this.facing = dampAngle(before, Math.atan2(wx, wz), MIRROR.turn, dt);
     }
 
     // Timers.
@@ -828,9 +967,11 @@ export class Player {
     }
 
     // Spin (ground, from a set of three) / ground pound (air, always available for switches).
+    // With the Mirror Shield, a tap of SPIN on the ground still spins, and holding it raises the shield.
     if (input.take('spin') && !this.pounding) {
       if (b.grounded || this.airTime < 0.05) {
-        this.startSpin();
+        if (this.has('mirror')) this.spinHold = 0;
+        else this.startSpin();
       } else if (b.y > this.groundBelow() + 0.9) {
         this.pounding = true;
         this.poundHang = POUND_HANG;
@@ -838,6 +979,17 @@ export class Player {
         audio.play('spin', 1.4);
       }
     }
+    if (this.spinHold >= 0) {
+      this.spinHold += dt;
+      if (!input.isHeld('spin')) {
+        this.spinHold = -1;
+        this.startSpin();
+      } else if (this.spinHold >= MIRROR.hold) {
+        this.spinHold = -1;
+        this.raiseMirror();
+      }
+    }
+    if (this.mirrorUp && (!input.isHeld('spin') || !b.grounded)) this.mirrorUp = false;
     this.tickSpins(dt);
     if (this.pounding) {
       if (this.poundHang > 0) {
@@ -850,7 +1002,11 @@ export class Player {
 
     // Blaster: tap to shoot (limited clip, then reload); hold to charge a big fireball. X / the weapon button switches weapons.
     if (input.take('weapon')) this.cycleWeapon();
-    this.updateBlaster(dt, input);
+    // Both hands are busy behind the Mirror Shield.
+    if (this.mirrorUp) {
+      this.cancelCharge();
+      input.take('shoot');
+    } else this.updateBlaster(dt, input);
 
     const ok = this.stepBody(dt, (impact) => {
       if (this.pounding) {
@@ -1134,6 +1290,24 @@ export class Player {
     m.armL.rotation.z = this.gliding ? -1.3 : air ? -0.3 : 0.05;
     m.armR.rotation.z = this.gliding ? 1.3 : 0;
     m.armR.rotation.x = this.shootPose > 0 || this.charge > 0 ? -1.5 : air ? -2.4 : s * 0.7 * walk;
+    // The Mirror Shield: slung on his back, or held out in front while SPIN is held.
+    if (!this.mirror && this.has('mirror')) this.raiseMirror(false);
+    if (this.mirror) {
+      const g = this.mirror.group;
+      if (this.mirrorUp) {
+        m.armL.rotation.set(-1.4, 0.35, -0.1);
+        m.armR.rotation.set(-1.2, -0.35, 0.1);
+        g.position.set(0, 1.05, damp(g.position.z, 0.55, 14, dt));
+        g.rotation.set(0, 0, 0);
+        g.scale.setScalar(1);
+      } else {
+        g.position.set(0, 1.12, -0.3);
+        g.rotation.set(0.15, Math.PI, 0);
+        g.scale.setScalar(0.8);
+      }
+      this.mirror.face.emissiveIntensity = 0.3 + this.mirrorFlash * 2.5;
+      this.mirror.glow.material.opacity = this.mirrorFlash * 0.9;
+    }
     m.body.position.y = air ? 0 : Math.abs(s) * 0.07 * walk + Math.sin(this.phase * 0.5) * 0.01;
     // Ground pound: a quick front flip while hanging in the air, then feet-first down.
     const flip = this.poundHang > 0 ? (1 - this.poundHang / POUND_HANG) * Math.PI * 2 : 0.2;

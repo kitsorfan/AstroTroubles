@@ -763,6 +763,13 @@ export function makeHoloFigure(who: HoloSpeaker, color: string): { group: THREE.
     add(new THREE.SphereGeometry(0.018, 8, 6), 0, 1.88, 0.125);
     for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.12, 0.018, 0.1), sx * 0.19, 1.49, 0);
     for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(0.012, 6, 4), 0.03, 1.02 + i * 0.1, 0.13);
+  } else if (who === 'aeetes') {
+    // Aeëtes: slicked-back hair, a long coat with wide lapels, and rings that catch the light.
+    const hair = add(new THREE.SphereGeometry(0.122, 22, 14, 0, Math.PI * 2, 0, 1.2), 0, 1.76, -0.02);
+    hair.scale.set(0.95, 1.02, 1.1);
+    const coat = add(lathe([[0.2, 0], [0.24, 0.3], [0.22, 0.62], [0.18, 0.7]]), 0, 0.55, 0);
+    coat.scale.z = 0.72;
+    for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.02, 6, 4), sx * 0.3, 1.1, 0.06);
   } else {
     // Hair drawn back into a bun, and the security vest over the uniform.
     const hair = add(new THREE.SphereGeometry(0.122, 22, 14, 0, Math.PI * 2, 0, 1.45), 0, 1.755, -0.012);

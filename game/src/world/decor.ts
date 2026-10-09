@@ -45,6 +45,7 @@ const HEIGHT: Record<DecorKind, number> = {
   thorns: 1.6,
   banner: 3.6,
   pillar: 3.4,
+  statue: 2.4,
 };
 
 function colored(geo: THREE.BufferGeometry, color: string, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1): THREE.BufferGeometry {
@@ -335,6 +336,27 @@ function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.
       g.push(colored(S(0.2, 8), '#ffe0f4', 0, 1.35));
       r = 0.4;
       break;
+    case 'statue': {
+      // One of Aeëtes's robots, caught by MEDUSA's gaze mid-step and turned to mossy stone: arms up in surprise.
+      const st = '#8e9a8c';
+      const dk = '#6c7a6c';
+      s.push(colored(B(1.3, 0.3, 1.1), dk, 0, 0.15));
+      s.push(colored(B(0.26, 0.8, 0.3), st, -0.22, 0.7, 0.12, -0.3));
+      s.push(colored(B(0.26, 0.8, 0.3), st, 0.22, 0.7, -0.1, 0.25));
+      s.push(colored(B(0.8, 0.75, 0.55), st, 0, 1.45));
+      s.push(colored(S(0.36, 10), st, 0, 2.08, 0.04, 0, 0, 0, 1, 0.9, 1));
+      s.push(colored(C(0.03, 0.03, 0.35, 5), dk, 0.12, 2.5, 0, 0, 0, 0.3));
+      s.push(colored(B(0.2, 0.7, 0.22), st, -0.55, 1.95, 0.05, 0, 0, 0.5));
+      s.push(colored(B(0.2, 0.7, 0.22), st, 0.55, 1.95, 0.05, 0, 0, -0.5));
+      // Moss in the cracks.
+      s.push(colored(S(0.18, 6), '#5f8a4a', -0.3, 1.75, 0.25, 0, 0, 0, 1.4, 0.5, 0.6));
+      s.push(colored(S(0.22, 6), '#5f8a4a', 0.4, 0.32, 0.4, 0, 0, 0, 1.4, 0.4, 0.8));
+      // Its eyes still glow, very faintly.
+      g.push(colored(S(0.07, 6), '#7dff9a', -0.13, 2.1, 0.33));
+      g.push(colored(S(0.07, 6), '#7dff9a', 0.13, 2.1, 0.33));
+      r = 0.6;
+      break;
+    }
     case 'screen':
       s.push(colored(C(0.08, 0.1, 2, 8), '#3a4458', 0, 1));
       s.push(colored(B(2.2, 1.3, 0.12), '#2a3242', 0, 2.3));

@@ -5,7 +5,7 @@ import { CHAPTER_DECKS, FOOT_LEVELS, LEVELS, LEVEL_ORDER, chapterSize, isFinale 
 import { parseLevel } from '../src/world/grid';
 import type { Ability } from '../src/world/levelTypes';
 
-const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
+const ALL: Ability[] = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple', 'mirror'];
 // The levels Jason walks; the flight levels have their own checks in chapter3.test.ts.
 const parsed = FOOT_LEVELS.map((id) => parseLevel(LEVELS[id]));
 

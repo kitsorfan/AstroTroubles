@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'coil';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,7 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  coil: '#7dff9a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -291,6 +292,33 @@ function glyph(g: G, kind: BadgeKind) {
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
       g.fill();
+      break;
+    }
+    case 'coil': {
+      // A cable snake rearing up in an S, with a wide head, two green eyes and a forked tongue.
+      g.lineWidth = 13;
+      g.beginPath();
+      g.moveTo(26, 104);
+      g.bezierCurveTo(70, 112, 104, 96, 84, 76);
+      g.bezierCurveTo(64, 58, 40, 70, 52, 46);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(64, 36, 22, 15, -0.35, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = COLORS.coil;
+      g.beginPath();
+      g.arc(56, 32, 5, 0, Math.PI * 2);
+      g.arc(73, 28, 5, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = '#ff4f7a';
+      g.lineWidth = 3.5;
+      g.beginPath();
+      g.moveTo(82, 40);
+      g.lineTo(96, 46);
+      g.lineTo(92, 40);
+      g.moveTo(96, 46);
+      g.lineTo(98, 52);
+      g.stroke();
       break;
     }
   }

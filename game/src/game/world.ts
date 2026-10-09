@@ -26,6 +26,7 @@ import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { GazeSentry, LightCrystal, MirrorPylon } from '../entities/labyrinth/gaze';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -496,6 +497,15 @@ export class World {
         break;
       case 'plate':
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'gazer':
+        this.addEntity(new GazeSentry(this, id, cx, cz, h, spec.dir, spec.sweep, spec.period, spec.offset));
+        break;
+      case 'mirror':
+        this.addEntity(new MirrorPylon(this, id, cx, cz, h, spec.turn));
+        break;
+      case 'crystal':
+        this.addEntity(new LightCrystal(this, id, cx, cz, h, spec.flag));
         break;
       case 'decor':
         this.decorItems.push({

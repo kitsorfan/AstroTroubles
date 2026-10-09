@@ -166,7 +166,7 @@ export class Shots {
         const reach = pl.body.r + s.radius + (pl.spinning ? 0.9 : shielded ? 0.7 : 0);
         if (dx * dx + dz * dz < reach * reach && Math.abs(dy) < 1.4) {
           if (pl.spinning || shielded) {
-            if (shielded) pl.bren?.clang();
+            if (shielded) pl.clang();
             const back = tmp.copy(s.vel).setY(0).multiplyScalar(-1).normalize();
             this.pop(s, '#bff4ff');
             this.fire('player', p.clone(), back.clone(), PLAYER.shotSpeed, 1 + (w.save.upgrades.blaster ?? 0));

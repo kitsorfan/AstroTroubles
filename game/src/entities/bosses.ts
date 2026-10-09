@@ -21,6 +21,7 @@ import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
 import { Aello } from './isles/aello';
+import { Medusa } from './labyrinth/medusa';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 export { Boss };
@@ -1572,6 +1573,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Aello(world, id, cx, cz, h);
     case 'excavator':
       return new Excavator(world, id, cx, cz, h);
+    case 'medusa':
+      return new Medusa(world, id, cx, cz, h);
   }
 }
 

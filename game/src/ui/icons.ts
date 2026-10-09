@@ -359,6 +359,31 @@ const ROGUE = `<svg viewBox="0 0 80 80">
     ${glass('pr', '#ff3a4c')}
   </svg>`;
 
+/** MEDUSA, Aeëtes's security AI: a gold mask with one great green eye and a crown of cable snakes. */
+const MEDUSA = `<svg viewBox="0 0 80 80">
+    ${screen('pm', '#7dff9a')}
+    <defs>
+      <radialGradient id="pmG" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2b8"/><stop offset=".5" stop-color="#f0c25a"/><stop offset="1" stop-color="#9a6a1a"/></radialGradient>
+      <radialGradient id="pmI" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#e6ffe8"/><stop offset=".45" stop-color="#5dff9a"/><stop offset="1" stop-color="#0e6a32"/></radialGradient>
+    </defs>
+    <g fill="none" stroke="#e8b84a" stroke-width="4.4" stroke-linecap="round">
+      <path d="M22 30Q10 24 14 12"/><path d="M30 22Q24 10 32 4"/><path d="M50 22Q56 10 48 4"/><path d="M58 30Q70 24 66 12"/><path d="M18 42Q6 44 4 34"/><path d="M62 42Q74 44 76 34"/>
+    </g>
+    <g fill="#e8b84a" stroke="#6a4a10" stroke-width=".8">
+      <ellipse cx="14" cy="12" rx="4" ry="3"/><ellipse cx="32" cy="4.5" rx="3.6" ry="3"/><ellipse cx="48" cy="4.5" rx="3.6" ry="3"/><ellipse cx="66" cy="12" rx="4" ry="3"/><ellipse cx="4.5" cy="34" rx="3.4" ry="3"/><ellipse cx="75.5" cy="34" rx="3.4" ry="3"/>
+    </g>
+    <g fill="#7dff9a"><circle cx="13" cy="11" r="1"/><circle cx="31" cy="3.6" r=".9"/><circle cx="49" cy="3.6" r=".9"/><circle cx="67" cy="11" r="1"/><circle cx="4" cy="33" r=".9"/><circle cx="76" cy="33" r=".9"/></g>
+    <path d="M40 20C55 20 63 32 62 46C61 60 52 72 40 74C28 72 19 60 18 46C17 32 25 20 40 20Z" fill="url(#pmG)" stroke="#8a5a10" stroke-width="1.2"/>
+    <path d="M24 34Q32 28 38 31M42 31Q48 28 56 34" fill="none" stroke="#8a5a10" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="40" cy="44" rx="11" ry="8.4" fill="#f2fbf4" stroke="#8a5a10" stroke-width="1.2"/>
+    <circle cx="40" cy="44" r="6.4" fill="url(#pmI)"/>
+    <rect x="38.9" y="39.4" width="2.2" height="9.2" rx="1.1" fill="#08140c"/>
+    <circle cx="37.6" cy="41.8" r="1.3" fill="#fff"/>
+    <circle cx="25.6" cy="52" r="1.8" fill="#7dff9a"/><circle cx="54.4" cy="52" r="1.8" fill="#7dff9a"/>
+    <path d="M34 62Q40 65 46 62" fill="none" stroke="#8a5a10" stroke-width="1.6" stroke-linecap="round"/>
+    ${glass('pm', '#7dff9a')}
+  </svg>`;
+
 /** Jason's wrist computer, the face on the action button while no droid is around. */
 export const WRIST_FACE = `<svg viewBox="0 0 80 80">
     <rect x="8" y="22" width="64" height="36" rx="10" fill="#3a4458" stroke="#cfd6e2" stroke-width="2.4"/>
@@ -419,6 +444,7 @@ const FACES: Record<Exclude<Speaker, 'celestia'>, string> = {
   </svg>`,
   iris: IRIS,
   rogue: ROGUE,
+  medusa: MEDUSA,
   colonist: COLONIST,
   captain: CAPTAIN,
   rosa: ROSA,
@@ -459,6 +485,7 @@ export const SPEAKER_NAME: Record<Speaker, string> = {
   glitch: 'HALCYON?!',
   iris: 'IRIS',
   rogue: 'LUX?!',
+  medusa: 'MEDUSA',
   colonist: 'Colonist',
   captain: 'Captain Argus',
   rosa: 'Aunt Rosa',
@@ -479,6 +506,7 @@ export const SPEAKER_COLOR: Record<Speaker, string> = {
   glitch: '#ff4fd8',
   iris: '#c9a8ff',
   rogue: '#ff3a4c',
+  medusa: '#7dff9a',
   colonist: '#ffd166',
   captain: '#ffd166',
   rosa: '#ff8a8a',

@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'labyrinth' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -292,6 +292,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.....x.x.....x.', s: '....x.......xxxx', h: 'x.x.x.x.x.x.x.x.' },
     lead: 'square',
     padLevel: 0.65,
+  },
+  // Medusa's Labyrinth: a sneaky tiptoe through echoing stone halls, a bell for the green crystals.
+  labyrinth: {
+    bpm: 92,
+    chords: [
+      [50, 'min'],
+      [46, 'maj'],
+      [48, 'sus'],
+      [45, 'min'],
+    ],
+    bass: '0..0..2.0..0..3.',
+    arp: '3.2.0...1.2...0.',
+    drums: { k: 'x.......x..x....', s: '....x.......x...', h: '..x...x...x...x.' },
+    lead: 'bell',
+    padLevel: 0.95,
   },
   boss: {
     bpm: 144,

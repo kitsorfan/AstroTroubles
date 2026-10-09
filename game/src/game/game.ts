@@ -87,6 +87,12 @@ const ABILITY_LINES: Record<string, Line[]> = {
     { who: 'bolt', text: 'It works over gaps, up cliffs, even across quicksand. If the ring glows bright, you can reach it.' },
     { who: 'jason', text: 'Hold on to your antenna, LUX!' },
   ],
+  mirror: [
+    { who: 'bolt', text: 'The Gardeners’ MIRROR SHIELD! It’s polished so bright, I can see all my scratches.' },
+    { who: 'bolt', text: 'HOLD the SPIN button to raise it. MEDUSA’s green gaze bounces right off it instead of turning you to stone!' },
+    { who: 'atalanta', text: 'And turn while you hold it up: the bounced beam goes where the shield points. Light a crystal with it!' },
+    { who: 'jason', text: 'A shield that bounces light. Just like Perseus in the old story!' },
+  ],
 };
 
 const tmpV = new THREE.Vector3();
@@ -185,7 +191,7 @@ export class Game {
 
   private devJump(dev: URLSearchParams) {
     if (dev.has('all')) {
-      this.save.abilities = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'];
+      this.save.abilities = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple', 'mirror'];
       this.save.unlocked = LEVEL_ORDER.length;
     }
     // &bolts=N sets the bolt count, &weapons=spread,frost hands over weapons (&weapon=frost equips one),

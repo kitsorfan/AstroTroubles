@@ -10,7 +10,7 @@
  * hero reaches counts for both. Doors are treated as open: the checker proves the geometry works,
  * the level's conditions decide the order.
  */
-import { ATALANTA, BRENNUS, CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
+import { ATALANTA, BRENNUS, CELL, GAZE, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
 import { heroRoster } from '../src/entities/heroes/heroes';
 import { PASSABLE_DECOR, type Ability, type Cond, type HeroId, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
@@ -73,7 +73,8 @@ function maxRise(abilities: Ability[], launch: number) {
   return apex - 0.3;
 }
 
-const SOLID_DECOR = (s: Spec) => s.type === 'decor' && s.solid !== false && !PASSABLE_DECOR.includes(s.kind);
+/** Props nobody can stand in: solid decor, and the eye-sentries, mirrors and crystals of Medusa's Labyrinth. */
+const SOLID_DECOR = (s: Spec) => (s.type === 'decor' && s.solid !== false && !PASSABLE_DECOR.includes(s.kind)) || s.type === 'gazer' || s.type === 'mirror' || s.type === 'crystal';
 
 export interface ReachResult {
   reached: Set<string>;
@@ -538,6 +539,31 @@ function arrowSight(level: ParsedLevel, s: Spot, t: PlacedEntity): boolean {
   return true;
 }
 
+/**
+ * True if a hero standing on `s` has a clear, straight view of the beam-height middle of a gaze-beam
+ * prop (a light crystal or a Gardener mirror) at `t`, within `range` cells.
+ */
+function beamSight(level: ParsedLevel, s: Spot, t: PlacedEntity, range: number): boolean {
+  const d = Math.hypot(t.cx - s.cx, t.cz - s.cz);
+  if (d > range) return false;
+  const y0 = s.h + 1.15;
+  const y1 = t.h + GAZE.eye;
+  const steps = Math.ceil(d * 4);
+  for (let i = 1; i < steps; i++) {
+    const f = i / steps;
+    const cx = Math.round(s.cx + (t.cx - s.cx) * f);
+    const cz = Math.round(s.cz + (t.cz - s.cz) * f);
+    if ((cx === s.cx && cz === s.cz) || (cx === t.cx && cz === t.cz)) continue;
+    const c = level.cells[cz * level.width + cx];
+    if (!c || c.kind === 'wall') return false;
+    if (c.kind !== 'void' && c.kind !== 'hazard' && c.h > y0 + (y1 - y0) * f) return false;
+  }
+  return true;
+}
+
+/** How close (in cells) Jason must stand to bounce a beam onto a `shield` crystal with the Mirror Shield. */
+const SHIELD_CELLS = 8;
+
 export function reach(level: ParsedLevel, abilities: Ability[], heroes: HeroId[] = levelHeroes(level)): ReachResult {
   const g = jumpGraph(level, abilities, abilities, heroes);
   const spots = g.spots;
@@ -559,7 +585,16 @@ export function reach(level: ParsedLevel, abilities: Ability[], heroes: HeroId[]
   // Arrow targets are hit from afar: by a power arrow, from any spot Atalanta reaches with a clear shot.
   const archer = heroes.includes('atalanta');
   const hit = (e: PlacedEntity) => archer && spots.some((s, i) => seen[i] === 1 && arrowSight(level, s, e));
-  const missing = level.entities.filter((e) => isTarget(e.spec) && (e.spec.type === 'target' ? !hit(e) : !near(e)));
+  // Medusa's Labyrinth: a `shield` crystal needs Jason with the Mirror Shield in sight of it; any other
+  // crystal is lit through mirrors, and a mirror is turned by a blaster shot (11 cells), an arrow (16)
+  // or a spin up close, from a spot in sight of it.
+  const sighted = (e: PlacedEntity, range: number) => spots.some((s, i) => seen[i] === 1 && beamSight(level, s, e, range));
+  const shieldBearer = heroes.includes('jason') && abilities.includes('mirror');
+  const lit = (e: PlacedEntity) => (e.spec.type === 'crystal' && e.spec.shield ? shieldBearer && sighted(e, SHIELD_CELLS) : sighted(e, ATALANTA.arrowRange / CELL));
+  const turned = (e: PlacedEntity) => near(e) || (heroes.includes('jason') && sighted(e, PLAYER.shotRange / CELL)) || (archer && sighted(e, ATALANTA.arrowRange / CELL));
+  const missing = level.entities.filter(
+    (e) => isTarget(e.spec) && (e.spec.type === 'target' ? !hit(e) : e.spec.type === 'crystal' ? !lit(e) : e.spec.type === 'mirror' ? !turned(e) : !near(e)),
+  );
   const orphanCells: [number, number][] = [];
   for (const s of spots) if (s.kind !== 'plat' && !reached.has(`${s.cx},${s.cz}`)) orphanCells.push([s.cx, s.cz]);
   const pathTo = (cx: number, cz: number) => {
@@ -590,6 +625,8 @@ export const TARGET_TYPES = [
   'prize',
   'rune',
   'target',
+  'crystal',
+  'mirror',
 ] as const;
 
 function isTarget(s: Spec) {
