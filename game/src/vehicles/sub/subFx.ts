@@ -117,6 +117,7 @@ export class FishView {
   update(fish: Fish[], s: number, t: number) {
     while (this.models.length < fish.length) {
       const m = makePiranha();
+      m.scale.setScalar(0.8);
       this.scene.add(m);
       this.models.push(m);
     }

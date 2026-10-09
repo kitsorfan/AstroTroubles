@@ -45,15 +45,16 @@ const CSS = `
 @keyframes vpulse { from { transform:translate(-50%,-50%) scale(1); } to { transform:translate(-50%,-50%) scale(1.08); } }
 @media (max-height: 460px) { #ui .vhud .vprompt { font-size:18px; } #ui .vhud .vprompt.urgent { font-size:24px; } }
 #ui .btn.boost.sing { background: radial-gradient(circle at 35% 30%, #ffd0ec, #e04a9a); box-shadow: 0 0 22px #ff6fb0; }
-#ui .vhud .vsong { position:absolute; left:50%; bottom:calc(22px + var(--safe-b, 0px)); transform:translateX(-50%); width:min(420px, 52vw);
+#ui .vhud .vsong { position:absolute; left:50%; top:calc(84px + var(--safe-t, 0px)); transform:translateX(-50%); width:min(420px, 52vw);
   height:54px; border-radius:27px; background:rgba(10,14,40,.6); border:2px solid rgba(255,111,176,.7); }
+@media (max-height: 460px) { #ui .vhud .vsong { top:calc(72px + var(--safe-t, 0px)); transform:translateX(-50%) scale(.82); } }
 #ui .vhud .vsong.hidden, #ui .buttons.hidden ~ .vhud .vsong { display:none; }
 #ui .vhud .vsong .target { position:absolute; left:14px; top:6px; width:38px; height:38px; border-radius:50%; border:4px solid #fff;
   box-shadow:0 0 12px #7fe6ff; box-sizing:border-box; }
 #ui .vhud .vsong .target.hit { background:#7fe6ff; }
 #ui .vhud .vsong i.note { position:absolute; top:13px; width:24px; height:24px; margin-left:-12px; border-radius:50%;
   background:radial-gradient(circle at 35% 30%, #fff, #ff6fb0); box-shadow:0 0 8px #ff6fb0; }
-#ui .vhud .vsong .got { position:absolute; right:12px; top:-24px; color:#fff; font:800 16px Fredoka, sans-serif; text-shadow:0 2px 4px #000; }
+#ui .vhud .vsong .got { position:absolute; right:12px; bottom:-26px; color:#fff; font:800 16px Fredoka, sans-serif; text-shadow:0 2px 4px #000; }
 `;
 
 const RING_ICON = `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#ffd166" stroke-width="3.4"/><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#fff6d0" stroke-width="1" opacity=".7"/></svg>`;
