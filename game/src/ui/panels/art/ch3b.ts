@@ -1,340 +1,11 @@
 /** Chapter 3 panels, part 2: the Harpy Isles. Atalanta and her stripped skiff, and old Phineus's stolen dinner. */
-import {
-  at,
-  atalanta,
-  backdrop,
-  C,
-  cloud,
-  gasGiant,
-  glow,
-  glowDef,
-  ink,
-  iris,
-  jason,
-  lux,
-  panel,
-  person,
-  poly,
-  r1,
-  rng,
-  sparkle,
-  stars,
-  vignette,
-} from '../kit';
 import * as gn from '../gn';
-
-const GOLD = '#ffc94a';
-const GOLD_DARK = '#c8901e';
-const SKIFF = '#2fb7a3';
-const SKIFF_DARK = '#1d7a6e';
-const SNOW = '#eef3f6';
-
-/** The colours of a sky-isle: grass on top, the grass's lip, the rock below, its shadow, and roots. */
-interface Tone {
-  grass: string;
-  edge: string;
-  rock: string;
-  shade: string;
-  root: string;
-  tree: string;
-}
-
-/**
- * A floating sky-isle: a grassy cap over a rocky underside with dangling roots, a few round trees and
- * (optionally) a little waterfall spilling off the edge at `fall` (-0.5..0.5 of the width). Top centre
- * at (x, y), `w` wide. Far-away isles pass `inked: false`.
- */
-function isle(x: number, y: number, w: number, t: Tone, o: { seed?: number; trees?: number; fall?: number; inked?: boolean } = {}): string {
-  const rand = rng(o.seed ?? 1);
-  const h = w * 0.7;
-  const k = w / 200;
-  const line = o.inked === false ? '' : ink(Math.max(2, Math.min(6, Math.round(3 * k))));
-  const prof = [[-0.5, 0], [-0.44, 0.2], [-0.32, 0.38], [-0.2, 0.62], [-0.06, 0.92], [0.04, 1], [0.14, 0.74], [0.26, 0.5], [0.38, 0.3], [0.5, 0]];
-  const pts = prof.map(([fx, fy], i) => [fx * w + (i % 9 ? (rand() - 0.5) * w * 0.05 : 0), fy * h * (i % 9 ? 0.9 + rand() * 0.2 : 1)]);
-  let out = `<path d="${poly(pts)}Z" fill="${t.rock}" ${line}/>`;
-  out += `<path d="${poly([[w * 0.02, h * 0.1], ...pts.slice(5)])}Z" fill="${t.shade}" opacity=".55"/>`;
-  out += `<path d="M${r1(-w * 0.3)} ${r1(h * 0.16)}l${r1(w * 0.08)} ${r1(h * 0.06)}l${r1(w * 0.06)} ${r1(-h * 0.03)}M${r1(-w * 0.12)} ${r1(h * 0.42)}l${r1(w * 0.1)} ${r1(h * 0.04)}" fill="none" stroke="${t.shade}" stroke-width="${r1(3 * k)}" stroke-linecap="round"/>`;
-  // Roots dangling from the underside.
-  const roots = [
-    [-0.33, 0.34],
-    [-0.12, 0.72],
-    [0.18, 0.6],
-    [0.34, 0.32],
-  ]
-    .map(([fx, fy], i) => {
-      const rx = fx * w;
-      const ry = fy * h;
-      const len = (40 + rand() * 50) * k;
-      return `M${r1(rx)} ${r1(ry)}q${r1((i % 2 ? 10 : -10) * k)} ${r1(len * 0.5)} ${r1(-2 * k)} ${r1(len)}t${r1(6 * k)} ${r1(len * 0.6)}`;
-    })
-    .join('');
-  out += `<path d="${roots}" fill="none" stroke="${t.root}" stroke-width="${r1(Math.max(1.5, 3.5 * k))}" stroke-linecap="round"/>`;
-  // The grassy cap, its lip hanging over the rock in little scallops.
-  const top = `M${r1(-w / 2 - 6 * k)} ${r1(4 * k)}Q${r1(-w * 0.3)} ${r1(-w * 0.1)} 0 ${r1(-w * 0.09)}Q${r1(w * 0.3)} ${r1(-w * 0.1)} ${r1(w / 2 + 6 * k)} ${r1(4 * k)}`;
-  let lip = '';
-  for (let i = 0; i < 8; i++) lip += `Q${r1(w / 2 - ((i + 0.5) * w) / 8)} ${r1(22 * k)} ${r1(w / 2 - ((i + 1) * w) / 8 - (i === 7 ? 6 * k : 0))} ${r1(6 * k)}`;
-  out += `<path d="${top}${lip}Z" fill="${t.edge}" ${line}/>`;
-  out += `<path d="${top}Q0 ${r1(10 * k)} ${r1(-w / 2 - 6 * k)} ${r1(4 * k)}Z" fill="${t.grass}"/>`;
-  // Round trees on top.
-  const n = o.trees ?? 0;
-  for (let i = 0; i < n; i++) {
-    const tx = (-0.32 + (0.64 * (i + 0.5)) / n + (rand() - 0.5) * 0.08) * w;
-    const ty = -w * 0.09 * (1 - ((2 * tx) / w) ** 2) + 2 * k;
-    const tr = (12 + rand() * 8) * k;
-    out += `<path d="M${r1(tx)} ${r1(ty)}V${r1(ty - tr * 1.4)}" stroke="#6a4a30" stroke-width="${r1(5 * k)}"/><circle cx="${r1(tx)}" cy="${r1(ty - tr * 1.6)}" r="${r1(tr)}" fill="${t.tree}" ${line}/>`;
-  }
-  // A thin waterfall pouring off the edge into the clouds.
-  if (o.fall !== undefined) {
-    const a = o.fall * w;
-    const L = h * 1.5;
-    out += `<path d="M${r1(a)} ${r1(8 * k)}Q${r1(a + 8 * k)} ${r1(24 * k)} ${r1(a + 6 * k)} ${r1(L * 0.6)}H${r1(a + 24 * k)}Q${r1(a + 26 * k)} ${r1(24 * k)} ${r1(a + 18 * k)} ${r1(8 * k)}Z" fill="#e4f8ff" opacity=".85"/>`;
-    out += `<path d="M${r1(a + 6 * k)} ${r1(L * 0.6)}L${r1(a + 4 * k)} ${r1(L)}H${r1(a + 26 * k)}L${r1(a + 24 * k)} ${r1(L * 0.6)}Z" fill="#e4f8ff" opacity=".4"/>`;
-    out += `<path d="M${r1(a + 12 * k)} ${r1(20 * k)}V${r1(L * 0.5)}" stroke="#fff" stroke-width="${r1(3 * k)}" opacity=".8"/>`;
-  }
-  return at(x, y, 1, out);
-}
-
-/** A sagging rope bridge from (x1, y1) to (x2, y2): a plank deck and a hand-rope above it. */
-function bridge(x1: number, y1: number, x2: number, y2: number, sag: number, s = 1, rope = '#6a4a30', wood = '#c89a62'): string {
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2 + sag * 2;
-  const q = (t: number, dy = 0) => [(1 - t) ** 2 * x1 + 2 * (1 - t) * t * mx + t * t * x2, (1 - t) ** 2 * y1 + 2 * (1 - t) * t * my + t * t * y2 + dy];
-  const n = Math.max(6, Math.round(Math.abs(x2 - x1) / (16 * s)));
-  let planks = '';
-  let ties = '';
-  for (let i = 1; i < n; i++) {
-    const [px, py] = q(i / n);
-    planks += `M${r1(px)} ${r1(py - 3 * s)}V${r1(py + 5 * s)}`;
-    if (i % 3 === 0) ties += `M${r1(px)} ${r1(py)}V${r1(py - 22 * s)}`;
-  }
-  const curve = (dy: number) => `M${x1} ${y1 + dy}Q${r1(mx)} ${r1(my + dy)} ${x2} ${y2 + dy}`;
-  return `<g fill="none" stroke-linecap="round"><path d="${ties}" stroke="${rope}" stroke-width="${r1(2 * s)}"/><path d="${planks}" stroke="${wood}" stroke-width="${r1(8 * s)}"/>
-    <path d="${curve(0)}" stroke="${rope}" stroke-width="${r1(3 * s)}"/><path d="${curve(-22 * s)}" stroke="${rope}" stroke-width="${r1(2.5 * s)}"/></g>`;
-}
-
-/** The sea of clouds far below: a soft floor of puffy clouds from height y to the bottom. */
-function cloudSea(seed: number, y: number, color: string, shade: string): string {
-  const rand = rng(seed);
-  let back = '';
-  let front = '';
-  for (let i = 0; i < 11; i++) {
-    back += cloud(i * 160 + rand() * 60, y + 30 + rand() * 30, 1.1 + rand() * 0.6, shade);
-    front += cloud(i * 170 - 40 + rand() * 60, y + 120 + rand() * 40, 1.3 + rand() * 0.6, color);
-  }
-  return back + `<rect x="0" y="${y + 20}" width="1600" height="${900 - y}" fill="${shade}"/>` + front + `<rect x="0" y="${y + 110}" width="1600" height="${800 - y}" fill="${color}"/>`;
-}
-
-/** What a harpy drone can carry off in its claws (drawn hanging under them). */
-type Loot = 'wing' | 'engine' | 'panel' | 'basket' | 'teapot' | 'cake' | 'none';
-
-const LOOT: Record<Loot, string> = {
-  wing: `<path d="M-60 0L70 -14L96 16L-40 34Z" fill="${SNOW}" ${ink(4)}/><path d="M-50 12L80 0" stroke="${SKIFF}" stroke-width="9"/><circle cx="86" cy="4" r="6" fill="#ff4a5a" ${ink(2)}/>
-    <path d="M-56 18q-14 10 -6 24M-50 24q-6 16 6 22" fill="none" stroke="#ff6a3a" stroke-width="3" stroke-linecap="round"/>`,
-  engine: `<rect x="-40" y="-2" width="70" height="44" rx="16" fill="#9aa6ba" ${ink(4)}/><path d="M30 4L54 -6V50L30 40Z" fill="#5a6274" ${ink(4)}/>
-    <path d="M-30 6H20" stroke="#fff" stroke-width="4" opacity=".5" stroke-linecap="round"/><ellipse cx="54" cy="22" rx="6" ry="24" fill="${C.cyan}" opacity=".7"/><rect x="-24" y="14" width="30" height="10" rx="4" fill="${SKIFF}" ${ink(2)}/>`,
-  panel: `<rect x="-34" y="0" width="68" height="48" rx="6" fill="${SKIFF}" ${ink(4)}/><path d="M-26 10H26" stroke="${SNOW}" stroke-width="6"/><circle cx="-24" cy="38" r="3" fill="${C.ink}"/><circle cx="24" cy="38" r="3" fill="${C.ink}"/>`,
-  basket: `<path d="M-30 8Q-16 -26 4 2Q20 -30 34 6" fill="#f0c070" ${ink(4)}/><path d="M-44 6H44L34 50H-34Z" fill="#c8884a" ${ink(4)}/>
-    <path d="M-40 20H40M-36 34H36M-20 6V50M0 6V50M20 6V50" stroke="#8a5a2a" stroke-width="3"/><path d="M-30 6Q0 -4 30 6" fill="none" ${ink(5)}/>`,
-  teapot: `<path d="M-30 30Q-34 0 0 -2Q34 0 30 30Q28 46 0 46Q-28 46 -30 30Z" fill="#e8f0f8" ${ink(4)}/><path d="M28 16Q50 10 54 -6" fill="none" ${ink(9)}/><path d="M28 16Q50 10 54 -6" fill="none" stroke="#e8f0f8" stroke-width="4"/>
-    <path d="M-28 10Q-46 14 -32 34" fill="none" ${ink(4)}/><path d="M-12 -2Q0 -14 12 -2" fill="${C.pink}" ${ink(3)}/><path d="M-24 22Q0 30 24 22" stroke="${C.pink}" stroke-width="5" fill="none"/>`,
-  cake: `<path d="M-30 10H30V36Q0 44 -30 36Z" fill="#e8a050" ${ink(4)}/><ellipse cx="0" cy="10" rx="30" ry="9" fill="#ffd166" ${ink(4)}/><path d="M-20 12q2 12 6 4q4 14 8 2q4 10 10 0" fill="none" stroke="#ffb020" stroke-width="4" stroke-linecap="round"/>`,
-  none: '',
-};
-
-/**
- * One of Aeëtes's harpy drones: a gold metal bird with a round glowing eye, a beak, flapping wings
- * and grabby claws (carrying `loot`). Faces right; centred on its body.
- */
-function harpy(x: number, y: number, s: number, o: { eye?: string; up?: boolean; loot?: Loot; flip?: boolean; rot?: number } = {}): string {
-  const eye = o.eye ?? C.cyan;
-  const wing = (dx: number, dy: number, col: string) =>
-    o.up === false
-      ? `<path d="M${dx - 14} ${dy}Q${dx - 64} ${dy + 26} ${dx - 50} ${dy + 84}Q${dx - 30} ${dy + 66} ${dx - 16} ${dy + 52}Q${dx - 4} ${dy + 70} ${dx + 10} ${dy + 60}Q${dx + 24} ${dy + 30} ${dx + 18} ${dy}Z" fill="${col}" ${ink(5)}/>`
-      : `<path d="M${dx - 18} ${dy - 6}Q${dx - 60} ${dy - 70} ${dx - 40} ${dy - 124}Q${dx - 20} ${dy - 98} ${dx - 6} ${dy - 82}Q${dx + 2} ${dy - 104} ${dx + 18} ${dy - 98}Q${dx + 26} ${dy - 50} ${dx + 18} ${dy - 8}Z" fill="${col}" ${ink(5)}/>
-         <path d="M${dx - 30} ${dy - 50}L${dx - 10} ${dy - 30}M${dx - 4} ${dy - 66}L${dx + 6} ${dy - 34}" stroke="${GOLD_DARK}" stroke-width="4" stroke-linecap="round"/>`;
-  const body = `${wing(-14, -16, '#e0a830')}
-    <path d="M10 22L2 56M26 20L32 56" ${ink(8)}/><path d="M10 22L2 56M26 20L32 56" stroke="#4a4050" stroke-width="3"/>
-    ${at(16, 62, 1, LOOT[o.loot ?? 'none'])}
-    <path d="M-10 64Q2 46 14 64M20 64Q32 46 44 64" fill="none" ${ink(6)}/>
-    <path d="M-44 -6L-112 -36L-98 -10L-116 8L-96 12L-108 34L-42 12Z" fill="${GOLD_DARK}" ${ink(4)}/>
-    <path d="M-50 -2Q-34 -34 20 -30Q58 -26 60 0Q52 28 2 28Q-38 26 -50 -2Z" fill="${GOLD}" ${ink(5)}/>
-    <path d="M-34 -14Q0 -28 34 -20" fill="none" stroke="#fff" stroke-width="5" opacity=".55" stroke-linecap="round"/><path d="M-6 -26Q-12 2 -4 26" fill="none" stroke="${GOLD_DARK}" stroke-width="3"/>
-    <g fill="${GOLD_DARK}"><circle cx="-28" cy="2" r="3.5"/><circle cx="-18" cy="16" r="3.5"/><circle cx="14" cy="14" r="3.5"/><circle cx="30" cy="4" r="3.5"/></g>
-    <path d="M40 -46L34 -70L50 -52L56 -78L64 -50Z" fill="${GOLD_DARK}" ${ink(3)}/>
-    <circle cx="54" cy="-26" r="26" fill="${GOLD}" ${ink(5)}/>
-    <path d="M76 -34L106 -22L76 -12Z" fill="#3a3040" ${ink(4)}/>
-    <circle cx="58" cy="-28" r="18" fill="${eye}" opacity=".3"/><circle cx="58" cy="-28" r="12" fill="#1a1630" ${ink(3)}/><circle cx="59" cy="-27" r="7" fill="${eye}"/><circle cx="55" cy="-32" r="3" fill="#fff"/>
-    ${wing(10, -10, GOLD)}`;
-  return at(x, y, s, body, o.flip, o.rot ?? 0);
-}
-
-
-/** The big floating isle in the front of the picture: grass to stand on, rock and roots below, a waterfall off its left end. */
-function mainIsle(t: Tone): string {
-  const rock = `<path d="M24 770L56 838L130 886L210 930H1390L1470 886L1544 838L1580 770Z" fill="${t.rock}" ${ink(6)}/><path d="M1000 900L1470 870L1560 790L1300 860Z" fill="${t.shade}" opacity=".5"/>`;
-  const roots = `<path d="M80 830q-14 30 0 60t-6 40M140 870q12 20 2 50M1490 860q14 26 0 50M1536 820q-10 30 4 70" fill="none" stroke="${t.root}" stroke-width="5" stroke-linecap="round"/>`;
-  const fall = `<path d="M60 790Q72 800 66 930H104Q100 800 92 790Z" fill="#e4f8ff" opacity=".85"/><path d="M78 800V920" stroke="#fff" stroke-width="4" opacity=".8"/>`;
-  const top = `M24 770Q40 704 300 694Q800 672 1300 694Q1560 704 1580 770`;
-  return (
-    rock +
-    roots +
-    `<path d="${top}Q1500 876 800 884Q100 876 24 770Z" fill="${t.edge}" ${ink(6)}/>` +
-    `<path d="${top}Q1500 856 800 864Q100 856 24 770Z" fill="${t.grass}"/>` +
-    fall
-  );
-}
-
-
-const ROBE = '#34407a';
-const BEARD_WHITE = '#f4f4f8';
-
-/** Phineus's face: round dark glasses, bushy white brows, a white moustache and a long white beard (head coordinates). */
-const PHINEUS_FACE = `<path d="M-40 6Q-46 60 -22 104Q-4 136 8 160Q14 128 32 104Q52 60 46 6Q38 30 24 38Q6 48 -12 38Q-30 30 -40 6Z" fill="${BEARD_WHITE}" ${ink(4)}/>
-  <path d="M-20 62Q-14 92 -4 112M8 56Q10 92 12 130M28 62Q26 86 22 102" fill="none" stroke="#c8c8d8" stroke-width="3" stroke-linecap="round"/>
-  <path d="M-18 14Q-4 2 6 10Q16 2 30 14Q38 22 26 22Q16 16 6 18Q-4 16 -12 22Q-28 22 -18 14Z" fill="#fff" ${ink(3)}/>
-  <g fill="#2a2440" ${ink(3)}><circle cx="-8.6" cy="-4" r="13"/><circle cx="19.5" cy="-4" r="13"/></g><path d="M4 -6H6M-22 -6L-40 -4" fill="none" ${ink(3)}/>
-  <path d="M-15 -10q4 -4 9 -2M13 -10q4 -4 9 -2" stroke="#fff" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/>
-  <path d="M-24 -22Q-10 -32 2 -21M10 -21Q22 -32 36 -22" fill="none" ${ink(11)}/><path d="M-24 -22Q-10 -32 2 -21M10 -21Q22 -32 36 -22" fill="none" stroke="${BEARD_WHITE}" stroke-width="6" stroke-linecap="round"/>
-  <path d="M-10 -44q4 -14 -4 -22M4 -46q6 -12 2 -24" fill="none" stroke="${BEARD_WHITE}" stroke-width="3" stroke-linecap="round"/>`;
-
-/** His patched star robe (body coordinates, already shifted down for sitting), its skirt draped over his folded legs. */
-const PHINEUS_ROBE = `<path d="M-48 -100Q-84 -72 -104 -42Q0 -28 104 -42Q84 -72 48 -100Z" fill="${ROBE}" ${ink(5)}/><path d="M-96 -48Q0 -34 96 -48" fill="none" stroke="${C.gold}" stroke-width="4"/>
-  <rect x="-30" y="-150" width="26" height="24" fill="#8a5a8a" ${ink(3)} transform="rotate(-8 -17 -138)"/><path d="M-28 -146h22M-26 -130h22" stroke="#f0d0f0" stroke-width="2" stroke-dasharray="4 3"/>
-  <rect x="40" y="-86" width="28" height="22" fill="#4a8a6a" ${ink(3)} transform="rotate(10 54 -75)"/><path d="M42 -82h22" stroke="#d0f0e0" stroke-width="2" stroke-dasharray="4 3"/>
-  ${[[-28, -110], [20, -150], [-60, -60], [10, -64], [70, -56], [30, -112], [-80, -48]].map(([sx, sy]) => sparkle(sx, sy, 7, C.gold)).join('')}`;
-
-/** Phineus, the blind old star-gazer, sitting with his robe draped round him, laughing and shaking his stick up at the drones. Feet at (x, y). */
-function phineus(x: number, y: number, s: number): string {
-  const fig = person(0, 0, 1, {
-    skin: '#e6b496',
-    hair: '#e8e8ee',
-    hairStyle: 'bald',
-    coat: ROBE,
-    long: true,
-    pants: ROBE,
-    shoes: '#6a4a30',
-    legs: 'kneel',
-    arms: [
-      [
-        [-76, -128],
-        [-92, -92],
-      ],
-      [
-        [82, -188],
-        [100, -236],
-      ],
-    ],
-    face: 'happy',
-    headExtra: PHINEUS_FACE,
-    bodyExtra: PHINEUS_ROBE,
-  });
-  // The walking stick through his raised hand (hand at 100, -192 once he's sitting), with shake lines.
-  const stick = `<path d="M72 -96L130 -300" ${ink(14)}/><path d="M72 -96L130 -300" stroke="#a0703a" stroke-width="7" stroke-linecap="round"/><circle cx="131" cy="-304" r="12" fill="#c8904a" ${ink(4)}/>
-    <circle cx="100" cy="-192" r="12" fill="#e6b496" ${ink(4)}/>
-    <path d="M148 -326q14 -6 22 4M156 -296q14 2 18 14M104 -330q-4 -14 6 -22" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/>`;
-  return at(x, y, s, fig + stick);
-}
-
-/** His little round stone observatory: a domed hut with a star-slit, a glowing doorway and a window. Base centre at (x, y). */
-function observatory(x: number, y: number, s: number): string {
-  let stones = '';
-  for (let r = 0; r < 5; r++) {
-    const sy = -34 - r * 36;
-    stones += `M-130 ${sy}Q0 ${sy + 14} 130 ${sy}`;
-    for (let j = 0; j < 4; j++) {
-      const sx = -100 + j * 64 + (r % 2) * 32;
-      stones += `M${sx} ${sy + 5}v30`;
-    }
-  }
-  const body = `<path d="M-130 0V-192Q0 -212 130 -192V0Q0 14 -130 0Z" fill="#b8a898" ${ink(6)}/>
-    <path d="${stones}" fill="none" stroke="#8a7a70" stroke-width="3"/>
-    <path d="M74 -198Q130 -192 130 -192V0Q104 8 74 10Z" fill="#000" opacity=".16"/>
-    <path d="M-144 -188Q-142 -332 0 -336Q142 -332 144 -188Q0 -212 -144 -188Z" fill="#4f8a96" ${ink(6)}/>
-    <path d="M-72 -200Q-80 -300 0 -336M72 -200Q80 -300 0 -336" fill="none" stroke="#2f6070" stroke-width="4"/>
-    <path d="M-100 -230Q-90 -300 -30 -320" fill="none" stroke="#fff" stroke-width="6" opacity=".3" stroke-linecap="round"/>
-    <path d="M-16 -198V-324Q0 -334 16 -324V-198Z" fill="#1a1838" ${ink(4)}/><path d="M-4 -300h0M6 -260h0M-6 -230h0" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M0 -336V-372" ${ink(6)}/>${sparkle(0, -382, 16, C.gold)}
-    <path d="M-42 0V-100Q-42 -138 0 -138Q42 -138 42 -100V0Z" fill="#ffd98a" ${ink(5)}/>
-    <path d="M-42 0V-100Q-42 -138 -8 -138L-22 -126V10Z" fill="#8a5a34" ${ink(4)}/>
-    <circle cx="84" cy="-128" r="20" fill="#ffd98a" ${ink(4)}/><path d="M84 -148V-108M64 -128H104" stroke="${C.ink}" stroke-width="3"/>`;
-  return at(x, y, s, body);
-}
-
-/** A big brass telescope on a wooden tripod, tilted up at the sky toward the right. Feet at (x, y). */
-function telescope(x: number, y: number, s: number): string {
-  const tube = `<rect x="-110" y="-24" width="230" height="48" rx="10" fill="#d8a040" ${ink(5)}/><rect x="110" y="-34" width="56" height="68" rx="10" fill="#e8b850" ${ink(5)}/>
-    <rect x="-150" y="-12" width="44" height="24" rx="6" fill="#b88030" ${ink(4)}/><path d="M-60 -24V24M40 -24V24" stroke="#a87020" stroke-width="6"/>
-    <path d="M-96 -12H100" stroke="#fff6c0" stroke-width="6" opacity=".6" stroke-linecap="round"/><ellipse cx="166" cy="0" rx="8" ry="30" fill="#bfeaff" ${ink(3)}/>`;
-  const body = `<path d="M0 -150L-70 0M0 -150L70 0M0 -150L10 0" ${ink(14)}/><path d="M0 -150L-70 0M0 -150L70 0M0 -150L10 0" stroke="#8a5a34" stroke-width="7"/>
-    <circle cx="0" cy="-150" r="14" fill="#b88030" ${ink(4)}/>${at(0, -160, 1, tube, false, -48)}`;
-  return at(x, y, s, body);
-}
-
-const DUSK: Tone = { grass: '#5a9a5a', edge: '#3a7a4a', rock: '#8a6a6a', shade: '#5a4a5a', root: '#4a3a40', tree: '#3a7a4a' };
-const DUSK_HAZE: Tone = { grass: '#9a8ab8', edge: '#8a7aa8', rock: '#b08aa8', shade: '#8a6a90', root: '#9a7a9a', tree: '#7a7aa8' };
-
-/** Crumbs and bits of dinner tumbling through the air in a box: crumbs, grapes, an apple and a bread roll. */
-function crumbs(seed: number, n: number, x0: number, y0: number, w: number, h: number): string {
-  const rand = rng(seed);
-  let dots = '';
-  for (let i = 0; i < n; i++) dots += `<circle cx="${Math.round(x0 + rand() * w)}" cy="${Math.round(y0 + rand() * h)}" r="${(3 + rand() * 4).toFixed(1)}"/>`;
-  return `<g fill="#e8b870" ${ink(2)}>${dots}</g>`;
-}
-
-const APPLE = `<circle r="18" fill="#ff5a4a" ${ink(4)}/><path d="M0 -16q2 -10 -2 -14" fill="none" ${ink(3)}/><path d="M2 -24q12 -8 16 2q-10 4 -16 -2Z" fill="#5f9a3a" ${ink(2)}/><circle cx="-6" cy="-6" r="4" fill="#fff" opacity=".6"/>`;
-const GRAPES = `<g fill="#9a5ac8" ${ink(3)}><circle cx="-10" cy="0" r="9"/><circle cx="8" cy="0" r="9"/><circle cx="0" cy="14" r="9"/><circle cx="-18" cy="-14" r="9"/><circle cx="2" cy="-16" r="9"/></g><path d="M-6 -24l-6 -12" ${ink(4)}/>`;
-const ROLL = `<ellipse rx="26" ry="16" fill="#e0a058" ${ink(4)}/><path d="M-10 -12q4 10 0 22M6 -14q4 12 0 26" fill="none" stroke="#a86a30" stroke-width="3"/>`;
-
-/** 24. Dusk on Phineus's isle: harpy drones snatch the old star-gazer's dinner; he laughs and shakes his stick; Jason and Atalanta run to help. */
-export function ch3Phineus(): string {
-  const id = 'ch3-phineus';
-  const checks = [0, 1, 2, 3, 4, 5].map((i) => `M${640 + i * 66} ${828 - i * 3}L${600 + i * 80} ${888 - i * 2}`).join('') + 'M590 850L990 836M574 870L1006 856';
-  return panel(
-    backdrop(id + 'b', [[0, '#22265a'], [0.4, '#54488a'], [0.68, '#d87e9a'], [0.86, '#ffaa86'], [1, '#ffd0a0']]) +
-      `<defs>${glowDef(id + 'w', '#ffc860', 0.8)}</defs>` +
-      stars(12, 70, 0, 0, 1600, 380, '#fff6e0') +
-      gasGiant(id + 'j', 200, 140, 64) +
-      cloudSea(6, 620, '#f6c0b4', '#d898ac') +
-      isle(900, 470, 180, DUSK_HAZE, { seed: 11, trees: 2, fall: 0.25, inked: false }) +
-      isle(1390, 330, 150, DUSK_HAZE, { seed: 13, trees: 1, inked: false }) +
-      bridge(986, 462, 1322, 324, 34, 0.55, '#8a6a8a', '#b898b0') +
-      isle(560, 330, 110, DUSK_HAZE, { seed: 15, trees: 1, inked: false }) +
-      mainIsle(DUSK) +
-      glow(id + 'w', 300, 720, 260, 0.9) +
-      observatory(300, 790, 0.95) +
-      telescope(500, 800, 0.85) +
-      // The picnic blanket, with what's left of dinner.
-      `<path d="M600 830L960 812L1020 872L560 892Z" fill="#e05a5a" ${ink(4)}/><path d="${checks}" stroke="#fff" stroke-width="8" opacity=".45"/>` +
-      `<ellipse cx="880" cy="846" rx="40" ry="12" fill="#f4f0e8" ${ink(4)}/>` +
-      at(950, 846, 1, `<path d="M-14 -10L14 -14L16 10L-12 12Z" fill="#e8f0f8" ${ink(3)}/><ellipse cx="-14" cy="1" rx="4" ry="11" fill="#c87a30"/>`, false, -80) +
-      phineus(690, 850, 1.05) +
-      // The harpy drones make off with the basket, the teapot and a honey cake; crumbs everywhere.
-      crumbs(5, 26, 760, 330, 320, 380) +
-      harpy(910, 270, 0.7, { flip: true, loot: 'basket', rot: -14 }) +
-      harpy(1080, 160, 0.58, { loot: 'teapot', up: false, eye: '#ff4a5a', rot: -18 }) +
-      `<g fill="#c87a30" ${ink(2)}><circle cx="1150" cy="236" r="6"/><circle cx="1166" cy="256" r="4"/><circle cx="1138" cy="262" r="5"/></g>` +
-      harpy(960, 620, 0.6, { loot: 'cake', up: true, rot: 12 }) +
-      at(740, 470, 1, APPLE, false, 20) +
-      at(1030, 420, 1, GRAPES, false, -20) +
-      at(780, 400, 1, ROLL, false, 30) +
-      // Jason and Atalanta (with LUX and IRIS) come running to help.
-      cloud(1270, 880, 0.35, '#f0d0c0', 0.8) +
-      cloud(1470, 884, 0.35, '#f0d0c0', 0.8) +
-      jason(1130, 870, 0.95, { pose: 'reach', legs: 'run', face: 'determined', flip: true }) +
-      at(1370, 870, 1, atalanta(0, 0, 0.95, { pose: 'point', face: 'determined', flip: true }), false, -6) +
-      lux(1040, 520, 0.7, 'normal', C.cyan, true) +
-      iris(1300, 430, 0.65, 'normal', true) +
-      sparkle(160, 520, 6, '#fff2a0') +
-      sparkle(470, 560, 5, '#fff2a0') +
-      sparkle(420, 470, 4, '#fff2a0') +
-      vignette(id + 'v', 0.35, '#1a1030'),
-  );
-}
+import { ellD, phineus } from '../gn/ch3a';
 
 /* ---------------- 23. Atalanta, in the graphic-novel style ---------------- */
 
 /** What a harpy drone carries off in its talons. */
-type Haul = 'wing' | 'engine' | 'none';
+type Haul = 'wing' | 'engine' | 'basket' | 'teapot' | 'cake' | 'none';
 
 /**
  * One of Aeëtes's harpy drones in the graphic-novel style: a gold metal raptor with blade feathers, a
@@ -421,6 +92,17 @@ function harpyGN(pen: gn.Pen, x: number, y: number, s: number, o: { haul?: Haul;
   } else if (o.haul === 'engine') {
     out += lp.form('M-36 58H48Q70 58 72 82Q70 106 48 106H-36Z', '#9aa6ba', { sh: 18, hatch: 2, line: 2.6, rim: 1.6, inner: `<rect x="-24" y="72" width="40" height="14" fill="#2fb7a3"/><path d="M-30 64H40" stroke="#fff" stroke-width="3" opacity=".6"/>` });
     out += lp.glow(76, 82, 24, '#7fe6ff', 0.8);
+  } else if (o.haul === 'basket') {
+    // Phineus's dinner basket, a loaf and a bunch of grapes poking out.
+    out += lp.brush([[-10, 60], [14, 26], [40, 58]], 11, gn.INK, [0.05, 0.05]) + lp.brush([[-10, 60], [14, 26], [40, 58]], 5, '#c8884a', [0.05, 0.05]);
+    out += lp.form('M-4 62Q12 40 30 58Q20 70 -4 62Z', '#e0a058', { sh: 6, line: 2.2 }) + lp.form('M26 50a9 9 0 1 0 18 0a9 9 0 1 0 -18 0ZM34 62a9 9 0 1 0 18 0a9 9 0 1 0 -18 0Z', '#9a5ac8', { sh: 5, line: 2 });
+    out += lp.form('M-28 58H66L56 104H-18Z', '#c8884a', { sh: 16, hatch: 1, line: 2.6, rim: 1.6, inner: `<path d="M-24 74H62M-22 90H58M0 58V104M22 58V104M44 58V104" stroke="#8a5a2a" stroke-width="3"/>` });
+  } else if (o.haul === 'teapot') {
+    out += lp.brush([[50, 80], [76, 72], [84, 52]], 12, gn.INK, [0.05, 0.3]) + lp.brush([[50, 80], [76, 72], [84, 52]], 6, '#e8f0f8', [0.05, 0.3]);
+    out += lp.form('M-14 98Q-20 62 18 60Q56 62 50 98Q46 112 18 112Q-10 112 -14 98Z', '#e8f0f8', { sh: 14, hatch: 1, line: 2.6, rim: 1.6, inner: `<path d="M-10 84Q18 94 48 84" stroke="#ff6fcf" stroke-width="5" fill="none"/>` });
+    out += lp.form('M4 62Q18 48 32 62Z', '#ff6fcf', { line: 2 }) + lp.brush([[30, 104], [36, 124], [30, 140]], 5, '#d8f0ff', [0.1, 0.6], 0.8);
+  } else if (o.haul === 'cake') {
+    out += lp.form('M-20 76H56V96Q18 106 -20 96Z', '#e8a050', { sh: 10, line: 2.6, rim: 1.6 }) + lp.form('M-20 76Q18 62 56 76Q18 88 -20 76Z', '#ffd166', { line: 2.2, inner: `<path d="M-8 78q4 10 8 2q4 10 8 0q4 10 10 0" fill="none" stroke="#ffb020" stroke-width="4"/>` });
   }
   out += lp.brush([[-6, 62], [4, 52], [16, 62]], 4, gn.INK, [0.1, 0.1]) + lp.brush([[22, 62], [32, 52], [42, 62]], 4, gn.INK, [0.1, 0.1]);
   // The body and the head.
@@ -690,3 +372,197 @@ export function ch3Atalanta(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, harpies) + gn.layer(0.85, ground + props) + gn.layer(1, heroes) + gn.layer(1.25, fore) + gn.vignette(pen, 0.45, '#1a1030') + gn.grain(pen, 0.08));
 }
 
+
+/* ---------------- 24. Phineus, in the graphic-novel style ---------------- */
+
+/** Phineus's little round stone observatory: a drum of stone blocks under a copper dome with a star-slit, its doorway glowing. Base centre at (x, y). */
+function observatoryGN(pen: gn.Pen, x: number, y: number, s: number): string {
+  let joints = '';
+  for (let r = 0; r < 5; r++) {
+    const sy = -34 - r * 36;
+    joints += `M-130 ${sy}Q0 ${sy + 14} 130 ${sy}`;
+    for (let j = 0; j < 4; j++) joints += `M${-100 + j * 64 + (r % 2) * 32} ${sy + 4}v30`;
+  }
+  let out = pen.form('M-130 0V-196Q0 -214 130 -196V0Q0 14 -130 0Z', '#b8a898', { sh: 90, hatch: 2, rim: 2.2, line: 3, inner: `<path d="${joints}" fill="none" stroke="${gn.INK}" stroke-width="2.6" opacity=".45"/>` });
+  out += pen.form('M-148 -190Q-144 -336 0 -340Q144 -336 148 -190Q0 -214 -148 -190Z', '#4f8a96', {
+    sh: 70,
+    hatch: 2,
+    rim: 2.4,
+    line: 3,
+    inner: `<path d="M-72 -202Q-80 -300 0 -340M72 -202Q80 -300 0 -340" fill="none" stroke="#2f6070" stroke-width="4"/>` + pen.brush([[-104, -232], [-90, -300], [-34, -322]], 8, '#bff0f0', [0.3, 0.4], 0.5),
+  });
+  out += pen.form('M-16 -200V-328Q0 -338 16 -328V-200Z', '#1a1838', { line: 2.4, inner: gn.spark(pen, -2, -300, 6, '#fff6d0') + gn.spark(pen, 6, -256, 5, '#fff6d0') });
+  out += pen.brush([[0, -338], [0, -380]], 6, gn.INK, [0.05, 0.05]) + gn.spark(pen, 0, -392, 16, '#ffd166');
+  // The open doorway, warm lamplight spilling out, and a round window.
+  out += pen.glow(0, -60, 120, '#ffc860', 0.7);
+  out += pen.form('M-44 0V-100Q-44 -140 0 -140Q44 -140 44 -100V0Z', '#ffd98a', { line: 2.8, inner: pen.glow(0, -50, 60, '#fff6d8', 0.9) });
+  out += pen.form('M-44 0V-100Q-44 -140 -8 -140L-22 -126V10Z', '#8a5a34', { sh: 8, line: 2.4 });
+  out += pen.form('M64 -128a20 20 0 1 0 40 0a20 20 0 1 0 -40 0Z', '#ffd98a', { line: 2.6, inner: `<path d="M84 -148V-108M64 -128H104" stroke="${gn.INK}" stroke-width="3"/>` });
+  return gn.at(x, y, s, out);
+}
+
+/** A brass telescope on a wooden tripod, tilted up at the sky toward the right. Feet at (x, y). */
+function telescopeGN(pen: gn.Pen, x: number, y: number, s: number): string {
+  const legs: [gn.P[], number][] = [
+    [
+      [
+        [0, -150],
+        [-70, 0],
+      ],
+      14,
+    ],
+    [
+      [
+        [0, -150],
+        [70, 0],
+      ],
+      14,
+    ],
+    [
+      [
+        [0, -150],
+        [12, 0],
+      ],
+      12,
+    ],
+  ];
+  let out = pen.brushes(legs, gn.INK, [0.02, 0.02]) + pen.brushes(
+    legs.map(([p, w]) => [p, w * 0.5] as [gn.P[], number]),
+    '#8a5a34',
+    [0.02, 0.02],
+  );
+  const tp = pen.local(false, -48);
+  const tube =
+    tp.form('M-150 -12H-106V12H-150Z', '#b88030', { sh: 6, line: 2.4 }) +
+    tp.form('M-110 -24H112V24H-110Z', '#d8a040', { sh: 16, hatch: 1, line: 2.6, rim: 1.8, inner: `<path d="M-60 -24V24M40 -24V24" stroke="#a87020" stroke-width="6"/><path d="M-96 -12H100" stroke="#fff6c0" stroke-width="5" opacity=".6"/>` }) +
+    tp.form('M110 -34H166V34H110Z', '#e8b850', { sh: 16, line: 2.6, rim: 1.8 }) +
+    `<ellipse cx="166" cy="0" rx="8" ry="30" fill="#bfeaff" stroke="${gn.INK}" stroke-width="2.4"/>`;
+  out += pen.form('M-14 -150a14 14 0 1 0 28 0a14 14 0 1 0 -28 0Z', '#b88030', { sh: 6, line: 2.4 }) + gn.at(0, -160, 1, tube, false, -48);
+  return gn.at(x, y, s, out);
+}
+
+/** A checked picnic blanket on the grass with what is left of dinner: a plate, a tipped cup and crumbs. */
+function picnic(pen: gn.Pen): string {
+  const checks = [0, 1, 2, 3, 4, 5].map((i) => `M${640 + i * 66} ${828 - i * 3}L${600 + i * 80} ${888 - i * 2}`).join('') + 'M590 850L990 836M574 870L1006 856';
+  return (
+    pen.form('M600 830L960 812L1020 872L560 892Z', '#d84a4a', { sh: 10, line: 2.8, rim: 1.6, inner: `<path d="${checks}" stroke="#fff" stroke-width="8" opacity=".45"/>` }) +
+    pen.form(ellD(880, 846, 42, 12), '#f4f0e8', { sh: 5, line: 2.4 }) +
+    gn.at(950, 846, 1, pen.local(false, -80).form('M-14 -10L14 -14L16 10L-12 12Z', '#e8f0f8', { sh: 6, line: 2.2 }), false, -80) +
+    `<g fill="#e8b870" stroke="${gn.INK}" stroke-width="1.6"><circle cx="760" cy="840" r="4"/><circle cx="800" cy="852" r="3"/><circle cx="700" cy="860" r="4"/></g>`
+  );
+}
+
+/** A bit of dinner tumbling through the air: an apple, a bunch of grapes or a bread roll. */
+function food(pen: gn.Pen, kind: 'apple' | 'grapes' | 'roll', x: number, y: number, rot: number): string {
+  const lp = pen.local(false, rot);
+  let out = '';
+  if (kind === 'apple') out = lp.form('M-18 0a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z', '#ff5a4a', { sh: 8, line: 2.4, rim: 1.4 }) + lp.form('M2 -24q12 -8 16 2q-10 4 -16 -2Z', '#5f9a3a', { line: 1.8 });
+  else if (kind === 'grapes') out = [[-10, 0], [8, 0], [0, 14], [-18, -14], [2, -16]].map(([gx, gy]) => lp.form(`M${gx - 9} ${gy}a9 9 0 1 0 18 0a9 9 0 1 0 -18 0Z`, '#9a5ac8', { sh: 4, line: 2 })).join('');
+  else out = lp.form(ellD(0, 0, 26, 16), '#e0a058', { sh: 7, line: 2.4, inner: `<path d="M-10 -12q4 10 0 22M6 -14q4 12 0 26" fill="none" stroke="#a86a30" stroke-width="3"/>` });
+  return gn.at(x, y, 1, out, false, rot);
+}
+
+/** 24. Dusk on Phineus's isle: harpy drones flap off with the old stargazer's dinner; he shakes his stick at them and shouts; Jason and Atalanta come running. */
+export function ch3Phineus(): string {
+  const pen = gn.Pen.scene('ch3-phineus', { key: [0.85, -0.4], keyColor: '#ffb890', rim: [-0.9, -0.35], rimColor: '#a8c8ff', shadow: '#5a4a9a', depth: 0.55 });
+  const sunX = 1300;
+  const sunY = 540;
+  const sky =
+    gn.sky(pen, [
+      [0, '#1e2258'],
+      [0.36, '#54488a'],
+      [0.58, '#d87e9a'],
+      [0.7, '#ffb088'],
+      [0.8, '#ffd0a0'],
+    ]) +
+    gn.starfield(pen, 12, 40, 0, 0, 1600, 300, '#fff6e0') +
+    gn.gasGiant(pen, 190, 150, 90, { lightDir: [0.9, 0.2], haze: 0.25, sky: '#3a3a7a' }) +
+    gn.godRays(pen, sunX, sunY, [-150, -125, -100, 100, 125, 150, 180, 205], 6, 1200, '#ffd8b0', 0.25) +
+    gn.bloom(pen, sunX, sunY, 110, '#fff0d0', 0.9);
+  const back = pen.relight({ key: [0.8, -0.6], rimColor: '#ffe0c8', rim: [0.6, -0.8] });
+  const far =
+    farIsle(pen, 520, 430, 170, '#f4d0d8', true, 2) +
+    farIsle(pen, 960, 340, 120, '#f4d4e0', false, 3) +
+    farIsle(pen, 1490, 380, 210, '#f4d0d8', true, 4) +
+    [
+      [100, 650, 420, 1],
+      [520, 670, 460, 2],
+      [980, 650, 420, 3],
+      [1420, 670, 460, 4],
+    ]
+      .map(([cx, cy, cw, seed]) => gn.cloud(back, cx, cy, cw, '#ffd8c8', '#b878a0', { seed, flat: true }))
+      .join('') +
+    `<rect x="-80" y="650" width="1760" height="320" fill="#e0a8b0"/>` +
+    gn.haze(pen, 520, 700, '#ffd8c0', 0.6);
+  // The isle they stand on: dusk grass, the observatory and telescope, and the picnic blanket.
+  const ground =
+    pen.form('M-80 780Q300 740 800 752Q1250 748 1680 770V960H-80Z', '#4a8a4a', {
+      sh: 30,
+      line: 3,
+      paint: pen.lin([
+        [0, '#7ab060'],
+        [1, '#24402a'],
+      ]),
+    }) +
+    gn.grass(pen, -40, 1640, 768, 18, 28, '#2a5a30', '#c8d890', 6) +
+    gn.wash(pen, 820, '#140c24', 0.6);
+  const home = pen.glow(230, 720, 300, '#ffc860', 0.35) + observatoryGN(pen, 210, 790, 1.0) + telescopeGN(pen, 410, 800, 0.85) + picnic(pen);
+  // The harpies make off with the basket, the teapot and a honey cake; dinner tumbles through the air.
+  const harpies =
+    gn.streaks(pen, 760, 250, -110, 180, 4, 60, '#ffffff', 0.6, 3) +
+    harpyGN(pen, 860, 230, 0.8, { haul: 'basket', rot: -14 }) +
+    gn.streaks(pen, 1080, 170, -110, 140, 3, 50, '#ffffff', 0.5, 4) +
+    harpyGN(pen, 1160, 150, 0.6, { haul: 'teapot', rot: -20, eye: '#ff6a5a' }) +
+    gn.streaks(pen, 760, 470, -120, 120, 3, 40, '#ffffff', 0.5, 5) +
+    harpyGN(pen, 850, 470, 0.62, { haul: 'cake', rot: -26 }) +
+    food(pen, 'apple', 760, 360, 20) +
+    food(pen, 'grapes', 1010, 320, -20) +
+    food(pen, 'roll', 720, 600, 30) +
+    gn.spark(pen, 980, 420, 8, '#fff2a0') +
+    gn.spark(pen, 560, 260, 6, '#fff2a0');
+  // Phineus, shaking his stick at them; Jason and Atalanta come running from the right.
+  const heroes =
+    gn.castShadow(pen, 540, 884, 150, 16, 0.5) +
+    phineus(pen, 540, 890, 0.86, {
+      pose: { turn: 0.45, lean: 4, tilt: -14, hipTilt: 4, armN: [-168, 168], armF: [96, 120], legN: { to: [-0.16, 0.97] }, legF: { to: [0.2, 0.96] }, handN: 'fist', handF: 'open', wristF: -20 },
+      mood: 'shout',
+      stickTilt: 40,
+    });
+  const shake = pen.brushes(
+    [
+      [
+        [
+          [470, 150],
+          [490, 130],
+        ],
+        5,
+      ],
+      [
+        [
+          [520, 120],
+          [548, 112],
+        ],
+        5,
+      ],
+      [
+        [
+          [430, 200],
+          [446, 176],
+        ],
+        4,
+      ],
+    ],
+    '#ffffff',
+    [0.3, 0.3],
+    0.85,
+  );
+  const runners =
+    gn.castShadow(pen, 1150, 886, 130, 12, 0.45) +
+    gn.jason(pen, 1150, 890, 0.92, { pose: { ...gn.POSES.run, armF: [135, 150], armN: [-50, 10], handF: 'point', handN: 'fist' }, flip: true, mood: 'shout', look: [2, -3] }) +
+    gn.lux(pen, 900, 600, 0.7, 'normal', { flip: true, look: [6, -6] }) +
+    gn.castShadow(pen, 1470, 880, 130, 12, 0.45) +
+    gn.atalanta(pen, 1470, 884, 0.9, { pose: { ...gn.POSES.run, armN: [30, 120] }, flip: true, mood: 'determined', look: [2, -2], bow: 'back', wind: 1.2 }) +
+    gn.iris(pen, 1360, 400, 0.6, 'normal', { flip: true, rot: -8 });
+  const fore = gn.grass(pen, -70, 220, 940, 4, 140, '#10201a', '#4a7a4a', 9) + gn.grass(pen, 1460, 1680, 940, 4, 140, '#10201a', '#4a7a4a', 10);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.75, ground + home) + gn.layer(0.9, harpies) + gn.layer(1, heroes + shake + runners) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#140c24') + gn.grain(pen, 0.08));
+}
