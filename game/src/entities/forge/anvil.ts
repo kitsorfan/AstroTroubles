@@ -7,6 +7,7 @@ import { Grid } from '../../world/grid';
 import type { EnemyModel } from '../aliens';
 import { Enemy } from '../enemies';
 import type { HitKind } from '../entity';
+import { ANVIL_TUNING } from './tuning';
 import { blobShadow, boxG, cyl, glowSprite, mat, mesh, ownMat, sphere } from '../models';
 
 /**
@@ -16,20 +17,6 @@ import { blobShadow, boxG, cyl, glowSprite, mat, mesh, ownMat, sphere } from '..
  * the moment to PUNCH it (or blast it any time with the cannon). Gentle numbers: one heart if the anvil
  * lands on you, and the circle is big and slow.
  */
-export const ANVIL_TUNING = {
-  hp: 3,
-  /** Height above the hero while it carries the anvil, and how fast it follows. */
-  hover: 5.5,
-  follow: 1.4,
-  /** Seconds between drops, the red-circle warning, and the circle's radius. */
-  rest: 2.6,
-  warn: 1.1,
-  radius: 1.5,
-  /** Seconds the anvil sits on the ground before the drone swoops down for it, and how low it comes. */
-  lie: 1.3,
-  fetch: 1.6,
-  low: 1.3,
-};
 
 type Mode = 'idle' | 'track' | 'warn' | 'drop' | 'lie' | 'fetch' | 'climb';
 

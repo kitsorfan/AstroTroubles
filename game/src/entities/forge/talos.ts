@@ -10,28 +10,11 @@ import { Boss } from '../bossBase';
 import type { Enemy } from '../enemies';
 import type { HitKind, Interactable, Target } from '../entity';
 import { Shockwave } from '../hazards';
+import { TALOS_TUNING } from './tuning';
 import { TALOS_COLORS, TALOS_HIP, makeTalos, type TalosLeg, type TalosModel } from './talosModel';
 
 type State = 'walk' | 'raise' | 'stomp' | 'stuck' | 'free' | 'hammer' | 'slam' | 'rivets' | 'kneel' | 'rise' | 'sit';
 
-/** The fight's numbers, per round (he gets a little quicker after each pull). */
-export const TALOS_TUNING = {
-  rounds: 3,
-  plates: 3,
-  /** Health: one per ankle plate, two per pull of the plug. */
-  plugDamage: 2,
-  /** Seconds the stomp is telegraphed (red circle), the foot stays stuck, and he kneels with the plug out. */
-  raise: [1.4, 1.2, 1.05],
-  stuck: [4.2, 3.8, 3.4],
-  kneel: 8,
-  /** The red circle under the stomping foot, and the hammer's strip (length and half-width). */
-  stompRadius: 2.1,
-  hammerLength: 10,
-  hammerHalf: 1.3,
-  walkSpeed: [2.4, 2.8, 3.2],
-  /** How far from the arena's middle he walks his rounds. */
-  orbit: 7,
-};
 
 const tmp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
