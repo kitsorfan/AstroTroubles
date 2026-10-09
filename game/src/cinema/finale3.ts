@@ -66,12 +66,12 @@ export async function fleeceHome(d: Director, p: PlanetScene, kind: EndingKind) 
   ship.add(argo.root);
   p.scene.add(ship);
   const pad = plains.clone().add(V(10, 3.5, 20));
-  const sky = pad.clone().add(V(-260, 300, 140));
+  const sky = pad.clone().add(V(-150, 110, 70));
   let t = 0;
   // Down she comes out of the sky, and settles in the valley (the camera waits on a hill and watches her come).
-  const eye = pad.clone().add(V(-60, 18, 70));
+  const eye = pad.clone().add(V(40, 10, 55));
   ship.position.copy(sky);
-  d.cut(eye, sky, 46);
+  d.cut(eye, sky.clone().lerp(pad, 0.4), 46);
   d.fade('#000000', 1, 0);
   await Promise.all([
     d.fade('#000000', 0, 1.2),
@@ -82,8 +82,9 @@ export async function fleeceHome(d: Director, p: PlanetScene, kind: EndingKind) 
         argo.update(t, 1 - k * 0.7);
         ship.position.lerpVectors(sky, pad, 1 - (1 - k) * (1 - k));
         ship.rotation.z = -0.4 * (1 - k);
-        d.rig.pos.lerpVectors(eye, pad.clone().add(V(-40, 12, 46)), k);
-        d.rig.look.copy(ship.position);
+        d.rig.pos.lerpVectors(eye, pad.clone().add(V(-30, 12, 46)), k);
+        // Keep the valley in the picture as well as the ship coming down into it.
+        d.rig.look.copy(ship.position).lerp(pad, 0.4);
       },
       ease.linear,
     ),
