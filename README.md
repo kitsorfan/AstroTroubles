@@ -74,7 +74,7 @@ Developer shortcuts (desktop browser only): `#deck=<id>` jumps into a deck (`&st
 | **GRAPPLE** | The grapple hook (found in the Glass Desert): look toward a glowing ring and press the LUX button to zip straight over to it, across gaps and up cliffs |
 | **Weapon button** | On Gaia Nova, once Jason owns a second weapon: switch weapons (or press **X** on a keyboard) |
 | LUX button | Appears near terminals, pylons, signs, the shop, lifts and grapple rings. It wears the face of whoever is helping Jason: LUX, IRIS, or (when Jason is on his own) his wrist computer, the ACTION button |
-| **Switch** (a face button above the others) | On levels with two heroes: switch to the hero whose face it shows, right where you stand (or press **C**). It works on the ground, between moves, with a one-second cooldown. The other hero follows you around, and hearts, armor, spins and bolts are shared |
+| **Switch** (a face button above the others) | On levels with two heroes: take control of the hero whose face it shows, wherever they are (the camera swings over), or press **C**. It works on the ground, between moves, with a one-second cooldown. The hero you were playing stays put and follows from there. Hearts, armor, spins and bolts are shared |
 
 #### Playing as Atalanta
 
@@ -84,11 +84,21 @@ Atalanta, the colony's fastest runner and best archer, joins in Chapter 3. Her b
 | --- | --- |
 | Move | She runs faster than Jason. Keep the stick pushed **all the way** (or hold a direction key) and she breaks into a **sprint** for long jumps; a sharp turn or letting go ends it |
 | **JUMP** | One strong jump (higher than Jason's first jump, but no jet boots). Jump while touching a wall to **wall-jump** off it (not off the same wall twice in a row). In mid-air, run at a wall with a glowing **teal stripe** to **wall-run** along it, and jump to kick off |
+| **CLIMB** (just push) | Cliffs with teal-and-gold **handholds** (and a glowing lip) can be climbed: push into one, on the ground or in mid-air, and she grabs on. Keep pushing to climb up, pull back to climb down, push sideways to shimmy along the holds, and JUMP to kick off. Her grip lasts a few seconds (it comes back on the ground). At the top she pulls herself over the lip |
 | **BOW** (the BLAST button) | Tap for quick arrows that fly far and straight. **Hold** to charge a **power arrow** that goes through up to 4 enemies and is the only thing that sets off a **bullseye target**. No clip, just a short cooldown; Blaster Power makes her arrows stronger |
 | **KICK** (the SPIN button) | A spinning kick that blocks enemy shots like Jason's spin (from the same charges), on the ground or once in mid-air |
 | **SLIDE** (the DASH button) | A low, fast slide that trips enemies and fits under **low gaps** (the walls with yellow-and-black stripes). Under a low ceiling she crawls until there's room to stand. Jump out of a slide for a long jump. It needs no energy cells |
 
-She has no grapple, no ground pound and none of Jason's weapons: red floor switches and grapple rings need Jason, low gaps and bullseyes need her.
+She has no grapple, no ground pound and none of Jason's weapons: red floor switches and grapple rings need Jason, low gaps, cliffs and bullseyes need her.
+
+#### Travelling together
+
+The heroes travel as a team, and nobody pops over by magic. The hero you aren't playing walks after you, copying only the moves their own hero can make: Atalanta crawls after you through a low gap and climbs after you up a cliff, Jason jumps a gap you jumped. When the way on needs a move they don't have, they stop at it and **wait** (a little "..." bubble over their head), and you can only scout a short way ahead of them (the **tether**: about six cells): far enough to reach a switch, open a door or bring out a bridge, and then they find the way round and catch up. Two moves bring them along:
+
+- **A hand up.** Stand still at the top of a ledge right above a waiting hero and you lend a hand: Atalanta drops a climbing rope, Jason lowers his grapple line, the General reaches down. They climb up beside you.
+- **Riding the grapple.** When Jason grapples with someone close behind him, they grab on and zip across with him.
+
+You can also switch to the waiting hero and find them a way yourself. `npm run game:check` checks every level for this: each hero must reach the exit and the boss together with the others, and anything only one hero can reach must be within the tether of where the others can wait.
 
 #### Playing as General Brennus
 
@@ -192,7 +202,7 @@ Every weapon has its own range, power, speed and ammo, and a special trick. The 
 - **Weeder drones** (the Garden of Colchis) are Aeëtes's garden wreckers: gold drones with garden shears and a tank of weed-killer. One hovers a few steps away, its tank glows, and a gold circle spreads where you stand: step off it before the weed-killer splashes.
 - **Light-word gates** (the Garden of Colchis): the Gardeners locked their gates with words of light, and the light-stones taught their colours. Step on the colour pads of the right word, in order (HOME is blue then green; FRIEND is the whole rainbow, red to violet). The garden's rescues are seed-sprites, the Gardeners' little helpers, caught in Aeëtes's gold nets.
 - **Ring guards** (the Golden Fleece) are Aeëtes's gold butler robots. They hold a big gold ring up in front like a shield (shots from the front ping off), and every few seconds, after a glowing wind-up, they throw it like a boomerang: it skims out at knee height and comes back. Jump the ring, and hit the guard while its ring is away (Brennus's shield bats the ring straight back).
-- **Three heroes.** On the Golden Fleece the switch button goes round all three: Jason, Atalanta and, once he joins, General Brennus. The two you aren't playing walk along behind (cracked rock is only for Brennus, even Jason's charged fireball just scorches it, and heavy plates only hold under the General).
+- **Three heroes.** On the Golden Fleece the switch button goes round all three: Jason, Atalanta and, once he joins, General Brennus. The two you aren't playing walk along behind, each where they can (cracked rock is only for Brennus, even Jason's charged fireball just scorches it, and heavy plates only hold under the General).
 
 ### Enemies
 
@@ -309,7 +319,7 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/world/             grid level parser, physics, level mesh builder, sky, particles, decor
   src/entities/          Jason, LUX and IRIS, enemies, bosses, pickups and interactive props
   src/entities/heroes/   the hero table and switching rules, Atalanta (model, moves, arrows), the follower,
-                         hero props (arrow targets, wall-run walls, low gaps) and the dev practice course,
+                         hero props (arrow targets, wall-run walls, climbing cliffs, low gaps), the jump envelopes and the dev practice course,
                          General Brennus (model, moves, cannon) and his Legion props (cracked walls, heavy
                          plates, command posts, his old robots), and the Gardeners' bronze mech (model, moves)
   src/entities/forge/    Talos's Forge: TALOS, the anvil drones, bronze gates and cracked floor plates
@@ -336,7 +346,7 @@ The files left at the root are the ones each tool looks for there: `package.json
 
 ### Levels
 
-Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Levels that list `heroes: ['jason', 'atalanta']` can also place arrow `target`s, `wallrun` walls and `lowgap` crawl holes, and General Brennus's levels (`heroes: ['brennus']`) `cracked` walls, heavy `plate`s, Legion command `post`s, idle `legionbot`s, and moving platforms dressed as ore carts or haulers (`look: 'cart' | 'hauler'`), plus, for his Last Stand, `hold` lines (with their dropships, drops and stretch of the Argo's way), Legion `dockgun`s woken by `post`s with `order: 'guns'`, and the Sky Gate `arch`. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors and, on levels with Atalanta, her jumps, sprint long jumps (after a two-cell run-up), wall-jumps, wall-runs, crawling through low gaps and power-arrow shots at targets, and on Brennus's levels his low jump, his charge-leaps and the cracked walls only he gets through; heroes can switch anywhere on the ground, so it also reports what each hero can't reach alone. It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
+Each deck is an ASCII map. `#` is a wall, space is open void, `.` is floor, `1`–`9` are raised floor (half a unit per step), `~` is a hazard (sludge, lava, electric water), `_` is ice and `,` is a grate (a plank bridge outdoors). Gaia Nova regions get their natural look (ground, cliffs, sky, weather) from the region's theme, and can place grapple `anchor`s, `wind` zones, `quicksand` and rolling `boulder` lanes. Levels that list `heroes: ['jason', 'atalanta']` can also place arrow `target`s, `wallrun` walls, `climb` cliffs (on the high cell, with its `h`) and `lowgap` crawl holes, and General Brennus's levels (`heroes: ['brennus']`) `cracked` walls, heavy `plate`s, Legion command `post`s, idle `legionbot`s, and moving platforms dressed as ore carts or haulers (`look: 'cart' | 'hauler'`), plus, for his Last Stand, `hold` lines (with their dropships, drops and stretch of the Argo's way), Legion `dockgun`s woken by `post`s with `order: 'guns'`, and the Sky Gate `arch`. Letters are placed from the deck's `legend`. `npm run game:check` simulates Jason's jump, double-jump, dash and hover ranges on every map. It also models grapple zips to anchors and, on levels with Atalanta, her jumps, sprint long jumps (after a two-cell run-up), wall-jumps, wall-runs, climbs, crawling through low gaps and power-arrow shots at targets, and on Brennus's levels his low jump, his charge-leaps and the cracked walls only he gets through. It also reports what each hero can't reach alone, and checks that the heroes can travel together (hand-ups and grapple rides included, see **Travelling together**). It reports anything you can't reach, checks that each deck's new ability really is needed to finish it, that a checkpoint or energy charger (`=` in a map) sits before every jump that needs a dash, and that every countdown leaves time to spare: the fastest route may use at most half the clock, and even the slowest order of switches at most four fifths. The Jest suite runs the same checks.
 
 ## Development
 
