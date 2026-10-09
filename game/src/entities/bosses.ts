@@ -1572,6 +1572,9 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Aello(world, id, cx, cz, h);
     case 'excavator':
       return new Excavator(world, id, cx, cz, h);
+    case 'organ':
+      // The Siren Organ is fought from the submarine: see vehicles/sub (it never stands on a map).
+      throw new Error('THE SIREN ORGAN is fought from the Dolphin submarine (vehicles/sub/organ.ts)');
   }
 }
 

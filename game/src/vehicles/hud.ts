@@ -44,9 +44,22 @@ const CSS = `
 #ui .vhud .vprompt.urgent { color:#ffd166; border:2px solid #ffd166; font-size:30px; animation: vpulse .45s infinite alternate; }
 @keyframes vpulse { from { transform:translate(-50%,-50%) scale(1); } to { transform:translate(-50%,-50%) scale(1.08); } }
 @media (max-height: 460px) { #ui .vhud .vprompt { font-size:18px; } #ui .vhud .vprompt.urgent { font-size:24px; } }
+#ui .btn.boost.sing { background: radial-gradient(circle at 35% 30%, #ffd0ec, #e04a9a); box-shadow: 0 0 22px #ff6fb0; }
+#ui .vhud .vsong { position:absolute; left:50%; bottom:calc(22px + var(--safe-b, 0px)); transform:translateX(-50%); width:min(420px, 52vw);
+  height:54px; border-radius:27px; background:rgba(10,14,40,.6); border:2px solid rgba(255,111,176,.7); }
+#ui .vhud .vsong.hidden, #ui .buttons.hidden ~ .vhud .vsong { display:none; }
+#ui .vhud .vsong .target { position:absolute; left:14px; top:6px; width:38px; height:38px; border-radius:50%; border:4px solid #fff;
+  box-shadow:0 0 12px #7fe6ff; box-sizing:border-box; }
+#ui .vhud .vsong .target.hit { background:#7fe6ff; }
+#ui .vhud .vsong i.note { position:absolute; top:13px; width:24px; height:24px; margin-left:-12px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff, #ff6fb0); box-shadow:0 0 8px #ff6fb0; }
+#ui .vhud .vsong .got { position:absolute; right:12px; top:-24px; color:#fff; font:800 16px Fredoka, sans-serif; text-shadow:0 2px 4px #000; }
 `;
 
 const RING_ICON = `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#ffd166" stroke-width="3.4"/><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#fff6d0" stroke-width="1" opacity=".7"/></svg>`;
+/** The sub's sonar (three arcs), and LUX's counter-song (a music note). */
+const PING_ICON = `<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.6" fill="#fff"/><path d="M10 7.5a6 6 0 0 1 0 9M13.5 4.5a10 10 0 0 1 0 15M17 2a13.5 13.5 0 0 1 0 20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const SING_ICON = `<svg viewBox="0 0 24 24"><path d="M9 18V5l10-2v12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="3" fill="#fff"/><circle cx="16.5" cy="15" r="3" fill="#fff"/></svg>`;
 const BOOST_ICON = `<svg viewBox="0 0 24 24"><path d="M3 15l7-3-7-3M9 17l8-5-8-5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="19.5" cy="12" r="2.6" fill="#fff"/></svg>`;
 
 export class VehicleHudView {
@@ -55,6 +68,9 @@ export class VehicleHudView {
   private buttons: HTMLElement | null;
   private last = '';
   private lastPrompt = '';
+  /** What the button says right now (BOOST, or the sub's PING and SING). */
+  private label = 'BOOST';
+  private song: HTMLElement;
 
   constructor(root: HTMLElement, input: Input) {
     if (!document.getElementById('vhud-css')) {
@@ -66,7 +82,9 @@ export class VehicleHudView {
     this.el = document.createElement('div');
     this.el.className = 'vhud hidden';
     this.el.innerHTML = `<div class="vtrack"><div class="fill"></div><div class="marks"></div><div class="goal"></div><div class="ship">✦</div></div>
-      <div class="vcount">${RING_ICON}<b>0</b></div><div class="vprompt off"></div>`;
+      <div class="vcount">${RING_ICON}<b>0</b></div><div class="vprompt off"></div>
+      <div class="vsong hidden"><i class="target"></i><div class="notes"></div><div class="got"></div></div>`;
+    this.song = this.el.querySelector('.vsong') as HTMLElement;
     const hud = root.querySelector('.hud-left')?.parentElement ?? root;
     hud.append(this.el);
     // BOOST sits with the other buttons (so it hides with them during cutscenes) and presses DASH.
@@ -101,9 +119,42 @@ export class VehicleHudView {
     if (this.buttons) this.buttons.dataset.vehicle = kind ?? '';
     this.last = '';
     this.lastPrompt = '';
+    this.setLabel('BOOST');
+    this.song.classList.add('hidden');
+  }
+
+  /** Re-labels (and re-draws) the button: BOOST, PING or SING. */
+  private setLabel(label: string) {
+    if (label === this.label) return;
+    this.label = label;
+    const icon = label === 'PING' ? PING_ICON : label === 'SING' ? SING_ICON : BOOST_ICON;
+    const old = this.btn.querySelector('svg:not(.cd-ring)');
+    if (old) old.outerHTML = icon;
+    const s = this.btn.querySelector('span');
+    if (s) {
+      s.dataset.t = label;
+      s.textContent = tr(label);
+    }
+    this.btn.classList.toggle('sing', label === 'SING');
+  }
+
+  /** The counter-song's rhythm strip: notes slide in from the right to the ring. */
+  private drawSong(song: VehicleHud['song']) {
+    this.song.classList.toggle('hidden', !song);
+    if (!song) return;
+    const notes = this.song.querySelector('.notes') as HTMLElement;
+    const shown = song.beats.filter((b) => b > -0.25 && b < 2.4);
+    if (notes.childElementCount !== shown.length) notes.innerHTML = '<i class="note"></i>'.repeat(shown.length);
+    // The ring sits 33px in; a beat 2.4 s away starts at the right end.
+    const w = this.song.clientWidth || 360;
+    notes.querySelectorAll<HTMLElement>('i').forEach((el, i) => (el.style.left = `${33 + (shown[i] / 2.4) * (w - 60)}px`));
+    (this.song.querySelector('.target') as HTMLElement).classList.toggle('hit', shown.some((b) => Math.abs(b) < 0.12));
+    (this.song.querySelector('.got') as HTMLElement).textContent = `♪ ${song.got} / ${song.need}`;
   }
 
   update(h: VehicleHud) {
+    this.setLabel(h.button ?? 'BOOST');
+    this.drawSong(h.song ?? null);
     const key = `${Math.round(h.boost * 30)}|${h.boostSlots}|${h.boosting}|${h.counter?.join(',')}|${Math.round(h.progress * 400)}|${h.marks.length}`;
     if (key !== this.last) {
       this.last = key;
@@ -136,7 +187,7 @@ export class VehicleHudView {
   /** Re-labels the button after a language change. */
   applyLang() {
     const s = this.btn.querySelector('span');
-    if (s) s.textContent = tr('BOOST');
+    if (s) s.textContent = tr(this.label);
     this.lastPrompt = '';
   }
 }

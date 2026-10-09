@@ -3,6 +3,7 @@ import type { SaveData, UpgradeId } from '../core/save';
 import { LEVELS, chapterOf, chapterTotals, inChapter } from '../levels';
 import type { DeckId, LevelDef } from '../world/levelTypes';
 import { flightQuests } from '../vehicles/quests';
+import { diveQuests } from '../vehicles/sub/quests';
 import { findKind, plannedFinds, rescueKind } from './collectibles';
 import { heartCap, levelUp } from './shop';
 
@@ -54,7 +55,8 @@ function vaultReward(def: LevelDef): string {
 
 export function deckQuests(id: DeckId, save: SaveData): Quest[] {
   const def = LEVELS[id];
-  // A flight has its own quests: rings, drones and the dove's timing.
+  // A flight has its own quests: rings, drones and the dove's timing (a dive: rings, buoys and pearls).
+  if (def.vehicle === 'sub') return diveQuests(id, def, save);
   if (def.vehicle) return flightQuests(id, def, save);
   const ch = chapterOf(id);
   const rescue = rescueKind(ch);

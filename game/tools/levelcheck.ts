@@ -17,6 +17,12 @@ function check(id: DeckId, showMap: boolean) {
     console.log(`== ${id} (flight: ${def.vehicle}) rocks ${n('rock')} crystals ${n('crystal')} rings ${n('ring')} bolts ${n('bolt')} drone waves ${n('drones')} clashing pairs ${n('clash')} hold lines ${n('hold')} checkpoints ${n('checkpoint')}`);
     return;
   }
+  if (def.dive) {
+    // A dive has no map to walk either: its course is checked by game/tests/sirens.test.ts.
+    const n = (k: string) => def.dive?.things.filter((t) => t.kind === k).length ?? 0;
+    console.log(`== ${id} (dive: ${def.vehicle}) rocks ${n('rock')} kelp ${n('kelp')} columns ${n('pillar')} rings ${n('ring')} bolts ${n('bolt')} pearls ${n('pearl')} gates ${n('door')} buoys ${n('buoy')} piranha schools ${n('fish')} currents ${n('current')} checkpoints ${n('checkpoint')}`);
+    return;
+  }
   const level = parseLevel(LEVELS[id]);
   const { before, after } = deckAbilities(level);
   const lines: string[] = [`== ${id} (${level.width}x${level.depth}) abilities: [${before.join(', ')}] -> [${after.join(', ')}]`];
