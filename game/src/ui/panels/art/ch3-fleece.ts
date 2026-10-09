@@ -3,39 +3,8 @@
  * join the Argonauts in the tree-temple; Aeëtes in the Fleece armour, the Golden King; the Fleece laid
  * over Celestia at home; and (the secret ending) a valley full of little Celestias.
  */
-import {
-  aeetes,
-  argoShip,
-  at,
-  atalanta,
-  backdrop,
-  brennus,
-  C,
-  captain,
-  cloud,
-  fleece,
-  flower,
-  gascuBloom,
-  gasGiant,
-  glow,
-  glowDef,
-  hypatia,
-  ink,
-  iris,
-  jason,
-  leaf,
-  lux,
-  panel,
-  ridge,
-  sparkle,
-  stars,
-  vignette,
-  vine,
-} from '../kit';
 import * as gn from '../gn';
-import { celestia, fleeceGN, goldenKing, legionBot, lifeboat, lightWord, rootGN } from '../gn/ch3d';
-
-const GOLD_VINE = '#e8b030';
+import { celestia, fleeceGN, goldenKing, legionBot, lifeboat, lightWord, type LightWord as LightWordKind, rootGN } from '../gn/ch3d';
 
 /* ---------------- 25. Brennus and his squad, in the graphic-novel style ---------------- */
 
@@ -213,7 +182,9 @@ export function ch3Squad(): string {
     bot(255, 822, 0.77) +
     gn.legionShield(pen, [500, 806], 180, -16) +
     bot(380, 846, 0.84);
-  // The handshake: Brennus and Jason, Atalanta on the right with IRIS, LUX bobbing over Jason.
+  // The handshake: Brennus and Jason, Atalanta on the right with IRIS, LUX bobbing over Jason. The young
+  // heroes are lit from the side they face, so the shadow (and its hatching) stays off their faces.
+  const faceL = pen.relight({ key: [-0.9, -0.45] });
   const heroes =
     gn.castShadow(pen, 640, 900, 190, 18, 0.5) +
     gn.brennus(pen, 650, 904, 1.08, {
@@ -224,7 +195,7 @@ export function ch3Squad(): string {
       look: [3, 0.8],
     }) +
     gn.castShadow(pen, 1045, 900, 150, 16, 0.5) +
-    gn.jason(pen, 1040, 904, 1.06, {
+    gn.jason(faceL, 1040, 904, 1.06, {
       flip: true,
       pose: { turn: 0.58, lean: 3, hipTilt: 5, armN: { to: [1.25, 0.05] }, armF: [-10, 6], legN: { to: [-0.18, 0.97] }, legF: { to: [0.22, 0.96] }, handN: 'grip', handF: 'relaxed', wristN: 6 },
       mood: 'grin',
@@ -232,7 +203,7 @@ export function ch3Squad(): string {
     }) +
     gn.lux(pen, 1140, 290, 0.82, 'happy', { flip: true }) +
     gn.castShadow(pen, 1310, 896, 140, 15, 0.45) +
-    gn.atalanta(pen, 1310, 900, 1.04, { pose: 'hips', mood: 'sly', flip: true, look: [2.4, 0.5] }) +
+    gn.atalanta(faceL, 1310, 900, 1.04, { pose: 'hips', mood: 'sly', flip: true, look: [2.4, 0.5] }) +
     gn.iris(pen, 1460, 340, 0.72, 'happy', { flip: true, rot: -8 });
   const fore =
     rootGN(pen, [[-90, 990], [60, 900], [200, 880], [330, 960]], 70, 40, '#2a1a1c', { rim: 2.6, grain: 3 }) +
@@ -323,46 +294,7 @@ export function ch3GoldenKing(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(0.8, king) + gn.layer(1.25, heroes) + gn.vignette(pen, 0.6, '#0a0410') + gn.grain(pen, 0.08));
 }
 
-/** A rolling meadow at sunset with flowers dotted along it (for the ending pictures). */
-function meadow(seed: number, y: number, colors: string[]): string {
-  let out = `<path d="M0 ${y}Q400 ${y - 40} 800 ${y}T1600 ${y}V900H0Z" fill="#7ab84a" ${ink(5)}/>`;
-  for (let i = 0; i < 16; i++) {
-    const x = 40 + ((i * 97 + seed * 31) % 1520);
-    const fy = y + 40 + ((i * 53) % 140);
-    out += flower(x, fy, 10 + (i % 3) * 4, colors[i % colors.length]);
-  }
-  return out;
-}
-
 /* ---------------- 27 and 28. The endings, in the graphic-novel style ---------------- */
-
-/** Little five-petal wild flowers scattered in a box, bigger toward the bottom (the valley in bloom). */
-function wildFlowers(pen: gn.Pen, seed: number, n: number, x0: number, x1: number, y0: number, y1: number, colors: string[], size = 12, line = 1.8): string {
-  const rand = gn.rng(seed);
-  const byColor: Record<string, string> = {};
-  let centres = '';
-  for (let i = 0; i < n; i++) {
-    const t = rand();
-    const x = x0 + rand() * (x1 - x0);
-    const y = y0 + t * (y1 - y0);
-    const r = size * (0.45 + t * 0.8);
-    const c = colors[i % colors.length];
-    let d = '';
-    for (let k = 0; k < 5; k++) {
-      const a = (k / 5) * Math.PI * 2 + rand();
-      const px = x + Math.cos(a) * r * 0.62;
-      const py = y + Math.sin(a) * r * 0.5;
-      d += `M${gn.r1(px - r * 0.42)} ${gn.r1(py)}a${gn.r1(r * 0.42)} ${gn.r1(r * 0.36)} 0 1 0 ${gn.r1(r * 0.84)} 0a${gn.r1(r * 0.42)} ${gn.r1(r * 0.36)} 0 1 0 ${gn.r1(-r * 0.84)} 0`;
-    }
-    byColor[c] = (byColor[c] ?? '') + d;
-    centres += `M${gn.r1(x)} ${gn.r1(y)}h0`;
-  }
-  return (
-    Object.entries(byColor)
-      .map(([c, d]) => `<path d="${d}" fill="${c}" stroke="${gn.INK}" stroke-width="${line}"/>`)
-      .join('') + `<path d="${centres}" stroke="#ffd166" stroke-width="${gn.r1(size * 0.5)}" stroke-linecap="round"/>`
-  );
-}
 
 /** Tiny far-off flowers: dots of colour in a box (cheap: one path per colour). */
 function flowerDots(seed: number, n: number, x0: number, x1: number, y0: number, y1: number, colors: string[], size: number): string {
@@ -552,40 +484,199 @@ export function ch3Home(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, garden) + gn.layer(1, heroes + motes) + gn.vignette(pen, 0.45, '#1a0c2a') + gn.grain(pen, 0.08));
 }
 
-/** 28. The secret ending: LUX and IRIS sing light-words over a valley full of little Celestias, golden seeds drifting down. */
+/** Sitting on the ground (facing right), leaning back on the near hand, the far hand on a knee. */
+const SIT: gn.Pose = { turn: 0.58, lean: -8, tilt: 4, lift: -0.45, legN: { to: [0.66, 0.3] }, legF: { to: [0.74, 0.24] }, armN: { to: [-0.75, 1.5] }, armF: { to: [1.05, 1.2] }, handN: 'flat', handF: 'relaxed', wristN: -20 };
+
+/**
+ * 28. The secret ending, one spring dawn: the valley below the colony is full of little Celestias, a
+ * hundred of them glowing round the big one (the Fleece still at her feet). LUX and IRIS sing the
+ * Gardeners' light-words into the sky, and the Fleece's golden seeds drift down like snow.
+ */
 export function ch3Gardeners(): string {
-  const id = 'ch3-gardeners';
-  const words = ['#5ec8ff', '#7dff9a', '#ff6fcf', C.gold, '#c37bff']
-    .map((c, i) => `<g transform="translate(${470 + i * 165} ${150 + (i % 2) * 50})" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"><path d="M-34 0q17 -34 34 0t34 0"/><path d="M-14 26h28"/></g>`)
-    .join('');
-  let blooms = '';
-  const spots = [
-    [180, 700, 0.42],
-    [360, 760, 0.5],
-    [560, 690, 0.38],
-    [1050, 690, 0.4],
-    [1240, 770, 0.5],
-    [1430, 700, 0.42],
-    [260, 860, 0.36],
-    [1350, 870, 0.36],
+  const pen = gn.Pen.scene('ch3-gardeners', { key: [0.3, -1], keyColor: '#fff0d0', rim: [0, -1], rimColor: '#ffe0c8', shadow: '#5a4a9a', depth: 0.5 });
+  const sunX = 1000;
+  const sunY = 420;
+  const sky =
+    gn.sky(pen, [
+      [0, '#1e2a6a'],
+      [0.28, '#5a5ab0'],
+      [0.44, '#c08ac8'],
+      [0.52, '#ffb8a8'],
+      [0.6, '#ffe2c0'],
+    ]) +
+    gn.starfield(pen, 21, 46, 0, 0, 1600, 230, '#fff6e0') +
+    gn.gasGiant(pen, 1380, 130, 70, { lightDir: [-0.8, 0.5], haze: 0.45, sky: '#6a6ab8' }) +
+    gn.godRays(pen, sunX, sunY, [-150, -130, -110, -90, -70, 70, 90, 110, 130, 150, 172, 192, -172], 6, 1300, '#fff2d8', 0.26) +
+    gn.bloom(pen, sunX, sunY, 110, '#fff4dc', 0.9);
+  // Far mountains and the valley in the morning haze, a river winding through it, flowers everywhere.
+  const far =
+    gn.silhouette(
+      [
+        [-80, 470],
+        [120, 380],
+        [300, 430],
+        [480, 360],
+        [700, 430],
+        [860, 400],
+        [1100, 440],
+        [1300, 370],
+        [1500, 420],
+        [1680, 380],
+        [1680, 500],
+        [-80, 500],
+      ],
+      '#a890c8',
+    ) +
+    gn.haze(pen, 380, 520, '#ffd8c8', 0.8) +
+    gn.silhouette(
+      [
+        [-80, 500],
+        [300, 470],
+        [700, 486],
+        [1100, 466],
+        [1680, 492],
+        [1680, 560],
+        [-80, 560],
+      ],
+      '#8aa0a8',
+    ) +
+    pen.brush(
+      [
+        [960, 470],
+        [900, 500],
+        [1040, 540],
+        [860, 600],
+        [1000, 680],
+        [900, 760],
+      ],
+      34,
+      '#ffe6d0',
+      [0.9, 0.05],
+      0.8,
+    ) +
+    flowerDots(31, 150, -60, 1660, 474, 540, ['#ff8ad8', '#ffe08a', '#8ab8ff', '#a8ffc0'], 4) +
+    gn.haze(pen, 460, 560, '#ffd8c8', 0.45);
+  // The valley floor, and Celestia's family: little ones everywhere, bigger toward us, all glowing.
+  const ground = pen.form('M-80 540Q500 520 800 530Q1200 520 1680 540V960H-80Z', '#5a9a5a', {
+    line: 0,
+    paint: pen.lin([
+      [0, '#8ab88a'],
+      [0.4, '#4a8a50'],
+      [1, '#1a3428'],
+    ]),
+    inner: flowerDots(32, 160, -60, 1660, 540, 700, ['#ff8ad8', '#ffe08a', '#8ab8ff', '#a8ffc0', '#ffffff'], 7),
+  });
+  const headId = pen.uid();
+  pen.def(headId, `<g id="${headId}">${celestia(pen.relight({ key: [0, -1], rim: [0, 1], rimColor: '#ffffff' }), 0, 0, 1, { mini: true, glow: 0.8 })}</g>`);
+  const rand = gn.rng(28);
+  const little: [number, number, number][] = [];
+  // Rows from the back of the valley toward us: [y, scale, count].
+  for (const [ry, sc, n] of [
+    [552, 0.07, 16],
+    [576, 0.09, 14],
+    [606, 0.12, 11],
+    [646, 0.16, 9],
+    [700, 0.22, 7],
+  ] as const) {
+    for (let i = 0; i < n; i++) {
+      const x = -40 + ((i + 0.2 + rand() * 0.6) * 1680) / n;
+      if (Math.abs(x - 640) < 150 * (sc / 0.1) * 0.4 && ry < 650) continue;
+      little.push([x, ry + (rand() - 0.5) * 16, sc * (0.85 + rand() * 0.3)]);
+    }
+  }
+  // A patch of little Celestias (feet at [x, y], scale): their stems in one path, then their glowing heads.
+  const patch = (list: [number, number, number][]) => {
+    const stems: [gn.P[], number][] = list.map(([x, y, sc]) => [
+      [
+        [x, y],
+        [x - 30 * sc, y - 210 * sc],
+        [x, y - 420 * sc],
+      ],
+      34 * sc,
+    ]);
+    let out = pen.brushes(stems, '#2f6a3a', [0.05, 0.3]);
+    for (const [x, y, sc] of list) out += `<use href="#${headId}" transform="translate(${gn.r1(x)} ${gn.r1(y - 420 * sc)}) scale(${gn.r1(sc * 1000) / 1000}) rotate(${Math.round(x * 7) % 90})"/>`;
+    return out;
+  };
+  const family = patch(little);
+  // Her own children, close round her feet.
+  const children = patch([
+    [560, 640, 0.2],
+    [770, 650, 0.22],
+    [860, 676, 0.26],
+    [950, 642, 0.18],
+    [690, 690, 0.2],
+  ]);
+  // The big Celestia, the Fleece at her feet.
+  const mother =
+    gn.bloom(pen, 640, 330, 150, '#fff0c0', 0.7) +
+    celestia(pen.relight({ key: [0.3, -1], rim: [0, 1], rimColor: '#ffffff' }), 640, 300, 0.9, { stem: 300, sway: 14, glow: 1.2 }) +
+    fleeceGN(pen.relight({ key: [0, -1] }), [
+      [600, 520],
+      [680, 520],
+      [760, 560],
+      [840, 588],
+      [790, 612],
+      [640, 622],
+      [490, 612],
+      [440, 588],
+      [520, 560],
+    ], { sh: 10, bump: 10, curl: 30, glow: 0.8, edge: 0.2, seeds: [[600, 580], [700, 590]], awake: true }) +
+    gn.bloom(pen, 640, 320, 70, '#ffffff', 0.7);
+  const valley = ground + family + mother + children;
+  // LUX and IRIS singing the light-words into the sky; the Fleece's seeds drifting down like golden snow.
+  const words: [number, number, number, LightWordKind][] = [
+    [420, 196, 1.1, 'sky'],
+    [820, 128, 1.2, 'grow'],
+    [1020, 168, 1.1, 'friend'],
+    [1180, 244, 1.0, 'home'],
   ];
-  spots.forEach(([x, y, s], i) => (blooms += gascuBloom(`${id}b${i}`, x, y, s, 160)));
+  const song =
+    pen.brush(
+      [
+        [360, 280],
+        [420, 220],
+        [600, 150],
+        [820, 130],
+        [1010, 170],
+        [1160, 250],
+        [1240, 300],
+      ],
+      7,
+      '#ffffff',
+      [0.2, 0.2],
+      0.35,
+    ) +
+    words.map(([x, y, s, w]) => lightWord(pen, x, y, s, w)).join('') +
+    gn.lux(pen, 330, 300, 0.95, 'happy', { look: [8, -6] }) +
+    gn.iris(pen, 1290, 330, 1.0, 'sing', { flip: true, rot: -6 });
+  const sr = gn.rng(5);
   let seeds = '';
-  for (let i = 0; i < 26; i++) seeds += sparkle(60 + ((i * 131) % 1480), 120 + ((i * 89) % 520), 5 + (i % 4) * 2, i % 3 ? C.gold : '#7dff9a');
-  return panel(
-    backdrop(id + 'b', [[0, '#3a4ab8'], [0.5, '#8a7ad8'], [0.8, '#ffc8a8'], [1, '#ffe8c8']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.6)}${glowDef(id + 'r', '#ffffff', 0.5)}</defs>` +
-      stars(9, 50, 0, 0, 1600, 260, '#fff6e0') +
-      ridge(5, 560, 70, '#9a8ac8', 5) +
-      meadow(7, 640, ['#7dff9a', C.pink, C.gold, C.hello]) +
-      glow(id + 'r', 800, 170, 420, 0.6) +
-      words +
-      lux(380, 230, 0.85, 'glow') +
-      iris(1230, 230, 0.9, 'sing', true) +
-      blooms +
-      glow(id + 'g', 800, 460, 340, 0.9) +
-      gascuBloom(id + 'c', 800, 470, 1.0, 300) +
-      seeds +
-      vignette(id + 'v', 0.25, '#1a1040'),
-  );
+  for (let i = 0; i < 34; i++) {
+    const x = 40 + sr() * 1520;
+    const y = 40 + sr() * 560;
+    const green = i % 4 === 0;
+    seeds += i % 3 === 0 ? gn.spark(pen, x, y, 7 + sr() * 9, green ? '#c8ffd8' : '#fff0b0', 0.9) : pen.glow(x, y, 9 + sr() * 7, green ? '#7dff9a' : '#ffd166', 1) + `<circle cx="${Math.round(x)}" cy="${Math.round(y)}" r="2.6" fill="#fffbe8"/>`;
+  }
+  // Jason and Atalanta sitting on the hill above the valley, watching it bloom.
+  const hill = pen.form('M-80 960V760Q200 720 420 740Q620 756 720 830Q760 900 760 960Z', '#3a6a44', {
+    line: 3,
+    sh: 0,
+    rim: 3,
+    paint: pen.lin([
+      [0, '#7aa86a'],
+      [1, '#1e3a2c'],
+    ]),
+  });
+  const sun = pen.relight({ key: [0.9, -0.45] });
+  const watchers =
+    hill +
+    gn.atalanta(sun, 250, 796, 0.92, { pose: SIT, mood: 'smile', look: [2.6, 0.5], wind: 0.3 }) +
+    gn.jason(sun, 440, 812, 0.92, { pose: SIT, mood: 'smile', look: [2.6, 0.5] });
+  const fore = patch([
+    [1330, 900, 0.36],
+    [1480, 870, 0.44],
+    [1610, 910, 0.32],
+  ]) + gn.grass(pen, -60, 740, 850, 7, 80, '#12281e', '#6aaa6a', 12) + gn.grass(pen, 1180, 1660, 900, 4, 80, '#12281e', '#6aaa6a', 13);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, valley) + gn.layer(1, watchers + song + seeds) + gn.layer(1.3, fore) + gn.vignette(pen, 0.45, '#140c30') + gn.grain(pen, 0.08));
 }

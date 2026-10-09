@@ -1,12 +1,12 @@
 /**
  * Graphic-novel pieces for the game's finale (the Golden Fleece panels): Brennus's green Legion robots,
  * the Golden Fleece itself (a living cloak of golden curls with green seeds in it), Celestia in bloom
- * (big or little), the Gardeners' light-words, Captain Argus's science officer Dr. Hypatia, and the
+ * (big or little), the Gardeners' light-words, the Golden King, the tree-temple's roots and the
  * Gorgon's old lifeboat. All of them draw through a `Pen` like the rest of the kit.
  */
 import { add, at, brushD, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
-import { bandD, type Build, hand, limb, type Pose, rig, type Rig, torso, U, ADULT, TALL } from './body';
-import { aeetes, coatSkirt, figure, type CastOpts, type Outfit, POSES } from './cast';
+import { bandD, type Build, hand, limb, type Pose, rig, torso, U, TALL } from './body';
+import { aeetes, type CastOpts, POSES } from './cast';
 import { spark } from './fx';
 
 /* ---------------- Brennus's green Legion robots ---------------- */
@@ -633,40 +633,6 @@ export function lightWord(pen: Pen, x: number, y: number, s: number, word: Light
   const d = word === 'friend' ? `${circ(-10, 0, 15)}${circ(10, 0, 15)}` : WORD_D[word];
   const body = pen.glow(0, 0, 60, c, 0.75) + `<path d="${d}" fill="none" stroke="${c}" stroke-width="9" opacity=".85"/><path d="${d}" fill="none" stroke="#ffffff" stroke-width="3"/>`;
   return at(x, y, s, `<g${op < 1 ? ` opacity="${op}"` : ''}>${body}</g>`);
-}
-
-/* ---------------- Dr. Hypatia ---------------- */
-
-const HY = { skin: '#c8906c', hair: '#1c1410', coat: '#f2f5fa', top: '#3a6ab0', pants: '#2a3448', shoes: '#3a2a22', gold: '#e8b84a' };
-
-/** Dr. Hypatia: hair up in a bun with a gold pin, round glasses, a white lab coat over a blue top. */
-export function hypatia(pen: Pen, x: number, y: number, s: number, o: CastOpts = {}): string {
-  const lp = pen.local(!!o.flip);
-  const pose = typeof o.pose === 'string' ? POSES[o.pose] : (o.pose ?? POSES.stand);
-  const build: Build = { ...ADULT, shoulder: 0.78, hips: 0.42, chest: 1.5, waist: 1.12, hipW: 1.42, neckW: 0.46, arm: [0.4, 0.31, 0.25], leg: [0.62, 0.4, 0.27], spine: 1.9, thigh: 1.66, shin: 1.6 };
-  const hair = lp.form('M-44 8Q-52 -40 -10 -52Q34 -56 44 -26Q30 -40 8 -36Q-16 -30 -26 -12Q-34 2 -32 16Z', HY.hair, {
-    sh: 12,
-    hatch: 2,
-    rim: 2.2,
-    line: 2.4,
-    shade: '#0a0606',
-    inner: lp.brushes([[[[-34, -20], [-14, -40], [16, -44]], 2], [[[-40, -4], [-30, -28], [-8, -42]], 1.8]], '#5a4438', [0.3, 0.5], 0.7),
-  });
-  const bun = lp.form(circ(-40, -46, 22), HY.hair, { sh: 10, hatch: 2, rim: 2.2, line: 2.4, shade: '#0a0606' }) + lp.brush([[-64, -70], [-40, -48], [-22, -30]], 5, HY.gold, [0.1, 0.1]);
-  const glasses = `<g fill="none" stroke="${INK}" stroke-width="2.6"><circle cx="-6" cy="3" r="11"/><circle cx="30" cy="2" r="9"/><path d="M5 2Q12 -2 21 2M-17 1L-34 -2"/></g><path d="M-12 -4Q-6 -8 0 -4" stroke="#ffffff" stroke-width="2.4" opacity=".8"/>`;
-  const outfit: Outfit = { build, skin: HY.skin, top: HY.coat, sleeve: HY.coat, pants: HY.pants, boots: HY.shoes, bootTop: 0.1, rim: o.rim };
-  const { svg } = figure(lp, pose, outfit, { skin: HY.skin, mood: o.mood ?? 'smile', eye: '#3a2418', brow: HY.hair, jaw: 0.86, chin: 0.95, nose: 0.95, soft: true, look: o.look, back: bun, front: hair + glasses }, {
-    torso: (r: Rig) => {
-      // The blue top under the open coat, the coat's skirt, lapels and a pen in the pocket.
-      let t = lp.form(dPoly([r.tf(-0.3, -0.02), r.tf(0.62, -0.02), r.tf(0.5, 0.7), r.tf(-0.1, 0.7)]), HY.top, { sh: 10, line: 2.2 });
-      t += coatSkirt(lp, r, HY.coat, 0.78, { open: true, rim: o.rim });
-      t += lp.brushes([[[r.tf(-0.34, 0.0), r.tf(-0.16, 0.36), r.tf(-0.1, 0.72)], 3], [[r.tf(0.64, 0.0), r.tf(0.52, 0.36), r.tf(0.5, 0.72)], 3]], INK, [0.1, 0.3], 0.8);
-      const pk = r.tf(-0.62, 0.3);
-      t += lp.brush([pk, add(pk, [2, -22])], 5, '#ff5a4a', [0.05, 0.05]);
-      return t;
-    },
-  });
-  return at(x, y, s, svg, o.flip);
 }
 
 /* ---------------- the tree-temple's roots ---------------- */
