@@ -6,6 +6,8 @@
 import { add, angle, at, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
 import { ADULT, faceFrame, headOn, type HeadOpts, neck, type Pose, rig, type Rig, TEEN_BOY, torso } from './body';
 import { jason, type JasonOpts, POSES } from './cast';
+import { lux, type LuxMood } from './droids';
+import { spark } from './fx';
 
 /* ---------------- GaScu: vines, leaves, buds and flowers ---------------- */
 
@@ -180,6 +182,21 @@ export function yawn(pen: Pen, turn: number): string {
   const tongue = `<ellipse cx="${r1(mx - 1)}" cy="${r1(my + 13)}" rx="8" ry="5" fill="#e2687a"/>` + `<path d="M${r1(mx - 10)} ${r1(my - 3)}Q${r1(mx - 2)} ${r1(my - 7)} ${r1(mx + 8)} ${r1(my - 3)}L${r1(mx + 7)} ${r1(my)}Q${r1(mx - 2)} ${r1(my - 4)} ${r1(mx - 9)} ${r1(my)}Z" fill="#f6f2ea"/>`;
   const tear = pen.form(`M${r1(F.eyeN[0] - 11)} ${r1(F.eyeN[1] + 3)}Q${r1(F.eyeN[0] - 16)} ${r1(F.eyeN[1] + 10)} ${r1(F.eyeN[0] - 12)} ${r1(F.eyeN[1] + 13)}Q${r1(F.eyeN[0] - 7)} ${r1(F.eyeN[1] + 10)} ${r1(F.eyeN[0] - 11)} ${r1(F.eyeN[1] + 3)}Z`, '#bff4ff', { line: 1.4, warm: 0 });
   return pen.form(d, '#5a1820', { line: 2.2, heavy: 1.2, inner: tongue }) + tear;
+}
+
+/* ---------------- LUX ---------------- */
+
+/** LUX with a loose wire dangling from his side pod and sparking (the one Jason fixes when they meet). */
+export function luxWith(pen: Pen, x: number, y: number, s: number, mood: LuxMood, o: { flip?: boolean; look?: P; rot?: number } = {}): string {
+  const lp = pen.local(!!o.flip);
+  const wire: P[] = [
+    [-50, 14],
+    [-66, 40],
+    [-54, 66],
+    [-66, 92],
+  ];
+  const w = lp.brush(wire, 7, INK, [0.05, 0.05]) + lp.brush(wire, 3.4, '#ff5e6a', [0.05, 0.1]) + spark(lp, -66, 96, 16, '#fff6b0') + spark(lp, -80, 84, 8, '#7fe6ff');
+  return at(x, y, s, w, o.flip) + lux(pen, x, y, s, mood, o);
 }
 
 /* ---------------- the colonists ---------------- */

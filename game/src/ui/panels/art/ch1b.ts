@@ -366,36 +366,243 @@ export function ch1Wake(): string {
 }
 
 
-/** A storage crate with a lid line and corner bands. */
-const crate = (x: number, y: number, w: number, h: number, c = '#8a5a34') =>
-  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${c}" ${ink(6)}/><path d="M${x + 14} ${y + 20}H${x + w - 14}M${x + 14} ${y + h - 20}H${x + w - 14}" stroke="#000" stroke-width="6" opacity=".2"/><path d="M${x} ${y}L${x + w} ${y + h}" stroke="#000" stroke-width="8" opacity=".12"/>`;
+/* ---------------- 5. LUX in the storeroom ---------------- */
 
-/** 5. A dark storeroom: Jason's flashlight finds LUX hiding behind the boxes, its eye just switching on. */
-export function ch1Lux(): string {
-  const id = 'ch1-lux';
-  const shelves = [0, 1, 2]
-    .map((i) => `<path d="M60 ${240 + i * 170}H1540" stroke="#2a2440" stroke-width="16"/>` + [0, 1, 2, 3, 4, 5].map((j) => `<rect x="${110 + j * 240 + (i % 2) * 70}" y="${168 + i * 170}" width="${90 + ((i + j) % 3) * 20}" height="64" rx="6" fill="#221c36"/>`).join(''))
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#120e22'], [1, '#1c1428']]) +
-      `<defs>${lin(id + 'l', [[0, '#fff2b0', 0.75], [1, '#ffd166', 0.08]], 1, 0)}${glowDef(id + 'w', '#ffc870', 0.5)}${glowDef(id + 'c', C.cyan, 0.8)}</defs>` +
-      shelves +
-      `<path d="M0 720H1600V900H0Z" fill="#0e0a1a"/>` +
-      glow(id + 'w', 1150, 600, 380, 0.9, 260) +
-      crate(980, 620, 260, 200) +
-      crate(1260, 560, 240, 260, '#7a4e2e') +
-      crate(1290, 400, 180, 160, '#9a6a3e') +
-      glow(id + 'c', 1130, 470, 130) +
-      lux(1130, 500, 1.25, 'scared') +
-      crate(1040, 560, 190, 140, '#a06a3a') +
-      jason(380, 830, 1.45, { pose: 'torch', face: 'smile', legs: 'kneel' }) +
-      // The flashlight beam.
-      `<path d="M610 700L1460 380L1500 860Z" fill="url(#${id}l)"/>` +
-      sparkle(1060, 470, 10, C.cyan, 0.9) +
-      sparkle(1215, 470, 8, C.cyan, 0.7) +
-      vignette(id + 'v', 0.55),
+/**
+ * A cargo crate seen a little from above and from the left: the front face (`w` x `h`, bottom-left at
+ * x, y), the left side face `d` deep and the top. `lit` = how strongly the flashlight catches it.
+ */
+function crateGN(pen: gn.Pen, x: number, y: number, w: number, h: number, d: number, color: string, lit = 0.5, stripe?: string): string {
+  const dx = -d * 0.62;
+  const dy = -d * 0.36;
+  const side = gn.dPoly([
+    [x, y - h],
+    [x + dx, y - h + dy],
+    [x + dx, y + dy],
+    [x, y],
+  ]);
+  const top = gn.dPoly([
+    [x, y - h],
+    [x + dx, y - h + dy],
+    [x + w + dx, y - h + dy],
+    [x + w, y - h],
+  ]);
+  const front = `M${x} ${y - h}H${x + w}V${y}H${x}Z`;
+  let planks = '';
+  for (let k = 1; k < 4; k++) planks += `M${x} ${gn.r1(y - (h * k) / 4)}H${x + w}`;
+  const metal = '#9aa6ba';
+  const corner = (cx: number, cy: number, sx: number, sy: number) => `M${cx} ${cy + sy * 34}V${cy}H${cx + sx * 34}`;
+  const corners = `<path d="${corner(x + 4, y - h + 4, 1, 1)}${corner(x + w - 4, y - h + 4, -1, 1)}${corner(x + 4, y - 4, 1, -1)}${corner(x + w - 4, y - 4, -1, -1)}" fill="none" stroke="${gn.INK}" stroke-width="14"/><path d="${corner(x + 4, y - h + 4, 1, 1)}${corner(x + w - 4, y - h + 4, -1, 1)}${corner(x + 4, y - 4, 1, -1)}${corner(x + w - 4, y - 4, -1, -1)}" fill="none" stroke="${metal}" stroke-width="8"/>`;
+  const marks = stripe
+    ? `<path d="M${x + w * 0.3} ${y - h * 0.62}H${x + w * 0.7}V${y - h * 0.46}H${x + w * 0.3}Z" fill="${stripe}"/><path d="M${x + w * 0.36} ${y - h * 0.46}l16 -${gn.r1(h * 0.16)}M${x + w * 0.48} ${y - h * 0.46}l16 -${gn.r1(h * 0.16)}M${x + w * 0.6} ${y - h * 0.46}l16 -${gn.r1(h * 0.16)}" stroke="${gn.INK}" stroke-width="7"/>`
+    : '';
+  const scuffs = pen.brushes(
+    [
+      [
+        [
+          [x + w * 0.2, y - h * 0.84],
+          [x + w * 0.34, y - h * 0.8],
+        ],
+        3,
+      ],
+      [
+        [
+          [x + w * 0.62, y - h * 0.3],
+          [x + w * 0.8, y - h * 0.34],
+        ],
+        3,
+      ],
+    ],
+    gn.INK,
+    [0.3, 0.3],
+    0.4,
+  );
+  const litSide = gn.mix(color, '#ffe6b0', lit * 0.55);
+  return (
+    pen.form(side, litSide, { line: 3, inner: `<path d="M${x + dx * 0.5} ${y - h + dy * 0.5}V${y + dy * 0.5}" stroke="${gn.INK}" stroke-width="3" opacity=".35"/>` + pen.brush([[x - 4, y - h + 6], [x - 4, y - 6]], 5, '#fff2d0', [0.1, 0.1], lit * 0.8) }) +
+    pen.form(top, gn.mix(color, '#ffe6b0', lit * 0.25), { line: 3 }) +
+    pen.form(front, color, {
+      sh: 0,
+      line: 3.2,
+      paint: pen.lin([
+        [0, gn.mix(color, '#ffd890', lit * 0.3)],
+        [1, pen.dark(color, 0.5)],
+      ], 0, 0, 1, 0.3),
+      inner: `<path d="${planks}" stroke="${gn.INK}" stroke-width="3" opacity=".4"/>` + marks + scuffs + corners,
+    })
   );
 }
+
+/** 5. A dark storeroom: Jason kneels with his flashlight and holds out a hand; LUX peeks out from behind the crates, his eye just lighting up. */
+export function ch1Lux(): string {
+  const pen = gn.Pen.scene('ch1-lux', { key: [-0.9, -0.3], keyColor: '#ffd890', rim: [0.8, -0.5], rimColor: '#7fe6ff', shadow: '#2a2050', depth: 0.75 });
+  // Jason is lit by the light bouncing back off the crates, and rimmed blue by the corridor behind him.
+  const jPen = pen.relight({ key: [0.8, -0.45], keyColor: '#ffc880', rim: [-0.9, -0.3], rimColor: '#7aa8ff', depth: 0.65 });
+  const back =
+    gn.sky(pen, [
+      [0, '#0a0716'],
+      [0.6, '#151028'],
+      [1, '#0a0716'],
+    ]) +
+    // The open door far behind: a frame, the half-open sliding door, and blue corridor light spilling in.
+    pen.form('M70 150H290V650H70Z', '#8ab4ff', { line: 3, warm: 0, paint: pen.lin([[0, '#e0f0ff'], [0.6, '#7aa0e8'], [1, '#3a5ab0']]) }) +
+    pen.form('M50 130H310V650H290V150H70V650H50Z', '#2a2840', { line: 3, sh: 8 }) +
+    pen.form('M70 170H150V650H70Z', '#3a3a58', { line: 2.6, sh: 20, inner: `<path d="M92 300H128M92 330H128" stroke="#7aa8ff" stroke-width="4"/>` }) +
+    `<path d="M150 650L290 650L640 900L-40 900Z" fill="${pen.lin([[0, '#7aa0ff', 0.35], [1, '#7aa0ff', 0]])}"/>` +
+    gn.godRays(pen, 220, 260, [25, 40, 55], 8, 800, '#9ab8ff', 0.18);
+  // Tall racks of boxes fading into the dark.
+  let shelves = '';
+  for (let i = 0; i < 3; i++) {
+    const y = 250 + i * 150;
+    for (let j = 0; j < 7; j++) {
+      const bx = 380 + j * 190 + (i % 2) * 50;
+      const bw = 90 + ((i + j) % 3) * 28;
+      const bh = 56 + ((i * 3 + j) % 4) * 18;
+      shelves += pen.form(`M${bx} ${y - bh}H${bx + bw}V${y}H${bx}Z`, ['#2a2244', '#242a46', '#2e243c'][(i + j) % 3], { line: 1.6, sh: bw * 0.3, hatch: 1 });
+    }
+    shelves += pen.form(`M340 ${y}H1680V${y + 14}H340Z`, '#3a3458', { line: 1.8, sh: 5 });
+  }
+  for (const ux of [350, 1010]) shelves += pen.form(`M${ux} 80H${ux + 18}V700H${ux}Z`, '#2a2440', { line: 1.8, sh: 6 });
+  // A vent with GaScu's vine curling out of it, glowing.
+  const vent =
+    pen.form('M1240 70H1420V160H1240Z', '#2a2a40', { line: 3, sh: 20, inner: `<path d="M1250 90H1410M1250 110H1410M1250 130H1410M1250 150H1410" stroke="${gn.INK}" stroke-width="6"/>` }) +
+    c1.vine(
+      pen,
+      [
+        [1300, 140],
+        [1270, 210],
+        [1330, 270],
+        [1300, 340],
+      ],
+      12,
+      { leaves: 3, buds: 4, seed: 9 },
+    ) +
+    c1.vine(
+      pen,
+      [
+        [1390, 140],
+        [1460, 190],
+        [1540, 170],
+        [1640, 230],
+      ],
+      10,
+      { leaves: 3, buds: 6, seed: 10 },
+    );
+  const far = shelves + vent + gn.haze(pen, 480, 800, '#140e26', 0.75);
+  const pose: gn.Pose = {
+    turn: 0.5,
+    lean: 12,
+    tilt: 2,
+    armN: [56, 82],
+    armF: [100, 110],
+    legN: { to: [0.34, 0.62] },
+    legF: { to: [-0.34, 0.72] },
+    handN: 'grip',
+    handF: 'open',
+    wristF: -30,
+    footF: 60,
+  };
+  const s = 1.34;
+  const jx = 330;
+  const jy = 884;
+  const r = gn.rig(gn.TEEN_BOY, pose);
+  const wr = r.wr[0];
+  const fd = gn.dir(r.foreA[0]);
+  const hand: gn.P = [jx + (wr[0] + fd[0] * 30) * s, jy + (wr[1] + fd[1] * 30) * s];
+  // LUX, where the beam points.
+  const luxX = 1070;
+  const luxY = 446;
+  const aim = gn.unit(gn.sub([luxX - 40, luxY + 90], hand));
+  const aimDeg = (Math.atan2(aim[1], aim[0]) * 180) / Math.PI;
+  const torchHead = gn.add(hand, gn.mul(aim, 64));
+  const torch =
+    gn.at(
+      hand[0],
+      hand[1],
+      1,
+      pen.local(false, aimDeg).form('M-30 -12H40L54 -19V19L40 12H-30Z', '#4a5468', { sh: 9, line: 2.6, rim: 1.6, inner: `<path d="M-16 -12V12M-4 -12V12" stroke="${gn.INK}" stroke-width="2.4" opacity=".6"/>` }) +
+        pen.local(false, aimDeg).form('M52 -19Q60 0 52 19', '#fff6d8', { line: 2 }),
+      false,
+      aimDeg,
+    ) + gn.bloom(pen, torchHead[0], torchHead[1], 34, '#fff2c0', 1);
+  // The beam: warm, widening toward the crates, full of floating dust.
+  const beamLen = 1000;
+  const n = gn.perp(aim);
+  const end = gn.add(torchHead, gn.mul(aim, beamLen));
+  const beamD = gn.dPoly([gn.add(torchHead, gn.mul(n, 14)), gn.add(end, gn.mul(n, 300)), gn.add(end, gn.mul(n, -280)), gn.add(torchHead, gn.mul(n, -14))]);
+  const beamPaint = (op: number) =>
+    pen.lin(
+      [
+        [0, '#fff6d0', op],
+        [0.55, '#ffd890', op * 0.45],
+        [1, '#ffd890', 0],
+      ],
+      gn.r1(torchHead[0]),
+      gn.r1(torchHead[1]),
+      gn.r1(end[0]),
+      gn.r1(end[1]),
+      true,
+    );
+  const coreD = gn.dPoly([gn.add(torchHead, gn.mul(n, 6)), gn.add(end, gn.mul(n, 110)), gn.add(end, gn.mul(n, -100)), gn.add(torchHead, gn.mul(n, -6))]);
+  const rand = gn.rng(21);
+  let motes = '';
+  for (let i = 0; i < 46; i++) {
+    const t = 0.08 + rand() * 0.7;
+    const p = gn.add(gn.add(torchHead, gn.mul(aim, beamLen * t)), gn.mul(n, (rand() - 0.5) * 520 * t));
+    motes += `M${gn.r1(p[0])} ${gn.r1(p[1])}h0`;
+  }
+  const beam = `<path d="${beamD}" fill="${beamPaint(0.5)}"/><path d="${coreD}" fill="${beamPaint(0.55)}"/><path d="${motes}" stroke="#fff6d8" stroke-width="3.4" stroke-linecap="round" opacity=".75"/>`;
+  // The crates LUX hides behind, lit where the beam lands, and LUX peeking over them, a loose wire sparking.
+  const crates =
+    crateGN(pen, 1190, 430, 300, 250, 120, '#5a5480', 0.35) +
+    crateGN(pen, 1290, 880, 360, 450, 150, '#a8743c', 0.55, '#ffd166') +
+    pen.glow(luxX, luxY, 190, '#7fe6ff', 0.6) +
+    c1.luxWith(pen, luxX, luxY, 2.05, 'scared', { flip: true, look: [-10, 3] }) +
+    gn.bloom(pen, luxX - 22, luxY - 4, 26, '#bff8ff', 0.7) +
+    crateGN(pen, 860, 880, 420, 330, 150, '#56688a', 0.9) +
+    pen.glow(1000, 640, 300, '#ffe0a0', 0.4, 150) +
+    crateGN(pen, 640, 880, 200, 130, 90, '#2f7a7a', 0.9);
+  const hero = gn.castShadow(jPen, 400, 880, 240, 18, 0.55) + gn.jason(jPen, jx, jy, s, { pose, mood: 'smile', look: [3, 0.5], rim: 2.2, blaster: false }) + torch;
+  // A coil of cable on the floor in the near corner.
+  const fore =
+    pen.brush(
+      [
+        [-80, 820],
+        [60, 800],
+        [140, 860],
+        [60, 920],
+        [-60, 900],
+      ],
+      30,
+      gn.INK,
+      [0.02, 0.02],
+    ) +
+    pen.brush(
+      [
+        [-80, 820],
+        [60, 800],
+        [140, 860],
+        [60, 920],
+        [-60, 900],
+      ],
+      18,
+      '#3a3450',
+      [0.02, 0.02],
+    ) +
+    pen.brush(
+      [
+        [-60, 812],
+        [56, 794],
+        [130, 846],
+      ],
+      4,
+      '#7aa8ff',
+      [0.2, 0.3],
+      0.6,
+    );
+  return pen.svg(gn.layer(0.2, back) + gn.layer(0.5, far) + gn.layer(1, crates + beam + hero) + gn.layer(1.3, fore) + gn.vignette(pen, 0.6, '#05030c') + gn.grain(pen, 0.08));
+}
+
 
 /** 6. The Bridge: the huge Heart of GaScu before a giant window full of a burning star. */
 export function ch1Heart(): string {
