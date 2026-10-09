@@ -81,7 +81,7 @@ describe('deck data', () => {
 
   it('hands out each ability exactly once, in order', () => {
     const found = parsed.flatMap((l) => l.entities.filter((e) => e.spec.type === 'upgrade').map((e) => (e.spec.type === 'upgrade' ? e.spec.ability : null)));
-    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'pulse', 'grapple']);
+    expect(found).toEqual(['doubleJump', 'dash', 'glide', 'pulse', 'grapple', 'mirror']);
   });
 });
 
