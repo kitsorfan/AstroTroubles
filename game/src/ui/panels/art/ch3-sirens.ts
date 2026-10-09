@@ -1,115 +1,379 @@
 /** Chapter 3 panels for the Sirens' Sea: LUX's counter-song against a siren buoy, and the Dolphin surfacing at the coral strait. */
-import { argoShip, at, backdrop, C, glow, glowDef, ink, jasonHead, lin, lux, panel, rad, rng, sparkle, vignette } from '../kit';
+import * as gn from '../gn';
+import { bubbles, coral, dolphin, kelp, note, sirenBuoy, soundRings, splash, whirlpool } from '../gn/ch3b';
 
-/** The little sub Dolphin, side view facing right: blue back, white belly, a beak, fins, and a glass bubble with Jason and LUX. */
-function dolphinSub(id: string, x: number, y: number, s: number, o: { face?: 'determined' | 'happy' | 'grin'; luxMood?: 'happy' | 'glow'; luxIris?: string; open?: boolean } = {}): string {
-  const defs = `<defs>${lin(id + 'b', [[0, '#5aa8f0'], [1, '#2a6ac0']])}${rad(id + 'g', [[0, '#e8fbff', 0.5], [1, '#7fe6ff', 0.2]])}</defs>`;
-  const body = `<path d="M-230 10Q-230 -90 -60 -100Q120 -108 200 -40Q236 -20 290 -6Q300 6 288 16Q230 30 200 40Q120 96 -60 92Q-230 84 -230 10Z" fill="url(#${id}b)" ${ink(6)}/>
-    <path d="M-222 30Q-150 86 -60 88Q110 92 200 38Q230 28 286 14Q240 40 200 52Q110 104 -60 98Q-200 92 -222 30Z" fill="#f4f8ff" ${ink(4)}/>
-    <path d="M-40 -96Q-10 -170 60 -176Q30 -130 40 -100Z" fill="#3a86d8" ${ink(5)}/>
-    <path d="M-226 4Q-290 -60 -330 -54Q-300 -10 -330 40Q-290 50 -226 18Z" fill="#3a86d8" ${ink(5)}/>
-    <path d="M10 60Q40 120 100 120Q80 80 90 50Z" fill="#3a86d8" ${ink(4)}/>
-    <path d="M-110 -96Q-110 10 -110 92" stroke="${C.gold}" stroke-width="12"/><path d="M-110 -96Q-110 10 -110 92" fill="none" ${ink(3)}/>
-    <circle cx="282" cy="4" r="16" fill="#fff6c8" ${ink(4)}/>`;
-  const bubble = o.open
-    ? `<path d="M-90 -96Q-80 -150 10 -150" fill="none" stroke="#bff4ff" stroke-width="10" opacity=".7"/>`
-    : `<ellipse cx="20" cy="-100" rx="120" ry="92" fill="url(#${id}g)" ${ink(5)}/><path d="M-50 -160Q0 -186 60 -170" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".8"/>`;
-  const crew = at(-22, -114, 0.8, jasonHead(o.face ?? 'determined')) + lux(88, -104, 0.62, o.luxMood ?? 'happy', o.luxIris ?? C.cyan);
-  return defs + at(x, y, s, body + crew + bubble);
+/* ---------------- 25. The siren's song ---------------- */
+
+/** A sunken Gardener ruin far off in the blue: a great round doorway, broken columns and a dome, flat and hazy. */
+function ruins(pen: gn.Pen, color: string, op: number): string {
+  const ring = `M120 700V430A170 170 0 0 1 460 430V700H400V440A110 110 0 0 0 180 440V700Z`;
+  const cols = [560, 640, 720].map((cx, i) => `M${cx - 18} 700V${520 + i * 40}L${cx - 6} ${506 + i * 40}L${cx + 4} ${516 + i * 40}L${cx + 18} ${500 + i * 40}V700Z`).join('');
+  const dome = `M1180 700V560Q1180 420 1320 410Q1460 420 1460 560V700Z`;
+  const lintel = `M520 520H760V540H520Z`;
+  return `<path d="${ring}${cols}${dome}${lintel}" fill="${color}" opacity="${op}"/>` + pen.glow(290, 430, 60, '#7ff0d8', op * 0.5) + `<path d="M270 430h40M290 410v40" stroke="#bffff0" stroke-width="5" opacity="${r2(op * 0.6)}"/>`;
 }
 
-/** A siren buoy: a gold ball on a chain, with a pink speaker horn pointing left (at the sub). */
-function sirenBuoy(id: string, x: number, y: number, s: number): string {
-  const defs = `<defs>${rad(id + 'g', [[0, '#fff2b0'], [0.6, '#ffc23a'], [1, '#b8801a']], 0.35, 0.35, 0.8)}${glowDef(id + 'p', '#ff6fb0')}</defs>`;
-  const fins = [-50, -20, 10, 40].map((fx) => `<path d="M${fx} -70l12 -40 12 40z" fill="${C.gold}" ${ink(3)}/>`).join('');
-  const body = `<path d="M0 60V420" stroke="#4a3a2a" stroke-width="10" stroke-dasharray="18 8"/>
-    ${glow(id + 'p', -110, 0, 140, 0.9)}${fins}
-    <circle r="80" fill="url(#${id}g)" ${ink(6)}/>
-    <path d="M-60 -30L-160 -70V70L-60 30Z" fill="#ff6fb0" ${ink(5)}/><ellipse cx="-160" cy="0" rx="18" ry="70" fill="#ff3a9a" ${ink(4)}/>
-    <circle cx="20" cy="-20" r="20" fill="#3a1a00" ${ink(3)}/><circle cx="26" cy="-26" r="6" fill="#fff"/>`;
-  return defs + at(x, y, s, body);
-}
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/** A music note (LUX's counter-song). */
-const note = (x: number, y: number, s: number, color: string, rot = 0) =>
-  at(x, y, s, `<path d="M0 0V-70L40 -84V-14" fill="none" stroke="${C.ink}" stroke-width="16" stroke-linejoin="round"/><path d="M0 0V-70L40 -84V-14" fill="none" stroke="${color}" stroke-width="8" stroke-linejoin="round"/><ellipse cx="-12" cy="2" rx="18" ry="13" fill="${color}" ${ink(4)}/><ellipse cx="28" cy="-12" rx="18" ry="13" fill="${color}" ${ink(4)}/>`, false, rot);
-
-/** Kelp stalks swaying up from the bottom edge. */
-function kelp(seed: number, x0: number, x1: number, color: string): string {
-  const r = rng(seed);
-  let out = '';
-  for (let x = x0; x < x1; x += 50 + r() * 40) {
-    const h = 300 + r() * 360;
-    const sway = (r() - 0.5) * 120;
-    out += `<path d="M${x} 920Q${x + sway} ${900 - h / 2} ${x + sway * 0.4} ${900 - h}" fill="none" stroke="${C.ink}" stroke-width="30" stroke-linecap="round"/><path d="M${x} 920Q${x + sway} ${900 - h / 2} ${x + sway * 0.4} ${900 - h}" fill="none" stroke="${color}" stroke-width="20" stroke-linecap="round"/>`;
+/** A far school of little fish darting away from the song (flat silhouettes in the haze), around (x, y). */
+function fishSchool(pen: gn.Pen, x: number, y: number, n: number, color: string): string {
+  const rand = gn.rng(23);
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const fx = x + (rand() - 0.3) * 320;
+    const fy = y + (rand() - 0.5) * 120 + (fx - x) * 0.15;
+    const k = 0.6 + rand() * 0.6;
+    d += `M${gn.r1(fx)} ${gn.r1(fy)}q${gn.r1(14 * k)} ${gn.r1(-9 * k)} ${gn.r1(30 * k)} 0q${gn.r1(-16 * k)} ${gn.r1(9 * k)} ${gn.r1(-30 * k)} 0zm${gn.r1(30 * k)} 0l${gn.r1(10 * k)} ${gn.r1(-7 * k)}v${gn.r1(14 * k)}z`;
   }
-  return out;
+  return `<path d="${d}" fill="${color}" opacity=".8"/>` + pen.glow(x, y, 160, '#8fe8ff', 0.15);
 }
 
-/** 25. Under the sea: a siren buoy sings pink rings at the Dolphin, and LUX sings cyan notes right back. */
+/** A burst of light where two songs collide: tapered rays flung out from (x, y), with a glow. */
+function burst(pen: gn.Pen, x: number, y: number, r: number, color: string): string {
+  const rand = gn.rng(9);
+  const rays: [gn.P[], number][] = [];
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * 360 + rand() * 12;
+    const d = gn.dir(a);
+    const l = r * (0.6 + rand() * 0.6);
+    rays.push([[gn.add([x, y], gn.mul(d, r * 0.25)), gn.add([x, y], gn.mul(d, l))], 4 + rand() * 6]);
+  }
+  return pen.glow(x, y, r * 1.4, '#ffd6f0', 0.6) + pen.brushes(rays, color, [0.1, 0.9], 0.85);
+}
+
+/** Wavy caustic light on the underside of the sea's surface (the top of the panel). */
+function caustics(pen: gn.Pen): string {
+  const rand = gn.rng(41);
+  const list: [gn.P[], number][] = [];
+  for (let i = 0; i < 26; i++) {
+    const x = -60 + rand() * 1720;
+    const y = -20 + rand() * 120;
+    const l = 60 + rand() * 120;
+    list.push([
+      [
+        [x, y],
+        [x + l * 0.35, y - 10 + rand() * 20],
+        [x + l * 0.7, y - 6 + rand() * 12],
+        [x + l, y + 4],
+      ],
+      3 + rand() * 5,
+    ]);
+  }
+  return pen.brushes(list, '#effeff', [0.3, 0.3], 0.5);
+}
+
+/** 25. Under the sea: a gold siren buoy sings rings of pink song at the Dolphin, and LUX, in the bubble beside Jason, sings bright notes right back. */
 export function ch3Sirens(): string {
-  const id = 'ch3-sirens';
-  const rays = [200, 520, 900, 1250]
-    .map((x, i) => `<path d="M${x} -20L${x + 120} -20L${x + 360 - i * 40} 900L${x + 160 - i * 40} 900Z" fill="#dff8ff" opacity=".1"/>`)
-    .join('');
-  const pinkRings = [0, 1, 2, 3].map((i) => `<ellipse cx="${1060 - i * 110}" cy="420" rx="${30 + i * 26}" ry="${90 + i * 60}" fill="none" stroke="#ff6fb0" stroke-width="${12 - i * 2}" opacity="${0.9 - i * 0.18}"/>`).join('');
-  const rocks = [1040, 1180, 1320, 1440].map((x, i) => `<path d="M${x - 120} 900Q${x - 100} ${640 - i * 20} ${x} ${620 + (i % 2) * 40}Q${x + 110} ${650} ${x + 130} 900Z" fill="#4e6670" ${ink(5)}/>`).join('');
-  const coral = [990, 1130, 1260, 1400].map((x, i) => `<circle cx="${x}" cy="${660 + (i % 2) * 30}" r="${26 + i * 4}" fill="${['#ff7a8a', '#ffb84a', '#c87aff', '#ff9ad8'][i]}" ${ink(4)}/>`).join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#5ad0e8'], [0.45, '#1a6a90'], [1, '#062038']]) +
-      `<defs>${glowDef(id + 'c', C.cyan, 0.7)}</defs>` +
-      rays +
-      kelp(25, -20, 380, '#3f9a4a') +
-      rocks +
-      coral +
-      sirenBuoy(id + 's', 1250, 400, 1) +
-      pinkRings +
-      glow(id + 'c', 640, 330, 220, 0.6) +
-      note(700, 300, 1.1, C.cyan, -10) +
-      note(820, 220, 0.9, '#bff8ff', 8) +
-      note(600, 190, 0.8, C.cyan, -4) +
-      dolphinSub(id + 'd', 420, 520, 1.15, { face: 'determined', luxMood: 'glow', luxIris: '#ff8ad0' }) +
-      sparkle(980, 200, 10, '#fff') +
-      sparkle(300, 160, 8, '#fff') +
-      [140, 330, 760, 1500].map((x, i) => `<circle cx="${x}" cy="${120 + i * 150}" r="${8 + (i % 3) * 4}" fill="none" stroke="#e8fbff" stroke-width="4" opacity=".7"/>`).join('') +
-      vignette(id + 'v', 0.4, '#031428'),
+  const pen = gn.Pen.scene('ch3-sirens', { key: [0.78, -0.6], keyColor: '#d8fbff', rim: [-1, -0.2], rimColor: '#9ff6ff', shadow: '#1c3a78', depth: 0.55, hatchAngle: 30 });
+  const sky =
+    gn.sky(pen, [
+      [0, '#9aeaf2'],
+      [0.1, '#3ab4d0'],
+      [0.42, '#14648e'],
+      [0.78, '#0a2c52'],
+      [1, '#051830'],
+    ]) +
+    caustics(pen) +
+    gn.godRays(pen, 900, -200, [-40, -28, -16, -5, 7, 19, 31], 4, 1300, '#e6fdff', 0.24) +
+    gn.bloom(pen, 900, -80, 170, '#e8fdff', 0.6) +
+    gn.starfield(pen, 52, 90, -40, 60, 1680, 820, '#cfefff');
+  const far =
+    ruins(pen, '#1a6a8e', 0.7) +
+    fishSchool(pen, 1180, 170, 16, '#2a8aac') +
+    gn.haze(pen, 420, 760, '#2a88a8', 0.55) +
+    gn.silhouette(
+      [
+        [-80, 760],
+        [140, 690],
+        [380, 720],
+        [620, 700],
+        [900, 740],
+        [1200, 690],
+        [1500, 720],
+        [1680, 700],
+        [1680, 980],
+        [-80, 980],
+      ],
+      '#0e3e5e',
+    ) +
+    gn.wash(pen, 640, '#04162c', 0.8);
+  // The rocks the song pulls ships onto: a jagged reef with the buoy chained to its spire, coral all over it.
+  const rockPen = pen.relight({ key: [0.15, -1], rim: [0.2, -1], rimColor: '#8ff0ff', depth: 0.85 });
+  const rocks =
+    gn.crag(
+      rockPen,
+      [
+        [1060, 960],
+        [1100, 800],
+        [1170, 720],
+        [1220, 600],
+        [1262, 560],
+        [1300, 590],
+        [1350, 680],
+        [1420, 650],
+        [1500, 700],
+        [1580, 640],
+        [1690, 660],
+        [1700, 960],
+      ],
+      '#4a7890',
+      { seed: 12, sh: 300, cracks: 10, strata: 3, rim: 3.2, hatch: 2, line: 3.2 },
+    ) +
+    gn.crag(
+      rockPen,
+      [
+        [860, 960],
+        [890, 830],
+        [960, 780],
+        [1040, 790],
+        [1110, 850],
+        [1140, 960],
+      ],
+      '#40688a',
+      { seed: 5, sh: 150, cracks: 5, rim: 2.6, hatch: 2, line: 3 },
+    ) +
+    coral(pen, 960, 790, 0.85, 'fan', '#ff7aa8', { seed: 2 }) +
+    coral(pen, 1080, 822, 0.6, 'brain', '#ffb84a') +
+    coral(pen, 1440, 664, 0.75, 'tube', '#c87aff') +
+    coral(pen, 1350, 690, 0.55, 'brain', '#ff9ad8') +
+    coral(pen, 1600, 652, 0.95, 'stag', '#ff9a7a', { flip: true });
+  const buoyX = 1300;
+  const buoyY = 360;
+  const mid = rocks + soundRings(pen, buoyX - 164, buoyY, -90, 4, 70) + sirenBuoy(pen, buoyX, buoyY, 1, { chain: 210 });
+  // LUX's counter-song: bright notes streaming from the bubble into the pink rings, and a burst of light where they meet.
+  const ribbon = pen.brush(
+    [
+      [620, 360],
+      [700, 300],
+      [800, 330],
+      [900, 300],
+      [990, 340],
+    ],
+    30,
+    '#7fe6ff',
+    [0.1, 0.4],
+    0.28,
+  );
+  const song =
+    ribbon +
+    burst(pen, 1000, 350, 120, '#ffffff') +
+    note(pen, 690, 290, 1.1, '#7fe6ff', -12) +
+    note(pen, 790, 200, 0.95, '#bff8ff', 10, true) +
+    note(pen, 860, 420, 1.0, '#7fe6ff', 6) +
+    note(pen, 950, 250, 0.85, '#e8fdff', -8) +
+    gn.spark(pen, 1000, 350, 56, '#ffffff', 1) +
+    gn.spark(pen, 1060, 220, 20, '#ffd6ec', 0.9) +
+    gn.spark(pen, 760, 450, 14, '#bff8ff', 0.9);
+  const heroes =
+    bubbles(pen, 40, 560, 9, 50, 8) +
+    dolphin(pen, 440, 560, 1.2, { mood: 'determined', look: [2.6, -1.2], lux: 'glow', luxEye: '#ff8ad0', luxLook: [8, -3], lamp: true, rot: -3 }) +
+    pen.glow(880, 560, 140, '#ff6fb0', 0.25) +
+    song;
+  const fore =
+    kelp(pen, -30, 980, 820, 70, '#1e6a46', 3) +
+    kelp(pen, 90, 990, 560, -50, '#2a7a50', 7) +
+    kelp(pen, 1650, 990, 700, -60, '#1e6a46', 11) +
+    gn.crag(
+      pen,
+      [
+        [-80, 960],
+        [-60, 860],
+        [60, 830],
+        [200, 850],
+        [300, 900],
+        [330, 960],
+      ],
+      '#2a4a5a',
+      { seed: 4, sh: 30, cracks: 4, rim: 2.4 },
+    ) +
+    coral(pen, 220, 870, 0.9, 'stag', '#ff7a8a', { seed: 3 }) +
+    bubbles(pen, 1500, 560, 7, 40, 12);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.65, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.6, '#020a18') + gn.grain(pen, 0.08));
+}
+
+/* ---------------- 26. Surfacing at the coral strait ---------------- */
+
+/**
+ * Far off on top of the tall rock: a gold crane robot with six long arms, flat in the haze, one red eye
+ * glinting (SCYLLA, waiting for the next level). Base at (x, y).
+ */
+function craneOnRock(pen: gn.Pen, x: number, y: number, s: number, color: string): string {
+  const arms: [gn.P, gn.P, gn.P][] = [
+    [[-20, -120], [-90, -170], [-130, -130]],
+    [[-16, -100], [-110, -110], [-140, -60]],
+    [[-12, -80], [-80, -50], [-110, -10]],
+    [[20, -120], [96, -176], [134, -140]],
+    [[16, -100], [116, -116], [146, -70]],
+    [[12, -80], [86, -56], [116, -16]],
+  ];
+  const list: [gn.P[], number][] = arms.map(([a, b, c]) => [[a, b, c], 9]);
+  const body = `M-50 0Q-50 -26 0 -28Q50 -26 50 0ZM-14 -26L-10 -110H10L14 -26ZM-36 -104H36L44 -128L30 -150H-30L-44 -128Z`;
+  return gn.at(
+    x,
+    y,
+    s,
+    pen.brushes(list, color, [0.05, 0.3]) + `<path d="${body}" fill="${color}"/>` + arms.map(([, , c]) => `<circle cx="${c[0]}" cy="${c[1]}" r="9" fill="${color}"/>`).join('') + pen.glow(0, -128, 30, '#ff3a4c', 0.9) + `<circle cx="0" cy="-128" r="7" fill="#ff6a5a"/>`,
   );
 }
 
-/** 26. The Dolphin pops up at the coral strait: a tall rock on one side, a whirlpool on the other, and the Argo coming. */
+/** 26. The Dolphin bursts up into the sunshine at the coral strait: Jason pops out of the cockpit, LUX zips out after him; a tall rock (with something gold on top) on one side, the great whirlpool on the other, and the Argo coming. */
 export function ch3Surface(): string {
-  const id = 'ch3-surface';
-  const swirl = [0, 1, 2, 3, 4]
-    .map((i) => `<ellipse cx="1240" cy="640" rx="${300 - i * 56}" ry="${70 - i * 12}" fill="none" stroke="${i % 2 ? '#bff4ff' : '#2a7aa0'}" stroke-width="${14 - i * 2}" transform="rotate(${-4 + i * 3} 1240 640)"/>`)
-    .join('');
-  // Branching coral poking out of the water along the strait.
-  const reef = [430, 520, 600, 690, 960, 1040]
-    .map((x, i) => {
-      const c = ['#ff7a8a', '#ffb84a', '#c87aff'][i % 3];
-      const h = 50 + (i % 3) * 22;
-      const d = `M${x} 640V${640 - h}M${x} ${640 - h * 0.5}l-${h * 0.4} -${h * 0.4}M${x} ${640 - h * 0.7}l${h * 0.35} -${h * 0.35}`;
-      return `<path d="${d}" stroke="${C.ink}" stroke-width="22" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`;
-    })
-    .join('');
-  // On top of the tall rock, something gold with long arms is waiting (Scylla, in the next level).
-  const crane = at(300, 120, 1, `<rect x="-34" y="-30" width="68" height="50" rx="12" fill="${C.gold}" ${ink(5)}/><circle cx="0" cy="-6" r="10" fill="#ff3a4c" ${ink(3)}/>` +
-    [-1, 1].map((sd) => [0, 1, 2].map((k) => `<path d="M${sd * 30} ${0 + k * 8}Q${sd * (70 + k * 10)} ${-40 + k * 30} ${sd * (90 + k * 16)} ${-10 + k * 40}" fill="none" stroke="${C.ink}" stroke-width="13" stroke-linecap="round"/><path d="M${sd * 30} ${0 + k * 8}Q${sd * (70 + k * 10)} ${-40 + k * 30} ${sd * (90 + k * 16)} ${-10 + k * 40}" fill="none" stroke="#e0a830" stroke-width="6" stroke-linecap="round"/>`).join('')).join(''));
-  return panel(
-    backdrop(id + 'b', [[0, '#ff9a6a'], [0.35, '#ffd08a'], [0.6, '#bfe8f0'], [1, '#bfe8f0']]) +
-      `<defs>${glowDef(id + 'sun', '#fff2c8', 0.9)}${lin(id + 'sea', [[0, '#3ab0d0'], [1, '#0a4a70']])}</defs>` +
-      glow(id + 'sun', 820, 360, 260, 0.9) +
-      `<circle cx="820" cy="360" r="70" fill="#fff6d8"/>` +
-      // The tall rock on the left, with something gold and long-armed perched on top.
-      `<path d="M120 640L180 260Q220 150 300 140Q380 160 400 300L440 640Z" fill="#6a6a7a" ${ink(6)}/>` +
-      crane +
-      argoShip(id + 'a', 1180, 210, 0.32, -6) +
-      `<rect y="600" width="1600" height="300" fill="url(#${id}sea)"/>` +
-      swirl +
-      reef +
-      [0, 1, 2, 3].map((i) => `<path d="M${i * 420} 620q60 -20 120 0t120 0" fill="none" stroke="#e8fbff" stroke-width="6" opacity=".7"/>`).join('') +
-      dolphinSub(id + 'd', 600, 770, 1.05, { face: 'grin', luxMood: 'happy', open: true }) +
-      sparkle(700, 600, 12, '#fff') +
-      sparkle(980, 520, 9, '#fff') +
-      vignette(id + 'v', 0.3, '#2a1a30'),
-  );
+  const pen = gn.Pen.scene('ch3-surface', { key: [-0.7, -0.6], keyColor: '#fff0c8', rim: [0.9, -0.3], rimColor: '#bff6ff', shadow: '#5a6ab0', depth: 0.5 });
+  const sunX = 110;
+  const sunY = 120;
+  const sky =
+    gn.sky(pen, [
+      [0, '#1a5aa8'],
+      [0.28, '#4a9ad8'],
+      [0.46, '#a8dcf0'],
+      [0.52, '#fff0d4'],
+    ]) +
+    gn.halftone(pen, 'M-80 -60H1680V240H-80Z', '#ffffff', 10, 0.08) +
+    gn.gasGiant(pen, 1330, 150, 104, { lightDir: [-0.9, 0.1], haze: 0.55, sky: '#7ab8e0' }) +
+    gn.godRays(pen, sunX, sunY, [20, 42, 64, 86, 108, 130, 152], 6, 1500, '#fff4d0', 0.26) +
+    gn.bloom(pen, sunX, sunY, 110, '#fff8e0', 1) +
+    gn.cloud(pen, 780, 200, 280, '#ffffff', '#b8c0e0', { seed: 4 }) +
+    gn.cloud(pen, 1080, 120, 200, '#ffffff', '#b8c0e0', { seed: 6 });
+  // The far sea, the Argo coming low over the horizon between the rock and the whirlpool.
+  const far =
+    gn.silhouette(
+      [
+        [560, 446],
+        [640, 420],
+        [720, 430],
+        [780, 446],
+      ],
+      '#8ab0c8',
+      0.9,
+    ) +
+    gn.silhouette(
+      [
+        [1440, 446],
+        [1520, 414],
+        [1640, 420],
+        [1690, 446],
+      ],
+      '#8aaac4',
+      0.9,
+    ) +
+    gn.sea(pen, 444, '#c8eef4', '#0e7a96', { seed: 9, sunX, ripple: '#e8fbff' }) +
+    gn.argoTrail(pen, 1030, 352, 160, -84, '#ffffff') +
+    gn.argo(pen, 1110, 350, 0.17, { rot: -3 }) +
+    gn.haze(pen, 400, 500, '#eef8ff', 0.6);
+  // The tall rock with something gold on top, and the giant whirlpool on the other side of the strait.
+  const rock =
+    gn.crag(
+      pen,
+      [
+        [10, 606],
+        [44, 520],
+        [96, 470],
+        [110, 390],
+        [158, 330],
+        [168, 260],
+        [214, 214],
+        [262, 200],
+        [318, 214],
+        [350, 262],
+        [342, 318],
+        [392, 372],
+        [408, 446],
+        [462, 512],
+        [520, 606],
+      ],
+      '#9a8a96',
+      { seed: 21, sh: 150, cracks: 10, strata: 5, rim: 2.6, hatch: 2, line: 2.6 },
+    ) + craneOnRock(pen, 264, 210, 0.5, '#b8904a');
+  const mid =
+    rock +
+    pen.brushes(
+      [
+        [
+          [
+            [30, 600],
+            [250, 590],
+            [480, 604],
+          ],
+          10,
+        ],
+      ],
+      '#ffffff',
+      [0.3, 0.3],
+      0.85,
+    ) +
+    whirlpool(pen, 1270, 588, 380, 80, { seed: 5, water: '#3ab8c8', glint: '#fff6d8' }) +
+    coral(pen, 510, 604, 0.45, 'stag', '#ff8a8a', { seed: 1 }) +
+    coral(pen, 560, 610, 0.32, 'fan', '#ffb84a', { seed: 4 }) +
+    gn.haze(pen, 560, 660, '#e8fbff', 0.35);
+  // The Dolphin breaking the surface, canopy open, Jason up out of the cockpit; LUX zipping out above.
+  const subX = 700;
+  const subY = 720;
+  const water = pen.lin([
+    [0, '#2aa8c4', 0.82],
+    [0.3, '#127a9e', 0.94],
+    [1, '#06405e', 1],
+  ]);
+  const front =
+    `<path d="M-80 ${subY - 6}Q200 ${subY - 22} 420 ${subY - 4}Q620 ${subY + 12} 800 ${subY - 2}Q1100 ${subY - 20} 1680 ${subY - 6}V980H-80Z" fill="${water}"/>` +
+    pen.brushes(
+      [
+        [
+          [
+            [-80, subY - 4],
+            [200, subY - 20],
+            [400, subY - 4],
+          ],
+          6,
+        ],
+        [
+          [
+            [900, subY - 6],
+            [1200, subY - 18],
+            [1500, subY - 8],
+          ],
+          6,
+        ],
+        [
+          [
+            [100, subY + 60],
+            [300, subY + 52],
+            [460, subY + 62],
+          ],
+          5,
+        ],
+        [
+          [
+            [1000, subY + 80],
+            [1200, subY + 70],
+            [1400, subY + 84],
+          ],
+          5,
+        ],
+      ],
+      '#e8fbff',
+      [0.3, 0.3],
+      0.7,
+    );
+  const heroes =
+    dolphin(pen, subX, subY - 70, 1.06, { open: true, mood: 'grin', look: [2.2, -1.6], pose: 'wave', lux: 'happy', luxAt: [190, -250], luxLook: [-4, 2], rot: -11 }) +
+    front +
+    pen.brush(
+      [
+        [subX - 380, subY + 6],
+        [subX - 120, subY - 6],
+        [subX + 140, subY - 4],
+        [subX + 360, subY + 4],
+      ],
+      16,
+      '#ffffff',
+      [0.2, 0.2],
+      0.85,
+    ) +
+    splash(pen, subX + 330, subY - 4, 150, 3, 1) +
+    splash(pen, subX - 330, subY + 2, 160, 7, -1) +
+    gn.spark(pen, subX + 420, subY - 160, 14, '#ffffff') +
+    gn.spark(pen, subX - 380, subY - 120, 10, '#ffffff');
+  const fore = coral(pen, 70, 940, 1.5, 'stag', '#ff7a8a', { seed: 8 }) + coral(pen, 1560, 950, 1.3, 'fan', '#ffb84a', { seed: 2, flip: true }) + coral(pen, 1440, 960, 1, 'brain', '#c87aff');
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.45, '#0a1a30') + gn.grain(pen, 0.08));
 }
+
