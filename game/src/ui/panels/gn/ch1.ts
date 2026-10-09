@@ -3,7 +3,7 @@
  * and flowers, the cryo pods and the sleeping colonists in them, and extras for Jason's face (a yawn)
  * that the cast's moods don't cover. Everything draws through a `Pen` like the rest of the kit.
  */
-import { add, angle, at, dir, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
+import { add, at, dir, dSmooth, INK, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
 import { ADULT, faceFrame, headOn, type HeadOpts, neck, type Pose, rig, type Rig, TEEN_BOY, torso } from './body';
 import { jason, type JasonOpts, POSES } from './cast';
 import { lux, type LuxMood } from './droids';
@@ -1336,4 +1336,3 @@ export function pod(pen: Pen, x: number, y: number, s: number, o: PodOpts = {}):
   return at(x, y, s, out);
 }
 
-export { angle, dSmooth, lerp };
