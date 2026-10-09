@@ -168,19 +168,38 @@ export class Bramble extends Entity implements Target {
     const x = cx * CELL + CELL / 2;
     const z = cz * CELL + CELL / 2;
     this.aim = new THREE.Vector3(x, h + 1, z);
-    const vine = mat('#3f5a22', { rough: 0.8 });
-    const dark = mat('#2c3a1a', { rough: 0.9 });
-    const thorn = mat('#d9c9a0', { rough: 0.6 });
-    for (let i = 0; i < 7; i++) {
-      const ring = mesh(torus(0.55 + (i % 3) * 0.18, 0.09), i % 2 ? vine : dark, Math.sin(i * 2.3) * 0.45, 0.35 + i * 0.36, Math.cos(i * 1.7) * 0.45);
-      ring.rotation.set(Math.PI / 2 + Math.sin(i) * 0.6, i * 0.9, Math.cos(i * 1.3) * 0.5);
+    const leaf = mat('#2f4a1c', { rough: 0.85 });
+    const vine = mat('#4f6a28', { rough: 0.8 });
+    const dark = mat('#3a2a1a', { rough: 0.9 });
+    const thorn = mat('#e8dcb8', { rough: 0.6 });
+    // A thick, lumpy hedge filling the cell...
+    const lumps: [number, number, number, number][] = [
+      [0, 0.75, 0, 0.95],
+      [-0.45, 0.55, 0.3, 0.6],
+      [0.45, 0.6, -0.3, 0.62],
+      [0.3, 1.45, 0.25, 0.6],
+      [-0.3, 1.5, -0.2, 0.55],
+    ];
+    for (const [lx, ly, lz, r] of lumps) {
+      const lump = mesh(new THREE.IcosahedronGeometry(r, 1), leaf, lx, ly, lz);
+      lump.scale.set(1.05, 0.85, 1.05);
+      this.bush.add(lump);
+    }
+    // ...wrapped in twisting woody vines bristling with pale thorns.
+    for (let i = 0; i < 5; i++) {
+      const ring = mesh(torus(0.8 + (i % 2) * 0.12, 0.07), i % 2 ? vine : dark, 0, 0.35 + i * 0.33, 0);
+      ring.rotation.set(Math.PI / 2 + Math.sin(i * 1.7) * 0.35, 0, Math.cos(i * 1.3) * 0.3);
       this.bush.add(ring);
-      for (let k = 0; k < 3; k++) {
-        const a = i * 1.1 + k * 2.1;
-        const spike = mesh(cone(0.05, 0.28, 5), thorn, Math.cos(a) * 0.75, 0.4 + i * 0.36, Math.sin(a) * 0.75);
-        spike.rotation.set(Math.cos(a) * 1.4, 0, -Math.sin(a) * 1.4);
-        this.bush.add(spike);
-      }
+    }
+    for (let k = 0; k < 18; k++) {
+      const a = k * 2.4;
+      const y = 0.3 + (k % 6) * 0.3;
+      const r = 0.85 - Math.abs(y - 0.9) * 0.25;
+      const spike = mesh(cone(0.06, 0.32, 5), thorn, Math.cos(a) * r, y, Math.sin(a) * r);
+      // Point each thorn outward.
+      spike.rotation.set(0, 0, -Math.PI / 2);
+      spike.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -a);
+      this.bush.add(spike);
     }
     this.bush.position.set(x, h, z);
     this.obj.add(this.bush);
