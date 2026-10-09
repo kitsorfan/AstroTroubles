@@ -121,6 +121,9 @@ function makeWeederModel(): EnemyModel & { rotor: THREE.Group; tank: THREE.MeshS
 
 type Mode = 'idle' | 'warn' | 'rest';
 
+/** When the next weeder on this level may start spraying (they take turns). */
+const nextSpray = new WeakMap<World, number>();
+
 let WeederClass: (new (world: World, id: string, x: number, y: number, z: number) => Enemy) | null = null;
 
 /** Builds a weeder drone (the class extends `Enemy`, so it is defined on first use, like the robots). */
@@ -181,7 +184,9 @@ function weederClass() {
           break;
         case 'rest':
           if (!this.aggro) this.setMode('idle', 1);
-          else if (this.modeT <= 0 && this.distToPlayer() < 12) {
+          else if (this.modeT <= 0 && this.distToPlayer() < 12 && this.world.time >= (nextSpray.get(this.world) ?? 0)) {
+            // Weeders take turns: never two circles at once, so there's always time to step aside.
+            nextSpray.set(this.world, this.world.time + T.warn + T.gap);
             this.setMode('warn', T.warn);
             this.world.soundAt('vent', b.x, b.z, 1.8, 18);
           }

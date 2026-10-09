@@ -25,6 +25,7 @@ export interface DragonModel {
   head: THREE.Group;
   jaw: THREE.Group;
   lids: THREE.Mesh[];
+  pupils: THREE.Mesh[];
   eyeMat: THREE.MeshStandardMaterial;
   gemMat: THREE.MeshStandardMaterial;
   spikeMat: THREE.MeshStandardMaterial;
@@ -126,9 +127,12 @@ export function makeDragonModel(): DragonModel {
   head.add(jaw);
   const eyeMat = ownMat(DRAGON.eye, { emissive: '#ffb020', ei: 1.6, rough: 0.2 });
   const lids: THREE.Mesh[] = [];
+  const pupils: THREE.Mesh[] = [];
   for (const s of [-1, 1]) {
     head.add(mesh(sphere(0.19, 12), eyeMat, s * 0.46, 0.22, 0.72, false));
-    head.add(mesh(sphere(0.07, 8), mat('#1a1208'), s * 0.5, 0.22, 0.88, false));
+    const pupil = mesh(sphere(0.07, 8), mat('#1a1208'), s * 0.5, 0.22, 0.88, false);
+    head.add(pupil);
+    pupils.push(pupil);
     const lid = mesh(sphere(0.23, 12), bodyMat, s * 0.46, 0.3, 0.72, false);
     lid.scale.set(1, 0.25, 1);
     head.add(lid);
@@ -155,5 +159,5 @@ export function makeDragonModel(): DragonModel {
   mouthGlow.position.set(0, -0.2, 1.7);
   head.add(mouthGlow);
   root.add(head);
-  return { root, segs, radii, head, jaw, lids, eyeMat, gemMat, spikeMat, mouthGlow, tree, leafMat };
+  return { root, segs, radii, head, jaw, lids, pupils, eyeMat, gemMat, spikeMat, mouthGlow, tree, leafMat };
 }

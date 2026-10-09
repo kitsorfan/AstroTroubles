@@ -103,6 +103,12 @@ export class Dragon extends Boss implements Target {
     return this.head.clone();
   }
 
+  /** A spot `dist` head-lengths in front of its face (and a little above), for a cutscene camera. */
+  faceSpot(dist: number): THREE.Vector3 {
+    this.m.head.updateWorldMatrix(true, false);
+    return this.m.head.localToWorld(new THREE.Vector3(0.8, 1.6, dist));
+  }
+
   /** The pylons stand on the level's `pylon:<kind>` markers (made on first use: the markers load after the boss). */
   private ensurePylons() {
     if (this.pylons.length) return;
@@ -393,6 +399,7 @@ export class Dragon extends Boss implements Target {
     m.jaw.rotation.x = damp(m.jaw.rotation.x, open * (1 - k), 8, dt || 1);
     const blink = Math.sin(t * 0.9) > 0.985 ? 1 : 0;
     const shut = Math.max(k, this.state === 'drowsy' ? 0.7 : this.lit * 0.12, blink);
+    for (const pupil of m.pupils) pupil.visible = shut < 0.6;
     for (const lid of m.lids) {
       lid.scale.y = 0.25 + shut * 0.8;
       lid.position.y = 0.3 - shut * 0.08;

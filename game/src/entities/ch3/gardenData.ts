@@ -26,7 +26,9 @@ export const WEEDER_TUNING = {
   hover: 2.6,
   keep: 4.5,
   warn: 0.8,
-  rest: 2.6,
+  rest: 3,
+  /** Seconds after one weeder's spray before any other weeder may start the next one. */
+  gap: 0.9,
   splash: 1.15,
   radius: 1.5,
 };

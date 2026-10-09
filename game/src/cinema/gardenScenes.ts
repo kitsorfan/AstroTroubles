@@ -44,8 +44,8 @@ export async function dragonLullaby(d: Director, w: World, b: Boss) {
     const h0 = head();
     const luxFrom = lux.pos.clone();
     const irisFrom = iris.pos.clone();
-    const luxTo = h0.clone().addScaledVector(from, 2.4).addScaledVector(side, 1.8).add(V(0, 1.2, 0));
-    const irisTo = h0.clone().addScaledVector(from, 2.4).addScaledVector(side, -1.8).add(V(0, 1.2, 0));
+    const luxTo = h0.clone().addScaledVector(from, 1.2).addScaledVector(side, 2.8).add(V(0, 2.2, 0));
+    const irisTo = h0.clone().addScaledVector(from, 1.2).addScaledVector(side, -2.8).add(V(0, 2.2, 0));
     const camPos = h0.clone().addScaledVector(from, 11).addScaledVector(side, 3).add(V(0, 1.5, 0));
     audio.play('tone2');
     await Promise.all([
@@ -72,8 +72,8 @@ export async function dragonLullaby(d: Director, w: World, b: Boss) {
           audio.play(tones[n], 1.2);
         }
         const h = head();
-        luxTo.y = h.y + 1.2 + Math.sin(x * 12) * 0.25;
-        irisTo.y = h.y + 1.2 + Math.cos(x * 12) * 0.25;
+        luxTo.y = h.y + 2.2 + Math.sin(x * 12) * 0.25;
+        irisTo.y = h.y + 2.2 + Math.cos(x * 12) * 0.25;
         lux.override?.copy(luxTo);
         iris.override?.copy(irisTo);
       }),
@@ -82,8 +82,10 @@ export async function dragonLullaby(d: Director, w: World, b: Boss) {
     const beats = w.def.stories?.lullaby;
     if (beats?.length) await d.story(beats);
     // Fast asleep, smiling, with little clouds of sleep drifting up.
+    // Right in front of its sleeping face (the dragon knows where its face points).
     const h1 = head();
-    d.cut(h1.clone().addScaledVector(from, 6).addScaledVector(side, 2.5).add(V(0, 1.2, 0)), h1.clone().add(V(0, -0.2, 0)), 44);
+    const face = (b as Boss & { faceSpot?: (dist: number) => THREE.Vector3 }).faceSpot?.(4.6);
+    d.cut(face ?? h1.clone().addScaledVector(from, 8.5).addScaledVector(side, 3).add(V(0, 2, 0)), h1.clone().add(V(0, -0.2, 0)), 44);
     await d.say(w.dialogue('bossDown'));
   } finally {
     lux.override = null;
