@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-import { audio } from '../../core/audio';
 import { damp } from '../../core/math';
 import type { World } from '../../game/world';
 import { Grid } from '../../world/grid';

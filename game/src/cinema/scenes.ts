@@ -11,6 +11,7 @@ import { BOSS_CARD, FLYOVER } from '../game/story';
 import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
+import { dragonLullaby } from './gardenScenes';
 import { luxTaken, rogueIntro } from './luxScenes';
 
 export { irisFound, luxReunion, luxTaken } from './luxScenes';
@@ -293,6 +294,8 @@ export async function bossIntro(d: Director, w: World, b: Boss) {
 }
 
 export async function bossOutro(d: Director, w: World, b: Boss) {
+  // The Sleepless Dragon isn't beaten: LUX and IRIS sing it to sleep.
+  if (b.kind === 'dragon') return dragonLullaby(d, w, b);
   const c = b.where.clone();
   const f = b.focus.clone();
   const color = BOSS_CARD[b.kind].color;
