@@ -34,7 +34,7 @@ export function ch2Arrival(): string {
       [0.5, 0.5],
       0.75,
     ) +
-    gn.spark(pen, sunX, sunY, 110, '#ffffff', 0.95) +
+    gn.spark(pen, sunX, sunY, 76, '#ffffff', 0.85) +
     gn.spark(pen, sunX, sunY, 40, '#fff6d8', 1);
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.3, planet) + gn.layer(0.8, ship) + gn.layer(1.15, flare) + gn.vignette(pen, 0.5, '#02030e') + gn.grain(pen, 0.07));
 }

@@ -171,9 +171,9 @@ export function ch2LuxTaken(): string {
   // The snare drone flying off with LUX in its cage, its tracks of light behind it.
   const inside = gn.lux(pen, 0, 112, 1.08, 'scared', { flip: true, look: [7, 2] });
   const drone =
-    gn.streaks(pen, 880, 300, -100, 320, 5, 150, '#ffffff', 0.5, 5) +
-    pen.glow(1070, 380, 280, '#ff4a5a', 0.35) +
-    snareDrone(pen, 1070, 230, 1.3, inside, { rot: -8 });
+    gn.streaks(pen, 880, 340, -100, 320, 5, 150, '#ffffff', 0.5, 5) +
+    pen.glow(1070, 420, 280, '#ff4a5a', 0.35) +
+    snareDrone(pen, 1070, 268, 1.3, inside, { rot: -8 });
   // The near snow: deep drifts, Jason's footprints, and Jason running after the drone.
   const prints = [
     [120, 846],
