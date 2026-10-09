@@ -33,7 +33,7 @@ import {
   vine,
 } from '../kit';
 import * as gn from '../gn';
-import { legionBot, lifeboat, lightWord, rootGN } from '../gn/ch3d';
+import { goldenKing, goldVine, legionBot, lifeboat, lightWord, rootGN } from '../gn/ch3d';
 
 const GOLD_VINE = '#e8b030';
 
@@ -247,41 +247,80 @@ export function ch3Squad(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(0.85, squad) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.55, '#120a18') + gn.grain(pen, 0.08));
 }
 
-/** 26. Aeëtes wearing the Golden Fleece: gold armour, a crown, gold vines curling out of his shoulders. */
+/* ---------------- 26. The Golden King, in the graphic-novel style ---------------- */
+
+/**
+ * 26. In the Fleece chamber, Aeëtes has put on the Golden Fleece: the Golden King towers on the altar,
+ * arms flung wide, gold vines curling from his shoulders and the Fleece spread behind him like wings.
+ * Brennus raises his shield in the foreground, Atalanta draws her bow behind him, and Jason takes aim.
+ */
 export function ch3GoldenKing(): string {
-  const id = 'ch3-goldenking';
-  const vines = [
-    [[720, 330], [560, 230], [480, 110], [380, 60]],
-    [[720, 360], [520, 360], [400, 300], [300, 330]],
-    [[880, 330], [1040, 230], [1120, 110], [1220, 60]],
-    [[880, 360], [1080, 360], [1200, 300], [1300, 330]],
-  ]
-    .map((p) => vine(p, 22, false, GOLD_VINE, C.gold))
-    .join('');
-  const crown = `<path d="M-70 0L-80 -60L-40 -26L0 -80L40 -26L80 -60L70 0Z" fill="${C.gold}" ${ink(5)}/><circle cx="0" cy="-30" r="10" fill="#7dff9a" ${ink(3)}/>`;
-  return panel(
-    backdrop(id + 'b', [[0, '#2a1440'], [0.6, '#6a3a40'], [1, '#c8783a']]) +
-      `<defs>${glowDef(id + 'g', C.gold, 0.7)}${glowDef(id + 'c', '#7dff9a', 0.8)}</defs>` +
-      stars(12, 60, 0, 0, 1600, 300) +
-      glow(id + 'g', 800, 420, 560, 0.85) +
-      vines +
-      // The Fleece as his cloak, behind him.
-      fleece(id + 'f', 800, 560, 2.2) +
-      aeetes(800, 930, 2.05, { pose: 'spread', face: 'grin' }) +
-      // Gold armour plates over the coat, the crown, and the glowing seed-core behind its crystal clasp.
-      at(800, 585, 0.8, `<path d="M-120 -40Q0 -90 120 -40L100 120Q0 150 -100 120Z" fill="${C.gold}" opacity=".92" ${ink(6)}/><path d="M-90 -10H90M-80 40H80" stroke="#c8801a" stroke-width="6"/>`) +
-      glow(id + 'c', 800, 610, 110, 0.9) +
-      at(800, 610, 0.9, `<path d="M0 -44L38 0L0 44L-38 0Z" fill="#dfffe8" opacity=".85" ${ink(5)}/><circle r="18" fill="#7dff9a"/>`) +
-      at(800, 296, 1.0, crown) +
-      // The three heroes far below, looking up, ready.
-      jason(290, 905, 0.9, { pose: 'point', face: 'determined' }) +
-      atalanta(110, 905, 0.9, { face: 'determined', bow: 'hand' }) +
-      brennus(1430, 905, 0.95, { pose: 'hips', face: 'stern' }) +
-      sparkle(600, 260, 12, '#fff6d0') +
-      sparkle(1010, 240, 14, '#fff6d0') +
-      sparkle(820, 700, 10, '#fff') +
-      vignette(id + 'v', 0.45, '#1a0820'),
-  );
+  const pen = gn.Pen.scene('ch3-goldenking', { key: [0.1, -1], keyColor: '#ffd070', rim: [0, -1], rimColor: '#fff0b0', shadow: '#5a2a6a', depth: 0.55 });
+  const cx = 800;
+  const cy = 430;
+  // The domed chamber: dark ribs of root converging overhead, lit gold from below.
+  const sky =
+    gn.sky(pen, [
+      [0, '#0c0616'],
+      [0.35, '#2a1236'],
+      [0.7, '#7a3436'],
+      [1, '#c8702e'],
+    ]) +
+    gn.halftone(pen, 'M-80 -60H1680V360H-80Z', '#000000', 9, 0.25) +
+    gn.godRays(pen, cx, cy, [-170, -145, -120, -98, -76, -54, 54, 76, 98, 120, 145, 170, 192], 6, 1300, '#ffd27a', 0.34) +
+    gn.bloom(pen, cx, cy - 60, 220, '#ffd88a', 0.75);
+  const ribL = pen.relight({ key: [0.8, 0.5], rim: [1, 0.2], rimColor: '#ffc860', shadow: '#2a1a3a', depth: 0.85 });
+  const ribR = pen.relight({ key: [-0.8, 0.5], rim: [-1, 0.2], rimColor: '#ffc860', shadow: '#2a1a3a', depth: 0.85 });
+  const far =
+    rootGN(ribL, [[-80, 980], [40, 560], [260, 200], [620, -90]], 190, 80, '#3a2230', { rim: 3, grain: 3 }) +
+    rootGN(ribR, [[1680, 980], [1560, 560], [1340, 200], [980, -90]], 190, 80, '#3a2230', { rim: 3, grain: 3 }) +
+    rootGN(ribL, [[280, 900], [330, 560], [470, 260], [700, -60]], 90, 50, '#4a2a34', { rim: 2.4, grain: 3 }) +
+    rootGN(ribR, [[1320, 900], [1270, 560], [1130, 260], [900, -60]], 90, 50, '#4a2a34', { rim: 2.4, grain: 3 }) +
+    gn.haze(pen, 560, 900, '#c8702e', 0.55);
+  // The altar: a round stone dais veined with gold, a ring of runes glowing round it, gold vines whipping up out of the floor.
+  const floor = pen.form('M-80 760Q800 700 1680 760V960H-80Z', '#3a2228', {
+    sh: 0,
+    line: 3,
+    paint: pen.lin([
+      [0, '#8a4a2e'],
+      [1, '#1a0e16'],
+    ]),
+  });
+  const dais =
+    pen.glow(cx, 800, 520, '#ffb040', 0.7, 120) +
+    `<ellipse cx="${cx}" cy="812" rx="430" ry="70" fill="none" stroke="#ffd166" stroke-width="5" stroke-dasharray="26 18" opacity=".75"/>` +
+    pen.form(`M${cx - 330} 790L${cx - 310} 846Q${cx} 890 ${cx + 310} 846L${cx + 330} 790Z`, '#b89a7a', { sh: 30, hatch: 2, line: 3, rim: 2, shade: '#5a3a4a', inner: `<path d="M${cx - 200} 820L${cx - 150} 870M${cx + 120} 830L${cx + 190} 866" stroke="#ffd166" stroke-width="5"/>` }) +
+    pen.form(`M${cx - 330} 790Q${cx} 740 ${cx + 330} 790Q${cx} 840 ${cx - 330} 790Z`, '#e0caa8', {
+      line: 3,
+      inner: `<path d="M${cx - 220} 790Q${cx - 120} 776 ${cx - 40} 800T${cx + 180} 786M${cx - 120} 808Q${cx} 812 ${cx + 60} 772" fill="none" stroke="#ffc844" stroke-width="5"/>` + pen.glow(cx, 790, 280, '#fff2c0', 0.6, 40),
+    });
+  const mid = floor + dais;
+  // The Golden King, lit gold from the altar beneath him.
+  const king =
+    goldenKing(pen.relight({ key: [0.15, 0.9], rim: [0, -1], rimColor: '#fff0b0', depth: 0.5 }), cx, 796, 0.84, { mood: 'scheming', look: [0, 2] }) +
+    gn.spark(pen, 560, 210, 18, '#fff6d0') +
+    gn.spark(pen, 1060, 190, 22, '#fff6d0') +
+    gn.spark(pen, 700, 640, 12, '#ffffff');
+  // The heroes in the foreground, dark against the gold, rimmed by its light.
+  const lt = pen.relight({ key: [1, -0.25], keyColor: '#ffc860', rim: [1, -0.3], rimColor: '#ffe6a0', shadow: '#2a1a4a', depth: 0.8 });
+  const rt = pen.relight({ key: [-1, -0.25], keyColor: '#ffc860', rim: [-1, -0.3], rimColor: '#ffe6a0', shadow: '#2a1a4a', depth: 0.8 });
+  const heroes =
+    gn.atalanta(lt, 560, 930, 0.86, { bow: 'draw', aim: 124, mood: 'focus', look: [2.6, -2.5], wind: 0.6, rim: 3 }) +
+    gn.brennus(lt, 210, 1130, 1.3, {
+      pose: { turn: 0.72, lean: 8, armF: { to: [1.5, 0.55] }, armN: [62, 96], legN: { to: [-0.35, 0.9] }, legF: { to: [0.35, 0.9] }, handN: 'fist', handF: 'fist' },
+      mood: 'determined',
+      look: [2.6, -2],
+      rim: 3,
+    }) +
+    gn.jason(rt, 1380, 1060, 1.2, {
+      flip: true,
+      pose: { turn: 0.62, lean: 6, armN: { to: [1.9, -0.75] }, armF: [-24, 10], legN: { to: [-0.34, 0.9] }, legF: { to: [0.32, 0.92] }, handN: 'fist', handF: 'fist' },
+      mood: 'determined',
+      look: [2.6, -2.4],
+      rim: 3,
+    }) +
+    gn.lux(rt, 1200, 360, 0.8, 'scared', { flip: true, look: [7, -3] });
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(0.8, king) + gn.layer(1.25, heroes) + gn.vignette(pen, 0.6, '#0a0410') + gn.grain(pen, 0.08));
 }
 
 /** A rolling meadow at sunset with flowers dotted along it (for the ending pictures). */

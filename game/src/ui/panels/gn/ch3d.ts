@@ -5,8 +5,8 @@
  * Gorgon's old lifeboat. All of them draw through a `Pen` like the rest of the kit.
  */
 import { add, at, brushD, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, spline, sub, unit } from './core';
-import { bandD, type Build, hand, limb, type Pose, rig, type Rig, torso, U, ADULT } from './body';
-import { coatSkirt, figure, type CastOpts, type Outfit, POSES } from './cast';
+import { bandD, type Build, hand, limb, type Pose, rig, type Rig, torso, U, ADULT, TALL } from './body';
+import { aeetes, coatSkirt, figure, type CastOpts, type Outfit, POSES } from './cast';
 import { spark } from './fx';
 
 /* ---------------- Brennus's green Legion robots ---------------- */
@@ -220,39 +220,33 @@ export function curlyD(pts: P[], bump: number, seed = 3): string {
   return d + 'Z';
 }
 
-/** A spiral curl (for the Fleece's texture), centred at (x, y), `r` across, as brush-stroke path data. */
-function curlStroke(x: number, y: number, r: number, w: number, turn = 1): string {
-  const pts: P[] = [];
-  for (let i = 0; i <= 8; i++) {
-    const t = i / 8;
-    const a = Math.PI * (0.9 + t * 1.6 * turn);
-    const rr = r * (1 - t * 0.6);
-    pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.85]);
-  }
-  return brushD(pts, w, [0.15, 0.5]);
+/** One hanging lock of fleece from (x, y), `l` long, swaying `sway` sideways and ending in a little hook. */
+function lockPts(x: number, y: number, l: number, sway: number): P[] {
+  return [
+    [x, y],
+    [x + sway * 0.5, y + l * 0.3],
+    [x - sway * 0.4, y + l * 0.62],
+    [x + sway * 0.2, y + l * 0.9],
+    [x + sway * 0.9, y + l],
+    [x + sway * 1.1, y + l * 0.86],
+  ];
 }
 
-/** The Fleece's curly texture as a pattern fill (`url(#...)`), `size` units per tile. */
+/** The Fleece's texture as a pattern fill (`url(#...)`): wavy hanging locks, `size` units per tile. */
 export function curlFill(pen: Pen, size = 40): string {
   const id = pen.shared(`curl${size}`, (id) => {
     const k = size / 40;
-    const curls = [
-      [12, 12],
-      [32, 31],
-      [-8, 31],
-      [52, 12],
-    ]
-      .map(([cx, cy], i) => curlStroke(cx * k, cy * k, 10 * k, 3.4 * k, i % 2 ? 0.9 : 1.1))
-      .join('');
-    const lights = [
-      [12, 12],
-      [32, 31],
-      [-8, 31],
-      [52, 12],
-    ]
-      .map(([cx, cy]) => brushD([[cx * k - 9 * k, cy * k - 6 * k], [cx * k - 2 * k, cy * k - 11 * k], [cx * k + 7 * k, cy * k - 9 * k]], 2.6 * k, [0.3, 0.4]))
-      .join('');
-    return `<pattern id="${id}" width="${size}" height="${r1(size * 0.95)}" patternUnits="userSpaceOnUse" patternTransform="rotate(-10)"><path d="${curls}" fill="#9a5a12" opacity=".75"/><path d="${lights}" fill="#fff6c8" opacity=".8"/></pattern>`;
+    const spots: [number, number, number][] = [
+      [8, 2, 1],
+      [28, 20, -1],
+      [-12, 20, -1],
+      [48, 2, 1],
+      [8, 38, 1],
+      [48, 38, 1],
+    ];
+    const dark = spots.map(([x, y, sw]) => brushD(lockPts(x * k, y * k, 30 * k, 8 * sw * k), 4.2 * k, [0.1, 0.4])).join('');
+    const lit = spots.map(([x, y, sw]) => brushD(lockPts(x * k - 4 * k, y * k + 2 * k, 22 * k, 7 * sw * k).slice(0, 4), 2.4 * k, [0.3, 0.4])).join('');
+    return `<pattern id="${id}" width="${size}" height="${r1(size * 0.9)}" patternUnits="userSpaceOnUse"><path d="${dark}" fill="#9a5a12" opacity=".55"/><path d="${lit}" fill="#fff6c8" opacity=".7"/></pattern>`;
   });
   return `url(#${id})`;
 }
@@ -283,10 +277,14 @@ export interface FleeceOpts {
 export function fleeceGN(pen: Pen, pts: P[], o: FleeceOpts = {}): string {
   let minY = Infinity;
   let maxY = -Infinity;
+  let minX = Infinity;
+  let maxX = -Infinity;
   let cx = 0;
   let cy = 0;
   for (const p of pts) {
     minY = Math.min(minY, p[1]);
+    minX = Math.min(minX, p[0]);
+    maxX = Math.max(maxX, p[0]);
     maxY = Math.max(maxY, p[1]);
     cx += p[0] / pts.length;
     cy += p[1] / pts.length;
@@ -300,7 +298,9 @@ export function fleeceGN(pen: Pen, pts: P[], o: FleeceOpts = {}): string {
     if (o.awake) seeds += spark(pen, sx, sy, 16, '#f0fff4', 0.9);
   }
   const folds = (o.folds ?? []).map((f) => [f, 4] as [P[], number]);
-  const inner = `<path d="${d}" fill="${curlFill(pen, o.curl ?? 40)}"/>` + (folds.length ? pen.brushes(folds, '#7a4208', [0.2, 0.5], 0.55) : '') + seeds;
+  const edge = pen.rad([[0.55, "#7a3a08", 0], [1, "#7a3a08", 0.55]], 0.5, 0.45, 0.62);
+  const box = `x="${r1(minX - 40)}" y="${r1(minY - 40)}" width="${r1(maxX - minX + 80)}" height="${r1(h + 80)}"`;
+  const inner = `<rect ${box} fill="${curlFill(pen, o.curl ?? 40)}"/><rect ${box} fill="${edge}"/>` + (folds.length ? pen.brushes(folds, '#7a4208', [0.2, 0.5], 0.55) : '') + seeds;
   const paint = pen.rad(
     [
       [0, '#fff6c8'],
@@ -312,6 +312,209 @@ export function fleeceGN(pen: Pen, pts: P[], o: FleeceOpts = {}): string {
     0.75,
   );
   return (o.glow ? pen.glow(cx, cy, h * 1.2 * o.glow, '#ffd166', 0.7) : '') + pen.form(d, '#ffc844', { sh: o.sh ?? h * 0.25, hatch: 1, rim: o.rim ?? 2.2, line: o.line ?? 3, paint, shade: '#c47a1c', inner });
+}
+
+/**
+ * A living gold vine of the Fleece along `pts`, `w` thick, ending in a curl (`curl` = its radius, turning
+ * `spin` = 1 clockwise or -1 the other way), with a glow and a few gold leaves.
+ */
+export function goldVine(pen: Pen, pts: P[], w: number, o: { curl?: number; spin?: 1 | -1; leaves?: number; glow?: number } = {}): string {
+  const p = pts.slice();
+  const c = o.curl ?? w * 2.4;
+  const spin = o.spin ?? 1;
+  if (c > 0) {
+    const last = p[p.length - 1];
+    const dv = unit(sub(last, p[p.length - 2]));
+    const ctr = add(last, mul(perp(dv), c * spin));
+    const a0 = Math.atan2(last[1] - ctr[1], last[0] - ctr[0]);
+    for (let i = 1; i <= 5; i++) {
+      const t = i / 5;
+      const a = a0 - spin * t * Math.PI * 1.5;
+      const rr = c * (1 - t * 0.55);
+      p.push([ctr[0] + Math.cos(a) * rr, ctr[1] + Math.sin(a) * rr]);
+    }
+  }
+  let out = o.glow ? pen.brush(p, w * 3.2, '#ffc844', [0.05, 0.6], 0.22 * o.glow) : '';
+  out += pen.brush(p, w + 5, INK, [0.03, 0.85]) + pen.brush(p, w, '#e8a828', [0.03, 0.85]) + pen.brush(p.map((q) => add(q, [-w * 0.18, -w * 0.18])), w * 0.34, '#fff2b0', [0.1, 0.8], 0.85);
+  const n = o.leaves ?? 2;
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(((i + 1) * pts.length) / (n + 1));
+    const a = pts[Math.min(pts.length - 1, k)];
+    const b = pts[Math.max(0, k - 1)];
+    const d = unit(sub(a, b));
+    const deg = (Math.atan2(d[0], d[1]) * 180) / Math.PI + (i % 2 ? 60 : -60);
+    out += leafD(pen, a, deg, w * 2.6, '#f0c040', 2);
+  }
+  return out;
+}
+
+/** Aeëtes's pose as the Golden King: arms flung up and wide, head back, laughing. */
+export const KING_SPREAD: Pose = { turn: 0.18, tilt: -6, armN: [-128, -160], armF: [128, 160], legN: { to: [-0.3, 0.94] }, legF: { to: [0.32, 0.93] }, handN: 'open', handF: 'open' };
+
+/**
+ * AEËTES, THE GOLDEN KING: Aeëtes wearing the Golden Fleece. The Fleece spreads behind him like a great
+ * golden cloak, gold vines curl out of his shoulders, and over his gold coat he wears the Fleece's armour:
+ * a breastplate with the crystal clasp over the glowing green seed-core, spiked pauldrons and a spiky
+ * crown with a green gem. Feet at (x, y), facing right (he is drawn nearly from the front).
+ */
+export function goldenKing(pen: Pen, x: number, y: number, s: number, o: CastOpts = {}): string {
+  const pose = typeof o.pose === 'string' ? POSES[o.pose] : (o.pose ?? KING_SPREAD);
+  const r = rig(TALL, pose);
+  const [L, R] = r.sh;
+  // The Fleece as a cloak, spreading out behind him from the shoulders to the floor.
+  const cloakPts: P[] = [
+    [L[0] - 300, L[1] - 170],
+    [L[0] - 150, L[1] - 80],
+    [L[0] + 10, L[1] - 18],
+    [R[0] - 10, R[1] - 18],
+    [R[0] + 150, R[1] - 80],
+    [R[0] + 300, R[1] - 170],
+    [R[0] + 410, R[1] + 40],
+    [R[0] + 470, R[1] + 260],
+    [R[0] + 400, -40],
+    [R[0] + 250, 0],
+    [R[0] + 100, -50],
+    [36, -260],
+    [-36, -260],
+    [L[0] - 100, -50],
+    [L[0] - 250, 0],
+    [L[0] - 400, -40],
+    [L[0] - 470, L[1] + 260],
+    [L[0] - 410, L[1] + 40],
+  ];
+  const seeds: P[] = [
+    [L[0] - 240, L[1] + 40],
+    [L[0] - 160, L[1] + 230],
+    [L[0] - 300, L[1] + 300],
+    [R[0] + 230, R[1] + 30],
+    [R[0] + 170, R[1] + 250],
+    [R[0] + 300, R[1] + 300],
+    [L[0] - 90, -120],
+    [R[0] + 120, -100],
+  ];
+  const folds: P[][] = [
+    [
+      [L[0] - 30, L[1] + 20],
+      [L[0] - 120, L[1] + 200],
+      [L[0] - 170, -60],
+    ],
+    [
+      [R[0] + 30, R[1] + 20],
+      [R[0] + 120, R[1] + 200],
+      [R[0] + 170, -60],
+    ],
+    [
+      [L[0] - 200, L[1] - 30],
+      [L[0] - 280, L[1] + 150],
+      [L[0] - 300, L[1] + 330],
+    ],
+    [
+      [R[0] + 200, R[1] - 30],
+      [R[0] + 280, R[1] + 150],
+      [R[0] + 300, R[1] + 330],
+    ],
+  ];
+  let out = fleeceGN(pen, cloakPts, { seeds, folds, sh: 90, rim: 3, line: 3.4, curl: 40, bump: 16, glow: 0.9, seed: 7 });
+  // Gold vines curling out of his shoulders.
+  const v = (base: P, k: number, spin: 1 | -1, offs: P[], w: number) => goldVine(pen, [base, ...offs.map((q) => add(base, [q[0] * k, q[1]]))], w, { spin, curl: w * 2.2, leaves: 1 });
+  for (const [base, k] of [
+    [L, -1],
+    [R, 1],
+  ] as [P, number][]) {
+    const spin = (k > 0 ? 1 : -1) as 1 | -1;
+    out += v(base, k, spin, [
+      [60, -26],
+      [130, 14],
+      [200, -34],
+      [270, 4],
+    ], 20);
+    out += v(add(base, [0, 30]), k, (-spin) as 1 | -1, [
+      [50, 60],
+      [110, 150],
+      [190, 160],
+      [250, 230],
+    ], 16);
+  }
+  out += aeetes(pen, 0, 0, 1, { pose, mood: o.mood ?? 'scheming', look: o.look, rim: o.rim ?? 2.6 });
+  // The armour: a gold breastplate engraved with fleece curls, the crystal clasp over the seed-core.
+  const gold = '#ffd166';
+  const plateGrad = pen.lin(
+    [
+      [0, '#fff4c0'],
+      [0.5, '#ffd166'],
+      [1, '#c88a1a'],
+    ],
+    0,
+    0,
+    1,
+    1,
+  );
+  const core = r.tf(0.12, 0.3);
+  const curls = [
+    [-0.6, 0.18],
+    [0.75, 0.2],
+    [-0.45, 0.48],
+    [0.6, 0.5],
+  ]
+    .map(([a, b]) => {
+      const q = r.tf(a, b);
+      return `M${r1(q[0] - 10)} ${r1(q[1] + 3)}a10 9 0 1 1 17 6a6 5 0 1 1 -8 -4`;
+    })
+    .join('');
+  out += pen.form(dSmooth([r.tf(-1.05, 0.04), r.tf(1.05, 0.04), r.tf(0.95, 0.38), r.tf(0.7, 0.66), r.tf(0.12, 0.76), r.tf(-0.55, 0.66), r.tf(-0.95, 0.38)]), gold, {
+    sh: 26,
+    hatch: 1,
+    line: 3,
+    rim: 2.4,
+    paint: plateGrad,
+    shade: '#b8741a',
+    inner: `<path d="${curls}" fill="none" stroke="#9a5a12" stroke-width="3.4" opacity=".75"/>` + pen.brush([r.tf(-0.8, 0.12), r.tf(-0.2, 0.08), r.tf(0.5, 0.14)], 6, '#ffffff', [0.3, 0.4], 0.7),
+  });
+  out += pen.glow(core[0], core[1], 90, '#7dff9a', 0.9) + pen.glow(core[0], core[1], 40, '#ffffff', 0.7);
+  const cs = 30;
+  out += pen.form(dPoly([add(core, [0, -cs * 1.25]), add(core, [cs, 0]), add(core, [0, cs * 1.25]), add(core, [-cs, 0])]), '#e8fff0', {
+    line: 2.8,
+    inner: `<circle cx="${r1(core[0])}" cy="${r1(core[1])}" r="13" fill="#7dff9a"/><circle cx="${r1(core[0] - 4)}" cy="${r1(core[1] - 4)}" r="5" fill="#ffffff"/><path d="M${r1(core[0] - cs)} ${r1(core[1])}L${r1(core[0] + cs)} ${r1(core[1])}M${r1(core[0])} ${r1(core[1] - cs * 1.25)}L${r1(core[0] + cs * 0.4)} ${r1(core[1])}L${r1(core[0])} ${r1(core[1] + cs * 1.25)}" fill="none" stroke="#9ad8b0" stroke-width="2"/>`,
+  });
+  // Spiked pauldrons on both shoulders.
+  for (const i of [1, 0] as const) {
+    const p = r.sh[i];
+    const k = i ? 1 : -1;
+    const w = 52;
+    const spikes = [-0.55, 0, 0.55].map((t) => {
+      const bx = p[0] + t * w * 0.9;
+      const by = p[1] - w * 0.55 * (1 - Math.abs(t) * 0.4);
+      const tip: P = [bx + k * 18 + t * 30, by - 46 + Math.abs(t) * 12];
+      return `M${r1(bx - 11)} ${r1(by + 6)}L${r1(tip[0])} ${r1(tip[1])}L${r1(bx + 11)} ${r1(by + 6)}Z`;
+    });
+    out += pen.form(spikes.join(''), gold, { sh: 8, line: 2.4, rim: 1.8, shade: '#b8741a' });
+    out += pen.form(`M${r1(p[0] - w)} ${r1(p[1] + 26)}Q${r1(p[0] - w * 1.05)} ${r1(p[1] - w * 0.75)} ${r1(p[0])} ${r1(p[1] - w * 0.78)}Q${r1(p[0] + w * 1.05)} ${r1(p[1] - w * 0.75)} ${r1(p[0] + w)} ${r1(p[1] + 26)}Q${r1(p[0])} ${r1(p[1] + 6)} ${r1(p[0] - w)} ${r1(p[1] + 26)}Z`, gold, {
+      sh: 22,
+      hatch: 1,
+      line: 2.8,
+      rim: 2.2,
+      paint: plateGrad,
+      shade: '#b8741a',
+      inner: `<path d="M${r1(p[0] - w * 0.9)} ${r1(p[1] + 4)}Q${r1(p[0])} ${r1(p[1] - 16)} ${r1(p[0] + w * 0.9)} ${r1(p[1] + 4)}" fill="none" stroke="#9a5a12" stroke-width="3" opacity=".7"/>`,
+    });
+  }
+  // The crown: tall gold spikes and a green gem, set on his silver hair.
+  const hp = pen.local(false, r.headRot);
+  const crown =
+    hp.glow(4, -74, 70, '#ffd166', 0.6) +
+    hp.form('M-40 -38L-50 -84L-26 -62L-14 -104L0 -68L14 -106L28 -64L50 -86L42 -38Q0 -50 -40 -38Z', gold, {
+      sh: 14,
+      hatch: 1,
+      line: 2.8,
+      rim: 2.2,
+      paint: plateGrad,
+      shade: '#b8741a',
+      inner: `<path d="M-42 -46Q0 -58 44 -46" fill="none" stroke="#9a5a12" stroke-width="4"/>`,
+    }) +
+    hp.glow(1, -58, 22, '#7dff9a', 0.9) +
+    hp.form('M1 -70L10 -58L1 -46L-8 -58Z', '#7dff9a', { line: 2.2, inner: '<circle cx="-1" cy="-61" r="2.6" fill="#fff"/>' });
+  out += at(r.head[0], r.head[1], 1, crown, false, r.headRot);
+  return at(x, y, s, out);
 }
 
 /* ---------------- Celestia ---------------- */
