@@ -172,7 +172,7 @@ export const WEAPONS: Record<WeaponId, Weapon> = {
     desc: 'A roaring cone of fire, for as long as you hold BLAST.',
     special: 'Sets enemies burning and burns away brambles. Fuel refills by itself.',
     price: 950,
-    power: 2.6,
+    power: 4.5,
     speed: 11,
     range: 5.5,
     aim: 6.5,
