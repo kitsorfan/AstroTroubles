@@ -3,8 +3,9 @@ import { DIVE, SONG, nearestBeat } from './dive';
 /**
  * THE SIREN ORGAN (chapter 3, level 4's boss), the rules only: a giant sonic platform Aeëtes sank in the
  * Gardener gate. Six tall pipes stand in an arc in front of the Dolphin, one glowing at a time: the
- * glowing pipe sings, and each note it sings is a ring of sound that swims at the sub. Swim through the
- * hole in the middle of a ring (or stay well outside it). Torpedoes break the glowing pipe. As the pipes
+ * glowing pipe sings, and each note it sings is a ring of sound that swims at the sub (between two
+ * glowing pipes every pipe wears its gold cap for a short rest, but the rings keep coming). Swim through
+ * the hole in the middle of a ring (or stay well outside it). Torpedoes break the glowing pipe. As the pipes
  * break the song speeds up: with four left the Organ raises a siren buoy, with two left it sends piranha
  * drones. With every pipe broken, its great horn sings one last song, and LUX sings back: land enough
  * notes on the beat and the Organ shatters.
@@ -13,7 +14,7 @@ import { DIVE, SONG, nearestBeat } from './dive';
 export const ORGAN = {
   /** How far in front of the sub the pipes stand. */
   dist: 36,
-  pipeHp: 3,
+  pipeHp: 5,
   /** Where the pipes stand (corridor x, y of their glowing mouths). */
   pipes: [
     [-8, -1.5],
@@ -29,8 +30,9 @@ export const ORGAN = {
   /** Seconds a ring takes to reach the sub, and seconds between rings, by phase (6-5 pipes, 4-3, 2-1). */
   travel: [3.2, 2.8, 2.5],
   every: [3.0, 2.3, 1.8],
-  /** A glowing pipe hands over to the next one after this long. */
-  litTime: 7,
+  /** A pipe glows (and can be broken) for this long; then every pipe is capped for a rest before the next one glows. */
+  litTime: 4.5,
+  rest: 2.5,
   /** The final song duel: beats in a round, and good notes needed to win it. */
   finaleBeats: 8,
   finaleNeed: 5,
@@ -70,6 +72,7 @@ export class OrganFight {
   readonly title = 'THE SIREN ORGAN';
   pipes: Pipe[] = [];
   waves: Wave[] = [];
+  /** The glowing pipe, or -1 while every pipe is capped (a rest between two). */
   lit = 2;
   t = 0;
   phase = 1;
@@ -78,6 +81,9 @@ export class OrganFight {
   finale: { t0: number; notes: number; sung: Set<number> } | null = null;
   private waveT = 1.5;
   private litT = 0;
+  private restT = 0;
+  /** The pipe the waves come from (the glowing one, or the last one that sang). */
+  private voice = 2;
   private finaleWait = 0;
   private rnd = 1;
 
@@ -95,6 +101,8 @@ export class OrganFight {
     this.finale = null;
     this.waveT = 2;
     this.litT = 0;
+    this.restT = 0;
+    this.voice = 2;
     this.finaleWait = 0;
     this.rnd = 1;
   }
@@ -117,14 +125,29 @@ export class OrganFight {
     return this.rnd / 2147483647;
   }
 
+  /** Pipes still standing, by index. */
+  private alive(): number[] {
+    return this.pipes.map((p, i) => (p.hp > 0 ? i : -1)).filter((i) => i >= 0);
+  }
+
+  /** Every pipe gets its gold cap back for a rest. */
+  private rest() {
+    this.voice = this.lit >= 0 ? this.lit : this.voice;
+    this.lit = -1;
+    this.restT = ORGAN.rest;
+  }
+
+  /** Another pipe (not the last one) starts to glow and sing. */
   private nextLit(ev: OrganEvents) {
-    const alive = this.pipes.map((p, i) => (p.hp > 0 ? i : -1)).filter((i) => i >= 0);
+    const alive = this.alive();
     if (!alive.length) return;
-    const at = alive.indexOf(this.lit);
+    const at = alive.indexOf(this.voice);
     this.lit = alive[(at + 1 + Math.floor(this.rand() * Math.max(1, alive.length - 1))) % alive.length];
+    this.voice = this.lit;
     this.litT = 0;
     ev.lit?.(this.lit);
   }
+
 
   /** Fires a ring from the glowing pipe, its hole a little to one side of the sub. */
   private fire(subX: number, subY: number, ev: OrganEvents) {
@@ -137,7 +160,8 @@ export class OrganFight {
       cy = subY + Math.sin(a) * ORGAN.ringR;
       if (Math.abs(cx) < DIVE.halfW - 2 && Math.abs(cy) < DIVE.halfH - 1.5) break;
     }
-    const w: Wave = { cx, cy, rel: ORGAN.dist, speed: ORGAN.dist / ORGAN.travel[k], R: 0.8, from: this.lit };
+    const from = this.pipes[this.voice]?.hp > 0 ? this.voice : (this.alive()[0] ?? 0);
+    const w: Wave = { cx, cy, rel: ORGAN.dist, speed: ORGAN.dist / ORGAN.travel[k], R: 0.8, from };
     w.cx = Math.max(-DIVE.halfW + 2, Math.min(DIVE.halfW - 2, w.cx));
     w.cy = Math.max(-DIVE.halfH + 1.5, Math.min(DIVE.halfH - 1.5, w.cy));
     this.waves.push(w);
@@ -164,8 +188,13 @@ export class OrganFight {
       return;
     }
     const k = Math.min(2, this.phase - 1);
-    this.litT += dt;
-    if (this.litT > ORGAN.litTime) this.nextLit(ev);
+    if (this.lit >= 0) {
+      this.litT += dt;
+      if (this.litT > ORGAN.litTime) this.rest();
+    } else {
+      this.restT -= dt;
+      if (this.restT <= 0) this.nextLit(ev);
+    }
     this.waveT -= dt;
     if (this.waveT <= 0) {
       this.waveT = ORGAN.every[k];
@@ -190,8 +219,9 @@ export class OrganFight {
     if (n === 0) {
       // Silence for a moment, then the great horn sings its last song.
       this.waves = [];
+      this.lit = -1;
       this.finaleWait = 2.2;
-    } else this.nextLit(ev);
+    } else this.rest();
     return true;
   }
 

@@ -27,7 +27,8 @@ beforeAll(() => {
   (globalThis as { navigator?: unknown }).navigator ??= { hardwareConcurrency: 8 };
 });
 
-const FLIGHTS = LEVEL_ORDER.filter((id) => isVehicleLevel(id));
+// The Argo's flights (the submarine's dive has its own tests in sirens.test.ts).
+const FLIGHTS = LEVEL_ORDER.filter((id) => isVehicleLevel(id) && LEVELS[id].vehicle === 'argo');
 
 describe('three chapters', () => {
   it('splits the levels into the ship, Gaia Nova and the Argonauts', () => {
