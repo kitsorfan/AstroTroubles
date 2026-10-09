@@ -291,7 +291,7 @@ function phineusHead(pen: Pen, turn: number, shout: boolean): { front: string; b
     shades +
     brows;
   // A white fringe round the back of his bald head.
-  const back = pen.form('M-44 14Q-54 -10 -42 -30Q-34 -6 -24 8Z', PH.beard, { sh: 6, line: 2.2, rim: 1.6 }) + pen.form('M-30 -34Q-50 -46 -46 -60Q-34 -50 -24 -44Z', PH.beard, { line: 2 });
+  const back = pen.form('M-44 14Q-54 -10 -42 -30Q-34 -6 -24 8Z', PH.beard, { sh: 6, line: 2.2, rim: 1.6 });
   const skinMarks = `<path d="M-20 -40Q0 -50 24 -40" fill="none" stroke="#ffffff" stroke-width="6" opacity=".35" stroke-linecap="round"/>`;
   return { front, back, skinMarks };
 }
@@ -305,8 +305,8 @@ function robeSkirt(pen: Pen, r: Rig): string {
   const aN = r.an[0];
   const aF = r.an[1];
   const lo = Math.max(aN[1], aF[1]) - 6;
-  const left = Math.min(aN[0], aF[0]) - lw * 1.6;
-  const right = Math.max(aN[0], aF[0]) + lw * 1.6;
+  const left = Math.min(aN[0], aF[0]) - lw * 1.15;
+  const right = Math.max(aN[0], aF[0]) + lw * 1.15;
   const d = dSmooth([
     r.ts(-r.b.waist * 0.5, 0.62),
     r.ts(-r.b.hipW * 0.58, 0.98),
@@ -345,6 +345,8 @@ function robeSkirt(pen: Pen, r: Rig): string {
 export interface PhineusOpts extends CastOpts {
   /** His walking stick in the near hand (default yes). */
   stick?: boolean;
+  /** How far the stick tilts forward from the line of his forearm (degrees, default 90: across the fist). */
+  stickTilt?: number;
 }
 
 /** Phineus, the blind old stargazer: bald, a long white beard, round dark glasses, a patched blue star robe, sandals and a walking stick. */
@@ -370,13 +372,13 @@ export function phineus(pen: Pen, x: number, y: number, s: number, o: PhineusOpt
     },
     nearArm: (r) => {
       if (o.stick === false) return '';
-      // The stick through the near fist, along the forearm's line and on past it.
+      // The stick through the near fist, tilted `stickTilt` degrees forward of the forearm's line.
       const w = r.wr[0];
-      const d = dir(r.foreA[0] + r.wrist[0]);
-      const g = add(w, mul(d, r.b.hand * U * 0.45));
-      const ax = unit(perp(d));
-      const a = add(g, mul(ax, -150));
-      const b = add(g, mul(ax, 150));
+      const fa = r.foreA[0] + r.wrist[0];
+      const g = add(w, mul(dir(fa), r.b.hand * U * 0.45));
+      const ax = dir(fa - (o.stickTilt ?? 90));
+      const a = add(g, mul(ax, -90));
+      const b = add(g, mul(ax, 230));
       return lp.brush([a, g, b], 15, INK, [0.02, 0.02]) + lp.brush([a, g, b], 8, PH.stick, [0.02, 0.02]) + lp.form(circD(b[0], b[1], 13), '#c8904a', { sh: 5, line: 2.4 });
     },
   });
