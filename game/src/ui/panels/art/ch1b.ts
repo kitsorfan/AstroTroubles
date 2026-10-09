@@ -1,5 +1,4 @@
 /** Chapter 1 panels, part 2: Jason wakes up, meets LUX, and finds the Heart in front of the star. */
-import { backdrop, C, gascuHeart, glow, glowDef, ink, jason, lin, lux, panel, rad, sparkle, stars, vignette } from '../kit';
 import * as gn from '../gn';
 import * as c1 from '../gn/ch1';
 
@@ -604,25 +603,221 @@ export function ch1Lux(): string {
 }
 
 
-/** 6. The Bridge: the huge Heart of GaScu before a giant window full of a burning star. */
-export function ch1Heart(): string {
-  const id = 'ch1-heart';
-  const mullions = [400, 800, 1200].map((x) => `<path d="M${x} 40V680" stroke="#1a1630" stroke-width="22"/>`).join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#3a0e10'], [1, '#120608']]) +
-      `<defs>${rad(id + 's', [[0, '#fffbe0'], [0.25, '#ffe08a'], [0.5, '#ff8a3d'], [0.8, '#ff4a1a', 0.6], [1, '#ff4a1a', 0]])}
-      <clipPath id="${id}w"><rect x="80" y="40" width="1440" height="640" rx="70"/></clipPath>${glowDef(id + 'o', C.orange, 0.5)}</defs>
-      <g clip-path="url(#${id}w)"><rect x="80" y="40" width="1440" height="640" fill="#4a1408"/>${stars(5, 40, 80, 40, 1440, 640, '#ffd8b0')}
-      <circle cx="1180" cy="300" r="720" fill="url(#${id}s)"/>
-      <path d="M700 120Q900 60 1100 140M560 480Q760 560 980 500" fill="none" stroke="#ffd166" stroke-width="14" opacity=".35" stroke-linecap="round"/></g>
-      ${mullions}<rect x="80" y="40" width="1440" height="640" rx="70" fill="none" stroke="#2a2440" stroke-width="40"/><rect x="60" y="20" width="1480" height="680" rx="86" fill="none" ${ink(8)}/>` +
-      `<path d="M0 680H1600V900H0Z" fill="#1a1020"/><path d="M0 680H1600" stroke="#ff8a3d" stroke-width="6" opacity=".6"/>
-      <path d="M60 900L220 760H520L600 900ZM1000 900L1080 760H1380L1540 900Z" fill="#2a1a30" ${ink(5)}/><path d="M250 790H490M1110 790H1350" stroke="${C.cyan}" stroke-width="8" opacity=".6"/>` +
-      glow(id + 'o', 800, 760, 800, 0.6, 140) +
-      gascuHeart(id + 'h', 800, 380, 1.08) +
-      jason(300, 870, 0.55, { pose: 'shock', face: 'shock' }) +
-      lux(390, 700, 0.6, 'scared') +
-      vignette(id + 'v', 0.45),
+/* ---------------- 6. The Heart of GaScu on the Bridge ---------------- */
+
+/** The star through the Bridge window: a huge white-hot disc right behind the Heart, its corona, flares and loops of fire. */
+function starView(pen: gn.Pen, sx: number, sy: number, sr: number): string {
+  let out = gn.sky(pen, [
+    [0, '#3a0a10'],
+    [0.5, '#7a1e10'],
+    [1, '#2a0810'],
+  ]);
+  // The corona, then the disc with its limb darkening toward the edge.
+  out += `<circle cx="${sx}" cy="${sy}" r="${sr * 2.6}" fill="${pen.rad(
+    [
+      [0, '#ffb060', 0.9],
+      [0.4, '#e8501a', 0.55],
+      [1, '#8a1a0e', 0],
+    ],
+    sx,
+    sy,
+    sr * 2.6,
+    true,
+  )}"/>`;
+  out += gn.godRays(pen, sx, sy, [-130, -100, -70, -40, -10, 30, 60, 100, 140, 175, 210, 240], 5, sr * 2.8, '#ffd890', 0.3);
+  out += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="${pen.rad(
+    [
+      [0, '#fffbe8'],
+      [0.45, '#ffe89a'],
+      [0.8, '#ffb050'],
+      [1, '#ff7a2a'],
+    ],
+    sx,
+    sy,
+    sr,
+    true,
+  )}"/>`;
+  // Loops of fire rising off the limb, and granules on the face.
+  const limb = (deg: number, k = 1): gn.P => gn.add([sx, sy], gn.mul(gn.dir(deg), sr * k));
+  const loops: [gn.P[], number][] = [
+    [[limb(-60), limb(-50, 1.25), limb(-36, 1.2), limb(-30)], 22],
+    [[limb(60), limb(72, 1.18), limb(84, 1)], 26],
+    [[limb(160), limb(168, 1.22), limb(180, 1.28), limb(188)], 18],
+    [[limb(-150), limb(-160, 1.15), limb(-168)], 16],
+  ];
+  out += pen.brushes(loops, '#ffd166', [0.3, 0.3], 0.75) + pen.brushes(
+    loops.map(([p, w]) => [p, w * 0.35] as [gn.P[], number]),
+    '#fff6d0',
+    [0.3, 0.3],
+    0.85,
   );
+  const rand = gn.rng(5);
+  const gran: [gn.P[], number][] = [];
+  for (let i = 0; i < 30; i++) {
+    const a = rand() * Math.PI * 2;
+    const d = sr * (0.3 + rand() * 0.6);
+    const p: gn.P = [sx + Math.cos(a) * d, sy + Math.sin(a) * d];
+    gran.push([[p, gn.add(p, [16 + rand() * 26, (rand() - 0.5) * 14])], 7]);
+  }
+  out += pen.brushes(gran, '#ff9a40', [0.4, 0.4], 0.35);
+  return out + gn.bloom(pen, sx, sy, sr * 0.7, '#fffbe8', 0.8);
+}
+
+/** The Bridge's great window: a heavy frame and mullions, black against the star, rimmed with its fire. */
+function bridgeWindow(pen: gn.Pen): string {
+  const frame = pen.relight({ key: [0.3, -1], rim: [0.4, -1], rimColor: '#ffb060', shadow: '#2a1028', depth: 0.9 });
+  const outer = 'M-80 -60H1680V700H-80Z';
+  const hole = 'M70 60Q70 20 110 20H1490Q1530 20 1530 60V620H70Z';
+  let out = `<path d="${outer}${hole}" fill="${frame.dark('#3a2440', 0.9)}" fill-rule="evenodd"/>`;
+  out += `<path d="${hole}" fill="none" stroke="${gn.INK}" stroke-width="14"/><path d="${hole}" fill="none" stroke="#ff9a50" stroke-width="4" transform="translate(0 6)" opacity=".8"/>`;
+  for (const mx of [430, 800, 1170]) out += frame.form(`M${mx - 16} 20H${mx + 16}V640H${mx - 16}Z`, '#3a2440', { sh: 30, hatch: 1, line: 3, rim: 3 });
+  out += frame.form('M70 330H1530V350H70Z', '#3a2440', { sh: 14, line: 3, rim: 2.4 });
+  return out;
+}
+
+/**
+ * The ship's wheel at the helm: a ring with handles on a pedestal console, GaScu's vines wrapped round it,
+ * steering the ship. Centre of the wheel at (x, y).
+ */
+function helm(pen: gn.Pen, x: number, y: number, s: number): string {
+  let spokes = '';
+  const handles: [gn.P[], number][] = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + 0.2;
+    spokes += `M0 0L${gn.r1(Math.cos(a) * 96)} ${gn.r1(Math.sin(a) * 96)}`;
+    handles.push([
+      [
+        [Math.cos(a) * 104, Math.sin(a) * 104],
+        [Math.cos(a) * 140, Math.sin(a) * 140],
+      ],
+      18,
+    ]);
+  }
+  const body =
+    pen.form('M-70 120L-50 40H50L70 120V320H-70Z', '#3a3448', { sh: 40, hatch: 2, line: 3, rim: 2.4, inner: `<path d="M-40 160H40M-40 200H40" stroke="#ff4a3a" stroke-width="6" opacity=".9"/>` }) +
+    pen.brushes(handles, gn.INK, [0.05, 0.05]) +
+    pen.brushes(
+      handles.map(([p, w]) => [p, w * 0.6] as [gn.P[], number]),
+      '#c89040',
+      [0.05, 0.05],
+    ) +
+    `<path d="${spokes}" stroke="${gn.INK}" stroke-width="14"/><path d="${spokes}" stroke="#a87830" stroke-width="7"/>` +
+    pen.form(c1.ringD(0, 0, 110, 110, 22), '#c89040', { sh: 20, hatch: 1, line: 3, rim: 2.4 }) +
+    pen.form(c1.circleD(0, 0, 26), '#e8b84a', { sh: 10, line: 2.6, rim: 1.6 });
+  return gn.at(x, y, s, body);
+}
+
+/** 6. The Bridge: the Heart of GaScu blooms huge before a window full of the burning star, its vines on the wheel; Jason and LUX face it. */
+export function ch1Heart(): string {
+  const pen = gn.Pen.scene('ch1-heart', { key: [0.75, -0.6], keyColor: '#ffb070', rim: [-0.9, -0.3], rimColor: '#ff7ad8', shadow: '#3a1a50', depth: 0.65 });
+  const back = pen.relight({ key: [0.35, -1], keyColor: '#ffd890', rim: [0.3, -1], rimColor: '#ffe0a0', shadow: '#3a1448', depth: 0.85 });
+  const hx = 860;
+  const hy = 330;
+  const sky = starView(pen, 1010, 300, 420);
+  const win = bridgeWindow(pen);
+  // GaScu's great vines: from the Heart out across the window, down to the deck and round the wheel.
+  const vines =
+    c1.vine(
+      back,
+      [
+        [hx - 120, hy - 60],
+        [620, 130],
+        [380, 160],
+        [150, 60],
+        [-60, 90],
+      ],
+      30,
+      { leaves: 3, buds: 4, seed: 1 },
+    ) +
+    c1.vine(
+      back,
+      [
+        [hx + 130, hy - 60],
+        [1250, 120],
+        [1450, 190],
+        [1700, 120],
+      ],
+      30,
+      { leaves: 3, buds: 4, seed: 2 },
+    ) +
+    c1.vine(
+      back,
+      [
+        [hx + 120, hy + 80],
+        [1260, 420],
+        [1420, 380],
+        [1700, 470],
+      ],
+      26,
+      { leaves: 3, buds: 5, seed: 3 },
+    ) +
+    c1.vine(
+      back,
+      [
+        [hx - 60, hy + 140],
+        [820, 560],
+        [700, 600],
+        [640, 700],
+        [560, 760],
+      ],
+      34,
+      { leaves: 3, buds: 4, seed: 4 },
+    ) +
+    c1.vine(
+      back,
+      [
+        [hx + 40, hy + 150],
+        [1010, 560],
+        [1120, 680],
+        [1060, 900],
+      ],
+      34,
+      { leaves: 3, buds: 4, seed: 5 },
+    );
+  const mid =
+    vines +
+    c1.guardPod(back, 1230, 640, 0.9, 12) +
+    c1.guardPod(back, 650, 660, 0.75, -14) +
+    c1.heart(back, hx, hy, 1.0) +
+    // The wheel, vines wound round its rim, turning the ship toward the star.
+    helm(pen, 1330, 560, 0.85) +
+    c1.vine(
+      pen,
+      [
+        [1150, 640],
+        [1250, 540],
+        [1340, 470],
+        [1420, 520],
+        [1400, 620],
+        [1330, 650],
+      ],
+      14,
+      { leaves: 2, buds: 3, curls: 3, seed: 6 },
+    );
+  // The deck: dark floor plates, consoles flashing red warnings, the star's light pooling on it.
+  const consoles =
+    pen.form('M-80 700L120 640H520L560 720V960H-80Z', '#2a1e34', { sh: 30, hatch: 1, line: 3.4, rim: 2.4, inner: `<path d="M140 660H500" stroke="#ff4a3a" stroke-width="8" opacity=".85"/><path d="M160 690H300M330 690H480" stroke="#7fe6ff" stroke-width="5" opacity=".6"/>` }) +
+    pen.glow(320, 660, 200, '#ff4a3a', 0.45, 40);
+  const deck =
+    pen.form('M-80 640H1680V960H-80Z', '#2a1830', {
+      line: 3,
+      paint: pen.lin([
+        [0, '#7a3a3a'],
+        [1, '#1a0e20'],
+      ]),
+      inner: `<path d="M-80 700H1680M-80 790H1680M400 640L100 960M800 640V960M1200 640L1500 960" stroke="${gn.INK}" stroke-width="3" opacity=".45" fill="none"/>` + pen.glow(1000, 660, 700, '#ffb060', 0.5, 70),
+    });
+  // Jason and LUX in the foreground, low against the light: blaster ready, LUX close by his shoulder.
+  const heroes =
+    consoles +
+    gn.castShadow(pen, 330, 896, 190, 18, 0.55) +
+    gn.jason(pen, 330, 900, 1.08, {
+      pose: { turn: 0.42, lean: 4, tilt: -6, armN: [82, 94], armF: [-24, -6], legN: { to: [-0.3, 0.92] }, legF: { to: [0.32, 0.92] }, handN: 'fist', handF: 'fist' },
+      mood: 'surprised',
+      look: [2.6, -3],
+      rim: 2.4,
+    }) +
+    gn.lux(pen, 200, 300, 1.15, 'scared', { look: [8, -4] });
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.4, win) + gn.layer(0.7, deck + mid) + gn.layer(1, heroes) + gn.vignette(pen, 0.55, '#1a0408') + gn.grain(pen, 0.08));
 }
 

@@ -184,6 +184,198 @@ export function yawn(pen: Pen, turn: number): string {
   return pen.form(d, '#5a1820', { line: 2.2, heavy: 1.2, inner: tongue }) + tear;
 }
 
+/* ---------------- the Heart of GaScu ---------------- */
+
+export interface HeartOpts {
+  /** Turned gold and happy (after LUX talks to it). */
+  gold?: boolean;
+  /** How far the petals spread (1 = wide open; default 1). */
+  open?: number;
+  /** Rotates the whole flower (degrees). */
+  rot?: number;
+}
+
+/**
+ * The Heart of GaScu: a huge glowing bulb in a crown of eight dark pointed petals, green sepals under
+ * it, light-veins running through it. Centred on the bulb at (x, y); about 640 across at scale 1.
+ */
+export function heart(pen: Pen, x: number, y: number, s: number, o: HeartOpts = {}): string {
+  const gold = !!o.gold;
+  const tint = gold ? GASCU.gold : GASCU.glow;
+  const light = gold ? '#fff2c4' : GASCU.light;
+  const deep = gold ? GASCU.goldDeep : '#a8287e';
+  const petalC = gold ? '#e89a30' : '#5a1a5e';
+  const vein = gold ? '#fff0a0' : '#ff8ae0';
+  const open = o.open ?? 1;
+  let out = pen.glow(0, 0, 560, tint, 0.5) + pen.glow(0, 0, 300, light, 0.5);
+  // The petals, behind the bulb: long, pointed, curling a little, glowing veins and a bright edge.
+  for (let i = 0; i < 8; i++) {
+    const a = i * 45 + 22.5 + (o.rot ?? 0);
+    const lp = pen.local(false, a);
+    const L = 300 * (0.86 + ((i * 5) % 3) * 0.08) * (0.75 + 0.25 * open);
+    const petal = `M-70 -70Q-128 ${r1(-L * 0.62)} -24 ${r1(-L * 0.92)}Q0 ${r1(-L * 1.04)} 18 ${r1(-L)}Q120 ${r1(-L * 0.66)} 70 -70Z`;
+    const veins = lp.brushes(
+      [
+        [
+          [
+            [0, -90],
+            [-6, -L * 0.5],
+            [6, -L * 0.9],
+          ],
+          5,
+        ],
+        [
+          [
+            [-20, -L * 0.42],
+            [-50, -L * 0.6],
+          ],
+          3,
+        ],
+        [
+          [
+            [12, -L * 0.55],
+            [44, -L * 0.7],
+          ],
+          3,
+        ],
+      ],
+      vein,
+      [0.1, 0.5],
+      0.75,
+    );
+    out += at(0, 0, 1, lp.form(petal, petalC, { sh: 46, hatch: 2, rim: 3, line: 3.2, inner: veins + lp.glow(0, -L * 0.3, L * 0.5, tint, 0.35, L * 0.3) }), false, a);
+  }
+  // Green sepals cupping the bulb from below.
+  for (const a of [-150, 150, 180]) {
+    const lp = pen.local(false, a);
+    out += at(0, 0, 1, lp.form('M-46 -110Q-70 -190 0 -236Q70 -190 46 -110Z', '#3f7a3a', { sh: 22, hatch: 1, rim: 2, line: 3 }), false, a);
+  }
+  // The bulb: glowing from inside, veins of light, a bright core and a glassy highlight.
+  const veins: [P[], number][] = [];
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + 0.3;
+    const p0: P = [Math.cos(a) * 26, Math.sin(a) * 30];
+    const p1: P = [Math.cos(a + 0.25) * 90, Math.sin(a + 0.25) * 104];
+    const p2: P = [Math.cos(a + 0.1) * 140, Math.sin(a + 0.1) * 160];
+    veins.push([[p0, p1, p2], 4]);
+  }
+  const paint = pen.rad([
+    [0, '#ffffff'],
+    [0.3, light],
+    [0.72, tint],
+    [1, deep],
+  ], 0.45, 0.42, 0.62);
+  // A slow spiral of light at the core, and specks of pollen glowing under the skin.
+  const spiral: P[] = [];
+  for (let i = 0; i <= 14; i++) {
+    const t = i / 14;
+    const a = t * Math.PI * 3.2 + 0.6;
+    spiral.push([Math.cos(a) * (8 + t * 96), Math.sin(a) * (8 + t * 106) - 6]);
+  }
+  const rs = rng(31);
+  let specks = '';
+  for (let i = 0; i < 16; i++) {
+    const a = rs() * Math.PI * 2;
+    const d = 40 + rs() * 90;
+    specks += `<circle cx="${r1(Math.cos(a) * d)}" cy="${r1(Math.sin(a) * d * 1.1)}" r="${r1(2.5 + rs() * 3.5)}" fill="#ffffff" opacity="${r1(0.4 + rs() * 0.5)}"/>`;
+  }
+  veins.push([spiral, 6]);
+  out += pen.form(ellipseD(0, 0, 150, 170), tint, {
+    sh: 18,
+    line: 3.6,
+    rim: 2.4,
+    paint,
+    shade: deep,
+    inner:
+      pen.brushes(veins, '#ffffff', [0.2, 0.7], 0.45) +
+      specks +
+      pen.glow(-10, -14, 110, '#ffffff', 0.8) +
+      pen.brush(
+        [
+          [-96, -40],
+          [-70, -110],
+          [-10, -138],
+        ],
+        14,
+        '#ffffff',
+        [0.3, 0.4],
+        0.75,
+      ) +
+      pen.brush(
+        [
+          [-60, 120],
+          [0, 150],
+          [70, 120],
+        ],
+        10,
+        deep,
+        [0.3, 0.3],
+        0.6,
+      ),
+  });
+  return at(x, y, s, out);
+}
+
+/** One of the Heart's guard pods: a glowing seed-pod on a stalk, ringed with thorns. Base of the stalk at (x, y). */
+export function guardPod(pen: Pen, x: number, y: number, s: number, lean = 0, color: string = GASCU.glow): string {
+  const lp = pen.local(false, lean);
+  const thorns: [P[], number][] = [];
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2;
+    const p: P = [Math.cos(a) * 50, -130 + Math.sin(a) * 62];
+    thorns.push([[p, add(p, [Math.cos(a) * 26, Math.sin(a) * 30])], 10]);
+  }
+  const body =
+    lp.brush(
+      [
+        [0, 0],
+        [-10, -40],
+        [0, -80],
+      ],
+      26,
+      INK,
+      [0.02, 0.1],
+    ) +
+    lp.brush(
+      [
+        [0, 0],
+        [-10, -40],
+        [0, -80],
+      ],
+      17,
+      '#3f8a3a',
+      [0.02, 0.1],
+    ) +
+    lp.brushes(thorns, INK, [0.02, 0.9]) +
+    lp.brushes(
+      thorns.map(([p, w]) => [p, w * 0.55] as [P[], number]),
+      '#5a1f3c',
+      [0.02, 0.9],
+    ) +
+    lp.glow(0, -130, 110, color, 0.7) +
+    lp.form(ellipseD(0, -130, 52, 66), '#8a2f75', {
+      sh: 16,
+      line: 3,
+      rim: 2,
+      paint: lp.rad([
+        [0, '#ffffff'],
+        [0.4, '#ffc0ec'],
+        [1, color],
+      ], 0.42, 0.38, 0.6),
+      inner: lp.brush(
+        [
+          [-28, -150],
+          [-14, -176],
+        ],
+        8,
+        '#ffffff',
+        [0.3, 0.3],
+        0.8,
+      ),
+    });
+  return at(x, y, s, body, false, lean);
+}
+
 /* ---------------- LUX ---------------- */
 
 /** LUX with a loose wire dangling from his side pod and sparking (the one Jason fixes when they meet). */
