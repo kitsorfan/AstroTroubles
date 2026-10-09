@@ -102,6 +102,19 @@ On his own levels in Chapter 3 (level 3, Aeëtes's Mine, and later level 8) you 
 
 His signs and hints are in his own voice (there is no droid with him); his wrist computer still hacks terminals. Developer shortcut: `#deck=mine` plays his level, and `&hero=brennus` puts him on any deck.
 
+#### Driving the bronze mech
+
+In Talos's Forge, Jason and Atalanta start on foot, then find the Gardeners' bronze **mech** asleep in the old forge and climb aboard: Jason sits in the glass bubble on top and steers, Atalanta rides on its shoulder, and LUX and IRIS fly alongside. From then on the mech is the only hero (nobody switches or gets out). It is twice Jason's height, a little slower, with one strong jump (four steps up) and no double jump, glider or grapple:
+
+| Control | What it does |
+| --- | --- |
+| **PUNCH** (the SPIN button) | A one-two of big bronze fists just in front of it: they break **bronze gates**, crates and cracked walls, knock robots flat, and knock **Talos's ankle armour** off |
+| **SLAM** (SPIN in mid-air) | Straight down like a ground pound: it presses red switches and smashes **cracked floor plates** (iron plates with glowing cracks), dropping the mech into the cellar or trench below. Any heavy landing from high up does too |
+| **THRUST** (the DASH button) | A burst of its back jets, straight ahead, on the ground or once per jump. Gravity pauses while the jets fire, so **jump, then thrust** to cross a wide lava channel |
+| **CANNON** (the BLAST button) | A heavy shell on a slow rhythm; **hold** for a big blast. No overheating |
+
+Developer shortcut: `#deck=forge&flags=mech` starts in the mech (`&flags=forgelit` wakes the forge, so walking up to the mech plays the boarding scene).
+
 A gold marker on screen points to where the current objective wants you to go, for example the launch tower and King Bloblin's island on the Habitat Ring, or the lift once a deck's boss is beaten.
 
 Jason finds a new ability on each deck, and it's needed to finish that deck:
@@ -167,6 +180,7 @@ On Gaia Nova, General Brennus's Thorn Legion sends its robots too:
 | Roller Mine | Rolls up to you and puffs up over a red circle before it pops. Blast it first and it just fizzles |
 | Shield Bulwark | Its tower shield blocks everything from the front. Get behind it and hit its glowing pink core, or drop the shield with a ground pound or LUX's zap |
 | Mortar Bot | Lobs shells at a red circle on the ground. Step out of the circle, then get close: it can't aim at its own feet |
+| Anvil Drone | One of Aeëtes's gold work drones (Talos's Forge). It hovers high with an iron anvil on a cable and drops it on a red circle; then it swoops down low to hook the anvil back up. Step out of the circle, then punch it while it's low (or blast it any time) |
 
 Enemies get tougher deck by deck: more health, faster attacks, sharper senses. They also scale up a little with every weapon upgrade and new weapon you buy. From the Engine Core on, some are **elites** with a gold crown: bigger, tougher and worth more bolts.
 
@@ -227,6 +241,7 @@ Cutscenes play in the game world with letterbox bars:
 - **The Clashing Rocks.** Jason flies the Argo through the asteroid belt and, following LUX's dove, between the slamming rocks.
 - **The Harpy Isles.** Floating sky-islands over a sea of clouds. A distress beacon leads Jason to **Atalanta**, the colony's fastest runner and best archer, who flew ahead alone in her scout skiff until Aeëtes's harpy drones stripped it for parts. IRIS is her friend from the greenhouse, and from then on flies with her while LUX stays with Jason: the hero you play has their droid in the lead, and the other droid floats beside the other hero. They meet **Phineus**, a blind old stargazer whose dinner the harpies steal every evening, beat the Harpy Queen AELLO, and learn the way to Colchis. Then a message comes in: General Brennus has gone after Aeëtes on his own.
 - **Aeëtes's Mine (level 3, General Brennus alone).** While the Argonauts fight on the Harpy Isles, Brennus flies the Gorgon's old lifeboat to Aeëtes's mining moon, talking to the little pot of Celestia's sprout on his belt: Captain Argus gave him a second chance (whether he was in the brig or in the garden after Chapter 2), and he means to pay his debts. Aeëtes is digging the whole moon into a golden pit with Brennus's own old Legion robots, which he found in the snow and painted gold, and he taunts Brennus on the radio all the way. Brennus blasts through cracked rock, charge-leaps into the mine, marches up a walkway under fire behind his shield, orders a robot onto a heavy plate, rides an ore cart over the pit and turns a whole squad back to his side. The boss is **THE GOLD EXCAVATOR**, his old digging machine "Rumble" with Aeëtes's control box bolted on: block its charges with the shield (or make it crash into a pillar), blast the box, and when it kneels, **COMMAND** it to stand down. In Aeëtes's office he finds the golden map to the Fleece vault on Colchis and sends it to the Argo; next stop, the Sirens' Sea (coming soon).
+- **Talos's Forge (a mech level).** Past Scylla's Reef lies a bronze volcanic island, and walking his rounds on it is **TALOS**, the Gardeners' ancient bronze guardian, reprogrammed by Aeëtes's gold crown to stomp anyone who lands. On foot, Atalanta's power arrow lowers the drawbridge over the lava moat, Jason grapples up to the forge's high door and Atalanta slides under it; a hologram from Dr. Hypatia translates the carvings: the plug in Talos's heel is his off-switch. In the forge sleeps the Gardeners' bronze mech (“strong hands for gentle work”), and everyone climbs aboard. The mech punches the bronze gate open, jumps and thrusts over lava channels under **anvil drones**, slams through the cracked casting floor into a trench under the wall, and slams two red switches to open the arena. **TALOS** stomps (the foot sticks in the floor: punch his ankle armour off), swings his forge hammer, and in later rounds Aeëtes sends anvil drones and Talos throws hot rivets; each time his armour is off he kneels, and the mech pulls the plug a little further. After the third pull the golden light drains away like warm honey and he sits down by the sea, free, his eye teal again, and gives the Argonauts a slow, grateful nod. Behind him the labyrinth gate leads under Colchis, where Aeëtes's security system, MEDUSA, is waiting.
 
 Tap to hurry a caption along, or press **SKIP** (or the Android back button) to skip a scene.
 
@@ -245,7 +260,8 @@ game/                    the 3D game (TypeScript, three.js), bundled with esbuil
   src/entities/heroes/   the hero table and switching rules, Atalanta (model, moves, arrows), the follower,
                          hero props (arrow targets, wall-run walls, low gaps) and the dev practice course,
                          General Brennus (model, moves, cannon) and his Legion props (cracked walls, heavy
-                         plates, command posts, his old robots)
+                         plates, command posts, his old robots), and the Gardeners' bronze mech (model, moves)
+  src/entities/forge/    Talos's Forge: TALOS, the anvil drones, bronze gates and cracked floor plates
   src/cinema/            cutscene director, in-deck cutscenes, the ship exterior and space cinematics
   src/game/              game state machine, world simulation, title scene, story text
   src/levels/            the six decks as ASCII maps plus legends, objectives and dialogue
