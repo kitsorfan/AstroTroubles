@@ -136,6 +136,8 @@ function anvilClass() {
       const b = this.body;
       const p = this.player.body;
       const g = this.world.grid;
+      // It flies far above the hero, so the usual "same height" wake-up check never fires: it watches from up high.
+      if (!this.aggro && !this.world.cutscene && this.distToPlayer() < this.world.difficulty.aggro && p.y > b.y - T.hover - 3) this.wake();
       this.modeT -= dt;
       let tx = this.home.x + Math.cos(this.t * 0.6) * 1.4;
       let tz = this.home.z + Math.sin(this.t * 0.6) * 1.4;
