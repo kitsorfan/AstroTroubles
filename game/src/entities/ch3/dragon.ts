@@ -9,7 +9,8 @@ import { Boss } from '../bossBase';
 import type { HitKind, Target } from '../entity';
 import { Shockwave, Strike } from '../hazards';
 import { DRAGON, makeDragonModel, SEGS } from './dragonModel';
-import { PYLON_KINDS, Pylon } from './pylons';
+import { PYLON_KINDS } from './gardenData';
+import { Pylon } from './pylons';
 
 /**
  * THE SLEEPLESS DRAGON (chapter 3, the Garden of Colchis): a huge serpent of vines and crystal, coiled

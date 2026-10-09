@@ -7,6 +7,7 @@ import type { EnemyModel } from '../aliens';
 import { Enemy } from '../enemies';
 import { Entity } from '../entity';
 import { blobShadow, boxG, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from '../models';
+import { WEEDER_TUNING } from './gardenData';
 
 /**
  * A WEEDER DRONE, Aeëtes's saboteur in the Garden of Colchis (chapter 3): a round gold drone with a
@@ -14,20 +15,8 @@ import { blobShadow, boxG, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, tor
  * snipping flowers until it spots a hero, then hovers a few steps away (it backs off if you get too
  * close) and sprays: its tank glows and hisses (the warning), and a gold circle spreads on the ground
  * where you stand. A moment later the weed-killer splashes down there: step off the circle! It never
- * touches you itself, so a few blasts (or arrows) and it pops.
+ * touches you itself, so a few blasts (or arrows) and it pops. Its timings are in `gardenData.ts`.
  */
-export const WEEDER_TUNING = {
-  hp: 2,
-  /** Height above the floor it floats at, and how far from the hero it likes to stay. */
-  hover: 2.6,
-  keep: 4.5,
-  /** The glowing-tank warning, the rest between sprays, and how long the circle takes to splash. */
-  warn: 0.8,
-  rest: 2.6,
-  splash: 1.15,
-  radius: 1.5,
-};
-
 const GOLD = '#f2c14e';
 const SPRAY = '#d8e84a';
 

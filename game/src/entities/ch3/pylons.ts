@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { audio } from '../../core/audio';
 import { haptic } from '../../core/bridge';
 import type { World } from '../../game/world';
-import type { HeroId } from '../../world/levelTypes';
+import { PYLONS, type PylonKind } from './gardenData';
 import { Entity, type HitKind, type Target } from '../entity';
 import { HEROES } from '../heroes/heroes';
 import { cyl, glowSprite, mat, mesh, ownMat, torus } from '../models';
@@ -17,16 +17,6 @@ import { cyl, glowSprite, mat, mesh, ownMat, torus } from '../models';
  * - FRIEND: on top of a crystal column; only Jason's grapple gets there. Touch it.
  * They only wake up once the fight has begun; the dragon resets them if the heroes are knocked out.
  */
-export type PylonKind = 'sky' | 'grow' | 'home' | 'friend';
-
-export const PYLON_KINDS: PylonKind[] = ['sky', 'grow', 'home', 'friend'];
-
-export const PYLONS: Record<PylonKind, { word: string; color: string; hero: HeroId; how: 'arrow' | 'pound' | 'touch'; text: string }> = {
-  sky: { word: 'SKY', color: '#5ec8ff', hero: 'atalanta', how: 'arrow', text: 'The SKY pylon only wakes up for a POWER ARROW. Switch to Atalanta and HOLD the BOW button!' },
-  grow: { word: 'GROW', color: '#ff6fcf', hero: 'jason', how: 'pound', text: 'The GROW pylon wants a GROUND POUND on its stone. Switch to Jason: jump, then pound!' },
-  home: { word: 'HOME', color: '#7dff9a', hero: 'atalanta', how: 'touch', text: '' },
-  friend: { word: 'FRIEND', color: '#ffe066', hero: 'jason', how: 'touch', text: '' },
-};
 
 export class Pylon extends Entity implements Target {
   readonly aim: THREE.Vector3;
