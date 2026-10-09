@@ -19,6 +19,7 @@ import { RogueLux } from './gaia/rogue';
 import { Excavator } from './ch3/excavator';
 import { Talos } from './forge/talos';
 import { GoldenRam } from './stand/goldenRam';
+import { GoldenKing } from './ch3/goldenKing';
 import { Stheno } from './gaia/stheno';
 import { Thresher } from './gaia/thresher';
 import { Shockwave, Strike } from './hazards';
@@ -1593,6 +1594,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new GoldenRam(world, id, cx, cz, h);
     case 'dragon':
       return new Dragon(world, id, cx, cz, h);
+    case 'goldenking':
+      return new GoldenKing(world, id, cx, cz, h);
   }
 }
 

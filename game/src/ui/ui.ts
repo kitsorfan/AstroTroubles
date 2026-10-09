@@ -1475,8 +1475,8 @@ export class UI {
    * Nova after chapter 1, the Argonauts' voyage after chapter 2.
    */
   ending(kind: EndingKind, paragraphs: string[], stats: [string, string][], done: () => void, next?: () => void, chapter = 1) {
-    const secret = kind === 'friends' || kind === 'redeemed';
-    const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' ? 'var(--gold)' : 'var(--good)';
+    const secret = kind === 'friends' || kind === 'redeemed' || kind === 'gardeners';
+    const color = kind === 'friends' ? 'var(--pink)' : kind === 'redeemed' || kind === 'fleece' ? 'var(--gold)' : kind === 'gardeners' ? '#7dff9a' : 'var(--good)';
     const title =
       kind === 'friends'
         ? tr('THE GARDEN BETWEEN STARS')
@@ -1484,8 +1484,13 @@ export class UI {
           ? tr('A GARDEN FOR EVERYONE')
           : kind === 'freed'
             ? tr('GAIA NOVA IS FREE!')
-            : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
-    const kicker = secret ? tr('SECRET ENDING') : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
+            : kind === 'fleece'
+              ? tr('THE GOLDEN FLEECE COMES HOME')
+              : kind === 'gardeners'
+                ? tr('NOT THE LAST OF HER KIND')
+                : tr('THE {ship} IS SAVED!', { ship: upper(tr(SHIP)) });
+    // The game's final endings (chapter 3) always say THE END, the secret one too.
+    const kicker = secret ? (chapter === 3 ? `${tr('SECRET ENDING')} · ${tr('THE END')}` : tr('SECRET ENDING')) : next ? tr('END OF CHAPTER {n}', { n: chapter }) : tr('THE END');
     const nextLabel = chapter === 1 ? tr('Chapter 2: Gaia Nova') : tr('Chapter 3: The Argonauts');
     const el = this.open(`<div class="panel" style="width:min(820px,94vw);text-align:center">
       <div class="deck" style="letter-spacing:.3em;color:var(--dim);font-family:Orbitron,sans-serif">${kicker}</div>

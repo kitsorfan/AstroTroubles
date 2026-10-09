@@ -16,8 +16,8 @@ import type { Chapter } from '../levels';
 export type FindKind = 'shard' | 'page' | 'stone';
 export type RescueKind = 'colonist' | 'scientist' | 'supplies';
 
-/** Chapter 3 plans seven levels on foot (the others are flown or driven), with three light-stones each. */
-export const LIGHT_STONES = 21;
+/** Chapter 3 has eight levels with a map to walk (the Clashing Rocks and the Sirens' Sea are flown or dived), with three light-stones each. */
+export const LIGHT_STONES = 24;
 
 export const findKind = (ch: Chapter): FindKind => (ch === 1 ? 'shard' : ch === 2 ? 'page' : 'stone');
 export const rescueKind = (ch: Chapter): RescueKind => (ch === 1 ? 'colonist' : ch === 2 ? 'scientist' : 'supplies');

@@ -77,8 +77,10 @@ export async function heroJoins(d: Director, w: World, hero: HeroId) {
       );
     }
     w.setFlag(flag);
-    pl.heroJoined(s);
+    pl.heroJoined(s, hero);
     w.refreshCompanions();
+    // General Brennus brings his own squad of Legion robots along.
+    if (hero === 'brennus') w.squadArrives();
     const color = HEROES[hero].color;
     w.rings.burst(s.x, s.y + 0.05, s.z, 4, color, 0.5);
     w.particles.emit(s.x, s.y + 1, s.z, { count: 30, color, speed: 5, life: 0.7, size: 0.5, up: 2 });
@@ -90,8 +92,9 @@ export async function heroJoins(d: Director, w: World, hero: HeroId) {
     // In case the scene was skipped before the join.
     if (!w.hasFlag(flag)) {
       w.setFlag(flag);
-      pl.heroJoined(s);
+      pl.heroJoined(s, hero);
       w.refreshCompanions();
+      if (hero === 'brennus') w.squadArrives();
     }
     w.hooks.checkpoint();
   }

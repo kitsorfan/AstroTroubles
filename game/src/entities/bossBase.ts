@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { audio } from '../core/audio';
+import { audio, type Track } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL } from '../core/constants';
 import type { World } from '../game/world';
@@ -107,6 +107,12 @@ export abstract class Boss extends Entity {
 
   /** Where the fight changes phase, as shares of health (notches on the boss bar), highest first. */
   phaseMarks: number[] = [];
+
+  /** The music the fight plays to (the game's very last boss has its own). */
+  readonly music: Track = 'boss';
+
+  /** How far (0..1) the fight's camera leans from the hero toward the boss (0: it just follows the hero). */
+  readonly camPull: number = 0;
 
   /** Frost Ray: bosses shrug most of the cold off. A chill only slows them a little, and never freezes them. */
   private chillT = 0;

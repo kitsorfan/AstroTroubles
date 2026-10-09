@@ -44,14 +44,14 @@ export class Player {
   private readonly cast: HeroId[];
   /** Atalanta's moves and model (built only on levels where she can play). */
   readonly ata: AtalantaMoves | null;
-  /** General Brennus's moves, model and cannon (built only on his own levels). */
+  /** General Brennus's moves, model and cannon (built only on levels where he can play). */
   readonly bren: BrennusMoves | null;
   /** The bronze mech's moves, model and cannon (built only in Talos's Forge). */
   readonly mech: MechMoves | null;
   /** Her arrows in flight (they keep flying after a switch). */
   readonly arrows: Arrows | null;
-  /** The hero not in control, walking along behind. */
-  private follower: Follower | null = null;
+  /** The heroes not in control, walking along behind (one, or two on the Golden Fleece), in switch order. */
+  private followers: Follower[] = [];
   /** Seconds before the next switch is allowed. */
   swapCd = 0;
   facing: number;
@@ -157,7 +157,8 @@ export class Player {
     const withAtalanta = this.cast.includes('atalanta');
     this.ata = withAtalanta ? new AtalantaMoves(this, world) : null;
     this.arrows = withAtalanta ? new Arrows(world) : null;
-    this.bren = this.roster.includes('brennus') ? new BrennusMoves(this, world) : null;
+    // Built for every hero on the level, even one who only joins later (Brennus on the Golden Fleece).
+    this.bren = this.cast.includes('brennus') ? new BrennusMoves(this, world) : null;
     this.mech = this.cast.includes('mech') ? new MechMoves(this, world) : null;
     this.body.h = HEROES[this.hero].height;
     if (this.hero === 'mech' && this.mech) this.body.r = this.mech.radius;
@@ -193,16 +194,22 @@ export class Player {
     });
   }
 
-  /** Where the hero who isn't playing stands right now (null on single-hero levels). */
+  /**
+   * Where the hero who isn't playing stands right now (null on single-hero levels): the one whose droid
+   * tags along (Jason's LUX while Atalanta plays, otherwise Atalanta's IRIS), else the first follower.
+   */
   get partner(): { x: number; y: number; z: number; facing: number } | null {
-    return this.nextHero && this.follower ? this.follower.spot : null;
+    if (!this.nextHero) return null;
+    const owner: HeroId = this.hero === 'atalanta' ? 'jason' : 'atalanta';
+    const f = this.followers.find((x) => x.hero === owner) ?? this.followers[0];
+    return f ? f.spot : null;
   }
 
   /**
    * A hero joins (their join flag was just set): they appear beside the playing hero, ready to follow,
    * or at the given spot. The HUD then shows the switch button.
    */
-  heroJoined(at?: THREE.Vector3) {
+  heroJoined(at?: THREE.Vector3, hero?: HeroId) {
     const ride = this.roster.length === 1 && HEROES[this.roster[0]].vehicle ? this.roster[0] : null;
     if (ride && ride !== this.hero) {
       this.board(ride);
@@ -210,8 +217,9 @@ export class Player {
     }
     this.showHero();
     const b = this.body;
-    if (at) this.follower?.place(at.x, at.y, at.z, this.facing);
-    else this.follower?.placeNear(b.x, b.y, b.z, this.facing);
+    const f = (hero && this.followers.find((x) => x.hero === hero)) || this.followers[0];
+    if (at) f?.place(at.x, at.y, at.z, this.facing);
+    else f?.placeNear(b.x, b.y, b.z, this.facing);
     this.world.hooks.hud();
   }
 
@@ -268,26 +276,47 @@ export class Player {
     this.world.hooks.hud();
   }
 
-  /** Shows the playing hero, and hands the other one (if any) to the follower. */
+  /**
+   * Shows the playing hero, and hands the others (if any) to the followers, in switch order. Heroes who
+   * haven't joined yet are left alone (they wait at their marker, see `showWaiting`).
+   */
   private showHero() {
     // Jason's model is always built; on a level without him (General Brennus's own) it stays hidden.
     if (!this.cast.includes('jason')) this.jason.root.visible = false;
     // Heroes who haven't joined yet (or who ride inside the mech) are left where `showWaiting` put them.
-    const now = this.roster;
-    for (const id of this.cast) if (now.includes(id) || id === this.hero) this.modelOf(id).root.visible = id === this.hero;
-    const other = nextHero(now, this.hero);
-    if (!other) {
-      this.follower = null;
+    const roster = this.roster;
+    for (const id of this.cast) if (roster.includes(id) || id === this.hero) this.modelOf(id).root.visible = id === this.hero;
+    const others: HeroId[] = [];
+    for (let id = nextHero(roster, this.hero); id && id !== this.hero && !others.includes(id); id = nextHero(roster, id)) others.push(id);
+    // Nobody left on foot (everyone climbed into the mech): nobody follows.
+    if (!others.length) {
+      this.followers = [];
       return;
     }
-    const m = this.modelOf(other);
-    m.root.visible = true;
-    if (this.follower) this.follower.swap(m, other);
-    else {
-      this.follower = new Follower(this.world, m, other);
-      const b = this.body;
-      this.follower.placeNear(b.x, b.y, b.z, this.facing);
-    }
+    // Each follower keeps its own hero; the one who was following the new hero takes the hero who was playing.
+    const free = this.followers.filter((f) => !others.includes(f.hero));
+    others.forEach((other, i) => {
+      const m = this.modelOf(other);
+      m.root.visible = true;
+      let f = this.followers.find((x) => x.hero === other);
+      if (!f) {
+        f = free.shift();
+        if (f) f.swap(m, other);
+        else {
+          f = new Follower(this.world, m, other);
+          this.followers.push(f);
+          const b = this.body;
+          f.slot = i;
+          f.placeNear(b.x, b.y, b.z, this.facing);
+        }
+      }
+      f.slot = i;
+    });
+  }
+
+  /** The follower walking as this hero, if any. */
+  private followerOf(hero: HeroId): Follower | undefined {
+    return this.followers.find((f) => f.hero === hero);
   }
 
   /** Why switching heroes isn't possible right now (null: it is). */
@@ -338,7 +367,8 @@ export class Player {
     this.swapCd = HERO_SWITCH.cooldown;
     b.h = HEROES[next].height;
     this.showHero();
-    this.follower?.placeNear(b.x, b.y, b.z, this.facing);
+    // The hero who was playing steps aside; anyone else following stays where they are.
+    this.followerOf(was)?.placeNear(b.x, b.y, b.z, this.facing);
     this.refreshGear();
     const color = HEROES[next].color;
     w.particles.emit(b.x, b.y + 1, b.z, { count: 40, color: '#ffffff', speed: 6, life: 0.55, size: 0.55, up: 1.5 });
@@ -864,7 +894,7 @@ export class Player {
     this.ata?.reset();
     this.bren?.reset();
     this.mech?.reset();
-    this.follower?.placeNear(x, y, z, this.facing);
+    for (const f of this.followers) f.placeNear(x, y, z, this.facing);
   }
 
   /** Throws Jason upward (bounce pads, steam vents); the double jump is available again afterwards. */
@@ -924,7 +954,7 @@ export class Player {
     this.swapCd -= dt;
     this.updateArmor(dt);
     this.arrows?.update(dt);
-    this.follower?.update(dt, this);
+    for (const f of this.followers) f.update(dt, this);
     this.tickStone(dt);
     this.mirrorFlash = Math.max(0, this.mirrorFlash - dt * 3);
     if (this.down || w.cutscene) {

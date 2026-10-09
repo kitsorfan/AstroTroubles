@@ -57,6 +57,12 @@ export const PANEL_IDS = [
   // The Garden of Colchis: arriving in the Gardeners' garden, and the dragon sung to sleep.
   'ch3-garden',
   'ch3-dragon',
+  // The Golden Fleece: Brennus and his squad join the Argonauts, Aeëtes in the Fleece armour, and the
+  // game's final endings (the Fleece over Celestia; the secret one: a valley of little Celestias).
+  'ch3-squad',
+  'ch3-goldenking',
+  'ch3-home',
+  'ch3-gardeners',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

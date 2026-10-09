@@ -7,7 +7,7 @@ import { tr } from '../core/i18n';
 import type { Boss } from '../entities/bosses';
 import type { BoltFind, Exit, Holo } from '../entities/props';
 import type { World } from '../game/world';
-import { BOSS_CARD, FLYOVER } from '../game/story';
+import { BOSS_CARD, FLYOVER, lightStones } from '../game/story';
 import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
@@ -254,6 +254,15 @@ function bossLines(w: World, b: Boss): Line[] {
       n >= 18
         ? { who: 'bolt', text: 'Jason, you read every page of his journal. You know who he really is. Get close and TALK to him!' }
         : { who: 'bolt', text: tr('If only we had all 18 journal pages... (we have {n}) then maybe we could reach the man inside that machine.', { n }) },
+    );
+  }
+  if (b.kind === 'goldenking') {
+    // The game's last fight: with every Gardener light-stone, LUX and IRIS could speak to the Fleece itself.
+    const { n, total } = lightStones(w.save);
+    lines.push(
+      n >= total
+        ? { who: 'iris', text: 'LUX, we know every Gardener word now. When this is over, we can speak to the Fleece itself!' }
+        : { who: 'bolt', text: tr('If only we had every Gardener light-stone... (we have {n} of {total}) then IRIS and I could talk to the Fleece in its own words.', { n, total }) },
     );
   }
   return lines;

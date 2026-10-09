@@ -8,7 +8,7 @@ import type { DiveCourse } from '../vehicles/sub/dive';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge' | 'labyrinth' | 'stand' | 'garden';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge' | 'labyrinth' | 'stand' | 'garden' | 'fleece';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea). (The mech suit of
@@ -29,11 +29,12 @@ export type HeroId = 'jason' | 'atalanta' | 'brennus' | 'mech';
  * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
  * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts, the anvil
  * drone drops heavy anvils from above (Talos's Forge), the coil is one of MEDUSA's cable snakes
- * in her labyrinth, and the weeder is his saboteur drone in the Garden of Colchis (it sprays gold
- * weed-killer).
+ * in her labyrinth, the weeder is his saboteur drone in the Garden of Colchis (it sprays gold
+ * weed-killer), and the ring guard is one of his gold butler robots that throws its ring like a
+ * boomerang (the Golden Fleece).
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil' | 'coil' | 'ramling' | 'weeder';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos' | 'medusa' | 'ram' | 'dragon';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil' | 'coil' | 'ramling' | 'weeder' | 'ringguard';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos' | 'medusa' | 'ram' | 'dragon' | 'goldenking';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -233,10 +234,12 @@ export type DecorKind =
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
- * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`). Chapter 3's
- * endings (the true final ones) come with its last level.
+ * Brennus is beaten (`freed`) or talked down with every journal page (`redeemed`). Chapter 3, the
+ * game's final endings: the Golden Fleece is carried home and Celestia blooms again (`fleece`), or,
+ * with every Gardener light-stone, LUX and IRIS speak the Gardeners' language and the Fleece's seeds
+ * wake, so Celestia is no longer the last of her kind (`gardeners`).
  */
-export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed';
+export type EndingKind = 'saved' | 'friends' | 'freed' | 'redeemed' | 'fleece' | 'gardeners';
 
 /** Low props Jason walks straight through (they never block a cell). */
 export const PASSABLE_DECOR: readonly DecorKind[] = ['grass', 'fern', 'bones', 'flowers', 'crops', 'kelp'];
