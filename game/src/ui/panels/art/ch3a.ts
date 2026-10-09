@@ -154,34 +154,198 @@ export function ch3Fading(): string {
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, ground + planter + fallen + plant + stone) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#141028') + gn.grain(pen, 0.08));
 }
 
-/** 21. Captain Argus rebuilds the shuttle into the Argo, at sunset; Jason cheers, LUX welds. */
+/* ---------------- 21. The Argo built, in the graphic-novel style ---------------- */
+
+/** A steel beam of the building dock from a to b, `w` wide: shaded along its length, with rivets. */
+function beam(pen: gn.Pen, a: gn.P, b: gn.P, w: number, color = '#5a5a72'): string {
+  const d = gn.unit(gn.sub(b, a));
+  const n = gn.mul(gn.perp(d), w / 2);
+  const l = gn.len(gn.sub(b, a));
+  let rivets = '';
+  for (let t = 40; t < l - 20; t += 70) {
+    const p = gn.add(a, gn.mul(d, t));
+    rivets += `M${gn.r1(p[0])} ${gn.r1(p[1])}h0`;
+  }
+  return pen.form(gn.dPoly([gn.add(a, n), gn.add(b, n), gn.sub(b, n), gn.sub(a, n)]), color, { sh: w * 0.45, hatch: 1, line: 2.4, rim: 1.6, axis: d, inner: `<path d="${rivets}" stroke="${gn.INK}" stroke-width="5" stroke-linecap="round" opacity=".6"/>` });
+}
+
+/** A work lamp on a pole: a hooded lamp with a warm cone of light pointing along `deg` (as `gn.dir` measures it). */
+function lamp(pen: gn.Pen, x: number, y: number, deg: number): string {
+  const d = gn.dir(deg);
+  const end = gn.add([x, y], gn.mul(d, 420));
+  const n = gn.perp(d);
+  const cone = `<path d="${gn.dPoly([gn.add([x, y], gn.mul(n, 12)), gn.add(end, gn.mul(n, 160)), gn.add(end, gn.mul(n, -160)), gn.add([x, y], gn.mul(n, -12))])}" fill="${pen.lin(
+    [
+      [0, '#fff2c8', 0.4],
+      [1, '#fff2c8', 0],
+    ],
+    gn.r1(x),
+    gn.r1(y),
+    gn.r1(end[0]),
+    gn.r1(end[1]),
+    true,
+  )}"/>`;
+  return cone + pen.glow(x, y, 50, '#fff2c8', 0.9) + gn.at(x, y, 1, pen.local(false, deg - 90).form('M-16 -14L18 -10L18 10L-16 14Z', '#3a3a4a', { sh: 6, line: 2.2 }), false, deg - 90) + `<circle cx="${x}" cy="${y}" r="7" fill="#fffbe8"/>`;
+}
+
+/** A red toolbox with its lid open, base at (x, y). */
+function toolbox(pen: gn.Pen, x: number, y: number, s: number): string {
+  const body =
+    pen.form('M-70 -20L-60 -70L60 -70L70 -20Z', '#a02a20', { sh: 10, line: 2.6, rim: 1.6 }) +
+    pen.form('M-80 0V-56H80V0Z', '#d0402a', { sh: 30, hatch: 1, line: 3, rim: 2, inner: `<path d="M-80 -36H80" stroke="${gn.INK}" stroke-width="2.6" opacity=".6"/><rect x="-14" y="-46" width="28" height="12" fill="#e8c060" stroke="${gn.INK}" stroke-width="2"/>` }) +
+    pen.brushes(
+      [
+        [
+          [
+            [-30, -72],
+            [-34, -100],
+          ],
+          9,
+        ],
+        [
+          [
+            [20, -72],
+            [36, -96],
+          ],
+          9,
+        ],
+      ],
+      gn.INK,
+      [0.05, 0.05],
+    ) +
+    pen.brush([[-30, -72], [-34, -100]], 4, '#c8ccd8', [0.05, 0.05]) +
+    pen.brush([[20, -72], [36, -96]], 4, '#e8b84a', [0.05, 0.05]);
+  return gn.at(x, y, s, body);
+}
+
+/** 21. Sunset in the Whispering Plains: the Argo stands finished in its building dock; Captain Argus shows her off, Jason cheers, LUX welds the last oar of light. */
 export function ch3Argo(): string {
-  const id = 'ch3-argo';
-  const poles = [380, 640, 1000, 1260].map((x) => `<rect x="${x}" y="200" width="16" height="560" fill="#8a5a34" ${ink(4)}/>`).join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#5a6ad0'], [0.45, '#ff9a7a'], [0.75, '#ffd8a0'], [1, '#ffe8c0']]) +
-      stars(8, 30, 0, 0, 1600, 200, '#fff6e0') +
-      gasGiant(id + 'j', 1360, 250, 150) +
-      ridge(3, 560, 60, '#c87a6a', 5) +
-      ridge(7, 640, 40, '#8a7a5a', 4) +
-      `<path d="M0 700Q800 670 1600 700V900H0Z" fill="#6a9a48"/>` +
-      // Scaffolding behind the ship.
-      poles +
-      `<path d="M380 300H1276M380 560H1276" stroke="#8a5a34" stroke-width="14"/><path d="M396 300L640 560M1000 300L1260 560" stroke="#8a5a34" stroke-width="8"/>` +
-      argoShip(id + 'a', 830, 500, 0.95, 0, false) +
-      // LUX welding a solar oar, sparks flying.
-      at(1105, 655, 1, `<path d="M-6 -40L4 -4" ${ink(10)}/><path d="M-6 -40L4 -4" stroke="#9aa6ba" stroke-width="5"/>`) +
-      lux(1095, 600, 0.75, 'happy') +
-      sparkle(1112, 660, 22, '#fff6b0') +
-      sparkle(1130, 640, 10, '#ffd166') +
-      sparkle(1094, 676, 8, '#ffffff') +
-      // A toolbox and a crate.
-      `<rect x="120" y="820" width="140" height="70" rx="10" fill="#d0402a" ${ink(5)}/><path d="M150 820V800H230V820" fill="none" ${ink(6)}/>` +
-      `<rect x="1440" y="790" width="120" height="100" rx="6" fill="#b8844a" ${ink(5)}/><path d="M1440 840H1560" ${ink(4)}/>` +
-      captain(330, 905, 1.05, { pose: 'point', face: 'happy' }) +
-      jason(1280, 905, 1.0, { pose: 'cheer', face: 'grin', flip: true }) +
-      vignette(id + 'v', 0.3, '#2a1030'),
-  );
+  const pen = gn.Pen.scene('ch3-argo', { key: [-0.8, -0.5], keyColor: '#ffc890', rim: [0.9, -0.3], rimColor: '#9ff0ff', shadow: '#5a4a9a', depth: 0.55 });
+  const sunX = 200;
+  const sunY = 500;
+  const sky =
+    gn.sky(pen, [
+      [0, '#1e1e52'],
+      [0.32, '#6a4a98'],
+      [0.56, '#f08a7a'],
+      [0.7, '#ffd0a0'],
+    ]) +
+    gn.starfield(pen, 8, 50, 0, 0, 1600, 260, '#fff0e8') +
+    gn.gasGiant(pen, 1340, 190, 130, { lightDir: [-0.95, 0.3], haze: 0.3, sky: '#8a5a9a' }) +
+    gn.godRays(pen, sunX, sunY, [110, 130, 150, 170, 195, 215], 6, 1400, '#ffe0b8', 0.25) +
+    gn.bloom(pen, sunX, sunY, 120, '#fff0d0', 0.95) +
+    gn.cloud(pen, 640, 240, 320, '#ffd8c0', '#8a5a9a', { seed: 6, flat: true }) +
+    gn.cloud(pen, 1000, 150, 220, '#ffd8c0', '#8a5a9a', { seed: 7, flat: true });
+  const far =
+    gn.silhouette(
+      [
+        [-80, 610],
+        [80, 560],
+        [180, 566],
+        [240, 520],
+        [380, 524],
+        [430, 580],
+        [700, 590],
+        [900, 540],
+        [1000, 536],
+        [1060, 580],
+        [1400, 560],
+        [1520, 510],
+        [1680, 520],
+        [1680, 680],
+        [-80, 680],
+      ],
+      '#a07890',
+    ) +
+    gn.haze(pen, 520, 660, '#ffd0b0', 0.7) +
+    gn.silhouette(
+      [
+        [-80, 650],
+        [400, 630],
+        [900, 650],
+        [1300, 630],
+        [1680, 645],
+        [1680, 720],
+        [-80, 720],
+      ],
+      '#6a6a6a',
+      0.6,
+    );
+  // The dock: a packed-earth pad with landing marks, steel gantries behind the ship, lamps and a crane.
+  const ground =
+    pen.form('M-80 660Q800 640 1680 660V960H-80Z', '#8a7a68', {
+      sh: 20,
+      line: 0,
+      paint: pen.lin([
+        [0, '#c8a888'],
+        [0.5, '#7a6a68'],
+        [1, '#3a3040'],
+      ]),
+      inner: `<path d="M200 760Q800 720 1400 760M380 840Q800 800 1220 840" fill="none" stroke="#ffd166" stroke-width="10" stroke-dasharray="40 30" opacity=".55"/>`,
+    }) +
+    gn.grass(pen, -60, 1660, 668, 24, 30, '#5a6a3a', '#d8c888', 4) +
+    gn.wash(pen, 780, '#120c20', 0.6);
+  const frame =
+    beam(pen, [470, 700], [470, 40], 30) +
+    beam(pen, [1250, 700], [1250, 40], 30) +
+    beam(pen, [420, 80], [1300, 80], 24) +
+    beam(pen, [470, 420], [600, 80], 16) +
+    beam(pen, [1250, 420], [1120, 80], 16) +
+    lamp(pen, 490, 120, 50) +
+    lamp(pen, 1230, 120, -50);
+  // The Argo, finished, standing in her cradle; three oars already glow, LUX is welding the fourth.
+  // She faces left, her ram's head toward the Captain.
+  const ax = 940;
+  const ay = 470;
+  const as = 1.1;
+  const at = (lx: number, ly: number): gn.P => [ax - lx * as, ay + ly * as];
+  const oar = (i: number) => {
+    const ox = -170 + i * 86;
+    const b = at(ox - 70, 170);
+    const tip = at(ox - 116, 262);
+    const m = gn.lerp(b, tip, 0.5);
+    return pen.glow(m[0], m[1], 56, '#8ff0ff', 0.6, 32) + pen.brush([b, m, tip], 22 * as, '#8ff0ff', [0.1, 0.8], 0.85) + pen.brush([b, m, tip], 8 * as, '#ffffff', [0.1, 0.8], 0.9);
+  };
+  const cradle = beam(pen, [600, 700], [680, 540], 26, '#7a6a5a') + beam(pen, [760, 700], [680, 540], 26, '#7a6a5a') + beam(pen, [1040, 700], [1120, 540], 26, '#7a6a5a') + beam(pen, [1200, 700], [1120, 540], 26, '#7a6a5a');
+  const ship = gn.argo(pen, ax, ay, as, { lit: false, flip: true }) + oar(0) + oar(2) + oar(3) + oar(4) + pen.brush([at(-84, 30), at(-119, 100), at(-154, 170)], 14 * as, gn.INK, [0.05, 0.05]) + pen.brush([at(-84, 30), at(-119, 100), at(-154, 170)], 7 * as, '#f0b840', [0.05, 0.05]);
+  // LUX, hovering under the hull, welds the last oar to its socket: a hot white spark and a spray of sparks.
+  const weld = at(-90, 44);
+  const luxAt = gn.add(weld, [78, 62]);
+  const sprayD: [gn.P[], number][] = [];
+  const rand = gn.rng(5);
+  for (let i = 0; i < 12; i++) {
+    const a = -40 + rand() * 120;
+    const l = 30 + rand() * 80;
+    const p = gn.add(weld, gn.mul(gn.dir(a), 10));
+    sprayD.push([[p, gn.add(p, gn.mul(gn.dir(a), l))], 3]);
+  }
+  const torch: gn.P = gn.add(luxAt, [-30, -20]);
+  const welding =
+    gn.lux(pen, luxAt[0], luxAt[1], 0.8, 'happy', { flip: true }) +
+    pen.brush([torch, weld], 9, gn.INK, [0.05, 0.05]) +
+    pen.brush([torch, weld], 4.5, '#9aa6ba', [0.05, 0.05]) +
+    pen.brushes(sprayD, '#ffe08a', [0.05, 0.9]) +
+    pen.glow(weld[0], weld[1], 90, '#bff4ff', 0.9) +
+    gn.spark(pen, weld[0], weld[1], 30, '#ffffff');
+  const heroes =
+    gn.castShadow(pen, 220, 924, 170, 16, 0.5) +
+    gn.argus(pen, 220, 930, 1.12, { pose: { turn: 0.42, lean: 3, hipTilt: 6, armN: { to: [-0.6, 1.4], bend: 1 }, armF: [124, 128], legN: { to: [-0.1, 0.98] }, legF: { to: [0.26, 0.95] }, handN: 'fist', handF: 'point' }, mood: 'proud', look: [2.4, -2] }) +
+    toolbox(pen, 560, 870, 0.9) +
+    gn.castShadow(pen, 1420, 924, 150, 14, 0.5) +
+    gn.jason(pen, 1420, 930, 1.12, { pose: 'cheer', mood: 'grin', flip: true, look: [2, -2] });
+  const fore = gn.crag(
+    pen,
+    [
+      [1500, 960],
+      [1520, 880],
+      [1600, 860],
+      [1690, 880],
+      [1690, 960],
+    ],
+    '#5a4a50',
+    { seed: 4, sh: 30, cracks: 3, rim: 2.4 },
+  ) + gn.grass(pen, -70, 220, 950, 4, 120, '#1a1a20', '#6a6a4a', 11);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.7, ground + frame + cradle + ship + welding) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#120a20') + gn.grain(pen, 0.08));
 }
 
 /** 22. Aeëtes on the bridge of his golden flagship, arms wide, grinning at a hologram of the Fleece. */
