@@ -8,7 +8,7 @@ import type { DiveCourse } from '../vehicles/sub/dive';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge' | 'labyrinth';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'reef' | 'sirens' | 'forge' | 'labyrinth' | 'stand';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * The Argo flies (The Clashing Rocks) and the submarine dives (the Sirens' Sea). (The mech suit of
@@ -31,8 +31,8 @@ export type HeroId = 'jason' | 'atalanta' | 'brennus' | 'mech';
  * drone drops heavy anvils from above (Talos's Forge), and the coil is one of MEDUSA's cable snakes
  * in her labyrinth.
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil' | 'coil';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos' | 'medusa';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'crab' | 'jelly' | 'anvil' | 'coil' | 'ramling';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'scylla' | 'organ' | 'talos' | 'medusa' | 'ram';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -129,7 +129,21 @@ export type Spec = Base &
      * gap (`carry`: a hauler platform with `needs: { flag }`), or switch sides and fight for him
      * (`fight`: the gold robots of `room`).
      */
-    | { type: 'post'; flag: string; order: 'plate' | 'carry' | 'fight'; room?: string }
+    | { type: 'post'; flag: string; order: 'plate' | 'carry' | 'fight' | 'guns'; room?: string }
+    /**
+     * Brennus's Last Stand: an old Legion dock gun, asleep until a command post (`order: 'guns'`) sets
+     * `flag`; then it fights for Brennus, shooting at Aeëtes's machines in range.
+     */
+    | { type: 'dockgun'; flag: string }
+    /**
+     * Brennus's Last Stand: a line to hold (the cell is its middle). Once `start` is true and Brennus
+     * is within `w` x `d` cells of it, Aeëtes's dropships bring the `drops` one by one while the Argo
+     * flies in, from `argo[0]` to `argo[1]` of its way (faster while the bridge is clear of enemies).
+     * When the Argo gets there, the rest flee and `flag` is set. The dropped robots belong to `room`.
+     */
+    /** Brennus's Last Stand: the Gardeners' great stone arch (the Sky Gate), `span` units between its pillars. */
+    | { type: 'arch'; span?: number }
+    | { type: 'hold'; start: Cond; flag: string; argo: [number, number]; time: number; w: number; d: number; room: string; drops: { enemy: EnemyKind; n: number; variant?: string }[] }
     /** One of Brennus's old Legion robots, painted gold by Aeëtes and standing idle: on the post's `flag` it marches to the nearest heavy plate. */
     | { type: 'legionbot'; flag: string }
     /** A heavy plate: sets `flag` while something heavy (Brennus, or a robot for good) stands on it. */

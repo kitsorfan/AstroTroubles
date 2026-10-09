@@ -29,6 +29,9 @@ import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/h
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
 import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
 import { GazeSentry, LightCrystal, MirrorPylon } from '../entities/labyrinth/gaze';
+import { SkyArch } from '../entities/stand/arch';
+import { DockGun } from '../entities/stand/dockgun';
+import { Hold, resetHolds } from '../entities/stand/holds';
 import { isRobot } from '../entities/robots';
 import { Impacts } from '../entities/moveFx';
 import { BoltField, Canister, EnergyPickup, HeartPickup, PowerCell, Shard, UpgradePickup } from '../entities/pickups';
@@ -531,6 +534,15 @@ export class World {
       case 'crystal':
         this.addEntity(new LightCrystal(this, id, cx, cz, h, spec.flag));
         break;
+      case 'dockgun':
+        this.addEntity(new DockGun(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'hold':
+        this.addEntity(new Hold(this, id, cx, cz, h, spec));
+        break;
+      case 'arch':
+        this.addEntity(new SkyArch(this, id, cx, cz, h, spec.span));
+        break;
       case 'decor':
         this.decorItems.push({
           kind: spec.kind,
@@ -695,6 +707,11 @@ export class World {
     if (play === 'taken') void this.hooks.cutscene((d) => scenes.luxTaken(d, this));
     else if (play === 'iris' && find) this.findBolt(find);
     else if (play === 'rogue' && rogue) rogue.begin();
+    // &play=outro plays the deck's boss-defeated scene (e.g. the Argo passing General Brennus's sky-dock).
+    else if (play === 'outro' && this.boss) {
+      const b = this.boss;
+      void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b));
+    }
     else if (play === 'reunion' && rogue) {
       rogue.defeated = true;
       this.luxBack(rogue);
@@ -1210,6 +1227,8 @@ export class World {
     const lw = legionWorld(this);
     for (const a of lw.allies) a.remove();
     lw.allies.length = 0;
+    // A line Brennus was holding starts again when he gets back to it.
+    resetHolds(this);
     this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();

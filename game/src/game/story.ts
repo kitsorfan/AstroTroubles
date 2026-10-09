@@ -63,6 +63,7 @@ export const FLYOVER: Record<DeckId, string> = {
   sirens: 'The <b>Sirens’ Sea</b>. Deep under the waves of a water moon lies a sunken Gardener gate... and Aeëtes’s gold buoys are singing a very strange song.',
   forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
   labyrinth: '<b>Medusa’s Labyrinth</b>. Under the gate of Colchis winds a maze of green stone... and in the dark, a great green eye is opening.',
+  stand: 'The <b>sky-dock of Colchis</b>, floating above the clouds. Aeëtes’s gold fleet is coming to shut its gate... and one old general is standing in the way.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -194,6 +195,15 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'brennus', text: 'I will hold the sky-dock. You fly through to the garden. Do not argue, Captain. Just fly.' },
     { who: 'atalanta', text: 'Holding a whole dock against a whole fleet? Okay. I take back everything I said about grumpy generals.' },
   ],
+  // The Argo is through Colchis's Sky Gate; next, the Garden of Colchis.
+  stand: [
+    { who: 'halcyon', text: 'We are through the Sky Gate! Aeëtes’s fleet is turning back. Every single ship.' },
+    { who: 'atalanta', text: 'He held off a whole fleet. On his own. With a SHIELD.' },
+    { who: 'brennus', text: 'Not on my own. My Legion stood with me. And the sprout. She is very brave, for a plant.' },
+    { who: 'jason', text: 'Thank you, General. We’ll find the Fleece. For Celestia.' },
+    { who: 'brennus', text: 'Then go, Argonauts. The garden is waiting. I will catch you up: old soldiers are slow, but we always arrive.' },
+    { who: 'captain', text: 'Taking her down through the clouds. Everyone, look out of the window... the Garden of Colchis.' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -289,6 +299,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   scylla: { sub: 'Aeëtes’s six-armed crane robot · she grabs every ship that sails by', color: '#ffb04a' },
   talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
   medusa: { sub: 'Aeëtes’s security AI · one look turns you to stone', color: '#7dff9a' },
+  ram: { sub: 'Aeëtes’s war machine · solid gold, and it butts like a battleship', color: '#ffb43a' },
 };
 
 /**
@@ -314,6 +325,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   jelly: { name: 'Jellyfish-Drone', tip: 'Its tentacles glow, then it ZAPS a ring of sparks. Step back until the zap is over, then blast it!' },
   anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
   coil: { name: 'Cable Snake', tip: 'It rears up and hisses, then LUNGES straight ahead. Step aside, then blast it while it lies tangled!' },
+  ramling: { name: 'Ramling', tip: 'It paws the ground, then charges head first! Its gold forehead stops shots. SHIELD it: it bonks its head and gets dizzy.' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

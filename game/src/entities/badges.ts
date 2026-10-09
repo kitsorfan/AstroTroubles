@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'piranha' | 'crab' | 'jelly' | 'anvil' | 'coil';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'piranha' | 'crab' | 'jelly' | 'anvil' | 'coil' | 'ramling';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -25,6 +25,7 @@ const COLORS: Record<BadgeKind, string> = {
   jelly: '#ff8ad8',
   anvil: '#ff8a3a',
   coil: '#7dff9a',
+  ramling: '#ffb43a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -458,6 +459,33 @@ function glyph(g: G, kind: BadgeKind) {
       g.moveTo(96, 46);
       g.lineTo(98, 52);
       g.stroke();
+      break;
+    }
+    case 'ramling': {
+      // A ram's head from the front: two big curly horns, a long face and a red visor.
+      g.lineWidth = 9;
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.arc(64 + sx * 30, 52, 17, 0, Math.PI * 2);
+        g.stroke();
+        g.beginPath();
+        g.arc(64 + sx * 30, 52, 6, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.beginPath();
+      g.moveTo(44, 40);
+      g.lineTo(84, 40);
+      g.lineTo(78, 92);
+      g.quadraticCurveTo(64, 104, 50, 92);
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.fillRect(48, 56, 32, 9);
+      g.fillStyle = COLORS.ramling;
+      g.beginPath();
+      g.arc(57, 88, 3.5, 0, Math.PI * 2);
+      g.arc(71, 88, 3.5, 0, Math.PI * 2);
+      g.fill();
       break;
     }
   }

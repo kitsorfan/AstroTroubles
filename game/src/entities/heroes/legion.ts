@@ -221,7 +221,7 @@ export class CommandPost extends Entity implements Interactable {
     cz: number,
     h: number,
     readonly flag: string,
-    readonly order: 'plate' | 'carry' | 'fight',
+    readonly order: 'plate' | 'carry' | 'fight' | 'guns',
     readonly room?: string,
   ) {
     super(world, id);
@@ -283,6 +283,8 @@ export class CommandPost extends Entity implements Interactable {
     haptic('medium');
     if (this.order === 'plate') w.hooks.toast('Legion! Onto that plate, quick march!', 'brennus');
     else if (this.order === 'carry') w.hooks.toast('Hauler! Carry me across. Gently, please.', 'brennus');
+    // Brennus's Last Stand: the Legion's dock guns wake up and hold the line with him.
+    else if (this.order === 'guns') w.hooks.toast('Legion guns! Wake up and hold this line with me!', 'brennus');
     else {
       const n = w.turnRobots(this.room);
       if (n) w.hooks.toast('Legion! You know my voice. Stand with me!', 'brennus');

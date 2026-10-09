@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'sirens' | 'reef' | 'forge' | 'labyrinth' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'sirens' | 'reef' | 'forge' | 'labyrinth' | 'stand' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -352,6 +352,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x.......x..x....', s: '....x.......x...', h: '..x...x...x...x.' },
     lead: 'bell',
     padLevel: 0.95,
+  },
+  // Brennus's Last Stand: a brave brass fanfare over a marching snare, an old soldier holding the line.
+  stand: {
+    bpm: 118,
+    chords: [
+      [50, 'maj'],
+      [55, 'maj'],
+      [47, 'min'],
+      [57, 'sus'],
+    ],
+    bass: '0.0.0...2.2.0...',
+    arp: '0.1.2.3.2.1.0.3.',
+    drums: { k: 'x...x...x...x.x.', s: '..x...x...x.xxxx', h: 'xxx.xxx.xxx.xxx.' },
+    lead: 'square',
+    padLevel: 0.8,
   },
   boss: {
     bpm: 144,

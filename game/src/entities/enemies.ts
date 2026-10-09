@@ -18,6 +18,7 @@ import { makeJelly } from './reef/jelly';
 import { makeAnvilDrone } from './forge/anvil';
 import { makeCoil } from './labyrinth/coil';
 import { makeRobot } from './robots';
+import { makeRamling } from './stand/ramling';
 
 const v3 = new THREE.Vector3();
 const WHITE = new THREE.Color('#ffffff');
@@ -993,6 +994,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'coil':
       e = makeCoil(world, id, x, h, z);
+      break;
+    case 'ramling':
+      e = makeRamling(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

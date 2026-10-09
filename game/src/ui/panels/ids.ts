@@ -51,6 +51,9 @@ export const PANEL_IDS = [
   // Medusa's Labyrinth: the Mirror Shield in the Gardeners' shrine, and MEDUSA asleep by the open gate.
   'ch3-mirror',
   'ch3-medusa',
+  // Brennus's Last Stand: the old general on the sky-dock as the gold fleet comes, and his salute to the Argo.
+  'ch3-stand',
+  'ch3-salute',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

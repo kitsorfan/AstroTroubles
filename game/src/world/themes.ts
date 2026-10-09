@@ -3,7 +3,7 @@ import type { ThemeId } from './levelTypes';
 export type ParticleMood = 'snow' | 'spores' | 'embers' | 'petals' | 'sparks' | 'motes' | 'pollen' | 'dust' | 'snowfall' | 'leaves' | 'ash';
 
 /** How the ground of an outdoor region is painted. */
-export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt';
+export type GroundStyle = 'grass' | 'sand' | 'snow' | 'rock' | 'jungle' | 'basalt' | 'flagstone';
 
 /** The open-air look of a Gaia Nova region: natural ground and cliffs, a sun, clouds and a horizon. */
 export interface Outdoor {
@@ -563,5 +563,32 @@ export const THEMES: Record<ThemeId, Theme> = {
     space: false,
     bloom: 0.3,
     outdoor: { ground: 'rock', ground2: '#6a8a5a', rock: '#5a7666', rockDark: '#2e4438', below: '#0a2a1a', sunDisc: '#c8ffd8', clouds: null, hills: '#0e221a', stars: true },
+  },
+  /* Brennus's Last Stand: Colchis's ancient sky-dock of pale Gardener stone, high above a sea of sunset clouds, with teal light-runes and the first stars out. */
+  stand: {
+    skyTop: '#33286a',
+    skyBottom: '#ffb487',
+    fog: '#f2cdb8',
+    fogNear: 60,
+    fogFar: 210,
+    floor: '#dccfb6',
+    floorLine: '#b4a48a',
+    floorSide: '#8c7c6a',
+    ice: '#c8ecff',
+    wall: '#cfc2ac',
+    wallTrim: '#5ee0c8',
+    edge: '#ffe6a0',
+    hazard: '#7fd8ff',
+    hazardDeep: '#2a6a9a',
+    hemiSky: '#ffe8da',
+    hemiGround: '#6a5a6e',
+    hemi: 1.0,
+    sun: '#ffd6ae',
+    sunI: 2.0,
+    accent: '#5ee0c8',
+    mood: 'motes',
+    space: false,
+    bloom: 0.2,
+    outdoor: { ground: 'flagstone', ground2: '#e6dac2', rock: '#d6c9b4', rockDark: '#9a8c7a', below: '#ffe0cc', sunDisc: '#ffe2b0', clouds: '#ffd6c6', hills: '#c4a4c8', stars: true, cloudSea: true },
   },
 };

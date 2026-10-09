@@ -33,6 +33,7 @@ import { INTEL, creditsHtml, endingChapter, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
 import { VehicleHudView } from '../vehicles/hud';
+import { argoBar } from '../entities/stand/holds';
 
 type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending' | 'cutscene' | 'cinema';
 
@@ -1057,6 +1058,7 @@ export class Game {
           this.ui.setCountdown(w.countdown());
           // The tide gauge steps aside during a boss fight (the boss bar takes its place).
           this.ui.setTide(w.boss?.started && !w.boss.defeated ? null : (w.tide?.gauge() ?? null));
+          this.ui.setArgo(argoBar(w));
           this.placeWaypoint(w);
           this.hudT -= dt;
           if (this.hudT <= 0) {

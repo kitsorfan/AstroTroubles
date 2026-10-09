@@ -293,6 +293,60 @@ canvas#game {
   }
 }
 
+/* Brennus's Last Stand: the Argo flying in along its bar (it turns red while the line is crowded). */
+.argobar {
+  width: min(420px, 44vw);
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #d8fff4;
+  text-shadow: 0 0 8px rgba(40, 200, 170, 0.8);
+}
+
+.argobar .track {
+  position: relative;
+  margin: 4px 14px 0;
+  height: 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(94, 224, 200, 0.7);
+}
+
+.argobar .fill {
+  height: 100%;
+  width: 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #2fb7a3, #9ff6e4);
+  transition: width 0.3s;
+}
+
+.argobar .ship {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 34px;
+  height: 21px;
+  transform: translate(-50%, -55%);
+  transition: left 0.3s;
+  filter: drop-shadow(0 0 4px rgba(160, 255, 230, 0.9));
+}
+
+.argobar .ship svg {
+  width: 100%;
+  height: 100%;
+}
+
+.argobar.slowed {
+  color: #ffd0d0;
+  text-shadow: 0 0 8px rgba(255, 60, 80, 0.9);
+}
+
+.argobar.slowed .fill {
+  background: linear-gradient(90deg, #ff5a6a, #ffb0b8);
+}
+
 /* The clock for timed switches, with a dot per switch. */
 /* The tide gauge (Scylla's Reef): a little tube of sea that fills up and drains, and what the tide does next. */
 .tide {

@@ -18,7 +18,9 @@ export type ArmPose =
   | 'fist'
   | 'hips'
   | 'hold'
-  | 'gear';
+  | 'gear'
+  /** Front hand up at the brim of the cap (General Brennus waving the Argo through). */
+  | 'salute';
 export type Hair = 'short' | 'bun' | 'curly' | 'long' | 'bald' | 'pony' | 'crop' | 'boy';
 export type Hat = 'none' | 'general' | 'captain';
 
@@ -37,6 +39,7 @@ const ARMS: Record<ArmPose, [number[][], number[][]]> = {
   hips: [[[-72, -132], [-44, -98]], [[72, -132], [44, -98]]],
   hold: [[[-36, -118], [6, -112]], [[50, -122], [30, -110]]],
   gear: [[[-56, -126], [-60, -94]], [[66, -128], [44, -112]]],
+  salute: [[[-54, -122], [-58, -90]], [[108, -186], [70, -252]]],
 };
 
 export interface PersonOpts {
