@@ -14,7 +14,7 @@ import { stripeTexture } from '../world/textures';
 import { Entity, type HitKind, type Interactable, type Target } from './entity';
 import { boxG, cyl, glowSprite, makeBolt, makeColonist, mat, mesh, ownMat, sphere, torus, type BoltModel } from './models';
 import { makeIris } from './companionModels';
-import { holoUniforms, makeHoloFigure, makeHoloProjector, type HoloFigure, type HoloProjector, type HoloUniforms } from './holoModels';
+import { holoMaterial, holoUniforms, makeHoloFigure, makeHoloProjector, type HoloFigure, type HoloProjector, type HoloUniforms } from './holoModels';
 import { makeHauler, makeOreCart, railSegment } from './mineModels';
 import type { CompanionSkin } from '../game/companions';
 import type { Player } from './player';
@@ -1216,6 +1216,8 @@ export class Vendor extends Entity implements Interactable {
   private blinkT = 2;
   private signMat: THREE.MeshBasicMaterial;
   private holo: THREE.Group;
+  /** The hologram bolt is drawn in the same light as the hologram logs. */
+  private holoU: HoloUniforms;
   private scanner: THREE.Mesh;
   private items: THREE.Object3D[] = [];
   private scanTop = 0;
@@ -1311,7 +1313,11 @@ export class Vendor extends Entity implements Interactable {
     g.add(mesh(boxG(0.95, 0.2, 0.04), dark, -0.1, base + 0.3, front + 0.03, false));
     // The hologram bolt spinning above her, so the shop is easy to spot across a room.
     this.holo = new THREE.Group();
-    const holoMat = new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.holoU = holoUniforms('#ffd166');
+    this.holoU.build.value = 1;
+    this.holoU.base.value = -1e3;
+    this.holoU.top.value = 1e3;
+    const holoMat = holoMaterial(this.holoU, { fill: 0.45, dim: 0 });
     const hex = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 6).rotateX(Math.PI / 2), holoMat);
     this.holo.add(hex, new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.018, 6, 6).rotateZ(Math.PI / 6), holoMat));
     this.holo.add(glowSprite('#ffd166', 0.9, 0.18));
@@ -1360,6 +1366,9 @@ export class Vendor extends Entity implements Interactable {
       this.setMood(near ? 'happy' : 'idle');
     }
     this.holo.rotation.y += dt * 1.6;
+    this.holoU.time.value = this.t;
+    this.holoU.opacity.value = 0.85 + (Math.random() < 0.03 ? -0.4 : 0);
+    this.holoU.glitch.value = Math.random() < 0.02 ? 0.8 : Math.max(0.03, this.holoU.glitch.value - dt * 3);
     this.holo.position.y = 0.08 + 2.5 + 0.6 + Math.sin(this.t * 2) * 0.08;
     // The marquee flickers now and then, like old neon.
     const flick = Math.random() < 0.01 ? 0.45 : 1;
