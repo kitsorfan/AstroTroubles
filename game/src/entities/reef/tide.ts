@@ -31,14 +31,17 @@ function rippleTexture(): THREE.CanvasTexture {
   const g = c.getContext('2d') as CanvasRenderingContext2D;
   g.fillStyle = '#ffffff';
   g.fillRect(0, 0, S, S);
-  g.strokeStyle = 'rgba(160, 225, 240, 0.9)';
-  g.lineWidth = 3;
-  for (let i = 0; i < 46; i++) {
-    const x = (i * 97) % S;
-    const y = (i * 61) % S;
-    const r = 10 + ((i * 13) % 24);
+  // Little scattered glints (a tiny seeded random, so every run looks the same).
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.lineWidth = 2;
+  for (let i = 0; i < 140; i++) {
+    const x = rnd() * S;
+    const y = rnd() * S;
+    const r = 4 + rnd() * 9;
+    g.strokeStyle = `rgba(150, 220, 236, ${0.25 + rnd() * 0.35})`;
     g.beginPath();
-    g.ellipse(x, y, r, r * 0.45, 0, Math.PI * 1.1, Math.PI * 1.9);
+    g.ellipse(x, y, r, r * 0.35, 0, Math.PI * 1.15, Math.PI * 1.85);
     g.stroke();
   }
   const t = new THREE.CanvasTexture(c);
@@ -74,7 +77,7 @@ export class Tide extends Entity implements FloorFx {
     const span = Math.max(lv.width, lv.depth) * CELL + 260;
     const hasDom = typeof document !== 'undefined';
     this.tex = hasDom ? rippleTexture() : null;
-    this.tex?.repeat.set(span / 14, span / 14);
+    this.tex?.repeat.set(span / 18, span / 18);
     const m = new THREE.MeshStandardMaterial({ color: '#2aaecb', map: this.tex, transparent: true, opacity: 0.74, roughness: 0.12, metalness: 0.15, depthWrite: false });
     this.water = new THREE.Mesh(new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2), m);
     this.water.position.set((lv.width * CELL) / 2, this.level, (lv.depth * CELL) / 2);
@@ -90,25 +93,31 @@ export class Tide extends Entity implements FloorFx {
     return c.kind === 'void' || c.kind === 'hazard' || this.level > c.h + FLOOD;
   }
 
+  /** A tidal flat (dry at low tide), as opposed to the open sea. */
+  private isFlat(cx: number, cz: number) {
+    const c = this.world.grid.cell(cx, cz);
+    return (c.kind === 'floor' || c.kind === 'grate' || c.kind === 'ice') && isTidal(this.def, c.h);
+  }
+
   stand(p: Player) {
     const g = p.body.ground;
     if (!g || this.world.cutscene) return;
     const c = this.world.grid.cell(g.cx, g.cz);
     const depth = this.level - c.h;
-    if (depth > FLOOD) this.wash(p);
+    if (depth > FLOOD) this.wash(p, true);
     else if (depth > 0 && Math.random() < 0.25) {
       // Wading in the shallows: little splashes at the ankles.
       this.world.particles.emit(p.body.x, this.level + 0.05, p.body.z, { count: 1, color: '#e8fbff', speed: 1.5, life: 0.4, size: 0.3, up: 1.5 });
     }
   }
 
-  /** Swept off by the sea: a splash, a heart, and back to the last dry spot. */
-  private wash(p: Player) {
+  /** Swept off by the sea (by the tide over a flat, or after falling in): a splash, a heart, and back to the last dry spot. */
+  private wash(p: Player, tidal: boolean) {
     const w = this.world;
     w.particles.emit(p.body.x, this.level + 0.1, p.body.z, { count: 26, color: '#e8fbff', speed: 6, life: 0.7, size: 0.5, up: 5 });
     w.rings.burst(p.body.x, this.level + 0.05, p.body.z, 4, '#bff4ff', 0.5);
     audio.play('vent', 1.4);
-    if (!this.told) {
+    if (tidal && !this.told) {
       this.told = true;
       w.hooks.toast('Splash! The tide washed us back. When the gauge blinks, get to high ground!', 'bolt');
     }
@@ -149,7 +158,7 @@ export class Tide extends Entity implements FloorFx {
     const b = p.body;
     if (!w.cutscene && !p.down && !p.zipping && b.y < this.level - FLOOD - 0.1 && b.vy <= 0 && this.flooded(Grid.toCell(b.x), Grid.toCell(b.z))) {
       const onBox = b.grounded && b.ground?.kind === 'box';
-      if (!onBox) this.wash(p);
+      if (!onBox) this.wash(p, this.isFlat(Grid.toCell(b.x), Grid.toCell(b.z)));
     }
   }
 }

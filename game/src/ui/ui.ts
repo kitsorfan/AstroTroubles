@@ -26,6 +26,7 @@ import { WEAPONS, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
 import type { FindKind } from '../game/collectibles';
 import type { Helper } from '../game/companions';
+import type { TideGauge } from '../world/tides';
 import { ICON, SPEAKER_COLOR, SPEAKER_NAME, WEAPON_ICON, WRIST_FACE, portrait } from './icons';
 import { panelSvg, type PanelId } from './panels';
 
@@ -161,6 +162,8 @@ export class UI {
   private bossEl: HTMLElement;
   private countdownEl: HTMLElement;
   private countdownKey = '';
+  private tideEl: HTMLElement;
+  private tideKey = '';
   private fpsEl: HTMLElement;
   private lastHearts = -1;
   private lastBolts = -1;
@@ -182,7 +185,7 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="tide hidden"><i class="tube"><i class="sea"></i></i><b></b></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
@@ -231,6 +234,7 @@ export class UI {
     this.wpEl = $(this.hud, '.waypoint');
     this.bossEl = $(this.hud, '.bossbar');
     this.countdownEl = $(this.hud, '.countdown');
+    this.tideEl = $(this.hud, '.tide');
     this.fpsEl = $(this.hud, '.fps');
 
     for (const btn of this.hud.querySelectorAll<HTMLElement>('.btn')) {
@@ -341,6 +345,28 @@ export class UI {
     if (!name) return;
     $(this.bossEl, '.name').textContent = tr(name);
     $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
+  }
+
+  /** The tide gauge (Scylla's Reef): how high the sea is, what it's doing next, and when. */
+  setTide(g: TideGauge | null) {
+    const label = !g
+      ? ''
+      : g.warn || g.phase === 'rising'
+        ? tr('TIDE COMING IN!')
+        : g.phase === 'low'
+          ? tr('LOW TIDE · {n}', { n: g.secs })
+          : g.phase === 'high'
+            ? tr('HIGH TIDE · {n}', { n: g.secs })
+            : tr('TIDE GOING OUT');
+    const key = g ? `${label}|${Math.round(g.fill * 20)}|${g.warn}` : '';
+    if (key === this.tideKey) return;
+    this.tideKey = key;
+    this.tideEl.classList.toggle('hidden', !g);
+    if (!g) return;
+    $(this.tideEl, 'b').textContent = label;
+    $(this.tideEl, '.sea').style.height = `${Math.round(8 + g.fill * 92)}%`;
+    this.tideEl.classList.toggle('warn', g.warn || g.phase === 'rising');
+    this.tideEl.classList.toggle('high', g.phase === 'high');
   }
 
   /** The clock for timed switches: whole seconds left, and a dot for each switch, lit once it's down. */

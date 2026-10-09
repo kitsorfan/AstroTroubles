@@ -3,7 +3,9 @@ import * as THREE from 'three';
 import { audio } from '../../core/audio';
 import { damp } from '../../core/math';
 import type { World } from '../../game/world';
+import { Grid } from '../../world/grid';
 import { Entity } from '../entity';
+import type { FloorFx } from '../props';
 
 /**
  * CHARYBDIS, the great whirlpool in the middle of Scylla's arena (a hole in the reef down to the sea).
@@ -22,6 +24,9 @@ export const CHARYBDIS = {
   /** Size of the spinning water. */
   radius: 7,
 };
+
+/** Cells this far (in cells) from the middle never count as a safe spot. */
+const RIM = 4;
 
 export type WhirlPhase = 'calm' | 'warn' | 'pull';
 
@@ -68,7 +73,9 @@ function spiralTexture(): THREE.CanvasTexture | null {
   return t;
 }
 
-export class Charybdis extends Entity {
+export class Charybdis extends Entity implements FloorFx {
+  /** The rim is never a safe spot: a hero swept in comes back a little farther from the edge. */
+  unsafe = true;
   /** Pulling only happens during the fight. */
   active = false;
   private disc: THREE.Mesh;
@@ -90,6 +97,15 @@ export class Charybdis extends Entity {
       new THREE.MeshBasicMaterial({ color: '#e8fbff', transparent: true, opacity: 0.6, depthWrite: false }),
     );
     this.obj.add(this.disc, this.foam);
+    const cx = Grid.toCell(at.x);
+    const cz = Grid.toCell(at.z);
+    for (let dz = -RIM; dz <= RIM; dz++) {
+      for (let dx = -RIM; dx <= RIM; dx++) {
+        if (dx * dx + dz * dz > RIM * RIM) continue;
+        const c = world.grid.cell(cx + dx, cz + dz);
+        if (c.kind === 'floor') world.registerFloor(cx + dx, cz + dz, this);
+      }
+    }
   }
 
   update(dt: number) {
@@ -127,7 +143,8 @@ export class Charybdis extends Entity {
     const dx = this.at.x - b.x;
     const dz = this.at.z - b.z;
     const d = Math.hypot(dx, dz);
-    if (w.cutscene || p.zipping || d < 0.3 || d > CHARYBDIS.range || b.y > this.at.y + 3) return;
+    // Not right after a splash: one pull, one heart at most.
+    if (w.cutscene || p.zipping || p.down || p.invuln > 0 || d < 0.3 || d > CHARYBDIS.range || b.y > this.at.y + 3) return;
     // Stronger closer in; a spin digs in.
     const k = (p.spinning ? 0.5 : 1) * (0.55 + 0.45 * (1 - d / CHARYBDIS.range));
     b.x += (dx / d) * CHARYBDIS.pull * k * dt;

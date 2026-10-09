@@ -304,7 +304,7 @@ export class Scylla extends Boss implements Target {
     }
     if (this.whirl) this.whirl.active = this.started && !this.defeated;
     if (!this.started || this.defeated) {
-      if (!this.started && !this.defeated && this.playerDist() < 15) this.begin();
+      if (!this.started && !this.defeated && this.playerDist() < 24) this.begin();
       for (const a of this.arms) this.stepArm(a, dt);
       this.sync(dt);
       return;

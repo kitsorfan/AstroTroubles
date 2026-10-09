@@ -237,6 +237,9 @@ export class Game {
       if (dev.has('talk')) setInterval(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' })), 900);
       // &tick also drives the game from a timer: headless browsers barely run animation frames.
       if (dev.has('tick')) setInterval(() => this.step(performance.now()), 33);
+      // &time=<seconds> winds the deck's clock (the tide on Scylla's Reef) once it is up.
+      const time = Number(dev.get('time'));
+      if (time) setTimeout(() => this.world && (this.world.time = time), 3400);
       // &at=x,z puts Jason on that map cell once the deck is up (after the title card).
       const at = dev.get('at')?.split(',').map(Number);
       // On a vehicle level, &at=<distance> flies ahead along the course instead.
@@ -1045,6 +1048,8 @@ export class Game {
             this.refreshAbilities(w);
           }
           this.ui.setCountdown(w.countdown());
+          // The tide gauge steps aside during a boss fight (the boss bar takes its place).
+          this.ui.setTide(w.boss?.started && !w.boss.defeated ? null : (w.tide?.gauge() ?? null));
           this.placeWaypoint(w);
           this.hudT -= dt;
           if (this.hudT <= 0) {
