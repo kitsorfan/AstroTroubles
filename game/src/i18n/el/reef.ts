@@ -5,7 +5,6 @@
  */
 export const EL_REEF: Record<string, string> = {
   // The level.
-  "Scylla’s Reef": "Ο Ύφαλος της Σκύλλας",
   "Between the rock and the whirlpool": "Ανάμεσα στον βράχο και στη ρουφήχτρα",
   "Cross the sand at low tide (watch the tide gauge!)": "Πέρνα την άμμο με άμπωτη (πρόσεχε τον μετρητή παλίρροιας!)",
   "Cross the sandbars to the old lighthouse": "Πέρνα τις αμμουδιές ως τον παλιό φάρο",
