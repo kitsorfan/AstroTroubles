@@ -940,6 +940,109 @@ export function sleeper(pen: Pen, x: number, y: number, k: number, look: Look, o
   return at(x - r.head[0] * k, y - r.head[1] * k, k, body);
 }
 
+/**
+ * A colonist asleep in one of GaScu's cocoons: a glowing pink pod of silk hanging from its stalk like a
+ * lantern, the sleeper's face peeking out at the top. Top of the stalk at (x, y); about 190 wide and 420
+ * tall at scale 1.
+ */
+export function cocoon(pen: Pen, x: number, y: number, s: number, look: Look, o: { gold?: boolean; tilt?: number } = {}): string {
+  const glowC = o.gold ? GASCU.gold : GASCU.glow;
+  const silk = o.gold ? '#ffe6a0' : '#ffb0e6';
+  const deep = o.gold ? '#e09a20' : '#c2389a';
+  const shell = 'M0 60Q96 80 96 210Q94 330 0 420Q-94 330 -96 210Q-96 80 0 60Z';
+  const clip = pen.uid();
+  pen.def(clip, `<clipPath id="${clip}"><path d="${shell}"/></clipPath>`);
+  let out = pen.glow(0, 230, 240, glowC, 0.55, 280);
+  // The stalk it hangs from.
+  out += pen.brush(
+    [
+      [0, 0],
+      [-8, 34],
+      [0, 70],
+    ],
+    16,
+    INK,
+    [0.02, 0.2],
+  );
+  out += pen.brush(
+    [
+      [0, 0],
+      [-8, 34],
+      [0, 70],
+    ],
+    9,
+    o.gold ? '#e8a830' : GASCU.stem,
+    [0.02, 0.2],
+  );
+  // The back of the pod, glowing from inside, and the sleeper in it.
+  out += pen.form(shell, deep, {
+    line: 3,
+    paint: pen.rad([
+      [0, '#fff0fa'],
+      [0.55, silk],
+      [1, deep],
+    ], 0.45, 0.35, 0.7),
+    warm: 0,
+    inner: sleeper(pen.relight({ key: [-0.85, -0.35], keyColor: '#fff0fa', depth: 0.3 }), 0, 160, 0.9, look, { tilt: o.tilt ?? 10 }),
+  });
+  // The silk wrapped over the sleeper from the chin down, its strands and a glossy highlight.
+  const wrap = 'M-96 210Q-60 196 -40 214Q-14 236 14 214Q40 196 96 210Q94 330 0 420Q-94 330 -96 210Z';
+  const strands: [P[], number][] = [
+    [
+      [
+        [-90, 250],
+        [-10, 290],
+        [80, 240],
+      ],
+      4,
+    ],
+    [
+      [
+        [-80, 310],
+        [0, 340],
+        [70, 300],
+      ],
+      4,
+    ],
+    [
+      [
+        [-50, 370],
+        [10, 380],
+        [40, 360],
+      ],
+      3.4,
+    ],
+    [
+      [
+        [-70, 220],
+        [-40, 300],
+        [-20, 400],
+      ],
+      3,
+    ],
+  ];
+  out += `<g clip-path="url(#${clip})">${pen.form(wrap, silk, {
+    sh: 40,
+    line: 2.6,
+    rim: 2.4,
+    shade: deep,
+    inner: pen.brushes(strands, '#ffffff', [0.2, 0.3], 0.55) + pen.brushes(strands.map(([p, w]) => [p.map((q) => add(q, [0, 6])), w * 0.8] as [P[], number]), deep, [0.2, 0.3], 0.45),
+  })}</g>`;
+  out += `<path d="${shell}" fill="none" stroke="${INK}" stroke-width="3.4"/>`;
+  out += pen.brush(
+    [
+      [-60, 130],
+      [-74, 200],
+      [-62, 280],
+    ],
+    10,
+    '#ffffff',
+    [0.3, 0.4],
+    0.6,
+  );
+  return at(x, y, s, out);
+}
+
 /* ---------------- cryo pods ---------------- */
 
 export interface PodOpts {
