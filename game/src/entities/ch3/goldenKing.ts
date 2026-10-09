@@ -115,6 +115,7 @@ class VineKnot implements Target {
 export class GoldenKing extends Boss implements Target {
   readonly title = 'AEËTES, THE GOLDEN KING';
   readonly music: Track = 'king';
+  readonly camPull = 0.35;
   protected focusHeight = 2.2;
   readonly aim = new THREE.Vector3();
   radius = 1.2;
@@ -438,12 +439,15 @@ export class GoldenKing extends Boss implements Target {
   update(dt: number) {
     this.t += dt;
     if (!this.started) {
-      if (!this.defeated && this.playerDist() < 12) this.begin();
+      if (!this.defeated && this.playerDist() < 19.5) this.begin();
       // Before the fight he floats beside the altar, admiring the Fleece.
       if (this.phase === 1 && !this.defeated) {
         this.pos.y = this.floorY + HOVER.y + Math.sin(this.t * 2) * 0.15;
+        // He admires the Fleece until the heroes come close, then turns to face them.
         const c = this.center;
-        this.yaw = dampAngle(this.yaw, Math.atan2(c.x - this.pos.x, c.z - this.pos.z), 3, dt);
+        const p = this.player.body;
+        const near = this.playerDist() < 26;
+        this.yaw = dampAngle(this.yaw, near ? Math.atan2(p.x - this.pos.x, p.z - this.pos.z) : Math.atan2(c.x - this.pos.x, c.z - this.pos.z), 3, dt);
       }
       this.sync(dt);
       return;
@@ -699,6 +703,10 @@ export class GoldenKing extends Boss implements Target {
     this.caughtK = k;
     this.slump = damp(this.slump, 0, 4, 1 / 60);
     this.grow = Math.max(1, (this.phase === 3 ? GIANT : 1.4) * (1 - k) + k);
+    // He stumbles back off the altar as he shrinks, so the Fleece can come down onto it.
+    const c = this.center;
+    this.pos.set(c.x, this.floorY, c.z + 3.2 * Math.min(1, k * 1.5));
+    this.yaw = 0.2;
     if (!this.cage) {
       this.cage = new THREE.Group();
       const vine = mat('#e8b030', { emissive: '#ffb020', ei: 0.8, metal: 0.4, rough: 0.4 });
@@ -707,7 +715,6 @@ export class GoldenKing extends Boss implements Target {
         r.rotation.set(Math.PI / 2 + (i % 2 ? 0.3 : -0.3), 0, i * 0.7);
         this.cage.add(r);
       }
-      this.cage.add(mesh(sphere(0.12, 8), mat('#ff6fcf', { emissive: '#ff6fcf', ei: 1.5 }), 0.4, 2.2, 0.3, false));
       this.obj.add(this.cage);
     }
     this.cage.visible = k > 0.4;

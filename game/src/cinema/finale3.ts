@@ -68,8 +68,10 @@ export async function fleeceHome(d: Director, p: PlanetScene, kind: EndingKind) 
   const pad = plains.clone().add(V(10, 3.5, 20));
   const sky = pad.clone().add(V(-260, 300, 140));
   let t = 0;
-  // Down she comes out of the sunset, and settles in the valley.
-  d.cut(pad.clone().add(V(-120, 60, 120)), sky, 46);
+  // Down she comes out of the sky, and settles in the valley (the camera waits on a hill and watches her come).
+  const eye = pad.clone().add(V(-60, 18, 70));
+  ship.position.copy(sky);
+  d.cut(eye, sky, 46);
   d.fade('#000000', 1, 0);
   await Promise.all([
     d.fade('#000000', 0, 1.2),
@@ -80,11 +82,11 @@ export async function fleeceHome(d: Director, p: PlanetScene, kind: EndingKind) 
         argo.update(t, 1 - k * 0.7);
         ship.position.lerpVectors(sky, pad, 1 - (1 - k) * (1 - k));
         ship.rotation.z = -0.4 * (1 - k);
+        d.rig.pos.lerpVectors(eye, pad.clone().add(V(-40, 12, 46)), k);
         d.rig.look.copy(ship.position);
       },
       ease.linear,
     ),
-    d.cam(pad.clone().add(V(-50, 22, 60)), pad, 6, ease.inOut),
   ]);
   audio.play('land', 0.6);
   p.shake(0.4);

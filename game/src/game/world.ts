@@ -1490,6 +1490,14 @@ export class World {
     }
     const p = this.player.body;
     const aim = tmpV.set(p.x + p.vx * 0.12, p.y + 1.2, p.z + p.vz * 0.12);
+    // A boss that asks for it (the big final one) pulls the camera part of the way toward itself.
+    const bs = this.boss;
+    if (bs?.started && !bs.defeated && bs.camPull > 0) {
+      const w = bs.where;
+      const k = bs.camPull * Math.min(1, 26 / Math.max(1, Math.hypot(w.x - p.x, w.z - p.z)));
+      aim.x += (w.x - aim.x) * k;
+      aim.z += (w.z - aim.z) * k;
+    }
     if (dt === 0) this.camTarget.copy(aim);
     else {
       this.camTarget.x = damp(this.camTarget.x, aim.x, 7, dt);

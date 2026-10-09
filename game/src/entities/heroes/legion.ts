@@ -116,6 +116,9 @@ export class CrackedWall extends Entity implements Target {
     if (kind !== 'smash' && !(kind === 'blast' && brennus)) {
       this.wobble = 1;
       audio.play('zap', 2.2, 0.5);
+      // (Only when the hero is close by: stray shots from far away, or from his robots, say nothing.)
+      const b = this.world.player.body;
+      if (Math.hypot(b.x - this.aim.x, b.z - this.aim.z) > 12) return true;
       if (brennus) hintOnce(this.world, 'cracked', () => this.world.hooks.toast('Too tough! HOLD the CANNON for a big blast, or CHARGE into it.', 'bolt'));
       else hintOnce(this.world, 'crackedHero', () => this.world.hooks.toast('Too tough for us! Only General Brennus can smash cracked rock: his big CANNON blast, or his CHARGE.', 'bolt'));
       return true;

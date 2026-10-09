@@ -114,7 +114,9 @@ export const EL_FLEECE: Record<string, string> = {
   "CLANG! He bounced right off General Brennus’s shield! His armour is cracked: hit him now!": "ΓΚΛΑΝΓΚ! Αναπήδησε πάνω στην ασπίδα του Στρατηγού Βρέννου! Η πανοπλία του ράγισε: χτύπα τον τώρα!",
   "He crashed into the pillar! His armour is cracked: hit him now!": "Έπεσε πάνω στην κολόνα! Η πανοπλία του ράγισε: χτύπα τον τώρα!",
   "He’s lowering his horns to charge! General Brennus: hold up your SHIELD toward him!": "Χαμηλώνει τα κέρατα για να ορμήσει! Στρατηγέ Βρέννο: σήκωσε την ΑΣΠΙΔΑ σου προς το μέρος του!",
-  "Oh no, the vines grew back! Atalanta, cut them again!": "Ωχ όχι, τα κλαδιά ξαναφύτρωσαν! Αταλάντη, κόψ’ τα πάλι!",
+  "LUX, we know every Gardener word now. When this is over, we can speak to the Fleece itself!": "ΛΟΥΞ, τώρα ξέρουμε κάθε λέξη των Κηπουρών. Όταν τελειώσει αυτό, θα μπορέσουμε να μιλήσουμε στο ίδιο το Δέρας!",
+  "If only we had every Gardener light-stone... (we have {n} of {total}) then IRIS and I could talk to the Fleece in its own words.": "Αν είχαμε όλες τις φωτόπετρες των Κηπουρών... (έχουμε {n} από {total}) τότε η ΙΡΙΔΑ κι εγώ θα μπορούσαμε να μιλήσουμε στο Δέρας στη δική του γλώσσα.",
+  "Oh no, the vines grew back! Atalanta, cut them again!":"Ωχ όχι, τα κλαδιά ξαναφύτρωσαν! Αταλάντη, κόψ’ τα πάλι!",
   // The game's final endings.
   "The Golden King’s armour fell away like autumn leaves, and the Fleece floated down, soft and warm, into Jason’s arms.": "Η πανοπλία του Χρυσού Βασιλιά έπεσε σαν φθινοπωρινά φύλλα, και το Δέρας κατέβηκε πετώντας, απαλό και ζεστό, στην αγκαλιά του Ιάσονα.",
   "The Argo carried it home across the ring of moons, past the Clashing Rocks, all the way back to <b>Gaia Nova</b>.": "Η Αργώ το πήγε σπίτι, περνώντας το δαχτυλίδι των φεγγαριών και τις Συμπληγάδες, μέχρι πίσω στη <b>Γαία Νόβα</b>.",
