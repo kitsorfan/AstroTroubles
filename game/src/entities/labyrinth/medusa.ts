@@ -269,6 +269,10 @@ export class Medusa extends Boss implements Target, BeamCatcher {
     this.set('tie', 1);
     audio.play('shield', 0.7);
     const w = this.world;
+    if (!this.hinted.knot) {
+      this.hinted.knot = true;
+      w.hooks.toast('Her snakes are tied in a knot over her eye! Only Atalanta’s POWER ARROW can untie it: hold BOW!', 'iris');
+    }
     this.helpers = this.helpers.filter((e) => e.alive);
     for (let i = this.helpers.length; i < 2; i++) {
       const sx = i % 2 ? 1 : -1;

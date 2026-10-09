@@ -100,9 +100,9 @@ export const labyrinth: LevelDef = {
     #.P22222P.................c.....w.....#
     #.2222222...ooooo.............a.......#
     #.2222222.............................#
-    #.222U222.T.............Y............B#
+    #.222U222...............Y............B#
     #.2222222.............................#
-    #.2222222............q................#
+    #.222T222............q................#
     #.P22222P.b...c............v..........#
     #..................K..................#
     #...;...........................h...k.#
@@ -153,7 +153,7 @@ export const labyrinth: LevelDef = {
     β: { type: 'trigger', id: 'inmirrors', dialogue: 'mirrors', w: 5, d: 1 },
     γ: { type: 'trigger', id: 'ineyes', dialogue: 'eyes', w: 7, d: 1 },
     δ: { type: 'trigger', id: 'inante', dialogue: 'ante', w: 5, d: 1 },
-    T: { type: 'trigger', id: 'shieldstory', event: 'story:shield', w: 3, d: 7, when: { flag: 'ability:mirror' } },
+    T: { type: 'trigger', id: 'shieldstory', event: 'story:shield', w: 11, d: 11, when: { flag: 'ability:mirror' } },
     '%': { type: 'trigger', id: 'gatestory', event: 'story:gate', w: 1, d: 1, when: { boss: true } },
     // MEDUSA's eyes, the Gardener mirrors and the light crystals.
     A: { type: 'gazer', dir: 1, sweep: 42, period: 7, reach: 9 },
