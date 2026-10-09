@@ -1,135 +1,6 @@
 /** Chapter 3 panels for Scylla's Reef: Scylla on her rock above Charybdis, and the Argo sailing through the calm strait. */
-import { argoShip, at, atalanta, backdrop, C, cloud, glow, glowDef, ink, iris, jason, lin, lux, panel, rad, ridge, sparkle, vignette } from '../kit';
 import * as gn from '../gn';
-
-const GOLD = '#ffc94a';
-const GOLD_DARK = '#c8901e';
-const ROCK = '#6e625c';
-const ROCK_DARK = '#4a403c';
-
-/** The bright tropical sky with a few puffy clouds and a far hazy island. */
-function sky(id: string): string {
-  return (
-    backdrop(id + 'b', [
-      [0, '#2a8ad8'],
-      [0.55, '#8fd0f4'],
-      [1, '#e6f8ff'],
-    ]) +
-    cloud(250, 150, 1.1, '#ffffff', 0.9) +
-    cloud(1250, 110, 0.8, '#ffffff', 0.85) +
-    cloud(760, 210, 0.6, '#ffffff', 0.7) +
-    ridge(31, 470, 30, '#7aa6bc', 5, 980, 1640)
-  );
-}
-
-/** The sea from height y down: turquoise, darker far away, with sparkling ripple lines. */
-function sea(id: string, y: number): string {
-  let ripples = '';
-  for (let i = 0; i < 16; i++) {
-    const rx = (i * 263) % 1600;
-    const ry = y + 30 + ((i * 97) % (900 - y - 40));
-    ripples += `<path d="M${rx - 40} ${ry}q20 -10 40 0t40 0" fill="none" stroke="#e6fbff" stroke-width="4" opacity=".6" stroke-linecap="round"/>`;
-  }
-  return `<defs>${lin(id + 's', [[0, '#3fb0d0'], [0.4, '#2ac0d0'], [1, '#7fe6e0']])}</defs><path d="M0 ${y}H1600V900H0Z" fill="url(#${id}s)"/>${ripples}`;
-}
-
-/** The great rock of the strait: a tall, craggy stack rising out of the sea, foam at its foot. */
-function bigRock(x: number, y: number, s: number): string {
-  const body = `<path d="M-260 0L-230 -180L-180 -260L-150 -420L-60 -470L40 -450L130 -400L170 -260L230 -170L270 0Z" fill="${ROCK}" ${ink(6)}/>
-    <path d="M-150 -420L-120 -300L-170 -150M40 -450L60 -330L20 -200M130 -400L110 -280L160 -150" fill="none" stroke="${ROCK_DARK}" stroke-width="10" stroke-linecap="round"/>
-    <path d="M-60 -470L40 -450L130 -400L60 -420Z" fill="#8a7e76"/>
-    <path d="M-280 4Q0 -30 290 4" fill="none" stroke="#f4fdff" stroke-width="16" stroke-linecap="round"/>`;
-  return at(x, y, s, body);
-}
-
-/** SCYLLA on top of the rock: a gold turret, a tall neck, a cab with one big red eye, and six crane arms. */
-function scylla(id: string, x: number, y: number, s: number, folded = false): string {
-  const defs = `<defs>${glowDef(id + 'e', '#ff3a4c', 0.8)}${glowDef(id + 'j', C.cyan, 0.7)}</defs>`;
-  let arms = '';
-  for (let i = 0; i < 6; i++) {
-    const side = i < 3 ? -1 : 1;
-    const k = i % 3;
-    const sx = side * 60;
-    const sy = -250 + k * 20;
-    // Raised: the elbows high and the claws out wide; folded: everything hangs down, tucked in.
-    const ex = folded ? side * (90 + k * 20) : side * (170 + k * 70);
-    const ey = folded ? -170 + k * 30 : -360 + k * 50;
-    const cx = folded ? side * (110 + k * 26) : side * (260 + k * 90);
-    const cy = folded ? -40 + k * 20 : -230 + k * 90;
-    arms += `<path d="M${sx} ${sy}L${ex} ${ey}" stroke="${GOLD}" stroke-width="26" stroke-linecap="round" ${ink(5)}/><path d="M${sx} ${sy}L${ex} ${ey}" stroke="${GOLD}" stroke-width="18" stroke-linecap="round"/>`;
-    arms += `<path d="M${ex} ${ey}L${cx} ${cy}" stroke="#8a5a2a" stroke-width="18" stroke-linecap="round"/>`;
-    if (!folded) arms += `${glow(id + 'j', ex, ey, 34, 0.8)}`;
-    arms += `<circle cx="${ex}" cy="${ey}" r="16" fill="${folded ? '#6a7a80' : '#bff4ff'}" ${ink(4)}/>`;
-    // The claw: a gold wrist with two little red eyes, and three fingers.
-    const claw = `<rect x="-24" y="-20" width="48" height="34" rx="8" fill="${GOLD}" ${ink(4)}/>
-      <circle cx="-9" cy="-6" r="5" fill="${folded ? '#5a2a2a' : '#ff3a4c'}"/><circle cx="9" cy="-6" r="5" fill="${folded ? '#5a2a2a' : '#ff3a4c'}"/>
-      <path d="M-18 14L-26 ${folded ? 40 : 52}M0 14V${folded ? 44 : 58}M18 14L26 ${folded ? 40 : 52}" stroke="#3a2c22" stroke-width="9" stroke-linecap="round"/>`;
-    arms += at(cx, cy, 1, claw);
-  }
-  const body = `<ellipse cx="0" cy="-10" rx="110" ry="34" fill="#6a4a2a" ${ink(5)}/><rect x="-100" y="-56" width="200" height="46" rx="10" fill="${GOLD}" ${ink(5)}/>
-    <rect x="-34" y="-230" width="68" height="180" fill="#8a5a2a" ${ink(5)}/>
-    <path d="M-34 -190H34M-34 -150H34M-34 -110H34" stroke="${GOLD}" stroke-width="8"/>
-    ${arms}
-    <g transform="rotate(${folded ? 14 : 0} 0 -270)"><rect x="-90" y="-320" width="180" height="96" rx="18" fill="${GOLD}" ${ink(6)}/>
-    <rect x="-96" y="-330" width="192" height="18" rx="6" fill="#3a2c22" ${ink(3)}/>
-    ${folded ? '' : glow(id + 'e', 0, -268, 60, 0.9)}<circle cx="0" cy="-268" r="28" fill="#1a1418" ${ink(4)}/><circle cx="0" cy="-268" r="16" fill="${folded ? '#5a2a2a' : '#ff3a4c'}"/>
-    ${folded ? `<path d="M-14 -268h28" stroke="#ff8a8a" stroke-width="5" stroke-linecap="round"/>` : ''}
-    <circle cx="-74" cy="-340" r="12" fill="#fff2b0" ${ink(3)}/><circle cx="74" cy="-340" r="12" fill="#fff2b0" ${ink(3)}/></g>`;
-  return defs + at(x, y, s, body);
-}
-
-/** CHARYBDIS: a great spiral of foam in a dark swirl of sea (calm = a small, gentle one). */
-function whirlpool(id: string, x: number, y: number, s: number, calm = false): string {
-  const defs = `<defs>${rad(id + 'w', [[0, '#04263a'], [0.6, '#0e5a7a'], [1, '#2ac0d0']])}</defs>`;
-  let arms = '';
-  const n = calm ? 3 : 5;
-  for (let a = 0; a < n; a++) {
-    let d = '';
-    for (let i = 0; i <= 30; i++) {
-      const k = i / 30;
-      const ang = (a / n) * Math.PI * 2 + k * Math.PI * 2.2;
-      const r = 10 + k * 190;
-      d += `${i ? 'L' : 'M'}${Math.round(Math.cos(ang) * r)} ${Math.round(Math.sin(ang) * r * 0.32)}`;
-    }
-    arms += `<path d="${d}" fill="none" stroke="#e6fbff" stroke-width="${calm ? 5 : 8}" stroke-linecap="round" opacity=".85"/>`;
-  }
-  const body = `<ellipse cx="0" cy="0" rx="210" ry="68" fill="url(#${id}w)" ${ink(5)}/>${arms}`;
-  return defs + at(x, y, s, body);
-}
-
-/** 26. The Argo sails through the calm strait past Scylla, her arms folded; the heroes wave from the pier. */
-export function ch3Strait(): string {
-  const id = 'ch3-strait';
-  const fish = [
-    [380, 560],
-    [430, 590],
-    [880, 640],
-  ]
-    .map(([fx, fy], i) => at(fx, fy, 1, `<path d="M0 0Q20 -18 40 0Q20 18 0 0ZM40 0l16 -12v24z" fill="${i % 2 ? '#ffb347' : '#ff7a8a'}" ${ink(3)}/>`, i % 2 === 1, -20))
-    .join('');
-  return panel(
-    sky(id) +
-      `<defs>${glowDef(id + 'g', '#fff4c0', 0.7)}</defs>` +
-      glow(id + 'g', 1400, 150, 140, 0.9) +
-      `<circle cx="1400" cy="150" r="60" fill="#fffbe8"/>` +
-      sea(id, 480) +
-      whirlpool(id + 'c', 300, 640, 0.5, true) +
-      bigRock(1260, 640, 0.9) +
-      scylla(id + 's', 1260, 230, 0.56, true) +
-      argoShip(id + 'a', 720, 560, 0.62, -2) +
-      fish +
-      // The heroes on the pier, waving.
-      `<path d="M820 900V780H1160V900Z" fill="#b0835a" ${ink(5)}/><path d="M840 780V900M900 780V900M960 780V900M1020 780V900M1080 780V900" stroke="#7a5636" stroke-width="5"/>` +
-      jason(920, 800, 0.8, { pose: 'wave', face: 'grin' }) +
-      atalanta(1060, 800, 0.8, { pose: 'cheer', face: 'happy' }) +
-      lux(860, 600, 0.55, 'happy') +
-      iris(1140, 610, 0.55, 'happy') +
-      sparkle(560, 420, 12, '#fff') +
-      sparkle(860, 380, 9, GOLD) +
-      sparkle(300, 600, 8, '#fff') +
-      vignette(id + 'v', 0.25, GOLD_DARK),
-  );
-}
+import { coral, splash, whirlpool } from '../gn/ch3b';
 
 /* ---------------- 25. SCYLLA, in the graphic-novel style ---------------- */
 
@@ -511,4 +382,234 @@ export function ch3Scylla(): string {
     });
   const fore = coralGN(pen, 10, 990, 2.0, false) + coralGN(pen, 1610, 990, 2.3, true);
   return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.65, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.55, '#0a0a1c') + gn.grain(pen, 0.08));
+}
+
+/* ---------------- 26. Through the calm strait ---------------- */
+
+/** A switched-off elbow joint: plain steel, no glow. */
+function dimJoint(pen: gn.Pen, p: gn.P, r: number): string {
+  return pen.form(`M${p[0] - r} ${p[1]}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`, '#6a6a7a', { sh: r * 0.6, line: 2.6, rim: 1.6, inner: `<circle cx="${p[0]}" cy="${p[1]}" r="${gn.r1(r * 0.4)}" fill="#3a3a48"/>` });
+}
+
+/** A grabber claw shut tight and hanging straight down, its little eyes dark. */
+function shutClaw(pen: gn.Pen, p: gn.P, s: number): string {
+  const fingers: [gn.P[], number][] = [
+    [
+      [
+        [-12, 20],
+        [-18, 56],
+        [-6, 84],
+      ],
+      20,
+    ],
+    [
+      [
+        [12, 20],
+        [18, 56],
+        [6, 84],
+      ],
+      20,
+    ],
+  ];
+  const body =
+    pen.brushes(fingers, gn.INK, [0.05, 0.8]) +
+    pen.brushes(
+      fingers.map(([pts, w]) => [pts, w * 0.55] as [gn.P[], number]),
+      '#5a5a6a',
+      [0.05, 0.8],
+    ) +
+    pen.form('M-24 -22H24L28 22H-28Z', SC_GOLD, { sh: 12, hatch: 1, line: 2.6, rim: 1.8, inner: `<path d="M-15 -2h10M5 -2h10" stroke="#4a1a1a" stroke-width="4"/>` });
+  return gn.at(p[0], p[1], s, body);
+}
+
+/**
+ * SCYLLA after the fight, folded up like a tired spider on her rock: all six arms tucked down round her
+ * mast, claws shut, the cab drooping and its big eye dark, a curl of smoke from her pumps. Base at (x, y).
+ */
+function scyllaFolded(pen: gn.Pen, x: number, y: number, s: number): string {
+  const rimC = pen.light.rimColor;
+  const arms: [gn.P, gn.P, gn.P][] = [
+    [
+      [-80, -360],
+      [-196, -404],
+      [-236, -214],
+    ],
+    [
+      [-60, -300],
+      [-194, -300],
+      [-212, -132],
+    ],
+    [
+      [-46, -220],
+      [-150, -186],
+      [-160, -52],
+    ],
+    [
+      [80, -360],
+      [196, -404],
+      [236, -214],
+    ],
+    [
+      [60, -300],
+      [194, -300],
+      [212, -132],
+    ],
+    [
+      [46, -220],
+      [150, -186],
+      [160, -52],
+    ],
+  ];
+  let back = '';
+  let front = '';
+  arms.forEach(([sh, el, cl], i) => {
+    const part = boom(pen, sh, el, 40, 34, rimC) + boom(pen, el, cl, 32, 26, rimC) + dimJoint(pen, el, 17) + shutClaw(pen, cl, 0.85);
+    if (i % 3 === 1) back += part;
+    else front += part;
+  });
+  const column = pen.form('M-62 -96L-42 -300H42L62 -96Z', SC_GOLD, { sh: 34, hatch: 2, line: 3, rim: 2.4, axis: [0, 1], inner: `<path d="M-52 -110L40 -200L-44 -290M52 -110L-40 -200L44 -290" fill="none" stroke="${gn.INK}" stroke-width="4" opacity=".55"/>` });
+  const skirt = pen.form('M-128 -92L-66 -150H66L128 -92Z', SC_GOLD, { sh: 24, hatch: 2, line: 3, rim: 2.4 });
+  const turret = pen.form('M-160 -50Q-160 -100 0 -104Q160 -100 160 -50V0Q160 26 0 28Q-160 26 -160 0Z', '#c89030', { sh: 50, hatch: 2, line: 3.2, rim: 2.4, inner: `<path d="M-160 -40Q0 -4 160 -40" fill="none" stroke="${gn.INK}" stroke-width="3.4" opacity=".7"/>` });
+  const collar = pen.form('M-76 -318H76L88 -268H-88Z', SC_GOLD, { sh: 20, hatch: 2, line: 3, rim: 2.4 });
+  const cabPen = pen.local(false, 16);
+  const cab =
+    cabPen.form('M-112 50H112L132 0L96 -62H-96L-132 0Z', SC_GOLD, { sh: 40, hatch: 2, line: 3.2, rim: 2.6, inner: `<path d="M-128 0H128" stroke="${gn.INK}" stroke-width="3" opacity=".7"/>` }) +
+    cabPen.form('M-40 -2a40 40 0 1 0 80 0a40 40 0 1 0 -80 0Z', '#1a1418', { line: 3.2, inner: `<circle cx="0" cy="-2" r="24" fill="#4a1a20"/><path d="M-40 -8Q0 -30 40 -8V-44H-40Z" fill="${SC_GOLD}" stroke="${gn.INK}" stroke-width="3"/>` });
+  const smoke = [
+    [70, -420, 22],
+    [96, -470, 30],
+    [80, -530, 38],
+  ]
+    .map(([cx, cy, r], i) => pen.glow(cx, cy, r * 1.6, '#e8e4ec', 0.75 - i * 0.18))
+    .join('');
+  return gn.at(x, y, s, back + turret + skirt + column + collar + gn.at(0, -350, 1, cab, false, 16) + front + smoke);
+}
+
+/** A little fish leaping out of the water along an arc: orange or pink, inked, a splash where it left. */
+function leapingFish(pen: gn.Pen, x: number, y: number, s: number, rot: number, color: string): string {
+  const lp = pen.local(false, rot);
+  const fish = lp.form('M-40 0Q-10 -24 30 -6Q40 0 30 6Q-10 24 -40 0Z', color, { sh: 10, line: 2.6, rim: 1.6, inner: `<circle cx="18" cy="-3" r="3.4" fill="${gn.INK}"/><path d="M-6 -14Q2 0 -6 14" fill="none" stroke="${gn.INK}" stroke-width="2" opacity=".6"/>` }) + lp.form('M-36 0L-62 -20L-56 0L-62 20Z', color, { sh: 6, line: 2.4 });
+  return gn.at(x, y, s, fish, false, rot);
+}
+
+/** 26. Afternoon at the strait: the Argo slips past Scylla, folded up on her rock, and the little swirl Charybdis has become; Atalanta points at the fish coming back, Jason waves from the pier. */
+export function ch3Strait(): string {
+  const pen = gn.Pen.scene('ch3-strait', { key: [-0.75, -0.6], keyColor: '#ffe6b0', rim: [0.9, -0.3], rimColor: '#bff6ff', shadow: '#6a6ab0', depth: 0.5 });
+  const sunX = 90;
+  const sunY = 100;
+  const sky =
+    gn.sky(pen, [
+      [0, '#2058a8'],
+      [0.3, '#58a4dc'],
+      [0.46, '#b8e2f2'],
+      [0.5, '#fff0d0'],
+    ]) +
+    gn.halftone(pen, 'M-80 -60H1680V240H-80Z', '#ffffff', 10, 0.08) +
+    gn.gasGiant(pen, 1180, 120, 80, { lightDir: [-0.9, 0.2], haze: 0.55, sky: '#7ab8e0' }) +
+    gn.godRays(pen, sunX, sunY, [30, 52, 74, 96, 118, 140], 6, 1700, '#fff4d0', 0.24) +
+    gn.bloom(pen, sunX, sunY, 100, '#fff8e0', 1) +
+    gn.cloud(pen, 820, 200, 300, '#ffffff', '#b8c0e0', { seed: 8 }) +
+    gn.cloud(pen, 1480, 230, 220, '#ffffff', '#b8c0e0', { seed: 9 });
+  // The far sea, the next island on the horizon (bronze, a thread of smoke from its volcano).
+  const far =
+    gn.silhouette(
+      [
+        [560, 432],
+        [640, 404],
+        [680, 368],
+        [706, 372],
+        [740, 406],
+        [840, 432],
+      ],
+      '#a89088',
+      0.95,
+    ) +
+    pen.glow(694, 330, 36, '#e8dcd8', 0.6) +
+    pen.glow(706, 286, 50, '#e8dcd8', 0.45) +
+    gn.sea(pen, 430, '#c8eef4', '#127a96', { seed: 14, sunX: 300, ripple: '#e8fbff' }) +
+    gn.haze(pen, 390, 480, '#f0faff', 0.6);
+  // Across the strait: Scylla's rock, Scylla folded up on top; the Argo gliding past; the little swirl with fish leaping round it.
+  const rock = gn.crag(
+    pen,
+    [
+      [-60, 720],
+      [-20, 600],
+      [60, 520],
+      [90, 430],
+      [150, 380],
+      [240, 352],
+      [330, 362],
+      [392, 410],
+      [420, 480],
+      [480, 540],
+      [530, 620],
+      [600, 720],
+    ],
+    '#8a7a80',
+    { seed: 8, sh: 120, cracks: 10, strata: 4, rim: 2.6, hatch: 2, line: 3 },
+  );
+  const mid =
+    rock +
+    scyllaFolded(pen, 248, 370, 0.56) +
+    pen.brush(
+      [
+        [-60, 716],
+        [260, 700],
+        [610, 718],
+      ],
+      14,
+      '#f4fdff',
+      [0.3, 0.3],
+      0.85,
+    ) +
+    gn.argoTrail(pen, 640, 488, 260, -86, '#e8fbff') +
+    gn.argo(pen, 820, 470, 0.34, { rot: -2 }) +
+    whirlpool(pen, 870, 590, 210, 40, { calm: true, seed: 3, water: '#2ab0c0', deep: '#1a7a9a' }) +
+    leapingFish(pen, 720, 556, 0.9, -34, '#ff9a4a') +
+    leapingFish(pen, 990, 566, 0.75, 28, '#ff7a9a') +
+    coral(pen, 640, 600, 0.45, 'stag', '#ff8a8a', { seed: 2 }) +
+    gn.haze(pen, 620, 740, '#e8fbff', 0.3);
+  // The pier at the foot of the reef: Atalanta points at the swirl and the fish, Jason waves to the Argo.
+  let planks = '';
+  for (let px = 1040; px < 1720; px += 64) planks += `M${px} 800L${px + (px - 1360) * 0.22} 980`;
+  const pier =
+    pen.brushes(
+      [
+        [
+          [
+            [1070, 820],
+            [1070, 960],
+          ],
+          26,
+        ],
+        [
+          [
+            [1260, 820],
+            [1260, 960],
+          ],
+          26,
+        ],
+      ],
+      '#3a2418',
+      [0, 0],
+    ) +
+    pen.form('M1040 800H1700V880H1004Z', '#b08058', { sh: 14, hatch: 1, line: 3.2, rim: 2, inner: `<path d="${planks}" stroke="${gn.INK}" stroke-width="2.6" opacity=".55"/>` }) +
+    pen.form('M1004 880H1700V912H1008Z', '#7a5236', { sh: 8, line: 3 });
+  const heroPen = pen.relight({ key: [-0.95, -0.3] });
+  const heroes =
+    pier +
+    gn.castShadow(pen, 1130, 868, 130, 14, 0.45) +
+    gn.atalanta(heroPen, 1130, 872, 1.04, {
+      flip: true,
+      pose: { turn: 0.45, lean: 6, hipTilt: 6, armN: [-12, 6], armF: [74, 78], legN: { to: [-0.22, 0.95] }, legF: { to: [0.26, 0.94] }, handN: 'fist', handF: 'point' },
+      mood: 'grin',
+      look: [2.4, 1.4],
+      wind: 0.8,
+    }) +
+    gn.castShadow(pen, 1410, 868, 140, 14, 0.45) +
+    gn.jason(heroPen, 1410, 872, 1.08, { flip: true, pose: 'wave', mood: 'grin', look: [2.2, -1] }) +
+    gn.lux(pen, 1300, 250, 0.85, 'happy', { flip: true }) +
+    gn.iris(pen, 1010, 250, 0.72, 'happy', { flip: true, rot: -10 });
+  const fore = coral(pen, -20, 960, 1.4, 'stag', '#ff7a8a', { seed: 6 }) + coral(pen, 160, 960, 1, 'fan', '#ffb84a', { seed: 5 });
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.45, '#0a1a30') + gn.grain(pen, 0.08));
 }

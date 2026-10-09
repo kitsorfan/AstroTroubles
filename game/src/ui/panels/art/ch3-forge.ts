@@ -1,135 +1,367 @@
 /** Chapter 3 panels for Talos's Forge: the sleeping bronze mech, and Talos sitting down by the sea, free. */
-import { at, atalanta, backdrop, C, cloud, glow, glowDef, ink, iris, jason, leaf, lin, lux, panel, rad, ridge, sparkle, vignette } from '../kit';
+import * as gn from '../gn';
+import { ell, lightWords, mech, MECH, mechPerch, TALOS, talos } from '../gn/ch3b';
 
-const BRONZE = '#c8862e';
-const BRONZE_LIGHT = '#e8b060';
-const BRONZE_DARK = '#7a4a1a';
-const PATINA = '#5aa88a';
-const IRON = '#3a3230';
-const TEAL = '#5ff0d0';
+/* ---------------- 25. The sleeping mech ---------------- */
 
-/** A row of little glowing leaves: the Gardeners' light-writing (centred on 0, 0). */
-function lightWords(n: number, w: number, color = TEAL): string {
-  return Array.from({ length: n }, (_, i) => leaf(-w / 2 + (i * w) / Math.max(1, n - 1), 0, 0.22, i % 2 ? -30 : 30, color, 2)).join('');
+/** The forge's furnace: a great arched mouth in the back wall, white-hot inside, its brick arch lit from within. */
+function furnace(pen: gn.Pen, x: number, y: number, w: number, h: number): string {
+  const arch = `M${x - w / 2} ${y}V${y - h * 0.55}Q${x - w / 2} ${y - h} ${x} ${y - h}Q${x + w / 2} ${y - h} ${x + w / 2} ${y - h * 0.55}V${y}Z`;
+  const fire = pen.lin([
+    [0, '#fff6d0'],
+    [0.45, '#ffb43a'],
+    [1, '#ff5a1a'],
+  ]);
+  const bricks = Array.from({ length: 9 }, (_, i) => {
+    const a = Math.PI * (i / 8);
+    const ix = x - Math.cos(a) * (w / 2);
+    const iy = y - h * 0.55 - Math.sin(a) * h * 0.45;
+    const ox = x - Math.cos(a) * (w / 2 + 70);
+    const oy = y - h * 0.55 - Math.sin(a) * (h * 0.45 + 70);
+    return `M${gn.r1(ix)} ${gn.r1(iy)}L${gn.r1(ox)} ${gn.r1(oy)}`;
+  }).join('');
+  const surround = `M${x - w / 2 - 70} ${y}V${y - h * 0.55}Q${x - w / 2 - 70} ${y - h - 70} ${x} ${y - h - 70}Q${x + w / 2 + 70} ${y - h - 70} ${x + w / 2 + 70} ${y - h * 0.55}V${y}Z`;
+  return (
+    pen.form(surround, '#5a3a30', { sh: 40, hatch: 2, line: 3.4, inner: `<path d="${bricks}" stroke="${gn.INK}" stroke-width="3" opacity=".6"/>` + pen.glow(x, y - h * 0.5, w * 0.9, '#ff9a3a', 0.6) }) +
+    `<path d="${arch}" fill="${fire}" stroke="${gn.INK}" stroke-width="4"/>` +
+    pen.glow(x, y - h * 0.35, w * 0.45, '#ffffff', 0.7) +
+    pen.brushes(
+      [
+        [
+          [
+            [x - w * 0.3, y],
+            [x - w * 0.2, y - h * 0.3],
+            [x - w * 0.26, y - h * 0.55],
+          ],
+          26,
+        ],
+        [
+          [
+            [x + w * 0.1, y],
+            [x + w * 0.18, y - h * 0.35],
+            [x + w * 0.08, y - h * 0.62],
+          ],
+          30,
+        ],
+      ],
+      '#ffe6a0',
+      [0.1, 0.9],
+      0.8,
+    )
+  );
 }
 
 /**
- * The Gardeners' bronze mech, sitting (feet at 0, 0, about 520 units tall at scale 1): a round bronze
- * body, a glass cockpit bubble on top, big fists, a teal eye across the chest (dim and closed while it
- * sleeps). `awake` lights the eye and the light-words.
+ * The deep arched niche in the back wall where the mech was left: a stone frame carved with dim
+ * light-words round a dark recess, faintly lit teal by the waking eye. Inner edges x0..x1, floor at y, top at `top`.
  */
-function bronzeMech(x: number, y: number, s: number, awake: boolean, cockpit = ''): string {
-  const eye = awake ? `<rect x="-80" y="-300" width="160" height="26" rx="13" fill="${TEAL}" ${ink(4)}/><rect x="-60" y="-296" width="40" height="8" rx="4" fill="#fff" opacity=".7"/>` : `<path d="M-70 -286Q0 -270 70 -286" fill="none" stroke="#2a4a44" stroke-width="10" stroke-linecap="round"/>`;
-  const leg = (sx: number) =>
-    `<path d="M${sx * 70} -150Q${sx * 120} -120 ${sx * 150} -40L${sx * 60} -40Z" fill="${BRONZE}" ${ink(6)}/>
-     <rect x="${sx > 0 ? 40 : -200}" y="-46" width="160" height="50" rx="16" fill="${BRONZE}" ${ink(6)}/>
-     <rect x="${sx > 0 ? 150 : -200}" y="-30" width="50" height="34" rx="10" fill="${PATINA}" ${ink(4)}/>`;
-  const arm = (sx: number) =>
-    `<circle cx="${sx * 175}" cy="-330" r="62" fill="${BRONZE_LIGHT}" ${ink(6)}/><path d="M${sx * 175} -300L${sx * 225} -150" ${ink(46)}/><path d="M${sx * 175} -300L${sx * 225} -150" stroke="${BRONZE}" stroke-width="34" stroke-linecap="round"/>
-     <rect x="${sx * 225 - 55}" y="-160" width="110" height="100" rx="22" fill="${BRONZE_LIGHT}" ${ink(6)}/><path d="M${sx * 225 - 30} -158v40M${sx * 225} -158v40M${sx * 225 + 30} -158v40" stroke="${BRONZE_DARK}" stroke-width="5"/>`;
-  const body = `<ellipse cx="0" cy="8" rx="260" ry="26" fill="#000" opacity=".22"/>
-    ${leg(-1)}${leg(1)}
-    <ellipse cx="0" cy="-260" rx="185" ry="150" fill="${BRONZE}" ${ink(7)}/>
-    <path d="M-150 -170Q0 -110 150 -170" fill="none" stroke="${PATINA}" stroke-width="16" stroke-linecap="round"/>
-    <path d="M-120 -360Q-150 -260 -100 -190" fill="none" stroke="#fff" stroke-width="12" opacity=".25" stroke-linecap="round"/>
-    ${at(-95, -220, 1, lightWords(4, 70, awake ? TEAL : '#3a6a60'))}${at(95, -220, 1, lightWords(4, 70, awake ? TEAL : '#3a6a60'))}
-    ${eye}
-    ${arm(-1)}${arm(1)}
-    <rect x="-90" y="-420" width="180" height="26" rx="12" fill="${IRON}" ${ink(5)}/>
-    ${cockpit}
-    <path d="M-92 -410A92 92 0 0 1 92 -410Z" fill="#bff4ff" fill-opacity=".28" ${ink(5)}/>
-    <path d="M-60 -460Q-40 -488 -6 -496" fill="none" stroke="#fff" stroke-width="8" opacity=".6" stroke-linecap="round"/>
-    <path d="M0 -500l-12 -40 12 -14 12 14z" fill="${PATINA}" ${ink(4)}/>`;
-  return at(x, y, s, body);
+function niche(pen: gn.Pen, x0: number, x1: number, y: number, top: number, lit: number): string {
+  const w = 70;
+  const mid = (x0 + x1) / 2;
+  const r = (x1 - x0) / 2;
+  const frame = `M${x0 - w} ${y}V${top + r}A${r + w} ${r + w} 0 0 1 ${x1 + w} ${top + r}V${y}H${x1}V${top + r}A${r} ${r} 0 0 0 ${x0} ${top + r}V${y}Z`;
+  const hole = `M${x0} ${y}V${top + r}A${r} ${r} 0 0 1 ${x1} ${top + r}V${y}Z`;
+  const depth = pen.rad(
+    [
+      [0, '#1c3a3a'],
+      [0.55, '#120c10'],
+      [1, '#07040a'],
+    ],
+    0.5,
+    0.62,
+    0.6,
+  );
+  let words = '';
+  for (let i = 0; i < 7; i++) {
+    const a = -90 + (i / 6) * 180;
+    const p = gn.add([mid, top + r], gn.mul(gn.dir(180 - a), r + w / 2));
+    words += lightWords(pen, p[0], p[1], 3, w * 0.7, lit * (0.6 + (i % 2) * 0.3), MECH.teal, a);
+  }
+  for (const px of [x0 - w / 2, x1 + w / 2]) for (let k = 0; k < 3; k++) words += lightWords(pen, px, top + r + 80 + k * 110, 3, w * 0.7, lit * 0.6, MECH.teal, 90);
+  let joints = '';
+  for (let yy = y - 90; yy > top + r; yy -= 100) joints += `M${x0 - w} ${yy}H${x0}M${x1} ${yy}H${x1 + w}`;
+  return `<path d="${hole}" fill="${depth}" stroke="${gn.INK}" stroke-width="4"/>` + pen.form(frame, '#6a5048', { sh: 26, hatch: 2, line: 3.4, rim: 2, inner: `<path d="${joints}" stroke="${gn.INK}" stroke-width="3" opacity=".5"/>` }) + words;
 }
 
-/** 25. In the dark old forge, the heroes find the Gardeners' bronze mech asleep, and its eye starts to glow. */
+/** 25. In the old forge, lit by the furnace, Jason and Atalanta find the Gardeners' bronze mech sitting where it was left, and its teal eye starts to glow. */
 export function ch3Mech(): string {
-  const id = 'ch3-mech';
-  const chains = [180, 420, 1180, 1420]
-    .map((x, i) => `<path d="M${x} 0V${180 + (i % 2) * 70}" stroke="#2a1a14" stroke-width="10" stroke-dasharray="18 8"/><path d="M${x - 22} ${200 + (i % 2) * 70}h44l-8 30h-28z" fill="${IRON}" ${ink(4)}/>`)
-    .join('');
-  return panel(
-    backdrop(id + 'b', [[0, '#1e120e'], [0.55, '#4a2414'], [1, '#2a160e']]) +
-      `<defs>${glowDef(id + 'f', '#ff8a2a', 0.9)}${glowDef(id + 't', TEAL, 0.7)}${lin(id + 'g', [[0, '#3a2418'], [1, '#1a0e0a']])}</defs>` +
-      // The great furnace at the back, still glowing, and bronze wall panels carved with leaves.
-      glow(id + 'f', 800, 330, 520, 0.85, 300) +
-      `<path d="M560 520V250Q800 90 1040 250V520Z" fill="#2a1a14" ${ink(7)}/><path d="M620 520V290Q800 170 980 290V520Z" fill="#ff7a1a"/><path d="M660 520V320Q800 230 940 320V520Z" fill="#ffd166"/>` +
-      [80, 330, 1270, 1520].map((x) => `<rect x="${x - 100}" y="170" width="200" height="380" rx="20" fill="${BRONZE_DARK}" opacity=".85" ${ink(5)}/>${at(x, 300, 1.4, lightWords(3, 90, '#4a8a7a'))}`).join('') +
-      chains +
-      `<path d="M0 560H1600V900H0Z" fill="url(#${id}g)"/><path d="M0 560H1600" ${ink(6)}/>` +
-      // The mech, sitting in the middle, waking up.
-      glow(id + 't', 800, 600, 260, 0.55) +
-      bronzeMech(800, 830, 0.95, true) +
-      sparkle(700, 330, 12, TEAL) +
-      sparkle(930, 300, 9, '#fff') +
-      // Jason and LUX on the left, Atalanta and IRIS on the right, staring up at it.
-      jason(330, 860, 1.05, { pose: 'point', face: 'shock', blaster: false }) +
-      lux(180, 560, 0.85, 'glow') +
-      atalanta(1280, 860, 1.05, { pose: 'cheer', face: 'grin' }) +
-      iris(1450, 540, 0.85, 'happy', true) +
-      vignette(id + 'v', 0.5, '#0a0604'),
-  );
+  const pen = gn.Pen.scene('ch3-mech', { key: [-0.75, -0.6], keyColor: '#ffb070', rim: [0.9, -0.3], rimColor: '#7ff8e0', shadow: '#4a2a5a', depth: 0.6 });
+  const mx = 820;
+  const my = 812;
+  const ms = 0.6;
+  const sky =
+    gn.sky(pen, [
+      [0, '#120a10'],
+      [0.5, '#2e1612'],
+      [1, '#160a0a'],
+    ]) +
+    pen.glow(250, 420, 520, '#ff7a2a', 0.5) +
+    furnace(pen, 240, 600, 240, 330) +
+    gn.godRays(pen, 240, 420, [40, 62, 84, 106, 128], 5, 1400, '#ffb070', 0.16) +
+    niche(pen, mx - 330, mx + 330, 650, 60, 0.5);
+  // Wall columns and hanging chains, half lost in the smoke.
+  const chain = (cx: number, len: number) => {
+    let d = '';
+    for (let cy = -20; cy < len; cy += 26) d += `M${cx - 6} ${cy}h12v20h-12Z`;
+    return `<path d="${d}" fill="none" stroke="#1a0e0c" stroke-width="6"/><path d="M${cx - 20} ${len}h40l-6 34h-28Z" fill="#2a1c18"/>`;
+  };
+  const far =
+    gn.silhouette(
+      [
+        [1250, 640],
+        [1250, 120],
+        [1330, 100],
+        [1330, 640],
+      ],
+      '#2a1614',
+    ) +
+    gn.silhouette(
+      [
+        [1500, 640],
+        [1500, 80],
+        [1580, 60],
+        [1580, 640],
+      ],
+      '#2a1614',
+    ) +
+    lightWords(pen, 1290, 300, 4, 50, 0.35, MECH.teal, 90) +
+    lightWords(pen, 1540, 260, 4, 50, 0.35, MECH.teal, 90) +
+    chain(560, 200) +
+    chain(1120, 260) +
+    chain(1420, 160) +
+    gn.haze(pen, 120, 520, '#ff9a5a', 0.1) +
+    gn.starfield(pen, 61, 40, 300, 100, 1200, 500, '#ffb050');
+  // The floor and the stone bench the mech sits on, then the mech, its eye just starting to glow.
+  let joints = '';
+  for (let i = -8; i <= 8; i++) joints += `M${mx + i * 40} 640L${mx + i * 280} 1000`;
+  for (const yy of [670, 720, 800, 900]) joints += `M-80 ${yy}H1680`;
+  const floor = pen.form('M-80 640H1680V980H-80Z', '#5a3a2c', { sh: 0, line: 3, inner: `<path d="${joints}" stroke="${gn.INK}" stroke-width="2.6" opacity=".4"/>` + pen.glow(240, 660, 420, '#ff8a3a', 0.45, 90) + pen.glow(mx, 700, 360, MECH.teal, 0.25, 80) });
+  const seat = my - 330 * ms;
+  const bench =
+    pen.form(`M${mx - 360} ${seat}H${mx + 360}L${mx + 380} ${seat + 26}V${my + 6}H${mx - 380}V${seat + 26}Z`, '#4e3a36', { sh: 60, hatch: 2, line: 3.4, rim: 2, inner: lightWords(pen, mx - 250, seat + 110, 5, 120, 0.25) + lightWords(pen, mx + 250, seat + 110, 5, 120, 0.25) }) +
+    pen.form(`M${mx - 370} ${seat - 16}H${mx + 370}V${seat + 10}H${mx - 370}Z`, '#6a5448', { sh: 8, line: 3, rim: 2 });
+  const mid = floor + gn.wash(pen, 820, '#0a0406', 0.7) + gn.castShadow(pen, mx, my + 10, 420, 30, 0.5) + bench + mech(pen, mx, my, ms, { sit: true, awake: 0.75, rim: 3.4 }) + gn.bloom(pen, mx + 18, my - 404, 80, MECH.teal, 0.8) + gn.spark(pen, mx + 60, my - 410, 26, '#e8fff8');
+  // IRIS scans the mech with a fan of light; LUX hides by Jason; Jason points at the bubble, Atalanta calls the shoulder.
+  const scan = `<path d="M1450 380L${mx + 140} 300L${mx + 160} 560Z" fill="${pen.lin([
+    [0, '#c9b8ff', 0.5],
+    [1, '#c9b8ff', 0],
+  ], 1, 0, 0, 0)}"/>`;
+  const heroes =
+    scan +
+    gn.castShadow(pen, 310, 884, 150, 16, 0.55) +
+    gn.jason(pen.relight({ key: [0.95, -0.3], keyColor: '#d8fff0', rim: [-0.9, -0.4], rimColor: '#ffa060' }), 310, 888, 1.1, {
+      pose: { turn: 0.45, lean: -4, tilt: -12, hipTilt: 5, armN: [-12, 8], armF: [124, 132], legN: { to: [-0.24, 0.94] }, legF: { to: [0.28, 0.93] }, handN: 'fist', handF: 'point' },
+      mood: 'grin',
+      look: [2.6, -3],
+    }) +
+    gn.lux(pen, 210, 470, 0.95, 'scared', { look: [8, -4] }) +
+    gn.castShadow(pen, 1310, 884, 150, 16, 0.55) +
+    gn.atalanta(pen.relight({ key: [-0.95, -0.3] }), 1310, 888, 1.1, {
+      flip: true,
+      pose: { turn: 0.38, tilt: -8, hipTilt: 7, armN: [-160, -176], armF: { to: [0.62, 1.4], bend: -1 }, legN: { to: [-0.08, 0.98] }, legF: { to: [0.24, 0.95] }, handN: 'open', handF: 'fist' },
+      mood: 'grin',
+      look: [2.4, -2.6],
+    }) +
+    gn.iris(pen, 1470, 380, 0.8, 'normal', { flip: true, rot: -8 });
+  const fore =
+    gn.starfield(pen, 77, 26, 0, 300, 1600, 500, '#ffb050') +
+    gn.silhouette(
+      [
+        [-80, 980],
+        [-80, 800],
+        [60, 790],
+        [120, 830],
+        [160, 980],
+      ],
+      '#140a0a',
+    ) +
+    chain(1640, 520);
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.65, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.6, '#0a0406') + gn.grain(pen, 0.09));
 }
 
-/**
- * TALOS sitting by the sea (hips at 0, 0, about 900 units tall at scale 1), free: legs out over the cliff
- * edge, hammer laid down, the gold crown on the ground, his eye teal again, head bowed in a nod.
- */
-function talosSitting(id: string): string {
-  const leg = (sx: number) =>
-    `<path d="M${sx * 120} -40L${sx * 150} 300" ${ink(130)}/><path d="M${sx * 120} -40L${sx * 150} 300" stroke="#a8692a" stroke-width="116" stroke-linecap="round"/>
-     <rect x="${sx * 150 - 80}" y="290" width="160" height="70" rx="20" fill="#a8692a" ${ink(6)}/>
-     <rect x="${sx * 150 - 54}" y="80" width="108" height="150" rx="16" fill="#d8944a" ${ink(5)}/>`;
-  return `<defs>${glowDef(id + 'i', '#ffd04a', 0.9)}</defs>
-    ${leg(-1)}${leg(1)}
-    <ellipse cx="0" cy="-40" rx="200" ry="70" fill="#2e2622" ${ink(6)}/>
-    <ellipse cx="0" cy="-270" rx="250" ry="230" fill="#a8692a" ${ink(7)}/>
-    <path d="M-220 -150Q0 -70 220 -150" fill="none" stroke="#4a9a7a" stroke-width="20" stroke-linecap="round"/>
-    ${Array.from({ length: 8 }, (_, i) => {
-      const a = (i / 8) * Math.PI * 2;
-      return leaf(Math.cos(a) * 70, -300 + Math.sin(a) * 60, 0.32, (a * 180) / Math.PI, TEAL, 3);
-    }).join('')}
-    <circle cx="-270" cy="-400" r="90" fill="#d8944a" ${ink(6)}/><circle cx="270" cy="-400" r="90" fill="#d8944a" ${ink(6)}/>
-    <path d="M-280 -380L-330 -60" ${ink(80)}/><path d="M-280 -380L-330 -60" stroke="#a8692a" stroke-width="66" stroke-linecap="round"/>
-    <path d="M280 -380L360 -80" ${ink(80)}/><path d="M280 -380L360 -80" stroke="#a8692a" stroke-width="66" stroke-linecap="round"/>
-    <rect x="-390" y="-90" width="120" height="110" rx="24" fill="#d8944a" ${ink(6)}/><rect x="300" y="-110" width="120" height="110" rx="24" fill="#d8944a" ${ink(6)}/>
-    ${at(0, -560, 1, `<rect x="-60" y="40" width="120" height="50" fill="#2e2622" ${ink(5)}/><circle r="125" fill="#a8692a" ${ink(7)}/>
-      <rect x="-90" y="-10" width="180" height="34" rx="17" fill="${TEAL}" ${ink(4)}/><rect x="-70" y="-5" width="50" height="10" rx="5" fill="#fff" opacity=".8"/>
-      <path d="M0 -125l-20 -70 20 -26 20 26z" fill="#4a9a7a" ${ink(4)}/><path d="M-60 -90Q-90 -40 -80 10" fill="none" stroke="#fff" stroke-width="12" opacity=".2" stroke-linecap="round"/>`, false, 14)}`;
+/* ---------------- 26. Talos, free ---------------- */
+
+/** Aeëtes's gold control crown, knocked off and lying tipped over, its red gem gone dark. Centre-bottom at (x, y). */
+function fallenCrown(pen: gn.Pen, x: number, y: number, s: number, rot: number): string {
+  const lp = pen.local(false, rot);
+  const body = lp.form('M-80 0V-46L-54 -16L-28 -62L0 -20L28 -62L54 -16L80 -46V0Q0 16 -80 0Z', '#ffd04a', { sh: 26, hatch: 1, line: 3.2, rim: 2, inner: `<path d="M-80 -10Q0 6 80 -10" stroke="#a8741c" stroke-width="7" fill="none"/>` });
+  return gn.at(x, y, s, body + `<circle cx="0" cy="-22" r="11" fill="#5a1a20" stroke="${gn.INK}" stroke-width="3"/>`, false, rot);
 }
 
-/** 26. Sunset by the sea: Talos sits on the cliff edge, free and calm, and nods to the little mech waving below. */
+/** Talos's great forge hammer, laid down and leaning on the rocks: head at (x, y), the haft running down-left. */
+function restingHammer(pen: gn.Pen, x: number, y: number, s: number): string {
+  const head = pen.form('M-80 -70H80V70H-80Z', TALOS.light, { sh: 50, hatch: 2, line: 3.6, rim: 2.6, inner: `<path d="M-80 -70H80V-44H-80Z" fill="${TALOS.patina}"/><path d="M-80 30H80" stroke="${gn.INK}" stroke-width="3" opacity=".5"/>` });
+  const haft = pen.form('M-30 40L-330 330L-306 352L-6 64Z', TALOS.iron, { sh: 10, line: 3.2, rim: 2 });
+  return gn.at(x, y, s, haft + head, false, 18);
+}
+
+/** Talos's light-words drifting toward the heroes ("Thank you, small friends"): rows of glowing leaves along a curve, fading as they go. */
+function lightSpeech(pen: gn.Pen, pts: gn.P[]): string {
+  const ribbon = pen.brush(pts, 70, TALOS.calm, [0.05, 0.6], 0.16) + pen.brush(pts, 22, '#d8fff4', [0.05, 0.7], 0.3);
+  return ribbon + pts.map((p, i) => lightWords(pen, p[0], p[1], 4, 92 - i * 10, 1 - i * 0.12, TALOS.calm, (i % 2 ? 1 : -1) * 6)).join('') + gn.spark(pen, pts[0][0], pts[0][1] - 30, 16, '#e8fff8');
+}
+
+/** 26. Sunset by the sea: TALOS, free, sits down on the rocks and gives the Argonauts a slow nod; Jason in the mech's bubble and Atalanta on its shoulder wave back. */
 export function ch3Talos(): string {
-  const id = 'ch3-talos';
-  const sea = `<defs>${lin(id + 's', [[0, '#3a8aa8'], [1, '#14405a']])}${rad(id + 'u', [[0, '#fff6d8'], [0.4, '#ffd08a'], [1, '#ff9a5a', 0]])}</defs>`;
-  const waves = [0, 1, 2, 3, 4].map((i) => `<path d="M${-40 + i * 360} ${640 + (i % 2) * 30}q60 -16 120 0t120 0" fill="none" stroke="#bfe8f4" stroke-width="5" opacity=".6" stroke-linecap="round"/>`).join('');
-  const crown = at(1160, 810, 0.8, `<path d="M-70 0V-40L-46 -10L-22 -50L0 -12L22 -50L46 -10L70 -40V0Z" fill="#ffd04a" ${ink(5)}/><circle cx="0" cy="-20" r="10" fill="#ff3a4c" ${ink(3)}/>`, false, 18);
-  const hammer = at(420, 800, 1, `<rect x="-240" y="-14" width="380" height="28" rx="12" fill="${IRON}" ${ink(5)}/><rect x="120" y="-70" width="150" height="140" rx="20" fill="#d8944a" ${ink(6)}/><rect x="120" y="-70" width="150" height="26" fill="#4a9a7a" ${ink(4)}/>`, false, -8);
-  return panel(
-    backdrop(id + 'b', [[0, '#2f6f9a'], [0.55, '#ffb48a'], [1, '#ffd8a8']]) +
-      sea +
-      `<circle cx="1240" cy="470" r="230" fill="url(#${id}u)"/><circle cx="1240" cy="470" r="80" fill="#fff4d8"/>` +
-      cloud(260, 170, 1.1, '#ffe4c8', 0.8) +
-      cloud(980, 120, 0.8, '#ffe4c8', 0.7) +
-      `<rect y="520" width="1600" height="380" fill="url(#${id}s)"/>` +
-      waves +
-      // The bronze island's cliff top, with Talos sitting on the edge.
-      ridge(7, 760, 60, '#5a3424', 5) +
-      `<path d="M0 700Q500 660 900 720Q1300 760 1600 700V900H0Z" fill="#4a2a1c" ${ink(6)}/>` +
-      // The cliff he sits on: his legs hang down over its face.
-      `<path d="M470 560Q820 530 1150 560L1190 900H430Z" fill="#6a3e28" ${ink(6)}/><path d="M480 572Q820 544 1140 572" fill="none" stroke="#9a6440" stroke-width="10" stroke-linecap="round"/>` +
-      at(820, 570, 0.62, talosSitting(id)) +
-      glow(id + 'i', 1010, 790, 120, 0.9, 40) +
-      hammer +
-      crown +
-      // The little mech below, with Jason in the bubble and Atalanta waving from the shoulder.
-      bronzeMech(1360, 880, 0.42, true, at(0, -420, 1, `<circle cy="-40" r="40" fill="#ffd8b8" ${ink(4)}/><path d="M-40 -50Q0 -100 40 -50" fill="${C.orange}" ${ink(4)}/>`)) +
-      atalanta(1440, 760, 0.42, { pose: 'wave', face: 'happy' }) +
-      lux(1230, 640, 0.45, 'happy') +
-      iris(1500, 630, 0.45, 'happy', true) +
-      sparkle(700, 300, 12, '#fff') +
-      sparkle(900, 250, 9, TEAL) +
-      vignette(id + 'v', 0.35, '#2a1408'),
+  const pen = gn.Pen.scene('ch3-talos', { key: [-0.9, -0.35], keyColor: '#ffc078', rim: [0.7, -0.7], rimColor: '#c8b8ff', shadow: '#5a3a7a', depth: 0.6 });
+  const mechPen = pen.relight({ key: [0.9, -0.35], rim: [-0.7, -0.7] });
+  const sunX = 740;
+  const sunY = 456;
+  const sky =
+    gn.sky(pen, [
+      [0, '#1e1e58'],
+      [0.25, '#5a3a7e'],
+      [0.42, '#d0688a'],
+      [0.52, '#ffb07a'],
+      [0.56, '#ffe0a8'],
+    ]) +
+    gn.starfield(pen, 33, 50, 0, 0, 1600, 220, '#ffe8f4') +
+    gn.godRays(pen, sunX, sunY, [-160, -135, -110, -85, -60, 60, 85, 110, 135, 160, 185], 6, 1300, '#ffe0b0', 0.28) +
+    gn.cloud(pen, 300, 300, 360, '#ffb8a0', '#7a4a8a', { seed: 3, flat: true }) +
+    gn.cloud(pen, 1300, 250, 420, '#ffb8a0', '#7a4a8a', { seed: 5, flat: true }) +
+    gn.bloom(pen, sunX, sunY, 96, '#fff0d0', 1);
+  // The far sea and the bronze island's volcano, smoking quietly behind the mech.
+  const far =
+    gn.silhouette(
+      [
+        [-80, 480],
+        [60, 380],
+        [150, 330],
+        [210, 336],
+        [300, 400],
+        [440, 480],
+      ],
+      '#8a4a6a',
+      0.95,
+    ) +
+    pen.glow(180, 250, 90, '#c88aa0', 0.5) +
+    pen.glow(140, 170, 120, '#c88aa0', 0.4) +
+    gn.silhouette(
+      [
+        [1380, 480],
+        [1480, 446],
+        [1600, 452],
+        [1690, 480],
+      ],
+      '#8a5a7a',
+      0.9,
+    ) +
+    gn.sea(pen, 476, '#f0b090', '#2a3a6a', { seed: 12, sunX, ripple: '#ffc8b0', glint: '#fff0c8' }) +
+    gn.haze(pen, 420, 540, '#ffc8a8', 0.6);
+  // TALOS on his rocks, his crown and hammer laid down; the golden ichor glowing where it ran out into the sea.
+  const ledge = gn.crag(
+    pen,
+    [
+      [760, 960],
+      [790, 860],
+      [880, 820],
+      [1060, 800],
+      [1300, 806],
+      [1500, 790],
+      [1690, 820],
+      [1700, 960],
+    ],
+    '#6a4a50',
+    { seed: 7, sh: 40, cracks: 8, rim: 2.4, hatch: 2 },
   );
+  const tx = 1240;
+  const ty = 912;
+  const mid =
+    restingHammer(pen, 1560, 600, 1) +
+    ledge +
+    pen.glow(1400, 900, 300, TALOS.ichor, 0.55, 90) +
+    pen.brushes(
+      [
+        [
+          [
+            [1320, 840],
+            [1350, 880],
+            [1340, 940],
+          ],
+          10,
+        ],
+        [
+          [
+            [1420, 830],
+            [1446, 890],
+            [1470, 950],
+          ],
+          8,
+        ],
+      ],
+      TALOS.ichor,
+      [0.1, 0.4],
+      0.9,
+    ) +
+    talos(pen, tx, ty, 1.3, { nod: 16, nodLines: true, rim: 3.6 }) +
+    // The golden ichor that ran out of his heel, glowing like warm honey on its way down to the sea.
+    pen.glow(880, 846, 230, TALOS.ichor, 0.55, 70) +
+    `<path d="M780 852Q800 830 870 832Q960 828 990 846Q970 866 880 868Q800 870 780 852Z" fill="${TALOS.ichor}" stroke="#a8741c" stroke-width="3"/>` +
+    pen.brush(
+      [
+        [806, 846],
+        [870, 840],
+        [930, 842],
+      ],
+      7,
+      '#fff6c8',
+      [0.2, 0.4],
+      0.95,
+    ) +
+    pen.brushes(
+      [
+        [
+          [
+            [800, 864],
+            [794, 900],
+          ],
+          10,
+        ],
+        [
+          [
+            [850, 868],
+            [852, 912],
+          ],
+          8,
+        ],
+      ],
+      TALOS.ichor,
+      [0.05, 0.6],
+      0.9,
+    ) +
+    fallenCrown(pen, 700, 830, 0.8, -24);
+  // The mech on the beach, Jason in its bubble, Atalanta on its shoulder waving; LUX and IRIS in the gap; Talos's light-words drifting to them.
+  const mx = 300;
+  const my = 1080;
+  const ms = 0.7;
+  const perch = mechPerch(false);
+  const seat: gn.P = [mx + perch[0] * ms - 6, my + perch[1] * ms + 4];
+  const atS = 0.7;
+  const sitPose: gn.Pose = { turn: 0.45, lean: 2, tilt: -6, armN: [-150, -172], armF: { to: [0.3, 1.45] }, legN: { to: [0.5, 0.52] }, legF: { to: [0.62, 0.46] }, handN: 'open', handF: 'flat' };
+  const sitRig = gn.rig(gn.TEEN_GIRL, sitPose);
+  const heroes =
+    lightSpeech(pen, [
+      [960, 250],
+      [860, 196],
+      [760, 170],
+      [660, 178],
+      [570, 206],
+    ]) +
+    mech(mechPen, mx, my, ms, { jason: 'grin', jasonLook: [2.4, -2], rim: 3 }) +
+    gn.atalanta(mechPen, seat[0] - sitRig.P[0] * atS, seat[1] - sitRig.P[1] * atS, atS, { pose: sitPose, mood: 'grin', look: [2.4, -2.2], wind: 0.6 }) +
+    gn.lux(pen, 700, 300, 0.85, 'happy', { flip: true }) +
+    gn.iris(pen, 176, 200, 0.72, 'happy', { rot: 12 });
+  const fore = gn.crag(
+    mechPen,
+    [
+      [-80, 960],
+      [-80, 860],
+      [60, 840],
+      [200, 870],
+      [260, 960],
+    ],
+    '#3a2a3a',
+    { seed: 2, sh: 30, cracks: 4, rim: 2.4 },
+  );
+  return pen.svg(gn.layer(0.15, sky) + gn.layer(0.35, far) + gn.layer(0.6, mid) + gn.layer(1, heroes) + gn.layer(1.3, fore) + gn.vignette(pen, 0.5, '#1a0c20') + gn.grain(pen, 0.08));
 }
