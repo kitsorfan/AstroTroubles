@@ -766,7 +766,11 @@ export function head(pen: Pen, turn: number, o: HeadOpts): string {
   // The skull, with the shadow under the brows and the side plane of the face.
   const sock = `<path d="M${r1(F.eyeN[0] - 12)} -6Q${r1(F.fc)} -16 ${r1(F.eyeF[0] + 10)} -7L${r1(F.eyeF[0] + 9)} -1Q${r1(F.fc)} -8 ${r1(F.eyeN[0] - 11)} 1Z" fill="${pen.dark(skin, 0.6)}" opacity=".45"/>`;
   const plane = `<path d="M${r1(F.eyeN[0] - 14)} 6Q${r1(F.eyeN[0] - 10)} 24 ${r1(F.mouth[0] - 14)} 40" fill="none" stroke="${pen.dark(skin, 0.5)}" stroke-width="6" opacity=".22"/>`;
-  out += pen.form(headD(turn, o.jaw, o.chin), skin, { sh: 15, hatch: 1, rim: o.rim ?? 1.4, line: 2.6, inner: sock + plane + (o.skinMarks ?? '') });
+  // Only weathered faces get hatching and a heavy ink edge in their shadow: on young or smooth faces they
+  // read as stubble along the jaw, so those get a lighter shadow instead.
+  const rugged = (o.age ?? 0) >= 0.4;
+  const shading = rugged ? { hatch: 1 as const } : { hatch: 0 as const, heavy: 0, shade: pen.dark(skin, 0.4) };
+  out += pen.form(headD(turn, o.jaw, o.chin), skin, { sh: 15, ...shading, rim: o.rim ?? 1.4, line: 2.6, inner: sock + plane + (o.skinMarks ?? '') });
   out += pen.brush([[ex - 3, ey - 7], [ex - 5, ey], [ex - 1, ey + 7]], 2.2, INK, [0.2, 0.4], 0.8);
   // Eyes.
   const ew = 16 * (o.eyeSize ?? 1);
