@@ -25,6 +25,15 @@ const CSS = `
 #ui .btn.boost .slots { position:absolute; top:-12px; display:flex; gap:4px; }
 #ui .btn.boost .slots i { width:14px; height:6px; border-radius:3px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 #ui .btn.boost .slots i.full { background:#ffd166; box-shadow:0 0 6px #ffd166; }
+#ui .btn.rocket { display:none; right:12px; bottom:118px; width:66px; height:66px;
+  background: radial-gradient(circle at 35% 30%, #ffb0a8, #c8282e); pointer-events:auto; }
+#ui .buttons.vehicle .btn.rocket.has { display:flex; }
+#ui .btn.rocket span { font-size:11px; }
+#ui .btn.rocket.empty { filter:grayscale(.85) brightness(.75); }
+#ui .btn.rocket.ready { box-shadow: 0 0 20px #ff7a5a, 0 4px 14px rgba(0,0,0,.45); }
+#ui .btn.rocket .slots { position:absolute; top:-12px; display:flex; gap:4px; }
+#ui .btn.rocket .slots i { width:10px; height:10px; border-radius:50%; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
+#ui .btn.rocket .slots i.full { background:#ff7a5a; box-shadow:0 0 6px #ff7a5a; }
 #ui .vhud .vtrack { position:absolute; left:50%; transform:translateX(-50%); top:calc(54px + var(--safe-t, 0px));
   width:min(360px, 46vw); height:8px; border-radius:4px; background:rgba(10,14,40,.55); border:1px solid rgba(255,255,255,.25); }
 #ui .vhud .vtrack .fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:linear-gradient(90deg,#5ee0ff,#ffd166); }
@@ -47,11 +56,13 @@ const CSS = `
 `;
 
 const RING_ICON = `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#ffd166" stroke-width="3.4"/><ellipse cx="12" cy="12" rx="8" ry="9" fill="none" stroke="#fff6d0" stroke-width="1" opacity=".7"/></svg>`;
+const ROCKET_ICON = `<svg viewBox="0 0 24 24"><path d="M12 2c3 2.5 4 6 4 9.5V17H8v-5.5C8 8 9 4.5 12 2z" fill="#fff"/><circle cx="12" cy="9" r="1.8" fill="#c8282e"/><path d="M8 13l-3 4v2l3-1.5M16 13l3 4v2l-3-1.5" fill="#ffd0c8"/><path d="M10 18.5l2 3.5 2-3.5" fill="#ffd166"/></svg>`;
 const BOOST_ICON = `<svg viewBox="0 0 24 24"><path d="M3 15l7-3-7-3M9 17l8-5-8-5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="19.5" cy="12" r="2.6" fill="#fff"/></svg>`;
 
 export class VehicleHudView {
   private el: HTMLElement;
   private btn: HTMLElement;
+  private rocketBtn: HTMLElement;
   private buttons: HTMLElement | null;
   private last = '';
   private lastPrompt = '';
@@ -76,22 +87,33 @@ export class VehicleHudView {
     this.btn.dataset.b = 'dash';
     this.btn.innerHTML = `${BOOST_ICON}<span data-t="BOOST">${tr('BOOST')}</span><svg class="cd-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg><div class="slots"></div>`;
     this.buttons?.append(this.btn);
-    const down = (e: PointerEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.btn.setPointerCapture?.(e.pointerId);
-      this.btn.classList.add('down');
-      input.press('dash', true);
-    };
-    const up = (e: PointerEvent) => {
-      e.preventDefault();
-      this.btn.classList.remove('down');
-      input.press('dash', false);
-    };
-    this.btn.addEventListener('pointerdown', down);
-    this.btn.addEventListener('pointerup', up);
-    this.btn.addEventListener('pointercancel', up);
-    this.btn.addEventListener('lostpointercapture', up);
+    // ROCKET (only on vehicles that carry rockets) presses SPIN, which is otherwise unused while flying.
+    this.rocketBtn = document.createElement('div');
+    this.rocketBtn.className = 'btn rocket clickable';
+    this.rocketBtn.dataset.b = 'spin';
+    this.rocketBtn.innerHTML = `${ROCKET_ICON}<span data-t="ROCKET">${tr('ROCKET')}</span><div class="slots"></div>`;
+    this.buttons?.append(this.rocketBtn);
+    for (const [btn, name] of [
+      [this.btn, 'dash'],
+      [this.rocketBtn, 'spin'],
+    ] as const) {
+      const down = (e: PointerEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        btn.setPointerCapture?.(e.pointerId);
+        btn.classList.add('down');
+        input.press(name, true);
+      };
+      const up = (e: PointerEvent) => {
+        e.preventDefault();
+        btn.classList.remove('down');
+        input.press(name, false);
+      };
+      btn.addEventListener('pointerdown', down);
+      btn.addEventListener('pointerup', up);
+      btn.addEventListener('pointercancel', up);
+      btn.addEventListener('lostpointercapture', up);
+    }
   }
 
   /** Switches the vehicle HUD on (for a kind of vehicle) or off. */
@@ -104,7 +126,7 @@ export class VehicleHudView {
   }
 
   update(h: VehicleHud) {
-    const key = `${Math.round(h.boost * 30)}|${h.boostSlots}|${h.boosting}|${h.counter?.join(',')}|${Math.round(h.progress * 400)}|${h.marks.length}`;
+    const key = `${Math.round(h.boost * 30)}|${h.boostSlots}|${h.boosting}|${h.counter?.join(',')}|${Math.round(h.progress * 400)}|${h.marks.length}|${h.rockets?.join(',')}`;
     if (key !== this.last) {
       this.last = key;
       const full = Math.floor(h.boost * h.boostSlots + 1e-6);
@@ -115,6 +137,16 @@ export class VehicleHudView {
       if (ring) ring.style.strokeDashoffset = String(100 - h.boost * 100);
       this.btn.classList.toggle('on', h.boosting);
       this.btn.classList.toggle('empty', full === 0 && !h.boosting);
+      const r = h.rockets;
+      this.rocketBtn.classList.toggle('has', !!r);
+      if (r) {
+        const [left, max, ready] = r;
+        const pips = this.rocketBtn.querySelector('.slots') as HTMLElement;
+        if (pips.childElementCount !== max) pips.innerHTML = '<i></i>'.repeat(max);
+        pips.querySelectorAll('i').forEach((x, i) => x.classList.toggle('full', i < left));
+        this.rocketBtn.classList.toggle('empty', left === 0);
+        this.rocketBtn.classList.toggle('ready', left > 0 && ready);
+      }
       const count = this.el.querySelector('.vcount') as HTMLElement;
       count.style.display = h.counter ? '' : 'none';
       if (h.counter) (count.querySelector('b') as HTMLElement).textContent = `${h.counter[1]} / ${h.counter[2]}`;
@@ -137,6 +169,8 @@ export class VehicleHudView {
   applyLang() {
     const s = this.btn.querySelector('span');
     if (s) s.textContent = tr('BOOST');
+    const r = this.rocketBtn.querySelector('span');
+    if (r) r.textContent = tr('ROCKET');
     this.lastPrompt = '';
   }
 }

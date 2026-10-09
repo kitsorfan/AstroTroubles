@@ -262,3 +262,30 @@ export function makeDove(): DoveModel {
     },
   };
 }
+
+/** One of the Argo's three rockets: a white-and-gold dart with red fins and a glowing exhaust (points along -z). */
+export function makeRocket(): THREE.Group {
+  const root = new THREE.Group();
+  const white = new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.35 });
+  const red = new THREE.MeshStandardMaterial({ color: '#e0383a', roughness: 0.4 });
+  const gold = new THREE.MeshStandardMaterial({ color: GOLD, roughness: 0.3, metalness: 0.7 });
+  root.add(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 10).rotateX(Math.PI / 2), white));
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 10).rotateX(-Math.PI / 2), red);
+  nose.position.z = -0.76;
+  root.add(nose);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.12, 10).rotateX(Math.PI / 2), gold);
+  band.position.z = -0.3;
+  root.add(band);
+  for (let i = 0; i < 4; i++) {
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.34, 0.3), red);
+    fin.position.set(0, 0, 0.42);
+    fin.rotation.z = (i * Math.PI) / 2;
+    fin.translateY(0.2);
+    root.add(fin);
+  }
+  const flame = glowSprite('#ffb020', 1.6, 0.9);
+  flame.position.z = 0.75;
+  root.add(flame);
+  root.scale.setScalar(1.3);
+  return root;
+}

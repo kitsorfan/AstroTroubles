@@ -31,6 +31,8 @@ export interface FlightInput {
   steerY: number;
   /** BOOST was pressed this step. */
   boost: boolean;
+  /** ROCKET was pressed this step. */
+  rocket?: boolean;
 }
 
 /** What happened during a step, for sounds, effects and the HUD. */
@@ -47,6 +49,12 @@ export interface FlightEvents {
   boost?(): void;
   /** BOOST pressed with an empty meter. */
   empty?(): void;
+  /** A rocket set off toward a pair of Clashing Rocks (it lands after `eta` seconds). */
+  rocket?(c: Clash, eta: number): void;
+  /** A rocket reached its pair and blew it to bits. */
+  blast?(c: Clash): void;
+  /** ROCKET pressed with no Clashing Rocks in range, or none left. */
+  noRocket?(why: 'range' | 'empty'): void;
   /** Lost a hull heart (from anything). */
   hurt?(): void;
   finish?(): void;
@@ -79,6 +87,12 @@ export class Flight {
   crushes = 0;
   bumps = 0;
   private passed = 0;
+  /** Rockets left, and how many there were at the last checkpoint (a lost section gets them back). */
+  rockets: number = FLIGHT.rockets;
+  private savedRockets: number = FLIGHT.rockets;
+  /** Pairs of Clashing Rocks blown to bits, and rockets still on their way (seconds to go). */
+  readonly broken = new Set<Clash>();
+  readonly flying: { c: Clash; eta: number; total: number }[] = [];
 
   constructor(readonly course: FlightCourse) {
     this.things = [...course.things].sort((a, b) => a.s - b.s);
@@ -95,6 +109,9 @@ export class Flight {
     this.boostT = 0;
     this.invuln = 0;
     this.hull = FLIGHT.hull;
+    this.rockets = this.savedRockets;
+    this.flying.length = 0;
+    for (const c of [...this.broken]) if (c.s > s) this.broken.delete(c);
     for (const s0 of [...this.cleared]) if (s0 > s) this.cleared.delete(s0);
     // Everything ahead comes back: rings to fly through again, crystals to blast again.
     for (const i of [...this.gone]) if (this.things[i].s > s) this.gone.delete(i);
@@ -108,7 +125,8 @@ export class Flight {
     for (let i = this.passed - 1; i < this.things.length; i++) {
       const th = this.things[Math.max(0, i)];
       if (th.s < this.s - 0.5) continue;
-      if (th.kind === 'hold' && !this.cleared.has(th.s)) return th;
+      // A hold line whose rocks have all been blown up doesn't stop the Argo any more.
+      if (th.kind === 'hold' && !this.cleared.has(th.s) && !this.openWay(th)) return th;
       if (th.s > this.s + FLIGHT.brake + 2) break;
     }
     return null;
@@ -118,11 +136,45 @@ export class Flight {
     return this.boostT > 0;
   }
 
-  /** The pairs of Clashing Rocks within `ahead` units in front (and just behind). */
+  /** True once every pair of rocks after a hold line has been blown up. */
+  openWay(h: Hold): boolean {
+    const group = holdGroup(this.things, h);
+    return group.length > 0 && group.every((c) => this.broken.has(c));
+  }
+
+  /** The next pair of Clashing Rocks a rocket would lock on to: the nearest one ahead, not yet hit or targeted. */
+  rocketTarget(): Clash | null {
+    for (const th of this.things) {
+      if (th.kind !== 'clash' || this.broken.has(th) || this.flying.some((r) => r.c === th)) continue;
+      if (th.s < this.s - CLASH.depth / 2) continue;
+      return th.s - this.s <= FLIGHT.rocketRange ? th : null;
+    }
+    return null;
+  }
+
+  /** Fires a rocket at the next pair of Clashing Rocks ahead. Returns true if one went. */
+  fireRocket(ev: FlightEvents = {}): boolean {
+    if (this.rockets <= 0) {
+      ev.noRocket?.('empty');
+      return false;
+    }
+    const c = this.rocketTarget();
+    if (!c) {
+      ev.noRocket?.('range');
+      return false;
+    }
+    this.rockets -= 1;
+    const eta = Math.max(0.15, (c.s - this.s) / FLIGHT.rocketSpeed);
+    this.flying.push({ c, eta, total: eta });
+    ev.rocket?.(c, eta);
+    return true;
+  }
+
+  /** The pairs of Clashing Rocks within `ahead` units in front (and just behind), not counting broken ones. */
   clashesNear(ahead = 300): Clash[] {
     const out: Clash[] = [];
     for (const th of this.things) {
-      if (th.kind !== 'clash') continue;
+      if (th.kind !== 'clash' || this.broken.has(th)) continue;
       if (th.s > this.s - CLASH.depth && th.s < this.s + ahead) out.push(th);
     }
     return out;
@@ -143,6 +195,25 @@ export class Flight {
     this.invuln = Math.max(0, this.invuln - dt);
     if (this.boostT > 0) this.boostT = Math.max(0, this.boostT - dt);
     else this.meter = Math.min(1, this.meter + FLIGHT.boostRecharge * dt);
+
+    // Rockets: off they go, and any that arrive blow their pair of rocks to bits.
+    if (input.rocket) this.fireRocket(ev);
+    for (let i = this.flying.length - 1; i >= 0; i--) {
+      const r = this.flying[i];
+      r.eta -= dt;
+      if (r.eta > 0) continue;
+      this.flying.splice(i, 1);
+      this.broken.add(r.c);
+      ev.blast?.(r.c);
+    }
+    if (this.holding) {
+      // Waiting at a hold line whose rocks are all gone now: the way is open, so fly on.
+      const at = this.things.find((th): th is Hold => th.kind === 'hold' && Math.abs(th.s - this.s) < 0.1);
+      if (at && this.openWay(at)) {
+        this.cleared.add(at.s);
+        this.holding = false;
+      }
+    }
 
     const hold = this.hold;
     if (input.boost) {
@@ -244,7 +315,10 @@ export class Flight {
     while (this.passed < this.things.length && this.things[this.passed].s <= this.s) {
       const th = this.things[this.passed];
       this.passed += 1;
-      if (th.kind === 'checkpoint') ev.beacon?.(th);
+      if (th.kind === 'checkpoint') {
+        this.savedRockets = this.rockets;
+        ev.beacon?.(th);
+      }
       else if (th.kind === 'radio') ev.radio?.(th);
       else if (th.kind === 'gate') {
         this.finished = true;

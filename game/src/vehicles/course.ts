@@ -35,6 +35,10 @@ export const FLIGHT = {
   ringRadius: 2.5,
   /** Bolts are picked up from this far away. */
   pickup: 2.0,
+  /** Rockets for the whole flight (one blows a pair of Clashing Rocks to bits), how far ahead they lock on, and how fast they fly. */
+  rockets: 3,
+  rocketRange: 240,
+  rocketSpeed: 150,
 } as const;
 
 /** The Clashing Rocks: how wide they open, how thick they are, and the parts of one slam cycle (seconds). */

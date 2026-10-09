@@ -50,6 +50,8 @@ export interface VehicleHud {
   boosting: boolean;
   /** A counter in the top right: [icon kind, got, total]. */
   counter: ['ring', number, number] | null;
+  /** Rockets: [left, how many it holds, a target is in range]; null when the vehicle has none. */
+  rockets?: [number, number, boolean] | null;
   /** How far along the course (0..1), with the checkpoint marks. */
   progress: number;
   marks: number[];
