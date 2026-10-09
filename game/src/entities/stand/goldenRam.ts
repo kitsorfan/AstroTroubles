@@ -441,6 +441,8 @@ export class GoldenRam extends Boss implements Target {
     const open = this.state === 'open';
     this.aimable = open;
     for (const [i, lid] of (r.lids ?? []).entries()) lid.rotation.z = damp(lid.rotation.z, open ? (i ? -1.9 : 1.9) : 0, 8, dt);
+    // The engine pops up out of its wool when the hatch opens, so it shows from every side.
+    if (r.engine) r.engine.position.y = damp(r.engine.position.y, open ? 2.15 : 1.62, 8, dt);
     if (r.core) r.core.emissiveIntensity = damp(r.core.emissiveIntensity, open ? 2.4 + Math.sin(this.t * 12) * 0.8 : 0.5, 6, dt);
     if (r.coreGlow) r.coreGlow.material.opacity = damp(r.coreGlow.material.opacity, open ? 0.9 : 0, 6, dt);
     r.root.rotation.z = this.state === 'locked' || this.state === 'dazed' ? Math.sin(this.t * 7) * 0.05 : 0;

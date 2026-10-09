@@ -124,8 +124,10 @@ export function makeRam(big: boolean): RamParts {
     engine.add(mesh(cyl(0.34, 0.38, 0.3, 16), steel, 0, 0, 0));
     const core = ownMat(C.engine, { emissive: C.engine, ei: 0.5 });
     engine.add(mesh(cyl(0.24, 0.24, 0.32, 16), core, 0, 0.02, 0, false));
-    const coreGlow = glowSprite(C.engine, 1.4, 0);
-    coreGlow.position.y = 0.3;
+    // Under the drum, a glowing column that shows once the engine pops up.
+    engine.add(mesh(cyl(0.2, 0.26, 0.6, 14), core, 0, -0.42, 0, false));
+    const coreGlow = glowSprite(C.engine, 2.4, 0);
+    coreGlow.position.y = 0.2;
     engine.add(coreGlow);
     const lids: THREE.Group[] = [];
     for (const sx of [-1, 1]) {
