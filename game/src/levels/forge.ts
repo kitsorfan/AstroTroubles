@@ -297,7 +297,7 @@ export const forge: LevelDef = {
         caption: 'In the middle of the old forge sat a bronze mech, waiting, just as the Gardeners had left it.',
         lines: [
           { who: 'iris', text: 'Not a robot: a mech, a suit you ride inside. The Gardeners used it to carry hot bronze. The light-words on it say: “Strong hands for gentle work.”' },
-          { who: 'jason', text: 'There’s a seat inside its chest. And a flat bit on the shoulder that’s exactly the right size for...' },
+          { who: 'jason', text: 'There’s a seat in the glass bubble on top. And a flat bit on the shoulder that’s exactly the right size for...' },
           { who: 'atalanta', text: 'Me! I call the shoulder!' },
           { who: 'bolt', text: 'Its eye is lighting up! It likes us. I think it likes us. Please like us.' },
         ],

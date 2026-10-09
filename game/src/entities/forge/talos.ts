@@ -114,20 +114,24 @@ export class Talos extends Boss implements Target, Interactable {
     return this.model;
   }
 
-  private hint(key: string, text: string) {
+  private hint(key: string, show: () => void) {
     if (this.hinted.has(key)) return;
     this.hinted.add(key);
-    this.world.hooks.toast(text, 'bolt');
+    show();
   }
 
   /* ---------------- the plug ---------------- */
 
+  private get kneeling() {
+    return this.state === 'kneel';
+  }
+
   label() {
-    return this.state === 'kneel' && !this.defeated ? 'PULL' : null;
+    return this.kneeling && !this.defeated ? 'PULL' : null;
   }
 
   interact() {
-    if (this.state !== 'kneel' || this.defeated) return;
+    if (!this.kneeling || this.defeated) return;
     const w = this.world;
     const p = this.plugSpot();
     this.round += 1;
@@ -146,7 +150,8 @@ export class Talos extends Boss implements Target, Interactable {
       this.finish();
       return;
     }
-    w.hooks.toast(this.round === 1 ? 'The plug moved! It’s stuck tight, though. Knock his armour off again and pull some more!' : 'Almost out! One more pull!', 'bolt');
+    if (this.round === 1) w.hooks.toast('The plug moved! It’s stuck tight, though. Knock his armour off again and pull some more!', 'bolt');
+    else w.hooks.toast('Almost out! One more pull!', 'bolt');
     this.setState('rise', 1.6);
   }
 
@@ -188,7 +193,7 @@ export class Talos extends Boss implements Target, Interactable {
     if (kind !== 'smash' && kind !== 'blast') {
       // Shells and shots just ping off the thick bronze.
       audio.play('zap', 1.6, 0.6);
-      this.hint('ping', 'Too thick for little shells! Get close and PUNCH his ankle (the SPIN button).');
+      this.hint('ping', () => this.world.hooks.toast('Too thick for little shells! Get close and PUNCH his ankle (the SPIN button).', 'bolt'));
       return true;
     }
     this.plates -= 1;
@@ -211,7 +216,7 @@ export class Talos extends Boss implements Target, Interactable {
     audio.play('pound', 0.5);
     this.world.shake(0.8);
     haptic('heavy');
-    this.hint('kneel', 'He’s down on one knee! Walk round behind him and PULL the plug in his heel!');
+    this.hint('kneel', () => this.world.hooks.toast('He’s down on one knee! Walk round behind him and PULL the plug in his heel!', 'bolt'));
   }
 
   reset() {
@@ -332,7 +337,7 @@ export class Talos extends Boss implements Target, Interactable {
         }
         if (this.stateT <= 0) {
           // Too slow: he gets back up, and his armour plates are back on.
-          this.hint('late', 'He’s back up, and the armour is back on! Next time, pull the plug while he kneels.');
+          this.hint('late', () => this.world.hooks.toast('He’s back up, and the armour is back on! Next time, pull the plug while he kneels.', 'bolt'));
           this.setState('rise', 1.4);
         }
         break;
@@ -369,7 +374,7 @@ export class Talos extends Boss implements Target, Interactable {
     this.disc.visible = true;
     this.setState('raise', TALOS_TUNING.raise[Math.min(this.round, 2)]);
     audio.play('roar', 0.35, 0.7);
-    this.hint('stomp', 'Talos is lifting his foot! Get out of the red circle, then PUNCH his ankle while his foot is stuck!');
+    this.hint('stomp', () => this.world.hooks.toast('Talos is lifting his foot! Get out of the red circle, then PUNCH his ankle while his foot is stuck!', 'bolt'));
   }
 
   private stomp() {

@@ -17,12 +17,12 @@ const center = (c: number) => c * CELL + CELL / 2;
 const hinted = new WeakMap<World, Set<string>>();
 
 /** A hint toast, only the first time on this level. */
-function hintOnce(world: World, key: string, text: string) {
+function hintOnce(world: World, key: string, show: () => void) {
   let h = hinted.get(world);
   if (!h) hinted.set(world, (h = new Set()));
   if (h.has(key)) return;
   h.add(key);
-  world.hooks.toast(text, 'bolt');
+  show();
 }
 
 /** Bursts a prop apart: shards of bronze, dust, a thump. */
@@ -89,7 +89,9 @@ export class BronzeGate extends Entity implements Target {
     if (!mech || (kind !== 'smash' && kind !== 'blast')) {
       this.wobble = 0.5;
       audio.play('zap', 1.5, 0.5);
-      hintOnce(this.world, 'gate', mech ? 'Bronze is tough! PUNCH it (the SPIN button).' : 'Solid bronze, a hand thick. Nothing on foot can open this.');
+      const w = this.world;
+      if (mech) hintOnce(w, 'gate', () => w.hooks.toast('Bronze is tough! PUNCH it (the SPIN button).', 'bolt'));
+      else hintOnce(w, 'gateFoot', () => w.hooks.toast('Solid bronze, a hand thick. Nothing on foot can open this.', 'bolt'));
       return true;
     }
     // Two punches: the first dents it, the second knocks it flat.
@@ -161,7 +163,7 @@ export class BrittleFloor extends Entity implements Target {
     if (!this.alive) return false;
     const w = this.world;
     if (kind !== 'pound' || w.player.hero !== 'mech') {
-      if (kind === 'pound') hintOnce(w, 'brittle', 'Not heavy enough! Only something as heavy as a mech can break these plates.');
+      if (kind === 'pound') hintOnce(w, 'brittle', () => w.hooks.toast('Not heavy enough! Only something as heavy as a mech can break these plates.', 'bolt'));
       return false;
     }
     burst(w, this.aim, '#ff9a3a');
