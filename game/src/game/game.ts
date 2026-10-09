@@ -33,6 +33,7 @@ import { INTEL, creditsHtml, endingChapter, endingText } from './story';
 import { TitleScene } from './title';
 import { World, type WorldHooks } from './world';
 import { VehicleHudView } from '../vehicles/hud';
+import { argoBar } from '../entities/stand/holds';
 
 type State = 'boot' | 'title' | 'menu' | 'card' | 'play' | 'dialogue' | 'hack' | 'shop' | 'pause' | 'down' | 'results' | 'ending' | 'cutscene' | 'cinema';
 
@@ -1045,6 +1046,7 @@ export class Game {
             this.refreshAbilities(w);
           }
           this.ui.setCountdown(w.countdown());
+          this.ui.setArgo(argoBar(w));
           this.placeWaypoint(w);
           this.hudT -= dt;
           if (this.hudT <= 0) {

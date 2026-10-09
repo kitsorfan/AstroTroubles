@@ -669,6 +669,11 @@ export class World {
     if (play === 'taken') void this.hooks.cutscene((d) => scenes.luxTaken(d, this));
     else if (play === 'iris' && find) this.findBolt(find);
     else if (play === 'rogue' && rogue) rogue.begin();
+    // &play=outro plays the deck's boss-defeated scene (e.g. the Argo passing General Brennus's sky-dock).
+    else if (play === 'outro' && this.boss) {
+      const b = this.boss;
+      void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b));
+    }
     else if (play === 'reunion' && rogue) {
       rogue.defeated = true;
       this.luxBack(rogue);

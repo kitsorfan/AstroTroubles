@@ -76,6 +76,9 @@ const label = (en: string, cls = '') => `<span${cls ? ` class="${cls}"` : ''} da
 /** An icon shown only for one hero's buttons (`hj` Jason, `ha` Atalanta; see style.css). */
 const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cls}"`);
 
+/** The little Argo riding along the approach bar (Brennus's Last Stand): white hull, gold belly, blue sail. */
+const ARGO_ICON = `<svg viewBox="0 0 40 24"><path d="M14 4h12v9H14z" fill="#5ab4ff" stroke="#1a1630" stroke-width="1.5"/><path d="M3 13h34q-2 6-8 7H9q-5-2-6-7z" fill="#fff" stroke="#1a1630" stroke-width="1.5"/><path d="M5 17h30" stroke="#ffd166" stroke-width="2.5"/><circle cx="37" cy="10" r="3" fill="#ffd166" stroke="#1a1630" stroke-width="1.2"/></svg>`;
+
 /** Each shop upgrade's icon. */
 const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
   heart: ICON.heart(true),
@@ -161,6 +164,8 @@ export class UI {
   private bossEl: HTMLElement;
   private countdownEl: HTMLElement;
   private countdownKey = '';
+  private argoEl: HTMLElement | null = null;
+  private argoKey = '';
   private fpsEl: HTMLElement;
   private lastHearts = -1;
   private lastBolts = -1;
@@ -182,7 +187,7 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="argobar hidden"><div class="name"></div><div class="track"><div class="fill"></div><i class="ship">${ARGO_ICON}</i></div></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="fill"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
@@ -341,6 +346,24 @@ export class UI {
     if (!name) return;
     $(this.bossEl, '.name').textContent = tr(name);
     $(this.bossEl, '.fill').style.width = `${Math.max(0, frac) * 100}%`;
+  }
+
+  /**
+   * Brennus's Last Stand: how close the Argo is (0..1), with a warning while Aeëtes's robots crowd the
+   * line and slow it down. Null hides the bar.
+   */
+  setArgo(a: { frac: number; slowed: boolean } | null) {
+    const key = a ? `${Math.round(a.frac * 200)}|${a.slowed}` : '';
+    if (key === this.argoKey) return;
+    this.argoKey = key;
+    this.argoEl ??= $(this.hud, '.argobar');
+    this.argoEl.classList.toggle('hidden', !a);
+    if (!a) return;
+    const pct = `${Math.max(0, Math.min(1, a.frac)) * 100}%`;
+    this.argoEl.classList.toggle('slowed', a.slowed);
+    $(this.argoEl, '.name').textContent = a.slowed ? tr('CLEAR THE LINE! THE ARGO IS SLOWING DOWN') : tr('THE ARGO IS COMING');
+    $(this.argoEl, '.fill').style.width = pct;
+    $(this.argoEl, '.ship').style.left = pct;
   }
 
   /** The clock for timed switches: whole seconds left, and a dot for each switch, lit once it's down. */

@@ -78,7 +78,7 @@ export const stand: LevelDef = {
          ............................
          .............o..............
         #...........*.:..............#
-        #..j.....i.r..............j..#
+        #..j.....i.r......+.......j..#
         #............................#
                      ,,,,
                      ,,,,
@@ -138,6 +138,7 @@ export const stand: LevelDef = {
     W: { type: 'boss', boss: 'ram', room: 'arena' },
     K: { type: 'checkpoint', id: 'cp1' },
     k: { type: 'checkpoint', id: 'cp2' },
+    '+': { type: 'checkpoint', id: 'cp3' },
     q: { type: 'checkpoint', id: 'cp4' },
     P: { type: 'vendor' },
     Y: { type: 'holo', log: 'log', who: 'captain' },

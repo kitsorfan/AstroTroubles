@@ -252,7 +252,8 @@ export class GoldenRam extends Boss implements Target {
     const near = cells.filter(([nx, nz]) => Math.abs(nx - x) <= 1 && Math.abs(nz - z) <= 1);
     const kind = want === 1 ? 'ramling' : 'trooper';
     this.world.addEntity(new Dropship(this.world, new THREE.Vector3(Grid.center(x), this.home.y, Grid.center(z)), near, kind, 2, kind === 'trooper' ? 'gold' : undefined, 'ramfight', () => {}));
-    this.world.hooks.toast(want === 1 ? 'Aeëtes sent ramlings to help it! Keep your shield up!' : 'More of Aeëtes’s robots! Your old Legion would never fall for this...', 'brennus');
+    if (want === 1) this.world.hooks.toast('Aeëtes sent ramlings to help it! Keep your shield up!', 'brennus');
+    else this.world.hooks.toast('More of Aeëtes’s robots! Shield up, and keep pushing that Ram into the pillars!', 'brennus');
   }
 
   update(dt: number) {
