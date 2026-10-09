@@ -12,7 +12,7 @@ import { DIVE, SONG, nearestBeat } from './dive';
 
 export const ORGAN = {
   /** How far in front of the sub the pipes stand. */
-  dist: 46,
+  dist: 36,
   pipeHp: 3,
   /** Where the pipes stand (corridor x, y of their glowing mouths). */
   pipes: [

@@ -14,7 +14,7 @@ function dolphinSub(id: string, x: number, y: number, s: number, o: { face?: 'de
   const bubble = o.open
     ? `<path d="M-90 -96Q-80 -150 10 -150" fill="none" stroke="#bff4ff" stroke-width="10" opacity=".7"/>`
     : `<ellipse cx="20" cy="-100" rx="120" ry="92" fill="url(#${id}g)" ${ink(5)}/><path d="M-50 -160Q0 -186 60 -170" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".8"/>`;
-  const crew = at(-10, -118, 0.62, jasonHead(o.face ?? 'determined')) + lux(78, -110, 0.5, o.luxMood ?? 'happy', o.luxIris ?? C.cyan);
+  const crew = at(-22, -114, 0.8, jasonHead(o.face ?? 'determined')) + lux(88, -104, 0.62, o.luxMood ?? 'happy', o.luxIris ?? C.cyan);
   return defs + at(x, y, s, body + crew + bubble);
 }
 
@@ -82,7 +82,18 @@ export function ch3Strait(): string {
   const swirl = [0, 1, 2, 3, 4]
     .map((i) => `<ellipse cx="1240" cy="640" rx="${300 - i * 56}" ry="${70 - i * 12}" fill="none" stroke="${i % 2 ? '#bff4ff' : '#2a7aa0'}" stroke-width="${14 - i * 2}" transform="rotate(${-4 + i * 3} 1240 640)"/>`)
     .join('');
-  const reef = [0, 1, 2, 3, 4, 5, 6].map((i) => `<circle cx="${480 + i * 110}" cy="${700 + (i % 2) * 14}" r="${30 + (i % 3) * 10}" fill="${['#ff7a8a', '#ffb84a', '#c87aff'][i % 3]}" ${ink(4)}/>`).join('');
+  // Branching coral poking out of the water along the strait.
+  const reef = [430, 520, 600, 690, 960, 1040]
+    .map((x, i) => {
+      const c = ['#ff7a8a', '#ffb84a', '#c87aff'][i % 3];
+      const h = 50 + (i % 3) * 22;
+      const d = `M${x} 640V${640 - h}M${x} ${640 - h * 0.5}l-${h * 0.4} -${h * 0.4}M${x} ${640 - h * 0.7}l${h * 0.35} -${h * 0.35}`;
+      return `<path d="${d}" stroke="${C.ink}" stroke-width="22" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`;
+    })
+    .join('');
+  // On top of the tall rock, something gold with long arms is waiting (Scylla, in the next level).
+  const crane = at(300, 120, 1, `<rect x="-34" y="-30" width="68" height="50" rx="12" fill="${C.gold}" ${ink(5)}/><circle cx="0" cy="-6" r="10" fill="#ff3a4c" ${ink(3)}/>` +
+    [-1, 1].map((sd) => [0, 1, 2].map((k) => `<path d="M${sd * 30} ${0 + k * 8}Q${sd * (70 + k * 10)} ${-40 + k * 30} ${sd * (90 + k * 16)} ${-10 + k * 40}" fill="none" stroke="${C.ink}" stroke-width="13" stroke-linecap="round"/><path d="M${sd * 30} ${0 + k * 8}Q${sd * (70 + k * 10)} ${-40 + k * 30} ${sd * (90 + k * 16)} ${-10 + k * 40}" fill="none" stroke="#e0a830" stroke-width="6" stroke-linecap="round"/>`).join('')).join(''));
   return panel(
     backdrop(id + 'b', [[0, '#ff9a6a'], [0.35, '#ffd08a'], [0.6, '#bfe8f0'], [1, '#bfe8f0']]) +
       `<defs>${glowDef(id + 'sun', '#fff2c8', 0.9)}${lin(id + 'sea', [[0, '#3ab0d0'], [1, '#0a4a70']])}</defs>` +
@@ -90,13 +101,13 @@ export function ch3Strait(): string {
       `<circle cx="820" cy="360" r="70" fill="#fff6d8"/>` +
       // The tall rock on the left, with something gold and long-armed perched on top.
       `<path d="M120 640L180 260Q220 150 300 140Q380 160 400 300L440 640Z" fill="#6a6a7a" ${ink(6)}/>` +
-      `<path d="M300 140L300 80M300 80L380 50M300 80L230 40M300 80L330 20" stroke="${C.ink}" stroke-width="14" stroke-linecap="round"/><path d="M300 140L300 80M300 80L380 50M300 80L230 40M300 80L330 20" stroke="#c89a3a" stroke-width="7" stroke-linecap="round"/>` +
+      crane +
       argoShip(id + 'a', 1180, 210, 0.32, -6) +
       `<rect y="600" width="1600" height="300" fill="url(#${id}sea)"/>` +
       swirl +
       reef +
       [0, 1, 2, 3].map((i) => `<path d="M${i * 420} 620q60 -20 120 0t120 0" fill="none" stroke="#e8fbff" stroke-width="6" opacity=".7"/>`).join('') +
-      dolphinSub(id + 'd', 520, 800, 0.95, { face: 'grin', luxMood: 'happy', open: true }) +
+      dolphinSub(id + 'd', 600, 770, 1.05, { face: 'grin', luxMood: 'happy', open: true }) +
       sparkle(700, 600, 12, '#fff') +
       sparkle(980, 520, 9, '#fff') +
       vignette(id + 'v', 0.3, '#2a1a30'),

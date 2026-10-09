@@ -96,7 +96,10 @@ export class SubDive implements Vehicle {
     this.view = new SeaView(things);
     scene.add(this.view.group);
     for (const b of this.dive.buoys) this.view.addBuoy(b);
+    // Jason and LUX ride in the sub: no droids floating about outside it.
+    for (const b of [world.lux, world.iris]) b.model.root.visible = false;
     this.model = makeSub();
+    this.model.root.scale.setScalar(0.8);
     scene.add(this.model.root);
     this.rings = new SoundRings(scene);
     this.guns = new Guns(world, scene, this.rings);
@@ -156,7 +159,7 @@ export class SubDive implements Vehicle {
         this.world.hooks.hud();
       },
       pipe: (_i, ok) => {
-        if (!ok) this.tellOnce('capped', 'That pipe is capped in gold! Torpedo the GLOWING one.');
+        if (!ok) this.toast('That pipe is capped in gold! Torpedo the GLOWING one.', 'capped');
       },
     });
     this.singAlong();
@@ -169,10 +172,12 @@ export class SubDive implements Vehicle {
     }
   }
 
-  /** A toast said only once a dive. */
-  tellOnce(key: string, text: string) {
-    if (this.told.has(key)) return;
-    this.told.add(key);
+  /** A hint from LUX (with `once`, only the first time this dive). */
+  toast(text: string, once?: string) {
+    if (once) {
+      if (this.told.has(once)) return;
+      this.told.add(once);
+    }
     this.world.hooks.toast(text, 'bolt');
   }
 
@@ -227,11 +232,12 @@ export class SubDive implements Vehicle {
     if (fog) {
       const k = this.dark * (1 - lit * 0.6);
       fog.color.copy(FOG).lerp(FOG_DEEP, k);
-      fog.near = 16 - k * 10;
-      fog.far = 125 - k * 80;
+      fog.near = 12 - k * 6;
+      fog.far = 105 - k * 62;
     }
-    m.lamp.intensity = 40 + this.dark * 80;
-    (m.beam.material as THREE.MeshBasicMaterial).opacity = 0.05 + this.dark * 0.08;
+    m.lamp.intensity = 6 + this.dark * 70;
+    (m.beam.material as THREE.MeshBasicMaterial).opacity = this.dark * 0.1;
+    m.beam.visible = this.dark > 0.05;
     this.view.update(d.s, this.time, d.gone, Math.min(1, d.reveal / 1.5), d.singer, (s) => d.s >= s);
     this.sea.update(d.s, this.time, this.world.camera.position, this.dark);
     this.rings.update(dt, ds);
@@ -251,8 +257,8 @@ export class SubDive implements Vehicle {
   cameraPose(out: Rig, dt: number): Rig {
     const d = this.dive;
     const arena = d.holding;
-    const want = arena ? tmp.set(d.x * 0.5, d.y * 0.5 + 4.2, 12.5) : tmp.set(d.x * 0.6, d.y * 0.55 + 3.4, 10.5);
-    const look = arena ? tmp2.set(d.x * 0.4, d.y * 0.3 + 0.5, -30) : tmp2.set(d.x * 0.8, d.y * 0.7, -18);
+    const want = arena ? tmp.set(d.x * 0.5, d.y * 0.5 + 3.6, 10.5) : tmp.set(d.x * 0.6, d.y * 0.55 + 4, 11);
+    const look = arena ? tmp2.set(d.x * 0.3, d.y * 0.3 + 1, -26) : tmp2.set(d.x * 0.8, d.y * 0.7 + 0.2, -20);
     if (!this.camReady || dt === 0) {
       this.camPos.copy(want);
       this.camLook.copy(look);
@@ -318,6 +324,8 @@ export class SubDive implements Vehicle {
       urgent,
       button: singer || duel ? label('SING') : label('PING'),
       song,
+      // The boss bar takes the top of the screen during the fight.
+      track: this.battle.state !== 'fight',
     };
   }
 

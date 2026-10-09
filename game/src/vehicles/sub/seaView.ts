@@ -36,12 +36,49 @@ interface DoorView {
   /** One light-membrane per doorway, and the frame glows. */
   skins: THREE.MeshBasicMaterial[];
   frames: THREE.MeshBasicMaterial[];
+  wall: THREE.MeshStandardMaterial;
 }
 
 interface BeaconView {
   s: number;
   group: THREE.Group;
   orb: THREE.MeshBasicMaterial;
+}
+
+/** Old Gardener stonework: big blocks with light-words carved in them (shared by every gate). */
+let stoneTex: THREE.CanvasTexture | null = null;
+function stoneTexture(): THREE.CanvasTexture {
+  if (stoneTex) return stoneTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d') as CanvasRenderingContext2D;
+  g.fillStyle = '#56706e';
+  g.fillRect(0, 0, 256, 256);
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) {
+      const x = col * 86 + (row % 2) * 43 - 43;
+      g.fillStyle = (row + col) % 2 ? '#5e7a77' : '#4c6563';
+      g.fillRect(x + 3, row * 64 + 3, 80, 58);
+    }
+  }
+  g.strokeStyle = 'rgba(74,224,216,0.45)';
+  g.lineWidth = 4;
+  for (let i = 0; i < 7; i++) {
+    const x = 20 + ((i * 37) % 216);
+    const y = 18 + ((i * 53) % 220);
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + 14, y);
+    g.lineTo(x + 14, y + 12);
+    g.moveTo(x + 4, y + 6);
+    g.lineTo(x + 22, y + 6);
+    g.stroke();
+  }
+  stoneTex = new THREE.CanvasTexture(c);
+  stoneTex.colorSpace = THREE.SRGBColorSpace;
+  stoneTex.wrapS = stoneTex.wrapT = THREE.RepeatWrapping;
+  stoneTex.repeat.set(0.12, 0.12);
+  return stoneTex;
 }
 
 /** The wall of a Gardener gate: old stone across the whole corridor, with its round doorways cut out. */
@@ -117,7 +154,8 @@ export class SeaView {
 
   private makeDoor(d: Door): DoorView {
     const group = new THREE.Group();
-    const wall = new THREE.Mesh(gateWall(d), new THREE.MeshStandardMaterial({ color: '#7f9c98', roughness: 0.9, flatShading: true }));
+    const wallMat = new THREE.MeshStandardMaterial({ map: stoneTexture(), roughness: 0.95, transparent: true });
+    const wall = new THREE.Mesh(gateWall(d), wallMat);
     group.add(wall);
     const skins: THREE.MeshBasicMaterial[] = [];
     const frames: THREE.MeshBasicMaterial[] = [];
@@ -125,7 +163,7 @@ export class SeaView {
       const frame = new THREE.MeshBasicMaterial({ color: '#4ae0d8' });
       const ring = new THREE.Mesh(new THREE.TorusGeometry(DIVE.doorR + 0.25, 0.22, 8, 36), frame);
       ring.position.set(x, y, 0.85);
-      const skin = new THREE.MeshBasicMaterial({ color: '#2a8a9a', transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
+      const skin = new THREE.MeshBasicMaterial({ color: '#2a8a9a', transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide, fog: false });
       const disc = new THREE.Mesh(new THREE.CircleGeometry(DIVE.doorR + 0.25, 32), skin);
       disc.position.set(x, y, 0);
       // Gardener light-words round each doorway.
@@ -142,7 +180,7 @@ export class SeaView {
     }
     group.visible = false;
     this.group.add(group);
-    return { d, group, skins, frames };
+    return { d, group, skins, frames, wall: wallMat };
   }
 
   private makeBeacon(s: number): BeaconView {
@@ -254,10 +292,13 @@ export class SeaView {
       v.group.visible = rel < AHEAD && rel > -BEHIND;
       if (!v.group.visible) continue;
       v.group.position.z = -rel;
+      // Once the sub is through, the wall fades so it doesn't block the camera behind it.
+      v.wall.opacity = rel < 1 ? Math.max(0.15, 1 + (rel - 1) / 6) : 1;
+      v.wall.depthWrite = rel >= 1;
       v.d.holes.forEach((_, k) => {
         const open = k === v.d.open;
         const lit = reveal > 0;
-        v.skins[k].opacity = lit && open ? 0.04 : 0.55;
+        v.skins[k].opacity = lit && open ? 0.04 : rel < 1 ? 0.15 : 0.7;
         v.skins[k].color.set(lit ? (open ? '#7dff9a' : '#ff8a4a') : '#2a8a9a');
         v.frames[k].color.set(lit ? (open ? '#7dff9a' : '#ff7a3a') : '#4ae0d8');
       });

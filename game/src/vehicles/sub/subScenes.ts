@@ -72,7 +72,7 @@ export async function organIntro(d: Director, sub: SubDive, battle: OrganBattle)
   const card = BOSS_CARD.organ;
   const z = -ORGAN.dist;
   d.cut(V(12, 1, -6), V(0, 0, z), 52);
-  await d.cam(V(6, 3, z + 22), V(0, 0, z), 2.2, ease.inOut, 50);
+  await d.cam(V(9, 4, z + 36), V(0, 0, z), 2.2, ease.inOut, 50);
   for (let i = 0; i < battle.model.pipes.length; i++) {
     const p = battle.model.pipes[i];
     p.glow.visible = true;
@@ -84,7 +84,7 @@ export async function organIntro(d: Director, sub: SubDive, battle: OrganBattle)
   w.flash(0, 0, z + 4, card.color, 70, 0.7);
   sub.rings.burst(0, -3, z + 2, 2, 14, card.color, 1.2);
   haptic('heavy');
-  await d.cam(V(0, -1, z + 16), V(0, 1, z), 1.2, ease.inOut, 46);
+  await d.cam(V(0, 0.5, z + 29), V(0, 0.5, z), 1.2, ease.inOut, 50);
   await d.title(battle.fight.title, card.sub, card.color);
   await d.say(w.dialogue('boss'));
   const back = chase(sub);
@@ -96,7 +96,7 @@ export async function organOutro(d: Director, sub: SubDive, battle: OrganBattle)
   const w = sub.world;
   const z = -ORGAN.dist;
   d.timeScale = 0.4;
-  await d.cam(V(10, 2, z + 22), V(0, 0, z), 1, ease.inOut, 50);
+  await d.cam(V(12, 4, z + 32), V(0, 0, z), 1, ease.inOut, 50);
   for (let i = 0; i < 6; i++) {
     const p = battle.model.pipes[i];
     const at = p.group.position;

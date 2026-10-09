@@ -154,6 +154,7 @@ export class VehicleHudView {
 
   update(h: VehicleHud) {
     this.setLabel(h.button ?? 'BOOST');
+    (this.el.querySelector('.vtrack') as HTMLElement).style.display = h.track === false ? 'none' : '';
     this.drawSong(h.song ?? null);
     const key = `${Math.round(h.boost * 30)}|${h.boostSlots}|${h.boosting}|${h.counter?.join(',')}|${Math.round(h.progress * 400)}|${h.marks.length}`;
     if (key !== this.last) {

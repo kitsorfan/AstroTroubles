@@ -29,10 +29,11 @@ export class OrganBattle {
     this.waves = new WaveView(sub.world.scene, ORGAN.band / ORGAN.ringR);
   }
 
-  private tell(key: string, text: string, who: 'bolt' | 'halcyon' | 'aeetes' = 'bolt') {
-    if (this.told.has(key)) return;
-    this.told.add(key);
-    this.sub.world.hooks.toast(text, who);
+  /** LUX calls out what the Organ is doing (each only once a fight). */
+  private toast(text: string, once: string) {
+    if (this.told.has(once)) return;
+    this.told.add(once);
+    this.sub.world.hooks.toast(text, 'bolt');
   }
 
   /** The Dolphin reached the arena: the Organ's entrance the first time, straight into the fight after that. */
@@ -98,7 +99,7 @@ export class OrganBattle {
         return;
       }
       if (this.sub.dive.hurt(this.sub.events)) {
-        this.tell('wave', 'Swim through the HOLE in the middle of the rings! Or stay right outside them.');
+        this.toast('Swim through the HOLE in the middle of the rings! Or stay right outside them.', 'wave');
       }
     },
     lit: () => audio.play('blip', 1.4, 0.6),
@@ -123,12 +124,12 @@ export class OrganBattle {
         const side = d.x > 0 ? -1 : 1;
         const st = d.addBuoy({ kind: 'buoy', s: this.arenaS + 16, x: side * 7, y: -1.5, id: 'organ-b' });
         this.sub.view.addBuoy(st);
-        this.tell('raise', 'It raised a siren buoy! SING on the beat, or torpedo it!');
+        this.toast('It raised a siren buoy! SING on the beat, or torpedo it!', 'raise');
       } else if (n === 3) {
         this.schoolT = 1.5;
-        this.tell('fish', 'Piranhas! PING them, then torpedo!');
+        this.toast('Piranhas! PING them, then torpedo!', 'fish');
       } else if (n === 4) {
-        this.tell('duel', 'Every pipe is broken! Now its big horn sings... and I sing back!');
+        this.toast('Every pipe is broken! Now its big horn sings... and I sing back!', 'duel');
       }
     },
     finaleRound: () => this.sub.world.hooks.toast('My turn! Tap SING every time a note reaches the ring!', 'bolt'),

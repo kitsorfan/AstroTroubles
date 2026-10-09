@@ -64,4 +64,6 @@ export interface VehicleHud {
    * so far out of those needed. Tap the button as a beat reaches the ring.
    */
   song?: { beats: number[]; got: number; need: number } | null;
+  /** Show the course progress bar (default yes; hidden while a boss bar is up). */
+  track?: boolean;
 }

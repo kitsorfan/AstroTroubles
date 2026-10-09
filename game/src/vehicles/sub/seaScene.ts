@@ -31,7 +31,7 @@ function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D)
 /** Rippled sand: pale stripes and a few pebbles. */
 function sandTexture() {
   return canvasTexture(256, 256, (g) => {
-    g.fillStyle = '#c8b88a';
+    g.fillStyle = '#a89c7a';
     g.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 18; i++) {
       g.strokeStyle = i % 2 ? 'rgba(255,248,220,0.35)' : 'rgba(120,100,60,0.25)';
@@ -201,7 +201,7 @@ export class Sea {
       const z = -(k * SLOT - s);
       for (const side of [-1, 1]) {
         const h = hash(k * 2 + (side > 0 ? 1 : 0));
-        if (w < 120) this.place(this.walls, w++, side * (DIVE.halfW + 7 + h * 6), SEABED + h * 8, z, 4 + h * 4, 5 + h * 7, 4 + h * 3, k, 0);
+        if (w < 120) this.place(this.walls, w++, side * (DIVE.halfW + 10 + h * 7), SEABED + h * 6, z, 3 + h * 3, 4 + h * 6, 3 + h * 3, k, 0);
         if (this.inRuins(k * SLOT) && h > 0.45 && r < 60) {
           const tall = 3 + hash(k + 70) * 10;
           this.place(this.ruins, r++, side * (DIVE.halfW + 3 + h * 2.5), SEABED - 0.5, z + 2, 1.1, tall, 1.1, 0, side * (hash(k + 5) - 0.5) * 0.4);

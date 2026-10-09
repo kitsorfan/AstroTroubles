@@ -252,10 +252,11 @@ export function sirenSpot(id: string, lane: Lane, s: number, side: number, seed:
   const x = Math.max(-DIVE.halfW + 1.5, Math.min(DIVE.halfW - 1.5, lx + side * 7));
   const y = Math.max(-DIVE.halfH + 1.5, Math.min(DIVE.halfH - 2, ly + 0.5));
   const out: (Buoy | Rock)[] = [{ kind: 'buoy', s, x, y, id }];
+  // The rocks heap up under and round the buoy (it floats just above them, where you can see it).
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2 + rand();
-    const r = 1.1 + rand() * 0.9;
-    out.push({ kind: 'rock', s: Math.round((s - 3 + Math.sin(a) * 4) * 10) / 10, x: Math.round((x + Math.cos(a) * 2.6) * 10) / 10, y: Math.round((y - 1.5 + Math.sin(a * 2) * 1.6) * 10) / 10, r: Math.round(r * 10) / 10 });
+    const r = 1.2 + rand() * 0.8;
+    out.push({ kind: 'rock', s: Math.round((s + Math.sin(a) * 3.5) * 10) / 10, x: Math.round((x + Math.cos(a) * 2.8) * 10) / 10, y: Math.round((y - 2 - rand() * 1.2) * 10) / 10, r: Math.round(r * 10) / 10 });
   }
   return out;
 }

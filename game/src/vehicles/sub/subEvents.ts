@@ -27,7 +27,7 @@ export function diveEvents(sub: SubDive): DiveEvents {
       audio.play('break', 0.6);
       w.shake(0.5);
       // Bumped into the rocks round a singing buoy: the song pulled us. Tell how to fight it.
-      if (d().singer) sub.tellOnce('pulled', 'The song pulled us onto the rocks! Steer away, tap SING on the beat, or torpedo the buoy!');
+      if (d().singer) sub.toast('The song pulled us onto the rocks! Steer away, tap SING on the beat, or torpedo the buoy!', 'pulled');
     },
     door: (door, ok) => {
       if (ok) {
@@ -40,7 +40,8 @@ export function diveEvents(sub: SubDive): DiveEvents {
       audio.play('pound', 0.8);
       w.shake(0.8);
       haptic('warning');
-      w.hooks.toast(bonks > 1 ? 'BONK! PING first: the open doorway glows GREEN.' : 'BONK! That doorway is sealed. PING to see which one is open!', 'bolt');
+      if (bonks > 1) w.hooks.toast('BONK! PING first: the open doorway glows GREEN.', 'bolt');
+      else w.hooks.toast('BONK! That doorway is sealed. PING to see which one is open!', 'bolt');
     },
     ring: (r) => {
       audio.play('bolt', 1.5);
@@ -57,7 +58,7 @@ export function diveEvents(sub: SubDive): DiveEvents {
       audio.play('shard', 1.4, 0.8);
       w.particles.emit(p.x, p.y, -0.5, { count: 16, color: '#ffd0f0', speed: 3, life: 0.8, size: 0.8, gravity: 0 });
       w.hooks.hud();
-      sub.tellOnce('pearl', 'A hidden pearl! Only a PING shows them. +10 bolts!');
+      sub.toast('A hidden pearl! Only a PING shows them. +10 bolts!', 'pearl');
       save();
     },
     beacon: (b) => {
@@ -76,16 +77,17 @@ export function diveEvents(sub: SubDive): DiveEvents {
       const dv = d();
       for (let i = 0; i < 3; i++) setTimeout(() => sub.rings.burst(dv.x, dv.y, -2 - i * 6, 1.5 + i * 2, 12 + i * 4, '#7fe6ff', 0.9), i * 120);
       const stunned = dv.fish.filter((f) => f.stun > 0).length;
-      if (stunned) sub.tellOnce('stun', 'Zapped! The piranhas are dizzy. Quick, torpedo them!');
+      if (stunned) sub.toast('Zapped! The piranhas are dizzy. Quick, torpedo them!', 'stun');
     },
-    empty: () => sub.tellOnce('empty', 'The sonar is still charging! Watch the lights on the PING button.'),
-    song: () => {
+    empty: () => sub.toast('The sonar is still charging! Watch the lights on the PING button.', 'empty'),
+    song: (b) => {
       audio.play('alarm', 1.6, 0.4);
-      // The first siren: a storybook picture of LUX singing back (the dive waits while it plays).
-      if (!sub.said.has('sirens')) {
-        sub.said.add('sirens');
+      // The first siren of the dive: a storybook picture of LUX singing back (the dive waits while it plays).
+      if (b.b.id.startsWith('organ')) return;
+      if (!w.flags.has('sub:sirens')) {
+        w.flags.add('sub:sirens');
         void w.hooks.cutscene((dir) => sirenStory(dir, sub));
-      } else sub.tellOnce('song2', 'Another siren! Tap SING when the notes reach the ring!');
+      } else sub.toast('A siren! Tap SING when the notes reach the ring!', 'song2');
     },
     note: (b, good) => {
       const dv = d();
@@ -108,7 +110,8 @@ export function diveEvents(sub: SubDive): DiveEvents {
       sub.silenced += 1;
       w.save.bolts += 10;
       w.hooks.hud();
-      w.hooks.toast(b.quiet === 'song' ? 'LUX out-sang the siren! It went quiet. +10 bolts' : 'Buoy switched off! +10 bolts', 'bolt');
+      if (b.quiet === 'song') w.hooks.toast('LUX out-sang the siren! It went quiet. +10 bolts', 'bolt');
+      else w.hooks.toast('Buoy switched off! +10 bolts', 'bolt');
       save();
     },
     school: () => {

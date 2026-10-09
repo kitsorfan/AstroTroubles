@@ -31,8 +31,8 @@ const SEABED = -9;
 
 export function makeOrgan(): OrganModel {
   const root = new THREE.Group();
-  const gold = new THREE.MeshStandardMaterial({ color: '#ffc23a', roughness: 0.28, metalness: 0.85, emissive: '#4a2a00', emissiveIntensity: 0.35 });
-  const darkGold = new THREE.MeshStandardMaterial({ color: '#b8801a', roughness: 0.4, metalness: 0.8 });
+  const gold = new THREE.MeshStandardMaterial({ color: '#e0a830', roughness: 0.45, metalness: 0.7, emissive: '#3a2000', emissiveIntensity: 0.2 });
+  const darkGold = new THREE.MeshStandardMaterial({ color: '#a8701a', roughness: 0.5, metalness: 0.7 });
   const stone = new THREE.MeshStandardMaterial({ color: '#6a8a8a', roughness: 0.9, flatShading: true });
   const coral = ['#ff7a8a', '#ffb84a', '#c87aff'].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, emissive: c, emissiveIntensity: 0.15 }));
 
