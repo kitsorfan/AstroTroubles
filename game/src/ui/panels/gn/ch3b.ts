@@ -7,7 +7,7 @@
  * this file (`../gn/ch3b`); they are not re-exported from the kit's index.
  */
 import { jason, POSES } from './cast';
-import { type Mood, type Pose, rig, TEEN_BOY } from './body';
+import { limbD, type Mood, type Pose, rig, TEEN_BOY } from './body';
 import { add, at, dSmooth, INK, lerp, mix, mul, type P, type Pen, perp, r1, rng, sub, unit } from './core';
 import { lux, type LuxMood } from './droids';
 import { spark } from './fx';
@@ -591,5 +591,327 @@ export function splash(pen: Pen, x: number, y: number, w: number, seed = 2, towa
       0.9,
     )
   );
+}
+
+/* ---------------- the Gardeners' bronze mech ---------------- */
+
+/** The mech's colours (as in the game's model): warm bronze, green patina, dark iron joints, teal light-lines. */
+export const MECH = { bronze: '#c8862e', light: '#e8b060', patina: '#5aa88a', iron: '#3a3230', teal: '#5ff0d0' };
+
+/** A shaded metal cylinder from a to b (a limb segment of a machine). */
+const pipe = (pen: Pen, a: P, b: P, w0: number, w1: number, color: string, rim: number, shade?: string) => pen.form(limbD(a, b, w0, w1, 0, 1, 0.18), color, { sh: Math.max(w0, w1) * 0.42, hatch: 2, rim, line: 3.4, axis: sub(b, a), shade });
+
+/** A shaded iron ball joint with a glint. */
+const ball = (pen: Pen, c: P, r: number, color: string, rim: number) => pen.form(ell(c[0], c[1], r), color, { sh: r * 0.6, hatch: 2, rim, line: 3.2, inner: `<ellipse cx="${r1(c[0] + pen.L[0] * r * 0.45)}" cy="${r1(c[1] + pen.L[1] * r * 0.45)}" rx="${r1(r * 0.22)}" ry="${r1(r * 0.13)}" fill="#ffffff" opacity=".5"/>` });
+
+export interface MechOpts {
+  /** Sitting on a bench (seat 330 above its feet), legs hanging, fists resting beside it. */
+  sit?: boolean;
+  /** How awake it is: 0 asleep (eye and light-lines dark) to 1 fully lit. */
+  awake?: number;
+  /** Jason in the glass bubble (his mood; leave out for an empty bubble), where he looks and his pose. */
+  jason?: Mood;
+  jasonLook?: P;
+  jasonPose?: keyof typeof POSES | Pose;
+  /** Raise the far fist in a wave. */
+  wave?: boolean;
+  rim?: number;
+}
+
+/** Where a rider sits on the mech's far shoulder pad (its top), in the mech's own coordinates. */
+export const mechPerch = (sit = false): P => [372, sit ? -816 : -886];
+
+/**
+ * The Gardeners' bronze mech, feet at (x, y), about 1100 tall at scale 1 (twice Jason's height) and
+ * turned a little to the right: a round bronze barrel of a body with patina bands and light-word plates,
+ * one wide teal eye across its chest, a glass bubble on top (Jason's seat) with a leaf crest, iron ball
+ * joints, big box fists and flat feet. Its far shoulder pad is Atalanta's perch (`mechPerch`).
+ */
+export function mech(pen: Pen, x: number, y: number, s: number, o: MechOpts = {}): string {
+  const sit = !!o.sit;
+  const rim = o.rim ?? 2.6;
+  const awake = o.awake ?? 1;
+  const C = MECH;
+  const up = sit ? 70 : 0;
+  const far = (c: string) => pen.dark(c, 0.7);
+  // The arms: shoulder, elbow, wrist for each side (-1 near, 1 far).
+  const armPts = (sx: number): [P, P, P] => {
+    if (sx > 0 && o.wave) return [[340, -760 + up], [520, -880 + up], [560, -1040 + up]];
+    if (sit) return [[sx * 350, -690], [sx * 450, -560], [sx * 452, -470]];
+    return [[sx * 350, -760], [sx * 392, -560], [sx * 404, -400]];
+  };
+  const arm = (sx: number) => {
+    const [sh, el, wr] = armPts(sx);
+    const k = sx > 0 ? 0.92 : 1;
+    const shade = sx > 0 ? far(C.bronze) : undefined;
+    const dirFist = unit(sub(wr, el));
+    const fc = add(wr, mul(dirFist, 70 * k));
+    const fist = at(fc[0], fc[1], 1, pen.local(false, 0).form(rrect(-82 * k, -76 * k, 164 * k, 152 * k, 34 * k), C.light, { sh: 56 * k, hatch: 2, rim, line: 3.6, shade: sx > 0 ? far(C.light) : undefined, inner: `<path d="M${r1(-82 * k)} ${r1(30 * k)}H${r1(82 * k)}V${r1(56 * k)}H${r1(-82 * k)}Z" fill="${C.patina}"/><path d="M${r1(-40 * k)} ${r1(-20 * k)}V${r1(30 * k)}M0 ${r1(-24 * k)}V${r1(30 * k)}M${r1(40 * k)} ${r1(-20 * k)}V${r1(30 * k)}" stroke="${INK}" stroke-width="3.4" opacity=".6"/>` }));
+    // The pauldron: high on the body side, curving down over the outside of the shoulder.
+    const [ox, oy] = sh;
+    const q = (dx: number, dy: number): string => `${r1(ox + sx * dx * k)} ${r1(oy + dy)}`;
+    const rivets = [
+      [10, -96],
+      [70, -84],
+      [116, -50],
+    ]
+      .map(([dx, dy]) => `<circle cx="${r1(ox + sx * dx * k)}" cy="${oy + dy}" r="5" fill="${INK}" opacity=".55"/>`)
+      .join('');
+    const pad = pen.form(`M${q(-96, -56)}Q${q(-74, -154)} ${q(30, -146)}Q${q(164, -126)} ${q(156, 34)}Q${q(70, -16)} ${q(-96, -56)}Z`, C.light, {
+      sh: 46,
+      hatch: 2,
+      rim,
+      line: 3.6,
+      shade: sx > 0 ? far(C.light) : undefined,
+      inner:
+        pen.brush(
+          [
+            [ox - sx * 92 * k, oy - 50],
+            [ox + sx * 60 * k, oy - 22],
+            [ox + sx * 150 * k, oy + 28],
+          ],
+          18,
+          C.patina,
+          [0.05, 0.05],
+        ) +
+        rivets +
+        shine(
+          pen,
+          [
+            [ox - sx * 50 * k, oy - 112],
+            [ox + sx * 30 * k, oy - 132],
+            [ox + sx * 100 * k, oy - 112],
+          ],
+          7,
+          0.6,
+        ),
+    });
+    return ball(pen, sh, 92 * k, C.iron, rim) + pipe(pen, sh, el, 122 * k, 104 * k, C.bronze, rim, shade) + ball(pen, el, 62 * k, C.iron, rim) + pipe(pen, el, wr, 108 * k, 124 * k, C.bronze, rim, shade) + fist + pad;
+  };
+  // The legs.
+  const legStand = (sx: number) => {
+    const k = sx > 0 ? 0.94 : 1;
+    const shade = sx > 0 ? far(C.bronze) : undefined;
+    const hip: P = [sx * 160, -430];
+    const kn: P = [sx * 165, -205];
+    const an: P = [sx * 172, -70];
+    const foot = pen.form(`M${an[0] - 110 * k} ${-86}H${an[0] + 60 * k}Q${an[0] + 120 * k} -86 ${an[0] + 130 * k} -30V0H${an[0] - 116 * k}Z`, C.bronze, { sh: 34, hatch: 2, rim, line: 3.6, shade, inner: `<path d="M${an[0] + 50 * k} -86H${an[0] + 140 * k}V0H${an[0] + 50 * k}Z" fill="${C.patina}"/>` });
+    return ball(pen, hip, 96 * k, C.iron, rim) + pipe(pen, hip, kn, 190 * k, 168 * k, C.bronze, rim, shade) + pipe(pen, kn, an, 172 * k, 212 * k, C.bronze, rim, shade) + foot + ball(pen, kn, 56 * k, C.iron, rim) + pen.form(`M${kn[0] - 60 * k + 20} ${kn[1] - 30}Q${kn[0] + 20} ${kn[1] - 86} ${kn[0] + 60 * k + 20} ${kn[1] - 30}L${kn[0] + 52 * k + 20} ${kn[1] + 40}Q${kn[0] + 20} ${kn[1] + 62} ${kn[0] - 52 * k + 20} ${kn[1] + 40}Z`, C.light, { sh: 24, line: 3, rim, shade: sx > 0 ? far(C.light) : undefined });
+  };
+  const legSit = (sx: number) => {
+    const k = sx > 0 ? 0.94 : 1;
+    const shade = sx > 0 ? far(C.bronze) : undefined;
+    const kn: P = [sx * 196, -300];
+    const an: P = [sx * 206, -72];
+    const thigh = pen.form(ell(sx * 180, -330, 116 * k, 92 * k), C.bronze, { sh: 50, hatch: 2, rim, line: 3.6, shade });
+    const foot = pen.form(rrect(an[0] - 128 * k, -92, 256 * k, 92, 26), C.bronze, { sh: 34, hatch: 2, rim, line: 3.6, shade, inner: `<path d="M${an[0] - 130 * k} -34H${an[0] + 130 * k}V2H${an[0] - 130 * k}Z" fill="${C.patina}"/>` });
+    return thigh + pipe(pen, kn, an, 176 * k, 214 * k, C.bronze, rim, shade) + foot + ball(pen, kn, 56 * k, C.iron, rim) + pen.form(`M${kn[0] - 70 * k} ${kn[1] - 30}Q${kn[0]} ${kn[1] - 96} ${kn[0] + 70 * k} ${kn[1] - 30}L${kn[0] + 60 * k} ${kn[1] + 44}Q${kn[0]} ${kn[1] + 70} ${kn[0] - 60 * k} ${kn[1] + 44}Z`, C.light, { sh: 26, line: 3, rim, shade: sx > 0 ? far(C.light) : undefined, inner: shine(pen, [[kn[0] - 36 * k, kn[1] - 14], [kn[0] + 30 * k, kn[1] - 18]], 6, 0.6) });
+  };
+  // The body: hip skirt, the round barrel, its patina band, the light-word plates and the eye.
+  const lit = Math.max(0, Math.min(1, awake));
+  const plate = (px: number, w: number) => rrect(px - w / 2, -730, w, 150, 22);
+  const plates =
+    `<path d="${plate(-196, 132)}${plate(206, 104)}" fill="${C.light}" stroke="${INK}" stroke-width="3"/>` +
+    `<path d="${plate(-196, 132)}${plate(206, 104)}" fill="${INK}" opacity=".12" transform="translate(-6 8)"/>` +
+    lightWords(pen, -196, -670, 4, 92, lit) +
+    lightWords(pen, 206, -670, 4, 70, lit * 0.9);
+  const band = `<path d="M-340 -560Q0 -456 340 -560V-520Q0 -414 -340 -520Z" fill="${C.patina}"/><path d="M-340 -560Q0 -456 340 -560M-340 -520Q0 -414 -340 -520" fill="none" stroke="${INK}" stroke-width="3"/>`;
+  const seams = `<path d="M-60 -918Q-90 -660 -64 -410M150 -900Q180 -660 160 -420" fill="none" stroke="${INK}" stroke-width="3" opacity=".45"/>` + [-280, -230, 230, 280].map((rx) => `<circle cx="${rx}" cy="${r1(-600 + Math.abs(rx) * 0.1)}" r="5" fill="${INK}" opacity=".55"/>`).join('');
+  const torso =
+    pen.form(ell(0, -656, 330, 272), C.bronze, {
+      sh: 120,
+      hatch: 2,
+      rim,
+      line: 4,
+      paint: pen.rad(
+        [
+          [0, '#ffd08a'],
+          [0.45, C.bronze],
+          [1, '#8a5418'],
+        ],
+        0.32,
+        0.28,
+        0.8,
+      ),
+      inner: band + plates + seams + shine(pen, [[-250, -800], [-150, -880], [-30, -906]], 12, 0.55),
+    }) +
+    // The eye: one wide visor across the chest.
+    (lit > 0.05 ? pen.glow(30, -742, 220 * (0.5 + lit * 0.5), C.teal, 0.8 * lit, 70) : '') +
+    pen.form(rrect(-70, -766, 200, 48, 24), lit > 0.05 ? mix('#2a5a52', '#c8fff4', lit) : '#1e3a36', { line: 3.2, inner: lit > 0.3 ? `<path d="M-46 -752H40" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="${r1(lit * 0.8 * 10) / 10}"/>` : `<path d="M-50 -742Q30 -728 110 -742" fill="none" stroke="#3a6a60" stroke-width="5"/>` });
+  const skirt = pen.form(ell(0, -430, 236, 82), C.iron, { sh: 40, hatch: 2, rim, line: 3.6 });
+  // The head: an iron ring with a light-bronze rim, the glass bubble with Jason in it, and the leaf crest.
+  const ring = pen.form('M-206 -884A206 42 0 0 0 206 -884V-842A206 42 0 0 1 -206 -842Z', C.iron, { sh: 16, line: 3.4, rim }) + pen.brush([[-206, -884], [0, -842], [206, -884]], 16, C.light, [0.05, 0.05]) + pen.brush([[-150, -868], [0, -846], [80, -852]], 5, '#fff2d0', [0.3, 0.3], 0.7);
+  let crew = '';
+  if (o.jason) {
+    const pose: Pose = typeof o.jasonPose === 'string' ? POSES[o.jasonPose] : (o.jasonPose ?? { turn: 0.45, lean: 4, armN: { to: [0.9, 1.0] }, armF: { to: [1.1, 0.9] }, legN: { to: [-0.06, 0.98] }, legF: { to: [0.16, 0.96] }, handN: 'grip', handF: 'grip' });
+    const r = rig(TEEN_BOY, pose);
+    const js = 1;
+    const head: P = [6, -990];
+    const clip = pen.uid();
+    pen.def(clip, `<clipPath id="${clip}"><path d="M-200 -860V-884A200 210 0 0 1 200 -884V-860Z"/></clipPath>`);
+    crew = `<g clip-path="url(#${clip})">${jason(pen, head[0] - r.head[0] * js, head[1] - r.head[1] * js, js, { pose, mood: o.jason, look: o.jasonLook, blaster: false, rim: 1.4 })}</g>`;
+  }
+  const bubbleBack = `<path d="M-200 -884A200 210 0 0 1 200 -884Z" fill="#2a5060" opacity=".45"/>` + pen.glow(0, -960, 170, '#8fe8ff', 0.3);
+  const crest = pen.form('M-22 -1086Q-36 -1170 8 -1236Q40 -1168 24 -1086Z', C.patina, { sh: 16, hatch: 1, line: 3, rim, inner: pen.brush([[2, -1092], [6, -1160], [8, -1220]], 3, INK, [0.2, 0.3], 0.6) });
+  const head = bubbleBack + crew + at(0, -884, 1, glassDome(pen, 200, 210, false)) + ring + crest;
+  // Back to front.
+  const upper = (body: string) => (up ? `<g transform="translate(0 ${up})">${body}</g>` : body);
+  let out = '';
+  if (sit) {
+    out += arm(1) + upper(skirt) + upper(torso) + upper(head) + legSit(1) + legSit(-1) + arm(-1);
+  } else {
+    out += arm(1) + legStand(1) + legStand(-1) + skirt + torso + head + arm(-1);
+  }
+  return at(x, y, s, out);
+}
+
+/* ---------------- TALOS ---------------- */
+
+/** Talos's colours (as in the game's model): old dark bronze, green patina, iron, golden ichor, and his eye. */
+export const TALOS = { bronze: '#a8692a', light: '#d8944a', patina: '#4a9a7a', iron: '#2e2622', ichor: '#ffd04a', calm: '#5ff0d0', angry: '#ff3a2a' };
+
+/** A ring of eight glowing leaves round (x, y): the light-word for "keep safe" carved on Talos's chest. */
+function leafRing(pen: Pen, x: number, y: number, r: number, color: string, lit: number): string {
+  let d = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const dv: P = [Math.cos(a), Math.sin(a) * 0.86];
+    d += leafD(add([x, y], mul(dv, r * 0.55)), add([x, y], mul(dv, r * 1.05)), r * 0.13);
+  }
+  return pen.glow(x, y, r * 1.6, color, lit * 0.6) + `<path d="${d}" fill="${mix('#2a4a44', color, lit)}" stroke="${INK}" stroke-width="2.4"/>`;
+}
+
+export interface TalosOpts {
+  /** Aeëtes's red control (default: his own calm teal eye). */
+  angry?: boolean;
+  /** How far he bows his head (degrees; + nods down toward the left). */
+  nod?: number;
+  /** Little comic motion arcs in front of his face (he is nodding). */
+  nodLines?: boolean;
+  rim?: number;
+}
+
+/**
+ * TALOS, the Gardeners' bronze guardian, sitting, seen from the front and turned to face left; hips at
+ * (x, y), about 1000 tall from his crest to his hips at scale 1. A barrel chest with the "keep safe"
+ * leaf-ring on its plate, great shoulder domes, iron ball joints, a round helmet head with one wide eye
+ * and a leaf crest, fists resting at his sides, thighs coming toward us. His crown is gone.
+ */
+export function talos(pen: Pen, x: number, y: number, s: number, o: TalosOpts = {}): string {
+  const C = TALOS;
+  const rim = o.rim ?? 3;
+  const eye = o.angry ? C.angry : C.calm;
+  const far = (c: string) => pen.dark(c, 0.72);
+  const arm = (sx: number) => {
+    const k = sx < 0 ? 0.94 : 1;
+    const shade = sx < 0 ? far(C.bronze) : undefined;
+    const sh: P = sx < 0 ? [-262, -352] : [236, -356];
+    const el: P = sx < 0 ? [-318, -160] : [300, -160];
+    const wr: P = sx < 0 ? [-326, 24] : [312, 26];
+    const fist = pen.form(rrect(wr[0] - 58 * k, wr[1] - 6, 116 * k, 110, 26), C.light, {
+      sh: 40,
+      hatch: 2,
+      rim,
+      line: 3.6,
+      shade: sx < 0 ? far(C.light) : undefined,
+      inner: `<path d="M${r1(wr[0] - 60 * k)} ${wr[1] - 8}H${r1(wr[0] + 60 * k)}V${wr[1] + 16}H${r1(wr[0] - 60 * k)}Z" fill="${C.patina}"/><path d="M${r1(wr[0] - 24 * k)} ${wr[1] + 40}V${wr[1] + 96}M${r1(wr[0] + 8 * k)} ${wr[1] + 40}V${wr[1] + 98}M${r1(wr[0] + 38 * k)} ${wr[1] + 40}V${wr[1] + 96}" stroke="${INK}" stroke-width="3.4" opacity=".55"/>`,
+    });
+    return ball(pen, sh, 68 * k, C.iron, rim) + pipe(pen, sh, el, 108 * k, 92 * k, C.bronze, rim, shade) + ball(pen, el, 56 * k, C.iron, rim) + pipe(pen, el, wr, 96 * k, 112 * k, C.bronze, rim, shade) + fist;
+  };
+  // The legs: thighs coming toward us over the ledge, iron knees with plates.
+  const leg = (sx: number) => {
+    const k = sx < 0 ? 0.95 : 1;
+    const shade = sx < 0 ? far(C.bronze) : undefined;
+    const hx = sx < 0 ? -120 : 130;
+    const kn: P = [hx + sx * 10, 96];
+    return (
+      pen.form(ell(hx, 50, 92 * k, 74), C.bronze, { sh: 40, hatch: 2, rim, line: 3.6, shade }) +
+      pipe(pen, kn, [kn[0] + sx * 8, 330], 104 * k, 90 * k, C.bronze, rim, shade) +
+      ball(pen, kn, 58 * k, C.iron, rim) +
+      pen.form(`M${kn[0] - 60 * k} ${kn[1] - 34}Q${kn[0]} ${kn[1] - 90} ${kn[0] + 60 * k} ${kn[1] - 34}L${kn[0] + 52 * k} ${kn[1] + 36}Q${kn[0]} ${kn[1] + 60} ${kn[0] - 52 * k} ${kn[1] + 36}Z`, C.light, { sh: 28, hatch: 1, line: 3, rim, shade: sx < 0 ? far(C.light) : undefined })
+    );
+  };
+  // The chest: a barrel of old bronze with a patina band, the carved plate and its ring of leaves.
+  const plate = rrect(-160, -350, 180, 140, 26);
+  const chestInner =
+    `<path d="M-280 -150Q-30 -56 230 -150V-112Q-30 -16 -280 -112Z" fill="${C.patina}"/><path d="M-280 -150Q-30 -56 230 -150M-280 -112Q-30 -16 230 -112" fill="none" stroke="${INK}" stroke-width="3.2"/>` +
+    `<path d="${plate}" fill="${C.light}" stroke="${INK}" stroke-width="3.4"/><path d="${plate}" fill="${INK}" opacity=".14" transform="translate(-8 10)"/>` +
+    leafRing(pen, -70, -280, 52, eye, 0.9) +
+    `<path d="M60 -440Q96 -260 60 -80M-200 -420Q-240 -260 -214 -120" fill="none" stroke="${INK}" stroke-width="3.2" opacity=".45"/>` +
+    // Ages of weather: rows of rivets along the seams, green verdigris running down from them, old scratches.
+    [-410, -370, -330, -290, -250, -210, -170].map((ry) => `<circle cx="${r1(62 + Math.sin((ry + 440) / 115) * 30)}" cy="${ry}" r="5" fill="${INK}" opacity=".5"/><circle cx="${r1(-206 - Math.sin((ry + 420) / 105) * 26)}" cy="${ry}" r="5" fill="${INK}" opacity=".5"/>`).join('') +
+    pen.brushes(
+      [
+        [[[70, -330], [74, -270], [70, -200]], 12],
+        [[[90, -400], [96, -350]], 8],
+        [[[-212, -300], [-218, -240], [-214, -170]], 14],
+        [[[-150, -206], [-150, -170]], 9],
+        [[[0, -206], [2, -160]], 10],
+        [[[140, -110], [142, -60]], 10],
+        [[[-120, -100], [-118, -50]], 12],
+      ],
+      C.patina,
+      [0.1, 0.9],
+      0.7,
+    ) +
+    pen.brushes(
+      [
+        [[[110, -300], [160, -330]], 2.6],
+        [[[120, -280], [150, -296]], 2.2],
+        [[[-150, -420], [-110, -436]], 2.4],
+      ],
+      INK,
+      [0.2, 0.3],
+      0.55,
+    ) +
+    shine(pen, [[-210, -380], [-120, -446], [-20, -462]], 12, 0.4);
+  const chest = pen.form(ell(-24, -250, 236, 220), C.bronze, {
+    sh: 110,
+    hatch: 2,
+    rim,
+    line: 4,
+    paint: pen.rad(
+      [
+        [0, '#c88a4a'],
+        [0.5, C.bronze],
+        [1, '#4a2410'],
+      ],
+      0.3,
+      0.3,
+      0.85,
+    ),
+    inner: chestInner,
+  });
+  const shoulder = (c: P, r: number, isFar: boolean) => pen.form(ell(c[0], c[1], r), mix(C.light, C.bronze, 0.45), { sh: r * 0.5, hatch: 2, rim, line: 3.6, shade: isFar ? far(C.bronze) : undefined, inner: shine(pen, [[c[0] - r * 0.6, c[1] - r * 0.3], [c[0] - r * 0.2, c[1] - r * 0.7], [c[0] + r * 0.2, c[1] - r * 0.78]], 8, 0.6) + pen.brush([[c[0] - r, c[1] + r * 0.2], [c[0], c[1] + r * 0.62], [c[0] + r, c[1] + r * 0.2]], 12, C.patina, [0.05, 0.05], 0.9) });
+  const belt = pen.form('M-190 -70Q-30 -26 170 -70V12Q-30 56 -190 12Z', C.iron, { sh: 24, hatch: 2, rim, line: 3.6, inner: `<path d="M-120 -50V30M40 -50V34" stroke="#6a5a52" stroke-width="4"/>` });
+  const neck = pipe(pen, [-40, -430], [-48, -500], 130, 120, C.iron, rim);
+  // The head: a round helmet, the dark visor with its one wide eye, the brow, a side disc, the leaf crest.
+  const nod = o.nod ?? 14;
+  const hp = pen.local(false, -nod);
+  const visor = `<path d="M-120 -18Q-30 -34 70 -22V30Q-30 20 -120 34Z" fill="${C.iron}" stroke="${INK}" stroke-width="3"/>`;
+  const eyeSlit = hp.glow(-40, 6, 150, eye, 0.85, 70) + `<path d="M-100 -4Q-40 -14 30 -6V18Q-40 10 -100 22Z" fill="${mix(eye, '#ffffff', 0.55)}" stroke="${INK}" stroke-width="2.6"/><path d="M-84 6Q-40 0 4 4" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>`;
+  const helmet = hp.form(ell(0, 0, 110), C.bronze, {
+    sh: 46,
+    hatch: 2,
+    rim,
+    line: 4,
+    paint: hp.rad(
+      [
+        [0, '#d89a58'],
+        [0.5, C.bronze],
+        [1, '#4a2410'],
+      ],
+      0.3,
+      0.28,
+      0.85,
+    ),
+    inner: visor + `<path d="M-20 52Q30 74 92 40" fill="none" stroke="${INK}" stroke-width="3" opacity=".55"/><circle cx="-30" cy="66" r="4.5" fill="${INK}" opacity=".6"/><circle cx="50" cy="62" r="4.5" fill="${INK}" opacity=".6"/>` + shine(hp, [[-80, -60], [-30, -92], [30, -96]], 10, 0.6),
+  });
+  const brow = hp.brush([[-118, -30], [-40, -48], [60, -38]], 16, C.light, [0.1, 0.2]) + hp.brush([[-118, -24], [-40, -40], [60, -30]], 3, INK, [0.1, 0.2], 0.7);
+  const disc = hp.form(ell(76, 6, 30, 34), C.light, { sh: 12, line: 3, rim, inner: `<circle cx="76" cy="6" r="10" fill="${C.patina}"/>` });
+  const crest = hp.form('M-24 -100Q-40 -196 26 -244Q46 -168 30 -96Z', C.patina, { sh: 18, hatch: 1, line: 3.4, rim, inner: hp.brush([[4, -104], [14, -170], [24, -232]], 3, INK, [0.2, 0.3], 0.6) });
+  const head = at(-56, -556, 1, crest + helmet + eyeSlit + brow + disc + (o.nodLines ? hp.brushes([[[[-150, -60], [-176, 0], [-160, 60]], 6], [[[-180, -40], [-200, 6], [-188, 50]], 5]], '#ffffff', [0.2, 0.2], 0.8) : ''), false, -nod);
+  const out = arm(-1) + shoulder([-236, -376], 96, true) + chest + belt + leg(-1) + leg(1) + neck + head + arm(1) + shoulder([214, -380], 104, false);
+  return at(x, y, s, out);
 }
 
