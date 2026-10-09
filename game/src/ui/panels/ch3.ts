@@ -7,6 +7,7 @@ import { ch3Scylla, ch3Strait } from './art/ch3-reef';
 import { ch3Mech, ch3Talos } from './art/ch3-forge';
 import { ch3Medusa, ch3Mirror } from './art/ch3-labyrinth';
 import { ch3Salute, ch3Stand } from './art/ch3-stand';
+import { ch3Dragon, ch3Garden } from './art/ch3-garden';
 import type { PanelId } from './ids';
 
 export const CH3_ART: Partial<Record<PanelId, () => string>> = {
@@ -27,4 +28,6 @@ export const CH3_ART: Partial<Record<PanelId, () => string>> = {
   'ch3-medusa': ch3Medusa,
   'ch3-stand': ch3Stand,
   'ch3-salute': ch3Salute,
+  'ch3-garden': ch3Garden,
+  'ch3-dragon': ch3Dragon,
 };

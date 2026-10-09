@@ -1052,7 +1052,9 @@ export class World {
       if (progress + 1 === group.length) {
         this.setFlag(r.group);
         audio.play('success');
-        this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+        // Rune pads also spell the Gardeners' light-words that lock gates (the Garden of Colchis).
+        if (r.group === 'vault') this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+        else this.hooks.toast('The light-word glows! The gate is opening!', 'bolt');
       }
     } else {
       for (const x of group) x.setLit(false);

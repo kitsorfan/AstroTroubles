@@ -17,6 +17,7 @@ import { makeCrab } from './reef/crab';
 import { makeJelly } from './reef/jelly';
 import { makeAnvilDrone } from './forge/anvil';
 import { makeCoil } from './labyrinth/coil';
+import { makeWeeder } from './ch3/weeder';
 import { makeRobot } from './robots';
 import { makeRamling } from './stand/ramling';
 
@@ -997,6 +998,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'ramling':
       e = makeRamling(world, id, x, h, z);
+      break;
+    case 'weeder':
+      e = makeWeeder(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

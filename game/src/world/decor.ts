@@ -52,6 +52,8 @@ const HEIGHT: Record<DecorKind, number> = {
   lighthouse: 10,
   tidepost: 3.2,
   statue: 2.4,
+  giantflower: 4.6,
+  crystaltree: 4.4,
 };
 
 function colored(geo: THREE.BufferGeometry, color: string, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1): THREE.BufferGeometry {
@@ -434,6 +436,30 @@ function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.
       r = 0.6;
       break;
     }
+    case 'giantflower':
+      // A Gardener flower taller than a house: a curving stem, two big leaves, a ring of petals and a glowing heart.
+      s.push(colored(C(0.16, 0.26, 4.2, 8), '#3f9a4a', 0, 2.1, 0, 0, 0, 0.05));
+      s.push(colored(S(0.6, 8), '#4fb35a', 0.55, 1.2, 0, 0, 0, -0.7, 1.2, 0.18, 0.55));
+      s.push(colored(S(0.55, 8), '#46a852', -0.5, 2, 0.1, 0, 0, 0.7, 1.1, 0.18, 0.5));
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        g.push(colored(S(0.55, 10), i % 2 ? '#ff8ad8' : '#ffb3e8', Math.cos(a) * 0.75, 4.35, Math.sin(a) * 0.75, Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5, 1, 0.3, 0.7));
+      }
+      g.push(colored(S(0.38, 12), '#ffe066', 0, 4.45));
+      r = 0.4;
+      break;
+    case 'crystaltree':
+      // A tree of living crystal: a pale twisted trunk and branches tipped with glowing cyan and violet shards.
+      s.push(colored(C(0.18, 0.34, 2.4, 7), '#e8e0f4', 0, 1.2));
+      s.push(colored(C(0.08, 0.14, 1.4, 6), '#e8e0f4', 0.5, 2.6, 0, 0, 0, -0.7));
+      s.push(colored(C(0.08, 0.14, 1.4, 6), '#e8e0f4', -0.45, 2.7, 0.2, 0.2, 0, 0.7));
+      for (let i = 0; i < 7; i++) {
+        const a = i * 0.9;
+        const rr = 0.4 + (i % 3) * 0.35;
+        g.push(colored(K(0.22, 1 + (i % 2) * 0.5, 5), i % 2 ? '#9fe8ff' : '#d0a8ff', Math.cos(a) * rr, 3.2 + (i % 3) * 0.35, Math.sin(a) * rr, Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5));
+      }
+      r = 0.45;
+      break;
     case 'screen':
       s.push(colored(C(0.08, 0.1, 2, 8), '#3a4458', 0, 1));
       s.push(colored(B(2.2, 1.3, 0.12), '#2a3242', 0, 2.3));

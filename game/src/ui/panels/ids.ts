@@ -54,6 +54,9 @@ export const PANEL_IDS = [
   // Brennus's Last Stand: the old general on the sky-dock as the gold fleet comes, and his salute to the Argo.
   'ch3-stand',
   'ch3-salute',
+  // The Garden of Colchis: arriving in the Gardeners' garden, and the dragon sung to sleep.
+  'ch3-garden',
+  'ch3-dragon',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

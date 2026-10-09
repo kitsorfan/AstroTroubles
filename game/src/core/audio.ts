@@ -41,7 +41,7 @@ export type Sfx =
   | 'tone2'
   | 'tone3';
 
-export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'sirens' | 'reef' | 'forge' | 'labyrinth' | 'stand' | 'boss' | 'ending';
+export type Track = 'title' | 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'argo' | 'isles' | 'mine' | 'sirens' | 'reef' | 'forge' | 'labyrinth' | 'stand' | 'garden' | 'boss' | 'ending';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -367,6 +367,21 @@ const SONGS: Record<Track, Song> = {
     drums: { k: 'x...x...x...x.x.', s: '..x...x...x.xxxx', h: 'xxx.xxx.xxx.xxx.' },
     lead: 'square',
     padLevel: 0.8,
+  },
+  // The Garden of Colchis: a gentle, wondering waltz-like tune of bells over soft pads, like a lullaby.
+  garden: {
+    bpm: 92,
+    chords: [
+      [55, 'maj'],
+      [52, 'min'],
+      [48, 'maj'],
+      [50, 'sus'],
+    ],
+    bass: '0.......2.......',
+    arp: '0.1.2.3.2.1.2.1.',
+    drums: { k: 'x.........x.....', s: '........x.......', h: '..x...x...x...x.' },
+    lead: 'bell',
+    padLevel: 0.95,
   },
   boss: {
     bpm: 144,

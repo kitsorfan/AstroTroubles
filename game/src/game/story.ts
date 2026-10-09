@@ -64,6 +64,7 @@ export const FLYOVER: Record<DeckId, string> = {
   forge: 'The bronze island of <b>Talos</b>. Lava channels, an ancient Gardener forge... and a bronze giant as tall as a tower, walking his rounds.',
   labyrinth: '<b>Medusa’s Labyrinth</b>. Under the gate of Colchis winds a maze of green stone... and in the dark, a great green eye is opening.',
   stand: 'The <b>sky-dock of Colchis</b>, floating above the clouds. Aeëtes’s gold fleet is coming to shut its gate... and one old general is standing in the way.',
+  garden: 'The <b>Garden of Colchis</b>. Flowers as tall as houses, trees of glowing crystal, and fountains that whisper in light... and somewhere in the middle, something very big is <b>not</b> asleep.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -204,6 +205,14 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'brennus', text: 'Then go, Argonauts. The garden is waiting. I will catch you up: old soldiers are slow, but we always arrive.' },
     { who: 'captain', text: 'Taking her down through the clouds. Everyone, look out of the window... the Garden of Colchis.' },
   ],
+  // The dragon sleeps; the way into the Gardeners' tree-temple and the Fleece vault is open.
+  garden: [
+    { who: 'iris', text: 'Listen. The whole garden is breathing slowly now, in time with the dragon’s snores.' },
+    { who: 'bolt', text: 'It’s smiling in its sleep! I made a dragon SMILE. I am putting that on my list of skills.' },
+    { who: 'atalanta', text: 'The tree-temple doors are open. The Fleece vault is right inside. Last one in is a slow harpy!' },
+    { who: 'captain', text: 'Careful, Argonauts. Aeëtes’s gold ships are circling Colchis. He knows exactly where you are going.' },
+    { who: 'jason', text: 'Then we’d better get to the Fleece first. Celestia is waiting for it. Let’s go!' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -300,6 +309,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   talos: { sub: 'The Gardeners’ bronze guardian · reprogrammed by Aeëtes', color: '#ffb050' },
   medusa: { sub: 'Aeëtes’s security AI · one look turns you to stone', color: '#7dff9a' },
   ram: { sub: 'Aeëtes’s war machine · solid gold, and it butts like a battleship', color: '#ffb43a' },
+  dragon: { sub: 'Guardian of the Golden Fleece · it hasn’t slept in a thousand years', color: '#7dffc8' },
 };
 
 /**
@@ -326,6 +336,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   anvil: { name: 'Anvil Drone', tip: 'It drops an anvil on the red circle. Step out, then hit it while it swoops down for its anvil!' },
   coil: { name: 'Cable Snake', tip: 'It rears up and hisses, then LUNGES straight ahead. Step aside, then blast it while it lies tangled!' },
   ramling: { name: 'Ramling', tip: 'It paws the ground, then charges head first! Its gold forehead stops shots. SHIELD it: it bonks its head and gets dizzy.' },
+  weeder: { name: 'Weeder Drone', tip: 'Aeëtes’s garden wrecker: when its tank glows, it sprays gold weed-killer on the ground. Step off the gold circle, then blast it!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

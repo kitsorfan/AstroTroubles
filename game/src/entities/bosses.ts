@@ -25,6 +25,7 @@ import { Shockwave, Strike } from './hazards';
 import { Aello } from './isles/aello';
 import { Scylla } from './reef/scylla';
 import { Medusa } from './labyrinth/medusa';
+import { Dragon } from './ch3/dragon';
 import { blobShadow, boxG, capsule, cone, cyl, glowSprite, mat, mesh, ownMat, sphere, torus } from './models';
 
 export { Boss };
@@ -1590,6 +1591,8 @@ function build(world: World, id: string, kind: BossKind, cx: number, cz: number,
       return new Medusa(world, id, cx, cz, h);
     case 'ram':
       return new GoldenRam(world, id, cx, cz, h);
+    case 'dragon':
+      return new Dragon(world, id, cx, cz, h);
   }
 }
 
