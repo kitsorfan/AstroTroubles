@@ -4,6 +4,7 @@ import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
 import type { World } from '../game/world';
 import { makeArgo } from '../vehicles/argoModel';
+import { Grid } from '../world/grid';
 import { ease, type Director } from './director';
 
 /**
@@ -36,8 +37,10 @@ export async function argoThrough(d: Director, w: World) {
   w.scene.add(argo.root);
   w.player.facing = Math.atan2(-side.x, -side.z);
   try {
-    // From beside Brennus, looking down the dock to the arch: here she comes, over his head.
-    d.cut(k.clone().addScaledVector(side, -9).addScaledVector(toArch, -5).add(V(0, 3.2, 0)), k.clone().addScaledVector(toArch, 10).add(V(0, 4, 0)), 50);
+    // From beside Brennus (on whichever side isn't a wall), looking down the dock to the arch: here she comes, over his head.
+    const open = (p: THREE.Vector3) => w.grid.cell(Grid.toCell(p.x), Grid.toCell(p.z)).kind !== 'wall';
+    const wide = [-9, 9, -5, 5].map((s) => k.clone().addScaledVector(side, s).addScaledVector(toArch, -5)).find((p) => open(p) && open(p.clone().lerp(k, 0.5))) ?? k.clone().addScaledVector(toArch, -6);
+    d.cut(wide.add(V(0, 3.2, 0)), k.clone().addScaledVector(toArch, 10).add(V(0, 4, 0)), 50);
     audio.play('glide', 0.5, 0.9);
     const path = new THREE.CatmullRomCurve3([from, over, arch.clone().add(V(0, 7, 0)), to]);
     const look = V();
@@ -67,8 +70,15 @@ export async function argoThrough(d: Director, w: World) {
     );
     w.flash(arch.x, arch.y + 6, arch.z, '#9fe8ff', 60, 0.8);
     w.rings.burst(arch.x, arch.y + 0.1, arch.z, 8, '#5ee0c8', 0.8);
-    // Close on the old general, still saluting.
-    await d.cam(k.clone().addScaledVector(toArch, 4.5).addScaledVector(side, 1.5).add(V(0, 2.2, 0)), k.clone().add(V(0, 1.7, 0)), 1.4, ease.inOut, 40);
+    // Close on the old general, still saluting (from whichever side has open floor, not a wall).
+    const front = [toArch, side, side.clone().negate(), toArch.clone().negate()].find((dir) => {
+      const p = k.clone().addScaledVector(dir, 4.5);
+      const c = w.grid.cell(Grid.toCell(p.x), Grid.toCell(p.z));
+      return c.kind !== 'wall' && c.h < k.y + 1.5;
+    }) ?? toArch;
+    w.player.facing = Math.atan2(front.x, front.z);
+    const sideways = V(front.z, 0, -front.x);
+    await d.cam(k.clone().addScaledVector(front, 4.5).addScaledVector(sideways, 1.5).add(V(0, 2.2, 0)), k.clone().add(V(0, 1.7, 0)), 1.4, ease.inOut, 40);
     await d.wait(0.6);
     const beats = w.def.stories?.salute;
     if (beats?.length) await d.story(beats);

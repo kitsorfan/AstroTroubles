@@ -34,9 +34,9 @@ export const stand: LevelDef = {
   shardIds: ['s1', 's2', 's3'],
   map: `
                  ############
-                 #.|......|.#
-                 #....E.....#
                  #..........#
+                 #....E.....#
+                 #....>.....#
                  #]........]#
      #################J##################
      #.........[..............[.........#
@@ -228,7 +228,8 @@ export const stand: LevelDef = {
     i: { type: 'sign', text: 'The last line before the Sky Gate. Wake the guns, hold the beacon, and the Argo will be nearly here.' },
     c: { type: 'sign', text: 'Aeëtes drops your old Legion robots here, painted gold. Use this COMMAND POST and they’ll fight for you instead!' },
     w: { type: 'sign', text: 'The Golden Ram charges like a bull. SHIELD its horns, CHARGE it into a stone pillar, then BLAST its open engine!' },
-    // Decor.
+    // Decor, and the Sky Gate the Argo flies through.
+    '>': { type: 'arch', span: 18 },
     '|': { type: 'decor', kind: 'pillar' },
     ']': { type: 'decor', kind: 'lamp' },
     '[': { type: 'decor', kind: 'banner' },

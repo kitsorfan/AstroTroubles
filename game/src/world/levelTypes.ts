@@ -133,6 +133,8 @@ export type Spec = Base &
      * flies in, from `argo[0]` to `argo[1]` of its way (faster while the bridge is clear of enemies).
      * When the Argo gets there, the rest flee and `flag` is set. The dropped robots belong to `room`.
      */
+    /** Brennus's Last Stand: the Gardeners' great stone arch (the Sky Gate), `span` units between its pillars. */
+    | { type: 'arch'; span?: number }
     | { type: 'hold'; start: Cond; flag: string; argo: [number, number]; time: number; w: number; d: number; room: string; drops: { enemy: EnemyKind; n: number; variant?: string }[] }
     /** One of Brennus's old Legion robots, painted gold by Aeëtes and standing idle: on the post's `flag` it marches to the nearest heavy plate. */
     | { type: 'legionbot'; flag: string }

@@ -26,6 +26,7 @@ import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
+import { SkyArch } from '../entities/stand/arch';
 import { DockGun } from '../entities/stand/dockgun';
 import { Hold, resetHolds } from '../entities/stand/holds';
 import { isRobot } from '../entities/robots';
@@ -504,6 +505,9 @@ export class World {
         break;
       case 'hold':
         this.addEntity(new Hold(this, id, cx, cz, h, spec));
+        break;
+      case 'arch':
+        this.addEntity(new SkyArch(this, id, cx, cz, h, spec.span));
         break;
       case 'decor':
         this.decorItems.push({
