@@ -1002,7 +1002,8 @@ export class World {
         this.setFlag(r.group);
         audio.play('success');
         // Rune pads also spell the Gardeners' light-words that lock gates (the Garden of Colchis).
-        this.hooks.toast(r.group === 'vault' ? 'Code accepted! The vault is open!' : 'The light-word glows! The gate is opening!', 'bolt');
+        if (r.group === 'vault') this.hooks.toast('Code accepted! The vault is open!', 'bolt');
+        else this.hooks.toast('The light-word glows! The gate is opening!', 'bolt');
       }
     } else {
       for (const x of group) x.setLit(false);

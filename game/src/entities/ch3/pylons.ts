@@ -21,11 +21,11 @@ export type PylonKind = 'sky' | 'grow' | 'home' | 'friend';
 
 export const PYLON_KINDS: PylonKind[] = ['sky', 'grow', 'home', 'friend'];
 
-export const PYLONS: Record<PylonKind, { word: string; color: string; hero: HeroId; how: 'arrow' | 'pound' | 'touch'; hint: string }> = {
-  sky: { word: 'SKY', color: '#5ec8ff', hero: 'atalanta', how: 'arrow', hint: 'The SKY pylon only wakes up for a POWER ARROW. Switch to Atalanta and HOLD the BOW button!' },
-  grow: { word: 'GROW', color: '#ff6fcf', hero: 'jason', how: 'pound', hint: 'The GROW pylon wants a GROUND POUND on its stone. Switch to Jason: jump, then pound!' },
-  home: { word: 'HOME', color: '#7dff9a', hero: 'atalanta', how: 'touch', hint: '' },
-  friend: { word: 'FRIEND', color: '#ffe066', hero: 'jason', how: 'touch', hint: '' },
+export const PYLONS: Record<PylonKind, { word: string; color: string; hero: HeroId; how: 'arrow' | 'pound' | 'touch'; text: string }> = {
+  sky: { word: 'SKY', color: '#5ec8ff', hero: 'atalanta', how: 'arrow', text: 'The SKY pylon only wakes up for a POWER ARROW. Switch to Atalanta and HOLD the BOW button!' },
+  grow: { word: 'GROW', color: '#ff6fcf', hero: 'jason', how: 'pound', text: 'The GROW pylon wants a GROUND POUND on its stone. Switch to Jason: jump, then pound!' },
+  home: { word: 'HOME', color: '#7dff9a', hero: 'atalanta', how: 'touch', text: '' },
+  friend: { word: 'FRIEND', color: '#ffe066', hero: 'jason', how: 'touch', text: '' },
 };
 
 export class Pylon extends Entity implements Target {
@@ -123,9 +123,9 @@ export class Pylon extends Entity implements Target {
   /** The wrong kind of hit: a "tink" and (once) a hint about who can light it. */
   private nudge() {
     audio.play('zap', 2.4, 0.6);
-    if (this.hinted || !this.def.hint) return;
+    if (this.hinted || !this.def.text) return;
     this.hinted = true;
-    this.world.hooks.toast(this.def.hint, 'bolt');
+    this.world.hooks.toast(this.def.text, 'bolt');
   }
 
   hit(_dmg: number, kind: HitKind): boolean {

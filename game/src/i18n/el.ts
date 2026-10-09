@@ -1,6 +1,7 @@
 import { EL_CHAPTER3 } from './el/chapter3';
 import { EL_COMPANIONS } from './el/companions';
 import { EL_DESERT } from './el/desert';
+import { EL_GARDEN } from './el/garden';
 import { EL_HARPIES } from './el/harpies';
 import { EL_BRENNUS3 } from './el/brennus3';
 import { EL_HEROES } from './el/heroes';
@@ -672,4 +673,5 @@ export const EL: Record<string, string> = {
   ...EL_WEAPONS,
   ...EL_HEROES,
   ...EL_BRENNUS3,
+  ...EL_GARDEN,
 };
