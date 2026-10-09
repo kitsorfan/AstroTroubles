@@ -4,8 +4,31 @@
  * the jungle and fortress pieces (big leaves, roots, thorny armour, banners). Everything draws through
  * a `Pen`, so the panel's light shades it; positions and sizes are noted on each function.
  */
-import { add, at, brushD, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, r1, rng, unit } from './core';
+import { headD, limbD, type Pose, rig, TEEN_BOY, U } from './body';
+import { jason, type JasonOpts, POSES } from './cast';
+import { add, at, brushD, dir, dPoly, dSmooth, INK, lerp, mix, mul, type P, type Pen, r1, rng, unit } from './core';
 import { spark } from './fx';
+
+/**
+ * Jason without the ink hatching on his face and neck: the kit hatches the shadow side of every face,
+ * which reads as stubble on a boy. Draws `jason(...)` as usual, then drops the hatch layer of just his
+ * head and neck shapes (found by their path data, which `Pen.form` shares per shape).
+ */
+export function jasonSmooth(pen: Pen, x: number, y: number, s: number, o: JasonOpts = {}): string {
+  const svg = jason(pen, x, y, s, o);
+  const pose: Pose = typeof o.pose === 'string' ? POSES[o.pose] : (o.pose ?? POSES.stand);
+  const r = rig(TEEN_BOY, pose);
+  const top = add(r.head, mul(dir(180 - r.headRot), -22));
+  const base = add(r.N, mul(r.u, -6));
+  const w = TEEN_BOY.neckW * U;
+  const shapes = (pen as unknown as { st: { shapes: Map<string, string> } }).st.shapes;
+  let out = svg;
+  for (const d of [headD(r.turn, 1, 1), limbD(base, top, w * 1.05, w * 0.92, 0, 1)]) {
+    const k = shapes.get(d);
+    if (k) out = out.replace(new RegExp(`<use href="#${k}" fill="url\\(#[^)"]*_h1\\)"/>`, 'g'), '');
+  }
+  return out;
+}
 
 /** A filled ellipse path (for `Pen.form`). */
 export const ellipseD = (x: number, y: number, rx: number, ry: number) => `M${r1(x - rx)} ${r1(y)}A${r1(rx)} ${r1(ry)} 0 1 0 ${r1(x + rx)} ${r1(y)}A${r1(rx)} ${r1(ry)} 0 1 0 ${r1(x - rx)} ${r1(y)}Z`;

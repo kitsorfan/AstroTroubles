@@ -1,6 +1,6 @@
 /** Chapter 2 panels, part 6: LUX is taken in the tundra, IRIS wakes in the jungle, and LUX comes home. */
 import * as gn from '../gn';
-import { armourShard, banner, bigLeaf, clipUrl, gearMark, root, snareDrone } from '../gn/ch2a';
+import { armourShard, banner, bigLeaf, clipUrl, gearMark, jasonSmooth, root, snareDrone } from '../gn/ch2a';
 
 /* ---------------- 20. LUX is taken ---------------- */
 
@@ -194,7 +194,8 @@ export function ch2LuxTaken(): string {
     ]) +
     prints +
     gn.castShadow(pen, 520, 870, 150, 14, 0.4, '#3a4a8a') +
-    gn.jason(pen, 520, 880, 1.18, {
+    // Jason is lit from ahead by the cage's red glow, the moon rimming his back (and no stubble on his jaw).
+    jasonSmooth(pen.relight({ key: [0.97, -0.15], keyColor: '#ffd8d0', rim: [-0.7, -0.7], rimColor: '#bcd4ff' }), 520, 880, 1.18, {
       mood: 'shout',
       look: [2.8, -3],
       rim: 2.6,
@@ -357,7 +358,7 @@ export function ch2Iris(): string {
     bigLeaf(pen, ix - 30, iy + 62, 54, 200, '#5a9a40', { line: 2.2, rim: 2 }) +
     bigLeaf(pen, ix + 170, iy + 200, 48, 20, '#4f8a3a', { line: 2.2, rim: 2 }) +
     gn.castShadow(pen, 470, 840, 160, 16, 0.5) +
-    gn.jason(pen, 470, 850, 1.22, {
+    jasonSmooth(pen.relight({ key: [0.97, -0.12] }), 470, 850, 1.22, {
       mood: 'surprised',
       look: [2.8, -3.2],
       rim: 2.6,
@@ -496,7 +497,8 @@ export function ch2LuxBack(): string {
   const r = gn.rig(gn.TEEN_BOY, pose);
   const P = (q: gn.P): gn.P => [jx + q[0] * js, jy + q[1] * js];
   const lux: gn.P = P(gn.add(r.N, [82, 26]));
-  const boy = gn.jason(pen, jx, jy, js, { pose, mood: 'smile', look: [1.6, 3.6], rim: 2.6, blaster: false });
+  // A level light on him from IRIS, so his face's shadow side falls on his hair, not his jaw.
+  const boy = jasonSmooth(pen.relight({ key: [0.98, 0.05] }), jx, jy, js, { pose, mood: 'smile', look: [1.6, 3.6], rim: 2.6, blaster: false });
   // The near forearm and hand, drawn again over LUX (clipped to a band round them).
   const el = P(r.el[0]);
   const wr = P(r.wr[0]);

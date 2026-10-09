@@ -1,6 +1,6 @@
 /** Chapter 2 panels, part 1: arriving at Gaia Nova, Brennus's broadcast, and the drones' raid. */
 import * as gn from '../gn';
-import { bigLeaf, celestiaPot, clipUrl, gaiaNova, gearMark, spiderDrone, syracusia } from '../gn/ch2a';
+import { bigLeaf, celestiaPot, clipUrl, gaiaNova, gearMark, jasonSmooth, spiderDrone, syracusia } from '../gn/ch2a';
 
 /** 9. The Syracusia in orbit over the great green-and-blue curve of Gaia Nova, the sun rising ahead of it. */
 export function ch2Arrival(): string {
@@ -161,7 +161,8 @@ export function ch2Broadcast(): string {
       pose: { turn: 0.55, lean: -5, tilt: -6, hipTilt: 4, armN: { to: [0.62, 0.95] }, armF: [14, 24], legN: { to: [-0.2, 0.95] }, legF: { to: [0.22, 0.95] }, handN: 'open', handF: 'fist', wristN: -30 },
     }) +
     gn.lux(right, 1418, 540, 1.35, 'scared', { flip: true, look: [7, -3] }) +
-    gn.jason(right, 1290, 1028, 1.2, {
+    // A near-level light on Jason's face, so its shadow side falls on his hair, not his jaw (no stubble).
+    jasonSmooth(right.relight({ key: [-0.97, -0.1] }), 1290, 1028, 1.2, {
       flip: true,
       mood: 'surprised',
       look: [2.6, -2.6],
