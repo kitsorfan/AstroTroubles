@@ -39,6 +39,9 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // The Garden of Colchis: arriving in the Gardeners' garden, and the dragon sung to sleep.
+  'ch3-garden',
+  'ch3-dragon',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'weeder';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,7 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  weeder: '#c8e04a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -290,6 +291,38 @@ function glyph(g: G, kind: BadgeKind) {
       g.fillStyle = '#e0142a';
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
+      g.fill();
+      break;
+    }
+    case 'weeder': {
+      // A round drone with a rotor on top, a spray tank, and a nozzle dripping weed-killer.
+      g.lineWidth = 6;
+      g.beginPath();
+      g.moveTo(30, 28);
+      g.lineTo(98, 28);
+      g.moveTo(64, 28);
+      g.lineTo(64, 42);
+      g.stroke();
+      g.beginPath();
+      g.ellipse(64, 62, 30, 22, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillRect(58, 80, 12, 14);
+      g.fillStyle = COLORS.weeder;
+      g.beginPath();
+      g.ellipse(64, 66, 16, 10, 0, 0, Math.PI * 2);
+      g.fill();
+      for (const [x, y] of [
+        [56, 104],
+        [72, 110],
+        [64, 118],
+      ]) {
+        g.beginPath();
+        g.arc(x, y, 5, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = '#e0142a';
+      g.beginPath();
+      g.arc(64, 52, 6, 0, Math.PI * 2);
       g.fill();
       break;
     }

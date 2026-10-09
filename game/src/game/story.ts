@@ -59,6 +59,7 @@ export const FLYOVER: Record<DeckId, string> = {
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  garden: 'The <b>Garden of Colchis</b>. Flowers as tall as houses, trees of glowing crystal, and fountains that whisper in light... and somewhere in the middle, something very big is <b>not</b> asleep.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -154,6 +155,14 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // The dragon sleeps; the way into the Gardeners' tree-temple and the Fleece vault is open.
+  garden: [
+    { who: 'iris', text: 'Listen. The whole garden is breathing slowly now, in time with the dragon’s snores.' },
+    { who: 'bolt', text: 'It’s smiling in its sleep! I made a dragon SMILE. I am putting that on my list of skills.' },
+    { who: 'atalanta', text: 'The tree-temple doors are open. The Fleece vault is right inside. Last one in is a slow harpy!' },
+    { who: 'captain', text: 'Careful, Argonauts. Aeëtes’s gold ships are circling Colchis. He knows exactly where you are going.' },
+    { who: 'jason', text: 'Then we’d better get to the Fleece first. Celestia is waiting for it. Let’s go!' },
+  ],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +254,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  dragon: { sub: 'Guardian of the Golden Fleece · it hasn’t slept in a thousand years', color: '#7dffc8' },
 };
 
 /**
@@ -265,6 +275,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  weeder: { name: 'Weeder Drone', tip: 'Aeëtes’s garden wrecker: when its tank glows, it sprays gold weed-killer on the ground. Step off the gold circle, then blast it!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 

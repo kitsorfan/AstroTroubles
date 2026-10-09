@@ -7,7 +7,7 @@ import type { FlightCourse } from '../vehicles/course';
  * chapter 3, The Argonauts, is the voyage of the Argo to the moon Colchis (its levels are being built
  * one by one: see `CHAPTER_PLAN` in levels/index.ts).
  */
-export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine';
+export type DeckId = 'cryo' | 'hydro' | 'engine' | 'habitat' | 'security' | 'bridge' | 'plains' | 'desert' | 'snow' | 'rockies' | 'jungle' | 'volcano' | 'rocks' | 'harpies' | 'mine' | 'garden';
 /**
  * A level that is driven instead of walked: the vehicle replaces Jason on foot (see game/src/vehicles).
  * Only the Argo flies so far; the submarine and the mech suit are planned for later chapter 3 levels.
@@ -23,10 +23,11 @@ export type Ability = 'doubleJump' | 'dash' | 'glide' | 'pulse' | 'grapple';
 export type HeroId = 'jason' | 'atalanta' | 'brennus';
 /**
  * Trooper, minebot, bulwark and mortar are General Brennus's robots (Aeëtes bought the old ones for
- * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts.
+ * scrap in chapter 3); the harpy is one of Aeëtes's gold thief drones that snatch bolts, and the weeder
+ * is his saboteur drone in the Garden of Colchis (it sprays gold weed-killer).
  */
-export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
-export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator';
+export type EnemyKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'weeder';
+export type BossKind = 'warden' | 'queen' | 'golem' | 'bloblin' | 'wardog' | 'heart' | 'reborn' | 'thresher' | 'driller' | 'boreas' | 'stheno' | 'hydra' | 'colossus' | 'rogue' | 'aello' | 'excavator' | 'dragon';
 
 /** Conditions that open doors or arm triggers. */
 export type Cond = { flag: string } | { clear: string } | { boss: true } | { all: Cond[] };
@@ -167,7 +168,10 @@ export type DecorKind =
   | 'wreck'
   | 'thorns'
   | 'banner'
-  | 'pillar';
+  | 'pillar'
+  /* The Garden of Colchis: a giant Gardener flower and a tree of glowing crystal. */
+  | 'giantflower'
+  | 'crystaltree';
 
 /**
  * How a chapter ends. Chapter 1: GaScu is stopped (`saved`) or befriended (`friends`). Chapter 2:
