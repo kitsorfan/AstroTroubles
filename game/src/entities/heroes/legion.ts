@@ -111,10 +111,13 @@ export class CrackedWall extends Entity implements Target {
 
   hit(_dmg: number, kind: HitKind): boolean {
     if (!this.alive) return false;
-    if (kind !== 'blast' && kind !== 'smash') {
+    // Only General Brennus is strong enough: his big cannon blast or his charge (Jason's fireball just scorches it).
+    const brennus = this.world.player.hero === 'brennus';
+    if (kind !== 'smash' && !(kind === 'blast' && brennus)) {
       this.wobble = 1;
       audio.play('zap', 2.2, 0.5);
-      hintOnce(this.world, 'cracked', () => this.world.hooks.toast('Too tough! HOLD the CANNON for a big blast, or CHARGE into it.', 'bolt'));
+      if (brennus) hintOnce(this.world, 'cracked', () => this.world.hooks.toast('Too tough! HOLD the CANNON for a big blast, or CHARGE into it.', 'bolt'));
+      else hintOnce(this.world, 'crackedHero', () => this.world.hooks.toast('Too tough for us! Only General Brennus can smash cracked rock: his big CANNON blast, or his CHARGE.', 'bolt'));
       return true;
     }
     const w = this.world;
@@ -178,8 +181,10 @@ export class HeavyPlate extends Entity {
   }
 
   private brennusOn(): boolean {
-    const b = this.world.player.body;
-    return b.grounded && Math.abs(b.x - this.spot.x) < CELL * 0.55 && Math.abs(b.z - this.spot.z) < CELL * 0.55 && Math.abs(b.y - this.spot.y) < 0.6;
+    const pl = this.world.player;
+    const b = pl.body;
+    // Only the old general is heavy enough (Jason and Atalanta are far too light).
+    return pl.hero === 'brennus' && b.grounded && Math.abs(b.x - this.spot.x) < CELL * 0.55 && Math.abs(b.z - this.spot.z) < CELL * 0.55 && Math.abs(b.y - this.spot.y) < 0.6;
   }
 
   update(dt: number) {

@@ -2,6 +2,7 @@ import { GAME_NAME } from '../core/brand';
 import { tr, upper } from '../core/i18n';
 import type { SaveData } from '../core/save';
 import { CHAPTER_DECKS, LEVELS, chapterTotals, inChapter, type Chapter } from '../levels';
+import { plannedFinds } from './collectibles';
 import type { BadgeKind } from '../entities/badges';
 import type { BossKind, DeckId, EndingKind, Line } from '../world/levelTypes';
 
@@ -59,6 +60,7 @@ export const FLYOVER: Record<DeckId, string> = {
   rocks: 'The <b>Clashing Rocks</b>. A glittering belt of asteroids guards the ring of moons... and somewhere in it, two giant rocks keep slamming together.',
   harpies: 'The <b>Harpy Isles</b>. Little green islands float on the wind, high above a sea of clouds... and something gold keeps flapping between them.',
   mine: 'The mining moon of <b>Aeëtes</b>. He is digging the whole moon into a golden pit... and <b>General Brennus</b> has just landed in it, all on his own.',
+  fleece: 'The great tree-temple of the <b>Gardeners</b>, taller than any mountain. Somewhere at the top, the <b style="color:#ffd166">Golden Fleece</b> is waiting... and so is Aeëtes.',
 };
 
 /** What everyone says in the lift between one deck and the next, keyed by the deck being left. */
@@ -154,6 +156,8 @@ export const TRANSITIONS: Record<DeckId, Line[]> = {
     { who: 'jason', text: 'Thank you, General. ...Brennus. That was really brave.' },
     { who: 'brennus', text: 'Hmph. Tell Celestia her little sprout says hello.' },
   ],
+  // The Golden Fleece is the game's finale: it ends with the final endings, not a hop to another level.
+  fleece: [],
 };
 
 /** Narration for the opening of chapter 2, one caption per shot. */
@@ -245,6 +249,7 @@ export const BOSS_CARD: Record<BossKind, { sub: string; color: string }> = {
   rogue: { sub: 'Your best friend · with Brennus’s chip on his back', color: '#ff5a6a' },
   aello: { sub: 'The Harpy Queen · Aeëtes’s biggest, greediest thief', color: '#ffd166' },
   excavator: { sub: 'Brennus’s old digging machine · painted gold, and very cross', color: '#ffc23a' },
+  goldenking: { sub: 'Aeëtes in the Golden Fleece · he wants every garden for himself', color: '#ffd166' },
 };
 
 /**
@@ -265,6 +270,7 @@ export const INTEL: Record<BadgeKind | 'elite', { name: string; tip: string }> =
   bulwark: { name: 'Shield Bulwark', tip: 'The shield only covers its front. Hit it from behind, or ground-pound to knock the shield down!' },
   mortar: { name: 'Mortar Bot', tip: 'Shells land on the red circles. Step out, then run up close: it can’t aim at its own feet!' },
   harpy: { name: 'Harpy Drone', tip: 'It swoops down and snatches your bolts! Blast it before it flies off, and it drops every one.' },
+  ringguard: { name: 'Ring Guard', tip: 'It hides behind its gold ring, then throws it like a boomerang. Jump over the ring, and hit the guard while its ring is away!' },
   elite: { name: 'Elite!', tip: 'A gold crown means bigger, tougher and more bolts.' },
 };
 
@@ -294,13 +300,27 @@ export const ENDING_CAPTIONS: Record<EndingKind, string[]> = {
     'Together, Brennus, the scientists and Celestia turned the Thorn Legion into the <b>Green Legion</b>: robots that plant forests instead of fighting.',
     'On the colony’s first morning, Celestia bloomed across the whole valley. Gaia Nova was home at last, for everyone.',
   ],
+  // Chapter 3, the game's final endings (said over the Argo's journey home and the colony garden).
+  fleece: [
+    'The Golden King’s armour fell away like autumn leaves, and the Fleece floated down, soft and warm, into Jason’s arms.',
+    'The Argo carried it home across the ring of moons, past the Clashing Rocks, all the way back to <b>Gaia Nova</b>.',
+    'In the colony’s garden, the Argonauts laid the Golden Fleece over Celestia, like a blanket made of sunshine.',
+    'Celestia opened her petals and glowed brighter than ever before. She was strong again, and the whole valley bloomed.',
+  ],
+  gardeners: [
+    'LUX and IRIS spoke the Gardeners’ words in light: <b style="color:#5ec8ff">sky</b>, <b style="color:#7dff9a">grow</b>, <b style="color:#ff6fcf">friend</b>, <b style="color:#ffd166">home</b>... and the Fleece answered.',
+    'Every golden seed in the Fleece woke up and began to glow. They had waited a very long time for someone to say hello.',
+    'At home on <b>Gaia Nova</b>, the Fleece settled over Celestia, and its seeds drifted down all around her like golden snow.',
+    'By spring, a hundred little Celestias were blooming across the valley. She was not the last of her kind anymore. She had a family.',
+  ],
 };
 
 /** Which chapter an ending belongs to. */
-export const endingChapter = (kind: EndingKind): Chapter => (kind === 'saved' || kind === 'friends' ? 1 : 2);
+export const endingChapter = (kind: EndingKind): Chapter => (kind === 'saved' || kind === 'friends' ? 1 : kind === 'freed' || kind === 'redeemed' ? 2 : 3);
 
 /** The short epilogue on the final stats card. */
 export function endingText(kind: EndingKind, save: SaveData): string[] {
+  if (endingChapter(kind) === 3) return endingText3(kind, save);
   if (endingChapter(kind) === 2) return endingText2(kind, save);
   const n = inChapter(save.colonists, 1);
   const rosa = save.colonists.includes('security.c1');
@@ -335,6 +355,34 @@ function endingText2(kind: EndingKind, save: SaveData): string[] {
   return out;
 }
 
+/** How many Gardener light-stones chapter 3 hides in all (every planned level's), and how many the save has. */
+export function lightStones(save: Pick<SaveData, 'shards'>): { n: number; total: number } {
+  return { n: inChapter(save.shards, 3), total: plannedFinds(3, chapterTotals(3).shards) };
+}
+
+/** With every light-stone, LUX and IRIS know enough Gardener words to wake the Fleece's seeds (the secret ending). */
+export function knowsGardenerWords(save: Pick<SaveData, 'shards'>): boolean {
+  const { n, total } = lightStones(save);
+  return n >= total;
+}
+
+function endingText3(kind: EndingKind, save: SaveData): string[] {
+  const { n, total } = lightStones(save);
+  const out: string[] = [];
+  out.push(
+    kind === 'gardeners'
+      ? tr('Celestia and her hundred little sisters glow together every night. LUX and IRIS teach the colony’s children Gardener words.')
+      : tr('Celestia blooms in the middle of the colony garden. Every evening she glows a little goodnight to everyone.'),
+  );
+  out.push(tr('Aeëtes got tangled in his own gold vines. Now he plants trees for the colony, and grumbles. He has planted four thousand so far.'));
+  out.push(tr('Captain Argus made General Brennus the colony’s Chief Gardener. His Green Legion robots water the new forests every morning.'));
+  out.push(tr('Atalanta still races everyone to the Argo, every single day. She still wins.'));
+  out.push(tr('Jason and LUX got the colony’s brand new medal, the Golden Fleece Star. LUX polishes his every morning.'));
+  out.push(tr('You found {n} of {total} Gardener light-stones.', { n, total }));
+  if (kind === 'fleece' && n < total) out.push(tr('Psst... the Gardeners left more light-stones than that. Find every one, and LUX and IRIS might wake the seeds inside the Fleece.'));
+  return out;
+}
+
 function colonistNames(save: SaveData, ch: Chapter): string[] {
   const names: string[] = [];
   for (const id of CHAPTER_DECKS[ch]) {
@@ -345,9 +393,59 @@ function colonistNames(save: SaveData, ch: Chapter): string[] {
   return names;
 }
 
+/**
+ * The final credits of the whole game (after chapter 3): everyone from all three chapters, every boss,
+ * the things won back on the voyage, the light-stones found, and THE END.
+ */
+function finalCredits(kind: EndingKind, save: SaveData): string {
+  const p = (s: string) => `<p>${tr(s)}</p>`;
+  const head = (s: string) => `<h3>${tr(s)}</h3>`;
+  const won = colonistNames(save, 3);
+  const { n, total } = lightStones(save);
+  return [
+    `<h1>${upper(tr(GAME_NAME))}</h1>`,
+    `<h2>${tr('THE ARGONAUTS')}</h2>`,
+    head('STARRING'),
+    p('Jason, junior engineer'),
+    p('LUX, a very brave little drone'),
+    p('Atalanta, the fastest runner in the colony'),
+    p('IRIS, a droid who speaks in rainbows'),
+    p('General Brennus, the colony’s Chief Gardener'),
+    head('WITH'),
+    p('Captain Argus, who built the Argo'),
+    p('HALCYON, the ship computer'),
+    p('Dr. Hypatia, chief scientist'),
+    p('Aunt Rosa, Security Chief'),
+    p('Phineus, the stargazer of the Harpy Isles'),
+    p('PANDORA, the travelling shop'),
+    kind === 'gardeners' ? p('Celestia, and her hundred little sisters') : p('Celestia, in full bloom'),
+    p('the Gardeners, who wrote in light'),
+    head('AND'),
+    p('Aeëtes, now a tree planter'),
+    head('ON THE SHIP'),
+    p('Frost Warden · Vine Queen · Magma Golem'),
+    p('King Bloblin · CERBERUS · the Heart of GaScu'),
+    head('ON GAIA NOVA'),
+    p('Thresher · Dune Driller · Boreas · Shadow LUX (not really)'),
+    p('Stheno · the Thorn Hydra · the Colossus'),
+    head('ON THE VOYAGE'),
+    p('the Clashing Rocks · AELLO · the Gold Excavator'),
+    p('the Siren Organ · Scylla · Talos'),
+    p('Medusa · the Golden Ram · the Sleepless Dragon'),
+    p('Aeëtes, the Golden King'),
+    head('THINGS YOU WON BACK'),
+    ...(won.length ? won.map(p) : [p('Everything found its way home!')]),
+    head('GARDENER LIGHT-STONES'),
+    `<p>${tr('{n} of {total}', { n, total })}</p>`,
+    `<h2>${tr('THE END')}</h2>`,
+    `<p class="end">${tr('Thank you for playing!')}</p>`,
+  ].join('');
+}
+
 export function creditsHtml(kind: EndingKind, save: SaveData): string {
   const p = (s: string) => `<p>${tr(s)}</p>`;
   const head = (s: string) => `<h3>${tr(s)}</h3>`;
+  if (endingChapter(kind) === 3) return finalCredits(kind, save);
   if (endingChapter(kind) === 2) {
     const rescued = colonistNames(save, 2);
     return [

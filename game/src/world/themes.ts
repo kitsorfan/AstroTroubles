@@ -449,4 +449,35 @@ export const THEMES: Record<ThemeId, Theme> = {
     bloom: 0.26,
     outdoor: { ground: 'rock', ground2: '#9a8466', rock: '#6e5c4c', rockDark: '#3e322a', below: '#ff9a20', belowGlow: true, sunDisc: '#fff4e0', clouds: null, hills: '#4a3a48', stars: true },
   },
+  /*
+   * The Golden Fleece: the Gardeners' great tree-temple on Colchis, at golden twilight. Mossy temple
+   * terraces among giant roots, honey-coloured stone with gold veins, a forest canopy far below, the gas
+   * giant hanging in a violet sky, and golden pollen drifting everywhere. The `~` pools are glowing sap.
+   */
+  fleece: {
+    skyTop: '#2a2466',
+    skyBottom: '#ffb98a',
+    fog: '#d8b0a8',
+    fogNear: 56,
+    fogFar: 190,
+    floor: '#7aa24a',
+    floorLine: '#5a8034',
+    floorSide: '#8a7a5a',
+    ice: '#d8f0ff',
+    wall: '#b8a080',
+    wallTrim: '#ffd166',
+    edge: '#ffe08a',
+    hazard: '#ffcf4a',
+    hazardDeep: '#8a5a10',
+    hemiSky: '#ffe8d0',
+    hemiGround: '#4a4030',
+    hemi: 0.95,
+    sun: '#ffd8a8',
+    sunI: 1.9,
+    accent: '#ffd166',
+    mood: 'pollen',
+    space: false,
+    bloom: 0.24,
+    outdoor: { ground: 'jungle', ground2: '#9ab85a', rock: '#b09a78', rockDark: '#6e5c44', below: '#2e5a34', sunDisc: '#ffe6b0', clouds: '#ffc8d8', hills: '#5a4a7a', stars: true },
+  },
 };

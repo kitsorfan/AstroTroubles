@@ -33,12 +33,27 @@ export class Follower {
   private hopLen = 0;
   private stuck = 0;
   private sampleT = 0;
+  /**
+   * Place in the line behind the leader: 0 walks close behind, 1 (the third hero, on the Golden Fleece)
+   * a little further back and on the other side, so the two followers don't bump into each other.
+   */
+  slot = 0;
 
   constructor(
     private world: World,
     private model: HeroModel,
     private id: HeroId,
   ) {}
+
+  /** Which hero this follower is walking as. */
+  get hero(): HeroId {
+    return this.id;
+  }
+
+  /** How far behind the leader this follower keeps. */
+  private get gap() {
+    return HERO_SWITCH.followDist + this.slot * 1.8;
+  }
 
   /** Where the follower stands and which way it faces (for the droid that tags along with it). */
   get spot() {
@@ -69,9 +84,13 @@ export class Follower {
    */
   placeNear(x: number, y: number, z: number, facing: number) {
     const g = this.world.grid;
-    for (const a of [-Math.PI / 2 - 0.5, Math.PI / 2 + 0.5, Math.PI]) {
-      const px = x + Math.sin(facing + a) * 1.5;
-      const pz = z + Math.cos(facing + a) * 1.5;
+    const sides = [-Math.PI / 2 - 0.5, Math.PI / 2 + 0.5, Math.PI];
+    // The second follower takes the other side first, and stands a little further off.
+    if (this.slot > 0) sides.unshift(sides.splice(1, 1)[0]);
+    const r = 1.5 + this.slot * 0.6;
+    for (const a of sides) {
+      const px = x + Math.sin(facing + a) * r;
+      const pz = z + Math.cos(facing + a) * r;
       const c = g.cell(Grid.toCell(px), Grid.toCell(pz));
       if (c.kind === 'wall' || c.kind === 'void' || c.kind === 'hazard' || Math.abs(c.h - y) > 0.6) continue;
       this.place(px, c.h, pz, facing);
@@ -109,12 +128,12 @@ export class Follower {
         this.trail.shift();
         continue;
       }
-      if (Math.hypot(c.x - b.x, c.z - b.z) < HERO_SWITCH.followDist) break;
+      if (Math.hypot(c.x - b.x, c.z - b.z) < this.gap) break;
       target = c;
       break;
     }
     let speed = 0;
-    if (target && lead > HERO_SWITCH.followDist) {
+    if (target && lead > this.gap) {
       const dx = target.x - this.x;
       const dz = target.z - this.z;
       const d = Math.hypot(dx, dz);

@@ -12,6 +12,7 @@ import type { Difficulty } from '../game/difficulty';
 import { Badge, type BadgeKind } from './badges';
 import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
+import { makeRingGuard } from './ch3/ringGuard';
 import { makeHarpy } from './isles/harpy';
 import { makeRobot } from './robots';
 
@@ -906,6 +907,9 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'harpy':
       e = makeHarpy(world, id, x, h, z);
+      break;
+    case 'ringguard':
+      e = makeRingGuard(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

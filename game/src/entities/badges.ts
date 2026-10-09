@@ -5,7 +5,7 @@ import * as THREE from 'three';
  * used for the "new threat" card in the UI.
  */
 
-export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy';
+export type BadgeKind = 'sporeling' | 'snapper' | 'buzzer' | 'sentry' | 'turret' | 'brute' | 'blob' | 'trooper' | 'minebot' | 'bulwark' | 'mortar' | 'harpy' | 'ringguard';
 
 const COLORS: Record<BadgeKind, string> = {
   sporeling: '#ff3fd0',
@@ -20,6 +20,7 @@ const COLORS: Record<BadgeKind, string> = {
   bulwark: '#c9a24a',
   mortar: '#ff6fcf',
   harpy: '#ffc94a',
+  ringguard: '#e8b83a',
 };
 
 type G = CanvasRenderingContext2D;
@@ -291,6 +292,29 @@ function glyph(g: G, kind: BadgeKind) {
       g.beginPath();
       g.arc(64, 52, 5, 0, Math.PI * 2);
       g.fill();
+      break;
+    }
+    case 'ringguard': {
+      // A round robot head with one wide red eye and a bow tie, behind a big ring.
+      g.lineWidth = 9;
+      g.beginPath();
+      g.arc(64, 70, 38, 0, Math.PI * 2);
+      g.stroke();
+      g.beginPath();
+      g.arc(64, 54, 18, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.moveTo(46, 86);
+      g.lineTo(64, 94);
+      g.lineTo(46, 102);
+      g.closePath();
+      g.moveTo(82, 86);
+      g.lineTo(64, 94);
+      g.lineTo(82, 102);
+      g.closePath();
+      g.fill();
+      g.fillStyle = '#e0142a';
+      g.fillRect(52, 50, 24, 7);
       break;
     }
   }

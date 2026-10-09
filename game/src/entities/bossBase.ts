@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { audio } from '../core/audio';
+import { audio, type Track } from '../core/audio';
 import { haptic } from '../core/bridge';
 import { CELL } from '../core/constants';
 import type { World } from '../game/world';
@@ -96,6 +96,9 @@ export abstract class Boss extends Entity {
   }
 
   bossKind: BossKind = 'warden';
+
+  /** The music the fight plays to (the game's very last boss has its own). */
+  readonly music: Track = 'boss';
 
   /** Frost Ray: bosses shrug most of the cold off. A chill only slows them a little, and never freezes them. */
   private chillT = 0;

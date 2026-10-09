@@ -9,6 +9,7 @@ import { hydro } from './hydro';
 import { jungle } from './jungle';
 import { mine } from './mine';
 import { plains } from './plains';
+import { fleece } from './fleece';
 import { harpies } from './harpies';
 import { rocks } from './rocks';
 import { rockies } from './rockies';
@@ -20,9 +21,9 @@ import { volcano } from './volcano';
  * Every playable level in play order: the ship's six decks, the six regions of Gaia Nova, then the
  * chapter 3 levels built so far (the rest of chapter 3 is listed in `CHAPTER_PLAN`).
  */
-export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine'];
+export const LEVEL_ORDER: DeckId[] = ['cryo', 'hydro', 'engine', 'habitat', 'security', 'bridge', 'plains', 'desert', 'snow', 'rockies', 'jungle', 'volcano', 'rocks', 'harpies', 'mine', 'fleece'];
 
-export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine };
+export const LEVELS: Record<DeckId, LevelDef> = { cryo, hydro, engine, habitat, security, bridge, plains, desert, snow, rockies, jungle, volcano, rocks, harpies, mine, fleece };
 
 /** Chapter 1 is the colony ship, chapter 2 the planet Gaia Nova, chapter 3 the Argonauts' voyage to Colchis. */
 export type Chapter = 1 | 2 | 3;
@@ -68,11 +69,18 @@ export function chapterIndex(id: DeckId): number {
 }
 
 /**
+ * The level that ends the whole game: the Golden Fleece, chapter 3's last level (it ends with the final
+ * endings, whichever levels of the chapter have been built before it).
+ */
+export const GAME_FINALE: DeckId = 'fleece';
+
+/**
  * The last level of a chapter ends with the chapter's finale instead of an exit. A chapter still being
- * built has no finale yet: its last level so far ends normally, and the next one is "coming soon".
+ * built has no finale yet: its last level so far ends normally, and the next one is "coming soon"
+ * (chapter 3's finale is always the Golden Fleece).
  */
 export function isFinale(id: DeckId): boolean {
-  return chapterIndex(id) === chapterSize(chapterOf(id));
+  return id === GAME_FINALE || (chapterOf(id) !== chapterOf(GAME_FINALE) && chapterIndex(id) === chapterSize(chapterOf(id)));
 }
 
 /** The first deck of the next chapter, if there is one. */

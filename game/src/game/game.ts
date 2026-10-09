@@ -3,6 +3,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 
 import { Director, type Rig } from '../cinema/director';
 import { argoHop, argoPrologue, argoVoyage } from '../cinema/chapter3';
+import { fleeceHome, fleeceVoyage } from '../cinema/finale3';
 import { MoonScene } from '../cinema/moonScene';
 import { flyover, wakeUp } from '../cinema/scenes';
 import { PlanetScene } from '../cinema/planetScene';
@@ -17,7 +18,7 @@ import { Input } from '../core/input';
 import { heroCourse } from '../entities/heroes/course';
 import { heroDev, parseHeroes } from '../entities/heroes/heroes';
 import { clearSave, loadSave, newSave, writeSave, type SaveData, type Settings } from '../core/save';
-import { CHAPTER_DECKS, LEVELS, LEVEL_ORDER, catchUpChapters, chapterIndex, chapterOf, chapterSize, chapterTotals, comingSoon, inChapter, isFinale, nextChapterStart, type Chapter } from '../levels';
+import { CHAPTER_DECKS, GAME_FINALE, LEVELS, LEVEL_ORDER, catchUpChapters, chapterIndex, chapterOf, chapterSize, chapterTotals, comingSoon, inChapter, isFinale, nextChapterStart, type Chapter } from '../levels';
 import type { DeckId, EndingKind, Line } from '../world/levelTypes';
 import { THEMES } from '../world/themes';
 import { PANEL_IDS, type PanelId } from '../ui/panels';
@@ -26,7 +27,7 @@ import { equippedWeapon, ownedWeapons } from '../entities/weapons';
 import { buyUpgrade, buyWeapon, equipWeapon } from './shop';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
-import { findKind, lootLabels } from './collectibles';
+import { findKind, lootLabels, plannedFinds } from './collectibles';
 import { deckQuests, givePrize, payQuests, shardMilestone } from './quests';
 import { takeReviewAsk } from './review';
 import { INTEL, creditsHtml, endingChapter, endingText } from './story';
@@ -171,7 +172,7 @@ export class Game {
     })();
     // Developer shortcut, only in a desktop browser (never in the app): #deck=<id> jumps straight into a deck
     // (&still skips its opening, &all hands over every ability), #cinema=<arrival|descent|hop|finale> plays a
-    // chapter 2 cinematic, #cinema=<argo|voyage|argohop> a chapter 3 one.
+    // chapter 2 cinematic, #cinema=<argo|voyage|argohop> a chapter 3 one, #cinema=<fleece|gardeners> the game's final endings.
     const dev = inApp() ? null : new URLSearchParams(location.hash.slice(1));
     if (dev && (dev.get('deck') || dev.get('cinema') || dev.get('panel') || dev.get('menu'))) {
       void ready.then(() => this.devJump(dev));
@@ -274,6 +275,8 @@ export class Game {
     else if (film === 'argo') void this.planetCinema((d, p) => argoPrologue(d, p)).then(() => this.moonCinema((d, m) => argoVoyage(d, m))).then(done);
     else if (film === 'voyage') void this.moonCinema((d, m) => argoVoyage(d, m)).then(done);
     else if (film === 'argohop') void this.moonCinema((d, m) => argoHop(d, m, 'rocks', null)).then(done);
+    // #cinema=fleece|gardeners plays the game's final ending (with its credits and card), as if just earned.
+    else if (film === 'fleece' || film === 'gardeners') this.ending(film);
   }
 
   private applySettings(s: Settings) {
@@ -953,7 +956,7 @@ export class Game {
   }
 
   private ending(kind: EndingKind) {
-    const finale = this.world?.def.id ?? (endingChapter(kind) === 1 ? 'bridge' : 'volcano');
+    const finale = this.world?.def.id ?? (endingChapter(kind) === 1 ? 'bridge' : endingChapter(kind) === 2 ? 'volcano' : GAME_FINALE);
     const ch = endingChapter(kind);
     this.state = 'ending';
     this.input.reset();
@@ -974,7 +977,12 @@ export class Game {
     const hours = Math.floor(this.save.playSeconds / 3600);
     const mins = Math.floor((this.save.playSeconds % 3600) / 60);
     const totals = chapterTotals(ch);
-    const film = kind === 'saved' || kind === 'friends' ? this.cinema((d, ship) => space.ending(d, ship, kind)) : this.planetCinema((d, p) => planet.finale(d, p, kind));
+    const film =
+      kind === 'saved' || kind === 'friends'
+        ? this.cinema((d, ship) => space.ending(d, ship, kind))
+        : ch === 2
+          ? this.planetCinema((d, p) => planet.finale(d, p, kind))
+          : this.moonCinema((d, m) => fleeceVoyage(d, m, kind)).then(() => this.planetCinema((d, p) => fleeceHome(d, p, kind)));
     void film.then(() => {
       this.state = 'ending';
       this.ui.credits(creditsHtml(kind, this.save), () => {
@@ -983,8 +991,8 @@ export class Game {
           kind,
           endingText(kind, this.save),
           [
-            [ch === 1 ? tr('Memory shards') : tr('Journal pages'), `${inChapter(this.save.shards, ch)} / ${totals.shards}`],
-            [ch === 1 ? tr('Colonists rescued') : tr('Scientists freed'), `${inChapter(this.save.colonists, ch)} / ${totals.colonists}`],
+            [lootLabels(ch).finds, `${inChapter(this.save.shards, ch)} / ${plannedFinds(ch, totals.shards)}`],
+            [lootLabels(ch).rescues, `${inChapter(this.save.colonists, ch)} / ${totals.colonists}`],
             [tr('Bolts in pocket'), String(this.save.bolts)],
             [tr('Play time'), tr('{h}h {m}m', { h: hours, m: mins })],
           ],

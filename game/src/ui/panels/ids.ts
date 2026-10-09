@@ -39,6 +39,12 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // The Golden Fleece: Brennus and his squad join the Argonauts, Aeëtes in the Fleece armour, and the
+  // game's final endings (the Fleece over Celestia; the secret one: a valley of little Celestias).
+  'ch3-squad',
+  'ch3-goldenking',
+  'ch3-home',
+  'ch3-gardeners',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];

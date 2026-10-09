@@ -8,10 +8,13 @@ import type { Input } from '../core/input';
 import { damp } from '../core/math';
 import type { Quality, SaveData } from '../core/save';
 import type { Director, Rig } from '../cinema/director';
+import * as fleeceScenes from '../cinema/fleeceScenes';
+import type { GoldenKing } from '../entities/ch3/goldenKing';
 import * as scenes from '../cinema/scenes';
 import { Bolt, HelmetLamp, Torch } from '../entities/bolt';
 import { makeBoss, type Boss } from '../entities/bosses';
 import { findKind, rescueKind } from './collectibles';
+import { knowsGardenerWords } from './story';
 import { SupplyNet } from '../entities/isles/supplies';
 import { companionPlan, helperOf, IRIS_FLAG, LUX_BACK_FLAG, ROGUE_MARKER, voiceOf, type CompanionPlan, type CompanionSkin, type Helper } from './companions';
 import type { BadgeKind } from '../entities/badges';
@@ -296,6 +299,8 @@ export class World {
 
     for (const pe of this.level.entities) this.spawnSpec(pe);
     this.spawnRogue();
+    // Back at a checkpoint after General Brennus joined: his squad is already here.
+    if (def.joins?.brennus && this.flags.has(def.joins.brennus)) this.squadArrives();
     // A hero who joins later waits at the marker named after her (Atalanta by her skiff).
     this.player.showWaiting((id) => this.markers.get(id));
     this.scene.add(buildDecor(this.decorItems, th.accent, this.boxes));
@@ -655,6 +660,7 @@ export class World {
     for (const f of flags) this.flags.add(f);
     // A join flag (`&flags=atalanta`) brings that hero in at once.
     if (Object.values(this.def.joins ?? {}).some((f) => flags.includes(f))) this.player.heroJoined();
+    if (this.def.joins?.brennus && flags.includes(this.def.joins.brennus)) this.squadArrives();
     this.refreshCompanions();
     const find = this.entities.find((e): e is BoltFind => e instanceof BoltFind);
     const rogue = this.entities.find((e) => (e as Boss).bossKind === 'rogue') as Boss | undefined;
@@ -1176,6 +1182,9 @@ export class World {
     const lw = legionWorld(this);
     for (const a of lw.allies) a.remove();
     lw.allies.length = 0;
+    // General Brennus's own squad (on the Golden Fleece) is always his: it lines up again at its posts.
+    const bren = this.def.joins?.brennus;
+    if (bren && this.flags.has(bren)) this.squadArrives();
     this.placeDroids(x, y, z);
     if (this.boss?.started && !this.boss.defeated) {
       this.boss.reset();
@@ -1194,14 +1203,14 @@ export class World {
   /** The boss's entrance: a full cinematic the first time, straight into the fight on a retry. */
   bossIntro(b: Boss): Promise<void> {
     if (b.introSeen) return Promise.resolve();
-    this.hooks.music('boss');
+    this.hooks.music(b.music);
     return this.hooks.cutscene((d) => scenes.bossIntro(d, this, b));
   }
 
   bossStarted(b: Boss) {
     this.boss = b;
     this.hooks.bossBar(b.title, b.hp / b.maxHp);
-    this.hooks.music('boss');
+    this.hooks.music(b.music);
   }
 
   bossDefeated(b: Boss) {
@@ -1222,9 +1231,30 @@ export class World {
     this.hooks.checkpoint();
     const last = isFinale(this.def.id);
     if (!last) this.hooks.music(this.def.music as Track);
+    const ch = chapterOf(this.def.id);
+    if (last && ch === 3) {
+      // The game's finale: with every light-stone, LUX and IRIS wake the Fleece's seeds (the secret ending).
+      this.hooks.music('ending');
+      const words = knowsGardenerWords(this.save);
+      void this.hooks
+        .cutscene((d) => fleeceScenes.fleeceWon(d, this, b as GoldenKing, words))
+        .then(() => this.hooks.ending(words ? 'gardeners' : 'fleece'));
+      return;
+    }
     void this.hooks.cutscene((d) => scenes.bossOutro(d, this, b)).then(() => {
-      if (last) this.hooks.ending(chapterOf(this.def.id) === 1 ? 'saved' : 'freed');
+      if (last) this.hooks.ending(ch === 1 ? 'saved' : 'freed');
     });
+  }
+
+  /**
+   * General Brennus's squad: when he joins the Argonauts (on the Golden Fleece) his own Legion robots
+   * march in with him and stand guard at the `squad1`..`squad3` markers, fighting for him.
+   */
+  squadArrives() {
+    for (const id of ['squad1', 'squad2', 'squad3']) {
+      const at = this.markers.get(id);
+      if (at) this.addEntity(new AllyBot(this, at.x, at.y, at.z, Math.PI));
+    }
   }
 
   /** The secret ending of a chapter: LUX talks GaScu round (chapter 1), or Jason talks Brennus down (chapter 2). */
