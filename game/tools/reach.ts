@@ -12,6 +12,7 @@
  */
 import { ATALANTA, BRENNUS, CELL, GRAPPLE, GRAVITY, PLAYER, STEP_UP } from '../src/core/constants';
 import { heroRoster } from '../src/entities/heroes/heroes';
+import { RAFT_TOP } from '../src/world/tides';
 import { PASSABLE_DECOR, type Ability, type Cond, type HeroId, type ParsedLevel, type PlacedEntity, type Spec } from '../src/world/levelTypes';
 
 type SpotKind = 'floor' | 'plat' | 'pad' | 'vent';
@@ -121,6 +122,13 @@ export function buildSpots(level: ParsedLevel, abilities: Ability[] = []): Spot[
   for (const e of level.entities) {
     const s = e.spec;
     if (s.type === 'faller') spots.push({ cx: e.cx, cz: e.cz, h: e.h, kind: 'floor', group: -1 });
+    if (s.type === 'raft') {
+      // A raft rides the tide: from resting on the sand up to floating at high tide, like a lift.
+      group += 1;
+      const top = Math.max(e.h + RAFT_TOP, (level.def.tide?.high ?? e.h) + 0.2);
+      for (let h = e.h + RAFT_TOP; h <= top + 1e-6; h += 0.25) spots.push({ cx: e.cx, cz: e.cz, h, kind: 'plat', group });
+      continue;
+    }
     if (s.type !== 'platform') continue;
     group += 1;
     const size = s.size ?? 1;

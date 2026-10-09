@@ -29,6 +29,8 @@ export interface Outdoor {
    * floating in it), and the far mountains become distant cloud banks.
    */
   cloudSea?: boolean;
+  /** A reef in the open sea: far below is the deep blue seabed, and the horizon stays low and flat. */
+  sea?: boolean;
 }
 
 export interface Theme {
@@ -421,6 +423,33 @@ export const THEMES: Record<ThemeId, Theme> = {
     space: false,
     bloom: 0.14,
     outdoor: { ground: 'grass', ground2: '#9ccc5a', rock: '#a8988a', rockDark: '#6e6052', below: '#f4f6fb', sunDisc: '#fff4dc', clouds: '#ffffff', hills: '#c8d8ee', stars: false, cloudSea: true },
+  },
+  /* Scylla's Reef: pale coral sand and dark reef rock in a bright turquoise sea, under a tropical sun. */
+  reef: {
+    skyTop: '#2a8ad8',
+    skyBottom: '#d6f2ff',
+    fog: '#c8ecf8',
+    fogNear: 62,
+    fogFar: 210,
+    floor: '#f0d8bc',
+    floorLine: '#d4b28c',
+    floorSide: '#b88a68',
+    ice: '#c8f0ff',
+    wall: '#8a7c74',
+    wallTrim: '#ff7a8a',
+    edge: '#fff2dc',
+    hazard: '#3fc8e0',
+    hazardDeep: '#0a4a6a',
+    hemiSky: '#eaf8ff',
+    hemiGround: '#5e8a8a',
+    hemi: 1.05,
+    sun: '#fff4dc',
+    sunI: 2.2,
+    accent: '#3fe0d0',
+    mood: 'motes',
+    space: false,
+    bloom: 0.14,
+    outdoor: { ground: 'sand', ground2: '#fbe6cf', rock: '#8c7d74', rockDark: '#5a4e48', below: '#0c4f72', sunDisc: '#fffbe8', clouds: '#ffffff', hills: '#7aa6bc', stars: false, sea: true },
   },
   /* Aeëtes's Mine: an open-pit gold mine on a dusty moon, under a black sky full of stars, with molten ore glowing at the bottom of the pit. */
   mine: {

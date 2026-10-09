@@ -12,6 +12,7 @@ import { inChapter, isFinale } from '../levels';
 import type { Line } from '../world/levelTypes';
 import { ease, type Director, type Rig } from './director';
 import { luxTaken, rogueIntro } from './luxScenes';
+import { straitClear } from './reefScenes';
 
 export { irisFound, luxReunion, luxTaken } from './luxScenes';
 export { heroJoins } from './islesScenes';
@@ -330,6 +331,8 @@ export async function bossOutro(d: Director, w: World, b: Boss) {
     await d.wait(1.2);
   }
   await d.say(w.dialogue('bossDown'));
+  // Scylla's Reef: the whirlpool calms, and the Argo sails through the strait.
+  if (w.def.id === 'reef') await straitClear(d, w);
   // In the tundra, Brennus has one more trick: a snare drone for LUX.
   if (w.def.id === 'snow') {
     await luxTaken(d, w);

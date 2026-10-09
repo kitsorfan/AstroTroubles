@@ -163,6 +163,10 @@ function belowProps(o: Outdoor, theme: Theme, cx: number, cz: number, span: numb
     const puff = new THREE.SphereGeometry(1, 18, 12);
     kinds.push({ geo: puff, colors: ['#ffffff', '#f4f6fb', '#e8eef8', '#fff0e2'], sy: [0.4, 0.65] });
     kinds.push({ geo: puff, colors: ['#ffffff', '#f6f8fc'], sy: [0.5, 0.8] });
+  } else if (o.sea) {
+    // The deep seabed under the reef: rounded coral heads in sea blues and soft pinks.
+    kinds.push({ geo: ball, colors: ['#1f6a8a', '#2a7a7a', '#5a4a8a', '#c86a7a', '#e8a07a'], sy: [0.5, 0.9] });
+    kinds.push({ geo: stone, colors: [o.rock, o.rockDark], sy: [0.7, 1.4] });
   } else switch (o.ground) {
     case 'grass':
     case 'jungle':

@@ -45,6 +45,12 @@ const HEIGHT: Record<DecorKind, number> = {
   thorns: 1.6,
   banner: 3.6,
   pillar: 3.4,
+  coral: 1.4,
+  seafan: 1.8,
+  kelp: 1.2,
+  shell: 0.8,
+  lighthouse: 10,
+  tidepost: 3.2,
 };
 
 function colored(geo: THREE.BufferGeometry, color: string, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1): THREE.BufferGeometry {
@@ -325,6 +331,77 @@ function build(kind: DecorKind, accent: string): [THREE.BufferGeometry[], THREE.
       g.push(colored(B(0.25, 0.25, 0.05), '#ff6fcf', 0, 1.7, 0.6));
       g.push(colored(B(0.25, 0.25, 0.05), '#ffd166', 0, 1.2, 0.6));
       r = 0.65;
+      break;
+    /* ---------------- Scylla's Reef ---------------- */
+    case 'coral': {
+      // Branching coral: a squat base with knobbly arms in warm pinks and oranges.
+      s.push(colored(D(0.45), '#e86a7a', 0, 0.25, 0, 0, 0, 0, 1.3, 0.6, 1.3));
+      const arms: [number, number, number, string][] = [
+        [0.5, 0.3, 0.2, '#ff8a8a'],
+        [-0.45, 0.25, -0.1, '#ff9a6a'],
+        [0.1, 0.35, -0.5, '#ff7a9a'],
+        [-0.15, 0.4, 0.45, '#ffaa7a'],
+        [0, 0.45, 0, '#ff8a8a'],
+      ];
+      for (const [x, tilt, z, col] of arms) {
+        const h = 0.8 + Math.abs(x + z) * 0.6;
+        s.push(colored(C(0.08, 0.14, h, 7), col, x * 0.6, 0.35 + h / 2, z * 0.6, z * tilt * 2, 0, -x * tilt * 2));
+        g.push(colored(S(0.12, 6), '#ffd8c8', x * 0.6 + x * tilt, 0.35 + h, z * 0.6 + z * tilt));
+      }
+      r = 0.55;
+      break;
+    }
+    case 'seafan':
+      // A purple sea fan: a flat lacy disc on a short stem.
+      s.push(colored(C(0.06, 0.1, 0.6, 6), '#5a3a6a', 0, 0.3));
+      s.push(colored(new THREE.CircleGeometry(0.85, 14, 0, Math.PI), '#9a5ad8', 0, 0.6, 0, 0, 0, 0, 1, 1.3, 1));
+      s.push(colored(new THREE.CircleGeometry(0.85, 14, 0, Math.PI), '#9a5ad8', 0, 0.6, 0, 0, Math.PI, 0, 1, 1.3, 1));
+      g.push(colored(S(0.08, 6), '#ff9af0', 0.3, 1.2, 0.03));
+      g.push(colored(S(0.08, 6), '#ff9af0', -0.4, 0.9, 0.03));
+      r = 0.3;
+      break;
+    case 'kelp':
+      // Seaweed: tall wavy blades (walk straight through them).
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        s.push(colored(B(0.16, 1.1 + (i % 2) * 0.4, 0.03), i % 2 ? '#3a8a4a' : '#6a8a2a', Math.cos(a) * 0.25, 0.55 + (i % 2) * 0.2, Math.sin(a) * 0.25, Math.sin(a) * 0.2, a, Math.cos(a) * 0.2));
+      }
+      r = 0;
+      break;
+    case 'shell':
+      // A giant spiral seashell, creamy pink.
+      s.push(colored(K(0.45, 1.1, 10), '#ffe2cc', 0, 0.4, 0, 0, 0, Math.PI / 2 - 0.25));
+      s.push(colored(S(0.42, 10), '#ffc8b0', 0.42, 0.42, 0, 0, 0, 0, 0.9, 1, 1));
+      s.push(colored(new THREE.TorusGeometry(0.3, 0.07, 6, 12), '#e8a090', 0.55, 0.42, 0, 0, Math.PI / 2, 0));
+      r = 0.5;
+      break;
+    case 'lighthouse': {
+      // An old lighthouse, broken at the top: red and white bands, a balcony and an empty lamp room.
+      const bands = 7;
+      for (let i = 0; i < bands; i++) {
+        const rb = 1.5 - i * 0.12;
+        s.push(colored(C(rb - 0.12, rb, 1.15, 14), i % 2 ? '#d84a4a' : '#f4f0e8', 0, 0.575 + i * 1.15, 0));
+      }
+      const top = bands * 1.15;
+      s.push(colored(C(1.05, 0.8, 0.25, 14), '#4a4a52', 0, top + 0.12, 0));
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        s.push(colored(B(0.12, 1.1, 0.12), '#4a4a52', Math.cos(a) * 0.62, top + 0.8, Math.sin(a) * 0.62));
+      }
+      // Half a roof, the rest blown away long ago.
+      s.push(colored(K(0.85, 0.8, 14), '#3a3a42', 0.15, top + 1.65, 0, 0, 0, 0.35));
+      g.push(colored(S(0.35, 10), '#fff2b0', 0, top + 0.8, 0));
+      s.push(colored(B(0.6, 1.2, 0.08), '#5a3a2a', 0, 0.6, 1.5));
+      r = 1.4;
+      break;
+    }
+    case 'tidepost':
+      // A tide gauge: a striped pole with a wave sign on top. Half a unit per stripe.
+      for (let i = 0; i < 6; i++) s.push(colored(C(0.12, 0.12, 0.5, 8), i % 2 ? '#f4f0e8' : '#3a8ad8', 0, 0.25 + i * 0.5, 0));
+      s.push(colored(B(0.7, 0.45, 0.06), '#f4f0e8', 0, 3.1, 0));
+      g.push(colored(B(0.5, 0.08, 0.07), '#3fc8e0', 0, 3.1, 0.01));
+      g.push(colored(B(0.5, 0.08, 0.07), '#3fc8e0', 0, 2.97, 0.01));
+      r = 0.15;
       break;
     case 'bloom':
       s.push(colored(C(0.15, 0.3, 1.2, 8), '#3fae4a', 0, 0.6));

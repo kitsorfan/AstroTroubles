@@ -13,6 +13,8 @@ import { Badge, type BadgeKind } from './badges';
 import { Entity, type HitKind, type Target } from './entity';
 import { Shockwave } from './hazards';
 import { makeHarpy } from './isles/harpy';
+import { makeCrab } from './reef/crab';
+import { makeJelly } from './reef/jelly';
 import { makeRobot } from './robots';
 
 const v3 = new THREE.Vector3();
@@ -977,6 +979,12 @@ export function makeEnemy(world: World, id: string, kind: EnemyKind, cx: number,
       break;
     case 'harpy':
       e = makeHarpy(world, id, x, h, z);
+      break;
+    case 'crab':
+      e = makeCrab(world, id, x, h, z);
+      break;
+    case 'jelly':
+      e = makeJelly(world, id, x, h, z);
       break;
   }
   const d = world.difficulty;

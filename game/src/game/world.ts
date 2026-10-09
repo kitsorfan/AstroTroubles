@@ -21,6 +21,7 @@ import type { PuzzleKind } from './puzzles';
 import { COLONIST_BOLTS, HINTS } from './quests';
 import { chapterOf, chapterTotals, inChapter, isFinale } from '../levels';
 import { Anchor, Boulder, Quicksand, Wind } from '../entities/outdoor';
+import { Raft, Tide } from '../entities/reef/tide';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, LowGap, WallRun } from '../entities/heroes/heroProps';
@@ -211,6 +212,8 @@ export class World {
   private freezeT = 0;
   /** On a vehicle level (the Argo...), the vehicle that runs instead of Jason on foot. */
   readonly vehicle: Vehicle | null = null;
+  /** The rising and falling sea of a tidal level (Scylla's Reef). */
+  readonly tide: Tide | null = null;
 
   constructor(
     def: LevelDef,
@@ -295,6 +298,11 @@ export class World {
     this.lamp = new HelmetLamp(this, this.torch);
     this.refreshCompanions();
 
+    // The sea moves first, so rafts and everything else see this frame's tide.
+    if (def.tide) {
+      this.tide = new Tide(this, def.tide);
+      this.movers.push(this.tide);
+    }
     for (const pe of this.level.entities) this.spawnSpec(pe);
     this.spawnRogue();
     // A hero who joins later waits at the marker named after her (Atalanta by her skiff).
@@ -500,6 +508,9 @@ export class World {
         break;
       case 'plate':
         this.addEntity(new HeavyPlate(this, id, cx, cz, h, spec.flag));
+        break;
+      case 'raft':
+        this.movers.push(new Raft(this, id, cx, cz, h));
         break;
       case 'decor':
         this.decorItems.push({

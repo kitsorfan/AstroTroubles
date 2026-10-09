@@ -294,6 +294,50 @@ canvas#game {
 }
 
 /* The clock for timed switches, with a dot per switch. */
+/* The tide gauge (Scylla's Reef): a little tube of sea that fills up and drains, and what the tide does next. */
+.tide {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 12px 3px 6px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid #3fc8e0;
+  color: #bff4ff;
+  font-weight: 700;
+  font-size: 14px;
+  width: fit-content;
+}
+
+.tide .tube {
+  position: relative;
+  width: 12px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid #bff4ff;
+  overflow: hidden;
+}
+
+.tide .sea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(#7fe6ff, #1f8fbf);
+  transition: height 0.3s;
+}
+
+.tide.high {
+  border-color: #5ea8ff;
+}
+
+.tide.warn {
+  color: #ffd166;
+  border-color: #ffd166;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.5);
+  animation: pulse 0.6s infinite;
+}
+
 .countdown {
   display: flex;
   align-items: center;

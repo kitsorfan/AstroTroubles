@@ -39,6 +39,9 @@ export const PANEL_IDS = [
   // General Brennus's own level: on the way to Aeëtes's mine, and the golden map.
   'ch3-brennus',
   'ch3-map',
+  // Scylla's Reef: Scylla on her rock above Charybdis, and the Argo sailing through the calm strait.
+  'ch3-scylla',
+  'ch3-strait',
 ] as const;
 
 export type PanelId = (typeof PANEL_IDS)[number];
