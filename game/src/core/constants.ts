@@ -239,7 +239,7 @@ export const GAZE = {
   stone: 2.2,
   safe: 1.6,
   /** How far a beam travels in all (world units), counting every bounce, and its tracing step. */
-  range: 48,
+  range: 80,
   step: 0.25,
   /** A gaze beam's height above the eye-sentry's floor. */
   eye: 1.3,
