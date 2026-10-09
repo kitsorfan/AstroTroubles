@@ -93,29 +93,34 @@ export function makeMech(): MechModel {
   }
 
   // The open cockpit in its chest: a seat, a glass dome over the front and two little control sticks.
-  const cockpit = new THREE.Group();
-  cockpit.position.set(0, 1.95, 0.32);
-  body.add(cockpit);
-  body.add(mesh(boxG(0.7, 0.12, 0.5), iron, 0, 1.92, 0.3, false));
-  const dome = mesh(new THREE.SphereGeometry(0.62, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: C.glass, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0.1, depthWrite: false }), 0, 2.15, 0.5, false);
-  dome.rotation.x = Math.PI / 2 - 0.35;
-  body.add(dome);
-  body.add(mesh(torus(0.6, 0.05), light, 0, 2.15, 0.5, false).rotateX(-0.35));
-  for (const sx of [-0.2, 0.2]) body.add(mesh(cyl(0.03, 0.03, 0.3, 6), iron, sx, 2.05, 0.62, false));
-
-  // The head: a little round dome on top, with one wide teal eye and a leaf crest.
+  // The cockpit: a glass bubble on top of the body, with Jason sitting inside it (his head and
+  // shoulders show), a little bronze control panel, and a leaf crest on top.
   const head = new THREE.Group();
-  head.position.set(0, 2.95, -0.1);
-  head.add(mesh(sphere(0.36, 16), bronze, 0, 0, 0));
-  head.add(mesh(cyl(0.2, 0.26, 0.2, 12), iron, 0, -0.3, 0));
-  const eye = new THREE.Group();
-  const lens = mesh(boxG(0.48, 0.12, 0.08), visor, 0, 0.02, 0.32, false);
-  eye.add(lens);
-  head.add(eye);
-  const crest = mesh(cone(0.09, 0.4, 6), patina, 0, 0.42, 0, false);
+  head.position.set(0, 2.72, 0.05);
+  body.add(head);
+  head.add(mesh(cyl(0.6, 0.66, 0.16, 18), iron, 0, 0, 0));
+  head.add(mesh(torus(0.63, 0.06), light, 0, 0.08, 0, false).rotateX(Math.PI / 2));
+  const cockpit = new THREE.Group();
+  cockpit.position.set(0, 0.06, -0.05);
+  head.add(cockpit);
+  head.add(mesh(boxG(0.5, 0.18, 0.14), iron, 0, 0.2, 0.42, false));
+  const bubble = mesh(
+    new THREE.SphereGeometry(0.64, 22, 14, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: C.glass, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false }),
+    0,
+    0.08,
+    0,
+    false,
+  );
+  head.add(bubble);
+  const crest = mesh(cone(0.08, 0.36, 6), patina, 0, 0.86, -0.05, false);
   crest.scale.set(0.5, 1, 1.4);
   head.add(crest);
-  body.add(head);
+  // One wide teal eye across the front of its chest.
+  const eye = new THREE.Group();
+  eye.position.set(0, 2.32, 0.74);
+  eye.add(mesh(boxG(0.62, 0.14, 0.1), visor, 0, 0, 0, false));
+  body.add(eye);
 
   // Arms: iron shoulder balls, bronze pauldrons, big fists. Atalanta's perch is the flat left pauldron.
   const armL = new THREE.Group();

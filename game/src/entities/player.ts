@@ -233,13 +233,14 @@ export class Player {
     this.hero = ride;
     this.body.h = HEROES[ride].height;
     for (const id of this.cast) if (id !== ride) this.modelOf(id).root.visible = false;
+    // Nobody follows on foot any more (this drops the follower before anyone is seated).
+    this.showHero();
+    this.teleport(m.position.x, m.position.y, m.position.z);
+    this.facing = m.rotation.y;
     if (ride === 'mech' && this.mech) {
       this.body.r = this.mech.radius;
       this.mech.seat(this.jason, this.ata?.model ?? null);
     }
-    this.teleport(m.position.x, m.position.y, m.position.z);
-    this.facing = m.rotation.y;
-    this.showHero();
     this.refreshGear();
     this.world.refreshCompanions();
     this.world.hooks.hud();
