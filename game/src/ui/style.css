@@ -2070,34 +2070,72 @@ canvas#game {
   margin: 3px 0 2px;
 }
 
-.wstats span {
-  display: contents;
-}
-
-.wstats em {
-  font-style: normal;
+.wstats .wl {
   font-size: 9.5px;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.75);
   text-align: left;
 }
 
-.wstats b {
+.wstats .wbar {
   display: flex;
   gap: 2px;
 }
 
-.wstats i {
+.wstats .wbar span {
   width: 11px;
   height: 7px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.14);
 }
 
-.wstats i.on {
+.wstats .wbar span.on {
   background: var(--wc, #5ee0ff);
   box-shadow: 0 0 5px var(--wc, #5ee0ff);
+}
+
+/* In the shop the bars are a little smaller, and the cards never grow wider than their column. */
+.shop-item .wstats {
+  row-gap: 2px;
+  margin: 4px 0 3px;
+}
+
+.shop-item .wstats .wbar span {
+  width: 10px;
+  height: 6px;
+}
+
+.shop-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* On short screens the weapon cards skip the flavour line: the stats and the special say it all. */
+@media (max-height: 460px) {
+  .shop-grid .shop-item.weapon .info i {
+    display: none;
+  }
+  .shop-grid .shop-item.weapon {
+    gap: 8px;
+  }
+  .shop-grid .shop-item.weapon .icon {
+    width: 28px;
+    height: 28px;
+  }
+  .shop-item .wstats .wbar span {
+    width: 8px;
+  }
+  .shop-grid .shop-item.weapon .buy {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
 }
 
 .shop-item .wspecial {

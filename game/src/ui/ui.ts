@@ -81,7 +81,7 @@ export function weaponStats(w: Weapon): string {
     [tr('SPEED'), w.bars.speed],
     [w.id === 'flame' ? tr('FUEL') : tr('AMMO'), w.bars.ammo],
   ];
-  const row = ([name, n]: [string, number]) => `<span><em>${name}</em><b>${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(5 - n)}</b></span>`;
+  const row = ([name, n]: [string, number]) => `<span class="wl">${name}</span><span class="wbar">${'<span class="on"></span>'.repeat(n)}${'<span></span>'.repeat(5 - n)}</span>`;
   return `<div class="wstats" style="--wc:${w.glow}">${rows.map(row).join('')}</div>`;
 }
 
