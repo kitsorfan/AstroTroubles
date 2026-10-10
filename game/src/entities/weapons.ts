@@ -287,12 +287,16 @@ export interface Tank {
 }
 
 export function stepTank(t: Tank, firing: boolean, dt: number, up: ArmsUpgrades = {}): Tank {
-  const max = clipOf('flame', up);
+  return stepFuel(t, firing, dt, clipOf('flame', up), reloadOf('flame', up));
+}
+
+/** Any fuel tank (Jason's, or the bronze mech's bigger one): `max` seconds of fire, refilled in `refill` seconds. */
+export function stepFuel(t: Tank, firing: boolean, dt: number, max: number, refill: number): Tank {
   if (firing && !t.dry && t.fuel > 0) {
     const fuel = Math.max(0, t.fuel - dt);
     return { fuel, dry: fuel <= 0, rest: FLAME.rest };
   }
   if (t.rest > 0) return { ...t, rest: Math.max(0, t.rest - dt) };
-  const fuel = Math.min(max, t.fuel + (max / reloadOf('flame', up)) * dt);
+  const fuel = Math.min(max, t.fuel + (max / refill) * dt);
   return { fuel, dry: t.dry && fuel < max * FLAME.dryAt, rest: 0 };
 }

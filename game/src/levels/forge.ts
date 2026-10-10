@@ -11,15 +11,16 @@ import type { LevelDef } from '../world/levelTypes';
  *    into the control room, where LUX wakes the old forge up (side: a Gardener light-word vault, and a
  *    light-stone only Atalanta's wall-jump reaches).
  * 3. In the forge hall sleeps the Gardeners' bronze MECH. Jason climbs into the cockpit and Atalanta onto
- *    its shoulder: from here on the mech is the only hero (cutscene + storybook panel).
+ *    its shoulder (cutscene + storybook panel): from here on they ride it, with STRENGTH instead of
+ *    hearts and a big FLAMETHROWER. They can GET OUT and CLIMB back IN with the action button.
  * 4. PUNCH the bronze gate open; cross the lava fields with a JUMP and a THRUST while anvil drones drop
  *    anvils from above.
  * 5. The casting floor: SLAM (spin in the air) through the cracked floor plates into the trench under
  *    the wall (another cracked plate hides a cellar with the heart canister).
  * 6. The bellows yard: SLAM both red switches to open the arena gate. PANDORA's shop, and a light-stone
  *    on top of the forge chimney across the lava (jump + thrust).
- * 7. TALOS walks his rounds: dodge his stomps and hammer, PUNCH the armour off his ankle while his foot
- *    is stuck, then pull the PLUG in his heel. Three pulls and the golden ichor drains: he sits down,
+ * 7. TALOS walks his rounds (only the mech can fight him): dodge his stomps and hammer, PUNCH (or burn)
+ *    the armour off his ankle while his foot is stuck, then pull the PLUG in his heel. Three pulls and the golden ichor drains: he sits down,
  *    gently, free of Aeëtes's control, and nods. Beyond him: the labyrinth gate into Colchis.
  */
 export const forge: LevelDef = {
@@ -33,7 +34,8 @@ export const forge: LevelDef = {
   shardIds: ['s1', 's2', 's3'],
   colonistIds: ['c1', 'c2'],
   // Jason and Atalanta on foot until they climb into the mech (the `join:mech` trigger sets the flag);
-  // from then on the mech is the only hero, with both of them aboard.
+  // from then on the mech is the only hero, with both of them aboard (unless they climb out and leave it
+  // parked: then they are on foot again until they climb back in).
   heroes: ['jason', 'atalanta', 'mech'],
   joins: { mech: 'mech' },
   map: `
@@ -197,10 +199,10 @@ export const forge: LevelDef = {
     r: { type: 'sign', text: 'A Gardener light-door. “Spell the word for SKY, then the word for GROW.” (The Harpy Isles taught you: SKY is blue, gold, blue. GROW is pink, then green.)' },
     '}': { type: 'sign', text: 'A BRONZE GATE, a hand thick. Nothing on foot can open it... but a mech’s PUNCH (the SPIN button) can!' },
     '|': { type: 'sign', text: 'LAVA CHANNELS! Narrow ones: just JUMP. Wide ones: JUMP, then THRUST (the DASH button) in the air. The jets carry you across.' },
-    '-': { type: 'sign', text: 'Watch the sky! Anvil drones drop anvils on red circles. Step out of the circle, then PUNCH the drone while it picks its anvil back up.' },
+    '-': { type: 'sign', text: 'Watch the sky! Anvil drones drop anvils on red circles. Step out of the circle, then PUNCH the drone while it picks its anvil back up, or roast it with the FLAMETHROWER.' },
     u: { type: 'sign', text: 'Cracked floor plates! Walking won’t break them. JUMP and SLAM (press SPIN in the air) to smash straight through.' },
     f: { type: 'sign', text: 'Two red switches, one on each side of the yard. SLAM them both and the arena gate opens.' },
-    F: { type: 'sign', text: 'TALOS walks his rounds in there. When he stomps, his foot gets stuck: PUNCH the armour off his ankle! Then pull the plug in his heel.' },
+    F: { type: 'sign', text: 'TALOS walks his rounds in there, and only the mech is strong enough to fight him! When he stomps, his foot gets stuck: PUNCH the armour off his ankle (or hold the FLAMETHROWER on it). Then pull the plug in his heel.' },
     // Decor: palms on the beach, lava rocks, Aeëtes's gold banners, the Gardeners' bronze pillars and forge machines.
     W: { type: 'decor', kind: 'wreck', scale: 1.4, rot: 0.6 },
     Q: { type: 'decor', kind: 'palm' },
@@ -247,7 +249,9 @@ export const forge: LevelDef = {
     ],
     'joined:mech': [
       { who: 'halcyon', text: 'The mech is awake! Jason pilots it, Atalanta rides on its shoulder, and LUX and IRIS fly alongside.' },
-      { who: 'halcyon', text: 'SPIN is PUNCH. In the air, SPIN is a big SLAM. DASH fires the back jets: THRUST! And BLAST fires its cannon.' },
+      { who: 'halcyon', text: 'SPIN is PUNCH. In the air, SPIN is a big SLAM. DASH fires the back jets: THRUST! And hold BLAST for its FLAMETHROWER.' },
+      { who: 'halcyon', text: 'No hearts in a mech: it has STRENGTH. Hits wear it down, and it comes back slowly. If it runs out, the mech overheats and you all hop out until it cools.' },
+      { who: 'jason', text: 'It’s slow, but SO strong. And the action button lets us GET OUT, and CLIMB back IN.' },
       { who: 'atalanta', text: 'Comfy up here! You steer, Jason. I’ll do the cheering.' },
     ],
     fields: [

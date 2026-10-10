@@ -36,17 +36,18 @@ export type HeroMove =
   | 'smash'
   | 'stomp'
   | 'command'
-  /* The bronze mech (Talos's Forge): its PUNCH breaks bronze gates, its SLAM cracked floors, its THRUST crosses gaps (plus a cannon) */
+  /* The bronze mech (Talos's Forge): its PUNCH breaks bronze gates, its SLAM cracked floors, its THRUST crosses gaps (plus a flamethrower) */
   | 'punch'
   | 'slam'
-  | 'thrust';
+  | 'thrust'
+  | 'flame';
 
 export interface HeroDef {
   id: HeroId;
   /**
    * A vehicle the other heroes climb into (the bronze mech): once it joins (see `LevelDef.joins`) it is the
    * only hero in the roster, with the others riding inside. Until then it stands parked at the marker
-   * named after it.
+   * named after it, and later the heroes can climb out and leave it parked again (see `parkedFlag`).
    */
   vehicle?: boolean;
   /** Speaker key for the hero's portrait and name. */
@@ -111,8 +112,8 @@ export const HEROES: Record<HeroId, HeroDef> = {
     speed: MECH.speed,
     jumpV: MECH.jumpV,
     height: MECH.height,
-    buttons: { shoot: 'CANNON', spin: 'PUNCH', dash: 'THRUST' },
-    moves: ['cannon', 'punch', 'slam', 'thrust'],
+    buttons: { shoot: 'FLAME', spin: 'PUNCH', dash: 'THRUST' },
+    moves: ['flame', 'punch', 'slam', 'thrust'],
   },
 };
 
@@ -156,6 +157,13 @@ export function joinedRoster(cast: readonly HeroId[], joined: (h: HeroId) => boo
   const ride = list.find((h) => HEROES[h].vehicle);
   return ride ? [ride] : list;
 }
+
+/**
+ * The story flag set while everyone has climbed out of a vehicle hero (the bronze mech) and left it
+ * parked: the roster is the heroes on foot again until they climb back in. A checkpoint reload clears it
+ * (everyone starts back aboard).
+ */
+export const parkedFlag = (vehicle: HeroId) => `parked:${vehicle}`;
 
 /** The hero a switch changes to (the next one in the roster), or null when there is nobody to switch to. */
 export function nextHero(roster: readonly HeroId[], current: HeroId): HeroId | null {

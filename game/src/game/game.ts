@@ -689,8 +689,16 @@ export class Game {
       return;
     }
     this.ui.setHearts(w.player.hearts, this.save.maxHearts, w.player.armor, w.player.armorMax);
+    this.refreshStrength(w);
     this.ui.setBolts(this.save.bolts);
     this.refreshAbilities(w);
+  }
+
+  /** Aboard the bronze mech, its STRENGTH bar stands in for the hearts, and its flamethrower's heat shows by FLAME. */
+  private refreshStrength(w: World) {
+    const mech = w.player.aboard ? w.player.mech : null;
+    this.ui.setStrength(mech ? mech.strength : null);
+    if (mech) this.ui.setHeat(1 - mech.fuel, mech.tank.dry, 'hm');
   }
 
   private refreshAbilities(w: World) {
@@ -1064,6 +1072,7 @@ export class Game {
             // The Flamethrower shows its fuel gauge instead of a clip.
             this.ui.setAmmo(pl.ammo, pl.clipSize, pl.reloadProgress, pl.charge, pl.weapon === 'flame' ? pl.fuel : null, pl.tank.dry);
             if (pl.bren && pl.hero === 'brennus') this.ui.setHeat(pl.bren.heat, pl.bren.overheated);
+            this.refreshStrength(w);
             this.refreshAbilities(w);
           }
           this.ui.setCountdown(w.countdown());

@@ -387,9 +387,9 @@ export abstract class Enemy extends Entity implements Target {
       if (this.player.pounding && p.y > this.body.y + this.radius) return false;
       // Jason is ramming it with a dash: the dash does the hitting.
       if (this.player.dashing) return false;
-      const before = this.player.hearts;
+      const before = this.player.health;
       this.player.hurt(dmg, this.body.x, this.body.z);
-      return this.player.hearts < before;
+      return this.player.health < before;
     }
     return false;
   }

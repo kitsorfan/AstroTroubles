@@ -57,4 +57,9 @@ export interface Interactable {
   reachY?: number;
   /** Picked by where Jason is facing as well as by distance (grapple anchors). */
   aimed?: boolean;
+  /**
+   * Offered anywhere (no distance check), but only when nothing else is in reach: the bronze mech's
+   * GET OUT. Its `label()` decides when it can be used.
+   */
+  fallback?: boolean;
 }

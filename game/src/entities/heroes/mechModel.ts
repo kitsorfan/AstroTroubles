@@ -10,7 +10,7 @@ export const MECH_COLORS = {
   iron: '#3a3230',
   glass: '#8fe8ff',
   light: '#5ff0d0',
-  /** The cannon's muzzle and charge glow, and the jets. */
+  /** The flamethrower's pilot flame, and the jets. */
   glow: '#ffb04a',
 };
 
@@ -18,7 +18,7 @@ export interface MechModel extends HeroModel {
   /** Where Jason sits (in the open cockpit in its chest) and where Atalanta sits (on its left shoulder). */
   cockpit: THREE.Group;
   perch: THREE.Group;
-  /** The cannon on its right forearm and the glow at its muzzle while a big blast charges. */
+  /** The flamethrower nozzle on its right forearm, and the pilot flame at its tip while it burns. */
   cannon: THREE.Group;
   chargeGlow: THREE.Sprite;
   /** The two back jets (THRUST), and the fists (they swell a little on a punch). */
@@ -44,7 +44,7 @@ function lightLine(m: THREE.Material, n: number, w: number): THREE.Group {
 /**
  * The Gardeners' bronze mech suit, found asleep in Talos's forge: about twice Jason's height, chunky and
  * friendly. Round bronze body with green patina at the edges, an open glass cockpit in its chest (Jason
- * sits in it), a flat shoulder pad for Atalanta, big fists (the right forearm carries a cannon), two back
+ * sits in it), a flat shoulder pad for Atalanta, big fists (the right forearm carries a flamethrower), two back
  * jets for THRUST, and a little round head with one wide teal eye. The last child of `root` is its shadow.
  */
 export function makeMech(): MechModel {
@@ -147,7 +147,7 @@ export function makeMech(): MechModel {
   const perch = new THREE.Group();
   perch.position.set(-0.05, 0.34, 0);
   armL.add(perch);
-  // The cannon along the right forearm, pointing down the arm (forward when the arm is raised).
+  // The flamethrower nozzle along the right forearm, pointing down the arm (forward when the arm is raised).
   const cannon = new THREE.Group();
   cannon.position.set(0.3, -0.95, 0);
   cannon.add(mesh(cyl(0.13, 0.15, 0.85, 12), iron, 0, -0.1, 0));

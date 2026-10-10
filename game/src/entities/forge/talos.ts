@@ -23,10 +23,12 @@ const UP = new THREE.Vector3(0, 1, 0);
  * TALOS, the Gardeners' bronze guardian giant (the boss of Talos's Forge), reprogrammed by Aeëtes's
  * gold crown to stomp anyone who lands. HP 15: three rounds of three ankle plates and a pull of the plug.
  *
+ * - Only the bronze mech is strong enough to fight him: on foot, the heroes' attacks bounce off with a
+ *   clang (and LUX says so now and then). If they are out of the mech, they have to climb back in.
  * - He walks his rounds of the arena, now and then turning on the mech.
  * - STOMP: he lifts his right foot over the mech (a red circle shows where), stamps down (a shockwave
  *   rolls out: jump it), and the foot sticks in the floor for a few seconds, the ankle armour glowing.
- *   PUNCH the plates off (a big cannon blast also knocks one off; shells just ping).
+ *   PUNCH the plates off; the mech's FLAMETHROWER, held on the ankle, heats a plate until it pops off too.
  * - HAMMER: he raises his forge hammer (a red strip shows where it lands) and brings it down.
  * - With all three plates off he drops to one knee, his heel turned up: walk round and PULL the plug.
  *   It comes out a third of the way, golden light leaks out, and he gets up for another round (in round
@@ -63,6 +65,10 @@ export class Talos extends Boss implements Target, Interactable {
   private droneWave = 0;
   /** The anvil drones Aeëtes sent in during the fight. */
   private drones: Enemy[] = [];
+  /** Ticks of the mech's flame on the stuck ankle so far (a plate pops off every `TALOS_TUNING.plateHeat`). */
+  private heat = 0;
+  /** When LUX last said only the mech can fight him (world time). */
+  private footSaid = -99;
 
   constructor(world: World, id: string, cx: number, cz: number, h: number) {
     super(world, id, cx, cz, h, TALOS_TUNING.rounds * (TALOS_TUNING.plates + TALOS_TUNING.plugDamage));
@@ -109,12 +115,17 @@ export class Talos extends Boss implements Target, Interactable {
     return this.state === 'kneel';
   }
 
+  /** Only the mech's big bronze hands can pull the plug. */
+  private get inMech() {
+    return this.world.player.aboard;
+  }
+
   label() {
-    return this.kneeling && !this.defeated ? 'PULL' : null;
+    return this.kneeling && !this.defeated && this.inMech ? 'PULL' : null;
   }
 
   interact() {
-    if (!this.kneeling || this.defeated) return;
+    if (!this.kneeling || this.defeated || !this.inMech) return;
     const w = this.world;
     const p = this.plugSpot();
     this.round += 1;
@@ -169,16 +180,43 @@ export class Talos extends Boss implements Target, Interactable {
   hit(dmg: number, kind: HitKind, from: THREE.Vector3): boolean {
     if (!this.started || this.defeated) return true;
     void dmg;
+    if (!this.inMech) {
+      this.clang(from);
+      return true;
+    }
     if (this.state !== 'stuck' || this.plates <= 0) {
       audio.play('zap', 1.2, 0.6);
       return true;
     }
-    if (kind !== 'smash' && kind !== 'blast') {
-      // Shells and shots just ping off the thick bronze.
+    if (kind === 'burn') {
+      // The mech's fire heats the ankle armour until a plate glows white-hot and pops off.
+      this.heat += 1;
+      const a = this.aim;
+      this.world.particles.emit(a.x, a.y, a.z, { count: 3, color: '#ffe0a0', speed: 3, life: 0.35, size: 0.5, gravity: -2 });
+      if (this.heat < TALOS_TUNING.plateHeat) return true;
+      this.heat = 0;
+    } else if (kind !== 'smash' && kind !== 'blast') {
+      // Anything lighter just pings off the thick bronze.
       audio.play('zap', 1.6, 0.6);
-      this.hint('ping', () => this.world.hooks.toast('Too thick for little shells! Get close and PUNCH his ankle (the SPIN button).', 'bolt'));
+      this.hint('ping', () => this.world.hooks.toast('Too thick! Get close and PUNCH his ankle (the SPIN button), or hold the FLAMETHROWER on it.', 'bolt'));
       return true;
     }
+    this.knockPlate(from);
+    return true;
+  }
+
+  /** On foot, nothing hurts him: a clang, sparks, and (now and then) LUX reminds everyone why. */
+  private clang(from: THREE.Vector3) {
+    const w = this.world;
+    audio.play('shield', 0.7, 0.6);
+    w.particles.emit(from.x, from.y, from.z, { count: 6, color: '#ffe8b0', speed: 4, life: 0.25, size: 0.35 });
+    if (w.time - this.footSaid < TALOS_TUNING.footHint) return;
+    this.footSaid = w.time;
+    w.hooks.toast('Only the mech is strong enough to fight Talos! Climb back in!', 'bolt');
+  }
+
+  /** One ankle plate comes off; with all three off he kneels. */
+  private knockPlate(from: THREE.Vector3) {
     this.plates -= 1;
     this.hp = Math.max(0, this.hp - 1);
     this.world.hooks.bossBar(this.title, this.hp / this.maxHp);
@@ -189,7 +227,6 @@ export class Talos extends Boss implements Target, Interactable {
     audio.play('explode', 1.4, 0.5);
     this.world.shake(0.4);
     if (this.plates <= 0) this.kneel();
-    return true;
   }
 
   /** All three plates off: he drops to one knee with his heel turned up. */
@@ -220,6 +257,8 @@ export class Talos extends Boss implements Target, Interactable {
   private setState(s: State, t: number) {
     this.state = s;
     this.stateT = t;
+    // The ankle cools as soon as his foot is free.
+    if (s !== 'stuck') this.heat = 0;
   }
 
   /* ---------------- the fight ---------------- */
@@ -424,7 +463,7 @@ export class Talos extends Boss implements Target, Interactable {
     const cx = Math.floor(this.home.x / CELL);
     const cz = Math.floor(this.home.z / CELL);
     for (const dx of [-9, 9]) this.drones.push(w.spawnEnemy('anvil', cx + dx, cz + (this.round === 1 ? -5 : 5)));
-    w.hooks.toast('Aeëtes is sending anvil drones! Blast them with the CANNON.', 'bolt');
+    w.hooks.toast('Aeëtes is sending anvil drones! Roast them with the FLAMETHROWER, or PUNCH them when they swoop down.', 'bolt');
   }
 
   /** His feet are solid: the mech is pushed out of them instead of walking through. */

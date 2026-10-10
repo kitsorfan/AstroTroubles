@@ -28,6 +28,7 @@ import { Raft, Tide } from '../entities/reef/tide';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, ClimbWall, LowGap, WallRun } from '../entities/heroes/heroProps';
+import { parkedFlag } from '../entities/heroes/heroes';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
 import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
@@ -132,6 +133,8 @@ const LIGHT_DIR = new THREE.Vector3(12, 30, 8).normalize();
 const LIGHT_ROT = new THREE.Matrix4().lookAt(LIGHT_DIR, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
 const LIGHT_INV = LIGHT_ROT.clone().transpose();
 const NO_BOXES: Box[] = [];
+/** The objective while the heroes are out of the bronze mech (Talos's Forge) and it waits for them. */
+const MECH_OBJECTIVE: { text: string; at?: string } = { text: 'Climb back into the bronze mech' };
 
 export class World {
   readonly scene = new THREE.Scene();
@@ -237,7 +240,8 @@ export class World {
     this.grid = new Grid(this.level.width, this.level.depth, this.level.cells);
     this.theme = THEMES[def.id];
     if (resume) {
-      for (const f of resume.flags) this.flags.add(f);
+      // Back at a checkpoint, everyone starts aboard the bronze mech again (wherever it was left parked).
+      for (const f of resume.flags) if (f !== parkedFlag('mech')) this.flags.add(f);
       for (const t of resume.taken) this.taken.add(t);
       for (const d of resume.dead) this.dead.add(d);
     }
@@ -866,10 +870,10 @@ export class World {
     return null;
   }
 
-  /** Live, aimable targets (enemies, bosses) within `r` of a point, nearest first (Jason's special weapons). */
-  targetsNear(p: THREE.Vector3, r: number): Target[] {
+  /** Live, aimable targets (enemies, bosses) within `r` of a point (and `dy` above or below it), nearest first (Jason's special weapons). */
+  targetsNear(p: THREE.Vector3, r: number, dy = 4): Target[] {
     return this.targets
-      .filter((t) => t.alive && t.aimable && t.aim.distanceToSquared(p) < r * r && Math.abs(t.aim.y - p.y) < 4)
+      .filter((t) => t.alive && t.aimable && t.aim.distanceToSquared(p) < r * r && Math.abs(t.aim.y - p.y) < dy)
       .sort((a, b) => a.aim.distanceToSquared(p) - b.aim.distanceToSquared(p));
   }
 
@@ -983,10 +987,11 @@ export class World {
     this.particles.emit(b.x + Math.cos(a) * 1.9, b.y + 0.85, b.z + Math.sin(a) * 1.9, { count: 2, color: '#bff4ff', speed: 3, life: 0.3, size: 0.3, gravity: 0 });
   }
 
-  groundPound(player: Player) {
+  /** A ground pound (or the bronze mech's bigger SLAM, with its own `radius` and `dmg`). */
+  groundPound(player: Player, radius = 2.8, dmg = 2 + (this.save.upgrades.blaster ?? 0)) {
     const b = player.body;
     const p = new THREE.Vector3(b.x, b.y + 0.3, b.z);
-    this.hitAll(p, 2.8, 2 + (this.save.upgrades.blaster ?? 0), 'pound');
+    this.hitAll(p, radius, dmg, 'pound');
     // Flash, two shockwaves, a scorched crater with glowing cracks, dust and sparks.
     this.impacts.slam(b.x, b.y, b.z, 4.4, '#7fe6ff');
     this.rings.burst(b.x, b.y, b.z, 6.5, '#bff4ff', 0.5);
@@ -1200,6 +1205,8 @@ export class World {
     this.player.heal(99);
     this.player.gainEnergy(99);
     this.player.rechargeArmor();
+    // The bronze mech is mended too (and cooled down, if it is waiting parked somewhere).
+    this.player.mech?.refill();
     this.hooks.toast('Checkpoint saved!', 'bolt');
     this.hooks.checkpoint();
   }
@@ -1228,6 +1235,8 @@ export class World {
     const x = cp ? cp.spot.x : Grid.center(sp.cx);
     const y = cp ? cp.spot.y : sp.h;
     const z = cp ? cp.spot.z + 1.2 : Grid.center(sp.cz);
+    // Once the bronze mech has joined, everyone starts again aboard it (it can never be lost somewhere out of reach).
+    this.player.backAboard();
     this.player.teleport(x, y, z);
     this.player.revive();
     this.pulseCd = 0;
@@ -1420,13 +1429,15 @@ export class World {
     this.objT -= dt;
     if (this.objT <= 0) {
       this.objT = 0.3;
-      const obj = this.def.objectives.find((o) => !this.cond(o.until));
+      // While the bronze mech waits, parked, the way on needs it: the marker points back to it.
+      const parked = this.flags.has('boss') ? null : this.player.mechParked;
+      const obj = parked ? MECH_OBJECTIVE : this.def.objectives.find((o) => !this.cond(o.until));
       const text = obj?.text ?? '';
       if (text !== this.lastObjective) {
         this.lastObjective = text;
         this.hooks.objective(text);
       }
-      this.waypoint = obj?.at ? this.place(obj.at) : null;
+      this.waypoint = parked ? parked.clone() : obj?.at ? this.place(obj.at) : null;
     }
 
     const drag = input.consumeCamDrag();
@@ -1519,9 +1530,14 @@ export class World {
   private findFocus(): Interactable | null {
     const p = this.player.body;
     let best: Interactable | null = null;
+    let spare: Interactable | null = null;
     let bd = Infinity;
     for (const it of this.interactables) {
       if (!it.alive) continue;
+      if (it.fallback) {
+        if (!spare && it.label()) spare = it;
+        continue;
+      }
       const d = Math.hypot(it.spot.x - p.x, it.spot.z - p.z);
       if (d > it.range || Math.abs(it.spot.y - p.y) > (it.reachY ?? 3)) continue;
       let score = d;
@@ -1536,7 +1552,7 @@ export class World {
       bd = score;
       best = it;
     }
-    return best;
+    return best ?? spare;
   }
 
   private placeCamera(dt: number) {

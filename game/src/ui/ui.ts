@@ -202,7 +202,7 @@ export class UI {
   ) {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
-      <div class="hud-left"><div class="hearts"></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
+      <div class="hud-left"><div class="hearts"></div><div class="strength hidden">${label('STRENGTH')}<div class="track"><i></i></div></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
       <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="tide hidden"><i class="tube"><i class="sea"></i></i><b></b></div><div class="argobar hidden"><div class="name"></div><div class="track"><div class="fill"></div><i class="ship">${ARGO_ICON}</i></div></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="chunk"></div><div class="fill"></div><div class="marks"></div></div></div></div>
       <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
@@ -210,9 +210,10 @@ export class UI {
       <div class="stick-hint">${label('MOVE')}</div>
       <div class="buttons" data-hero="jason">
         <div class="btn jump clickable" data-b="jump">${ICON.jump}${label('JUMP')}</div>
-        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${only(ICON.cannon, 'hm')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${label('CANNON', 'hm')}${ring('charge-ring')}</div>
+        <div class="btn shoot clickable" data-b="shoot">${only(ICON.shoot, 'hj')}${only(ICON.bow, 'ha')}${only(ICON.cannon, 'hb')}${only(WEAPON_ICON.flame, 'hm')}${label('BLAST', 'hj')}${label('BOW', 'ha')}${label('CANNON', 'hb')}${label('FLAME', 'hm')}${ring('charge-ring')}</div>
         <div class="ammo"><div class="pips"></div><div class="fuel"><i></i></div><div class="reload"><i></i></div></div>
         <div class="heat hb"><i></i></div>
+        <div class="heat hm"><i></i></div>
         <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${only(ICON.punch, 'hm')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${label('PUNCH', 'hm')}${ring('cd-ring')}<div class="charges"></div></div>
         <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${only(ICON.thrust, 'hm')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}${label('THRUST', 'hm')}<div class="charges"></div></div>
         <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
@@ -330,6 +331,30 @@ export class UI {
     const shields = Array.from({ length: armorMax }, (_, i) => `<i class="armor">${ICON.shield(i < armor)}</i>`).join('');
     el.classList.toggle('wide', max > 10);
     el.innerHTML = Array.from({ length: max }, (_, i) => ICON.heart(i < n)).join('') + shields;
+  }
+
+  private lastStrength = '';
+
+  /**
+   * The bronze mech's STRENGTH bar, in place of the hearts while the heroes ride it (`k` 0..1, or null
+   * to show the hearts again). It shakes when it drops and blinks red when it is low.
+   */
+  setStrength(k: number | null) {
+    const key = k === null ? '' : String(Math.round(k * 100));
+    if (key === this.lastStrength) return;
+    const el = $(this.hud, '.strength');
+    const before = this.lastStrength === '' ? 101 : Number(this.lastStrength);
+    this.lastStrength = key;
+    el.classList.toggle('hidden', k === null);
+    $(this.hud, '.hearts').classList.toggle('hidden', k !== null);
+    if (k === null) return;
+    if (Math.round(k * 100) < before - 1) {
+      el.classList.remove('shake');
+      void el.offsetWidth;
+      el.classList.add('shake');
+    }
+    el.classList.toggle('low', k < 0.3);
+    $<HTMLElement>(el, '.track i').style.width = `${Math.round(k * 100)}%`;
   }
 
   setBolts(n: number) {
@@ -622,12 +647,15 @@ export class UI {
 
   private lastHeat = '';
 
-  /** General Brennus's cannon heat, a thermometer beside CANNON: it blinks red while the cannon cools down after overheating. */
-  setHeat(heat: number, over: boolean) {
-    const key = `${Math.round(heat * 30)}|${over}`;
+  /**
+   * General Brennus's cannon heat (`hb`), or the bronze mech's flamethrower heat (`hm`): a thermometer
+   * beside BLAST that blinks red while it cools down after overheating.
+   */
+  setHeat(heat: number, over: boolean, who: 'hb' | 'hm' = 'hb') {
+    const key = `${who}|${Math.round(heat * 30)}|${over}`;
     if (key === this.lastHeat) return;
     this.lastHeat = key;
-    const bar = $(this.hud, '.heat');
+    const bar = $(this.hud, `.heat.${who}`);
     bar.classList.toggle('over', over);
     $<HTMLElement>(bar, 'i').style.height = `${Math.round(heat * 100)}%`;
   }
@@ -1249,8 +1277,11 @@ export class UI {
       <div class="help-grid">
         ${item('#e0a040', tr('PUNCH'), tr('big bronze fists: they break bronze gates and knock Talos’s ankle armour off. In the air, SPIN is a SLAM that smashes cracked floors.'))}
         ${item('#ffb04a', tr('THRUST'), tr('its back jets push it forward, on the ground or once per jump: JUMP, then THRUST to cross wide lava channels.'))}
+        ${item('#ff7a1a', tr('FLAME'), tr('hold for a big flamethrower that roasts robots and drones. Its gauge empties as it burns: let go and it fills up again.'))}
+        ${item('#ffd166', tr('STRENGTH'), tr('no hearts in the mech: hits wear its STRENGTH down, and it comes back slowly. At zero it overheats and everyone hops out until it cools. Only the mech can fight TALOS.'))}
+        ${item('#5ff0d0', tr('GET OUT'), tr('the action button lets Jason and Atalanta climb out on solid ground. The mech waits, kneeling: walk up to it and CLIMB IN.'))}
       </div>
-      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}<br/>${tr('Mech: J cannon · K punch (in the air: slam) · L thrust')}</p>
+      <p class="keys">${tr('Keyboard: WASD move · Space jump · J blast · K spin/pound · L dash · I pulse · E use · Q/R camera · Esc pause')}<br/>${tr('Atalanta: J bow · K kick · L or Shift slide · C switch hero')}<br/>${tr('Brennus: J cannon · K shield (in the air: stomp) · L charge · E command')}<br/>${tr('Mech: J flamethrower · K punch (in the air: slam) · L thrust · E get out')}</p>
       <button class="menu-btn primary back">${tr('Got it!')}</button></div>`);
     this.button(el, '.back', back);
   }

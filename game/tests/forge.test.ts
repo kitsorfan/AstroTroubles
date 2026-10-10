@@ -1,12 +1,20 @@
 import { GRAVITY, MECH, STEP_H } from '../src/core/constants';
-import { HEROES, joinedRoster } from '../src/entities/heroes/heroes';
+import { newSave } from '../src/core/save';
+import { HEROES, joinedRoster, parkedFlag } from '../src/entities/heroes/heroes';
+import { coolProgress, drain, freshPower, hitCost, overheat, spent, stepPower, type MechPower } from '../src/entities/heroes/mechPower';
 import { ANVIL_TUNING, TALOS_TUNING } from '../src/entities/forge/tuning';
+import { ROBOT_TUNING } from '../src/entities/robots';
+import { WEAPONS, damageOf, stepFuel, type Tank } from '../src/entities/weapons';
+import { difficultyFor } from '../src/game/difficulty';
 import { BOSS_CARD, FLYOVER, INTEL, TRANSITIONS } from '../src/game/story';
 import { CHAPTER_DECKS, CHAPTER_PLAN, LEVELS, chapterOf } from '../src/levels';
 import { PANEL_IDS, panelSvg } from '../src/ui/panels';
 import { parseLevel } from '../src/world/grid';
 import type { HeroId } from '../src/world/levelTypes';
 import { footHeroes, isCollectible, levelHeroes, mechReach, reach, vehicleStart } from '../tools/reach';
+
+// The robots' module builds three.js models; the test only needs its tuning, so give it the real module.
+jest.mock('three', () => process.getBuiltinModule('node:module').createRequire(__filename)('three'));
 
 const level = parseLevel(LEVELS.forge);
 const ALL = ['doubleJump', 'dash', 'glide', 'pulse', 'grapple'] as const;
@@ -64,6 +72,19 @@ describe('Talos’s Forge', () => {
     expect(joinedRoster(['jason', 'atalanta'], () => true)).toEqual(['jason', 'atalanta']);
   });
 
+  it('lets the heroes climb out (the mech waits, parked) and back in', () => {
+    const cast: HeroId[] = ['jason', 'atalanta', 'mech'];
+    // While the parked flag is set, the mech counts as not joined: Jason and Atalanta are on foot again.
+    const flags = new Set(['mech', parkedFlag('mech')]);
+    const joined = (h: HeroId) => (h === 'mech' ? flags.has('mech') && !flags.has(parkedFlag('mech')) : true);
+    expect(joinedRoster(cast, joined)).toEqual(['jason', 'atalanta']);
+    flags.delete(parkedFlag('mech'));
+    expect(joinedRoster(cast, joined)).toEqual(['mech']);
+    // The boarding scene teaches the new rules: strength, the flamethrower, getting out.
+    const lines = LEVELS.forge.dialogues['joined:mech'].map((l) => l.text).join(' ');
+    for (const word of ['STRENGTH', 'FLAMETHROWER', 'GET OUT', 'CLIMB back IN']) expect(lines).toContain(word);
+  });
+
   it('needs Jason, Atalanta and the mech: each alone gets stuck', () => {
     // On foot: Atalanta's bullseye lowers the drawbridge, Jason's grapple reaches the ledge, her slide the terminal.
     expect(blocked(['jason'])).toEqual(expect.arrayContaining(['target', 'terminal', 'boss']));
@@ -106,8 +127,85 @@ describe('the bronze mech', () => {
   it('is big and heavy, but still fits through a one-cell door', () => {
     expect(MECH.height).toBeGreaterThan(HEROES.jason.height);
     expect(MECH.radius * 2).toBeLessThan(2);
-    expect(MECH.speed).toBeLessThan(HEROES.jason.speed);
     expect(MECH.slamSpeed).toBeGreaterThan(MECH.heavyLanding);
+  });
+
+  it('walks slowly: clearly slower than Jason, and even than General Brennus', () => {
+    expect(MECH.speed).toBeLessThanOrEqual(HEROES.jason.speed * 0.75);
+    expect(MECH.speed).toBeLessThan(HEROES.brennus.speed);
+    expect(HEROES.mech.speed).toBe(MECH.speed);
+  });
+
+  it('hits far harder than anyone on foot: small robots and drones go down in one or two punches', () => {
+    const d = difficultyFor(LEVELS.forge.index, newSave());
+    const punch = MECH.punchDamage * d.hp;
+    for (const hp of [ROBOT_TUNING.trooper.hp, ROBOT_TUNING.minebot.hp, ROBOT_TUNING.mortar.hp, ANVIL_TUNING.hp]) {
+      // An ordinary one in one punch; a big gold-crowned elite in two.
+      expect(punch).toBeGreaterThanOrEqual(Math.round(hp * d.hp));
+      expect(punch * 2).toBeGreaterThanOrEqual(Math.round(hp * d.hp * 1.8));
+    }
+    // The flames burn much hotter, farther and wider than Jason's Flamethrower...
+    expect(MECH.flameDps * d.hp).toBeGreaterThan(damageOf('flame') * 2);
+    expect(MECH.flameRange).toBeGreaterThan(WEAPONS.flame.range);
+    // ...and reach up to an anvil drone hovering over the mech (the fire leaves its fist 2.2 up).
+    expect(MECH.flameReachY + 2.2).toBeGreaterThanOrEqual(ANVIL_TUNING.hover);
+    expect(MECH.slamRadius).toBeGreaterThan(2.8);
+  });
+
+  it('has a flamethrower tank that runs dry and fills back up by itself', () => {
+    let t: Tank = { fuel: MECH.flameFuel, dry: false, rest: 0 };
+    for (let s = 0; s < MECH.flameFuel + 0.1; s += 0.05) t = stepFuel(t, true, 0.05, MECH.flameFuel, MECH.flameRefill);
+    expect(t.fuel).toBe(0);
+    expect(t.dry).toBe(true);
+    for (let s = 0; s < MECH.flameRefill + 1; s += 0.05) t = stepFuel(t, false, 0.05, MECH.flameFuel, MECH.flameRefill);
+    expect(t.fuel).toBeCloseTo(MECH.flameFuel);
+    expect(t.dry).toBe(false);
+  });
+});
+
+describe('the mech’s STRENGTH (instead of hearts)', () => {
+  const run = (s: MechPower, seconds: number) => {
+    for (let t = 0; t < seconds; t += 0.05) s = stepPower(s, 0.05);
+    return s;
+  };
+
+  it('loses only a small slice to a hit that would cost a hero a whole heart', () => {
+    expect(hitCost(1, false)).toBeLessThanOrEqual(MECH.strength * 0.15);
+    expect(hitCost(1, true)).toBeGreaterThan(hitCost(1, false));
+    let s = freshPower();
+    let hits = 0;
+    while (!spent(s)) {
+      s = drain(s, 1);
+      hits += 1;
+    }
+    expect(hits).toBeGreaterThanOrEqual(8);
+    expect(s.strength).toBe(0);
+  });
+
+  it('comes back slowly once the hits stop', () => {
+    const hurt = drain(drain(freshPower(), 1), 1);
+    expect(run(hurt, MECH.regenDelay - 0.2).strength).toBe(hurt.strength);
+    const later = run(hurt, MECH.regenDelay + 1);
+    expect(later.strength).toBeGreaterThan(hurt.strength);
+    expect(later.strength).toBeLessThan(MECH.strength);
+    expect(run(hurt, MECH.regenDelay + 60).strength).toBe(MECH.strength);
+  });
+
+  it('overheats at 0: it cools down (filling back up) before anyone can climb back in', () => {
+    let s = overheat(drain(freshPower(), 99));
+    expect(spent(s)).toBe(true);
+    expect(s.cool).toBe(MECH.cool);
+    expect(coolProgress(s)).toBe(0);
+    s = run(s, MECH.cool / 2);
+    expect(coolProgress(s)).toBeCloseTo(0.5, 1);
+    expect(s.strength).toBeCloseTo(MECH.strength / 2, -1);
+    s = run(s, MECH.cool / 2 + 0.2);
+    expect(s.cool).toBe(0);
+    expect(coolProgress(s)).toBe(1);
+    expect(s.strength).toBe(MECH.strength);
+    // Long enough to notice, short enough not to bore anyone.
+    expect(MECH.cool).toBeGreaterThanOrEqual(6);
+    expect(MECH.cool).toBeLessThanOrEqual(15);
   });
 });
 
@@ -121,6 +219,16 @@ describe('TALOS and the anvil drones', () => {
     // Generous windows: time to step out of the circle, walk over and punch three times.
     expect(Math.min(...TALOS_TUNING.stuck)).toBeGreaterThanOrEqual(3 * (MECH.punchTime + MECH.punchCooldown) + 1.5);
     expect(TALOS_TUNING.kneel).toBeGreaterThanOrEqual(6);
+  });
+
+  it('only fights the mech: its flames heat an ankle plate off in a second or so, and LUX explains on foot', () => {
+    expect(TALOS_TUNING.plateHeat * MECH.flameTick).toBeLessThanOrEqual(1.5);
+    expect(TALOS_TUNING.plateHeat * MECH.flameTick).toBeGreaterThanOrEqual(0.8);
+    // The "only the mech" reminder comes at most every few seconds.
+    expect(TALOS_TUNING.footHint).toBeGreaterThanOrEqual(3);
+    expect(LEVELS.forge.legend.F).toMatchObject({ type: 'sign' });
+    const sign = LEVELS.forge.legend.F;
+    if (sign.type === 'sign') expect(sign.text).toContain('only the mech');
   });
 
   it('warns before every anvil, and comes down low enough to punch', () => {

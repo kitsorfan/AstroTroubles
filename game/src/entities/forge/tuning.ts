@@ -35,4 +35,8 @@ export const TALOS_TUNING = {
   walkSpeed: [2.4, 2.8, 3.2],
   /** How far from the arena's middle he walks his rounds. */
   orbit: 7,
+  /** Ticks of the mech's flame on his stuck ankle that pop a plate off (about 1.2 seconds of fire). */
+  plateHeat: 6,
+  /** Seconds between LUX's "only the mech can fight him" reminders while the heroes hit him on foot. */
+  footHint: 5,
 };
