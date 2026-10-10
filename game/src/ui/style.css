@@ -454,7 +454,19 @@ canvas#game {
   right: calc(14px + var(--safe-r));
   display: flex;
   gap: 10px;
+  align-items: flex-start;
+}
+
+/* Pause, and under it the switch-hero button: out of the thumb cluster, where a tap is never an accident. */
+.side-col {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 12px;
+}
+
+.shards {
+  margin-top: 8px;
 }
 
 .shards {
@@ -600,28 +612,6 @@ canvas#game {
   background: radial-gradient(circle at 35% 30%, #ff9ae0, #c0368f);
 }
 
-.action {
-  position: absolute;
-  right: calc(292px + var(--safe-r));
-  bottom: calc(40px + var(--safe-b));
-  padding: 12px 20px 12px 14px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(94, 224, 255, 0.95), rgba(63, 120, 255, 0.95));
-  border: 2px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 22px rgba(94, 224, 255, 0.55);
-  font-weight: 700;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: pulse 1.2s infinite;
-}
-
-.action svg {
-  width: 30px;
-  height: 30px;
-}
-
 @keyframes pulse {
   50% {
     transform: scale(1.06);
@@ -630,33 +620,68 @@ canvas#game {
 
 /* ---------------- toast & dialogue ---------------- */
 
+/*
+ * LUX's quick remarks sit at the top, under the objective (and the boss bar), well away from the thumbs
+ * and the buttons. Two lines at most; the full story belongs in dialogue.
+ */
 .toast {
-  position: absolute;
-  left: 50%;
-  bottom: calc(18px + var(--safe-b));
-  transform: translateX(-50%);
-  max-width: min(520px, 52vw);
-  display: flex;
+  display: none;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px 8px 8px;
-  border-radius: 18px;
+  gap: 8px;
+  max-width: min(460px, 100%);
+  padding: 4px 12px 4px 4px;
+  border-radius: 14px;
   background: var(--panel-hi);
   border: 1px solid var(--line);
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.25;
-  opacity: 0;
-  transition: opacity 0.25s, transform 0.25s;
+  animation: toastIn 0.22s ease-out;
 }
 
 .toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-6px);
+  display: flex;
+}
+
+.toast.out {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.toast .t {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 .toast .portrait {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+/* A reward banner owns the top for a moment: LUX's remark steps down out of its way. */
+#ui:has(.reward-banner.show) .hud-top .toast {
+  margin-top: 40px;
+}
+
+/* In a vehicle the top holds the course bar and the song lane: the remark goes to the bottom middle. */
+.toast.low {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(18px + var(--safe-b));
+  width: fit-content;
+  max-width: min(460px, 46vw);
+  margin: 0 auto;
 }
 
 .portrait {
@@ -2012,9 +2037,69 @@ canvas#game {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
-.btn.pulse.empty svg,
-.btn.pulse.empty span {
+.btn.pulse.empty > svg,
+.btn.pulse.empty > span {
   opacity: 0.3;
+}
+
+/*
+ * The LUX button is also the USE button: next to a terminal, a lift or a grapple ring it shows the
+ * helper's face, glows, and names what it does in a tag above it (instead of a pill in mid-screen).
+ */
+.btn.pulse .face,
+.btn.pulse .act {
+  display: none;
+}
+
+.btn.pulse.use {
+  filter: none;
+  padding: 0;
+  background: #0b1426;
+  border: 3px solid #7fe6ff;
+  animation: useGlow 1.1s ease-in-out infinite;
+}
+
+.btn.pulse.use > svg,
+.btn.pulse.use > span,
+.btn.pulse.use > em {
+  display: none;
+}
+
+.btn.pulse.use .face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.btn.pulse.use .face svg {
+  width: 100%;
+  height: 100%;
+}
+
+.btn.pulse.use .act {
+  display: block;
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5ee0ff, #3f78ff);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes useGlow {
+  50% {
+    box-shadow: 0 0 22px rgba(94, 224, 255, 0.95), 0 4px 14px rgba(0, 0, 0, 0.45);
+  }
 }
 
 /* Spent charges grey the button out; a ring fills while they come back. */
@@ -2134,25 +2219,14 @@ canvas#game {
   }
 }
 
-/* After a switch the name pops up as a little card with the weapon's stat bars. */
+/* Just the name, edged in the weapon's colour: the stat bars are for the shop, not the middle of a fight. */
 .btn.weapon .wname {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  padding: 6px 10px 7px;
-  border-radius: 12px;
   border: 2px solid var(--wc, #fff);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--wc, #fff) 45%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--wc, #fff) 45%, transparent);
 }
 
 .btn.weapon .wname b {
-  text-align: center;
   color: #fff;
-}
-
-.btn.weapon .wname.show {
-  animation-duration: 2.3s;
 }
 
 /* A weapon's stat bars: RANGE, POWER, SPEED, AMMO/FUEL, five segments each in the weapon's colour. */
@@ -3036,10 +3110,9 @@ canvas#game {
 
 .btn.swap {
   --hero: #5fe0c8;
-  right: 196px;
-  bottom: 166px;
-  width: 58px;
-  height: 58px;
+  position: relative;
+  width: 52px;
+  height: 52px;
   padding: 0;
   background: #0b1426;
   border: 3px solid var(--hero);
@@ -3061,10 +3134,10 @@ canvas#game {
 
 .btn.swap .badge {
   position: absolute;
-  right: -6px;
+  left: -8px;
   bottom: -6px;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -3086,6 +3159,45 @@ canvas#game {
 }
 
 .btn.swap:not(.empty) .cd-ring {
+  display: none;
+}
+
+/* Nobody to switch to inside a vehicle. */
+#ui:has(.buttons.vehicle) .swap-slot {
+  display: none;
+}
+
+/*
+ * Two small turn-the-camera buttons left of the cluster (hold to keep turning), so it's plain to see the
+ * view can turn; dragging on the right side still works too. Vehicles steer their own camera.
+ */
+.btn.cam {
+  bottom: 4px;
+  width: 42px;
+  height: 42px;
+  background: rgba(10, 16, 34, 0.62);
+  border: 2px solid rgba(160, 200, 255, 0.45);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.btn.cam svg {
+  width: 60%;
+  height: 60%;
+}
+
+.btn.cam.left {
+  right: 344px;
+}
+
+.btn.cam.right {
+  right: 294px;
+}
+
+.btn.cam.right svg {
+  transform: scaleX(-1);
+}
+
+.buttons.vehicle .btn.cam {
   display: none;
 }
 

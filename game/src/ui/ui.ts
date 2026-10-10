@@ -96,6 +96,9 @@ const only = (svg: string, cls: string) => svg.replace('<svg', `<svg class="${cl
 /** The little Argo riding along the approach bar (Brennus's Last Stand): white hull, gold belly, blue sail. */
 const ARGO_ICON = `<svg viewBox="0 0 40 24"><path d="M14 4h12v9H14z" fill="#5ab4ff" stroke="#1a1630" stroke-width="1.5"/><path d="M3 13h34q-2 6-8 7H9q-5-2-6-7z" fill="#fff" stroke="#1a1630" stroke-width="1.5"/><path d="M5 17h30" stroke="#ffd166" stroke-width="2.5"/><circle cx="37" cy="10" r="3" fill="#ffd166" stroke="#1a1630" stroke-width="1.2"/></svg>`;
 
+/** The turn-the-camera buttons: an anticlockwise arrow around a dot (mirrored for the right one in style.css). */
+const CAM_ICON = `<svg viewBox="0 0 24 24"><path d="M5 13a7 7 0 1 0 2.4-6.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M3.6 3.4l.6 5.2 5.1-1" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="2.2" fill="#fff"/></svg>`;
+
 /** Each shop upgrade's icon. */
 const UPGRADE_ICON: Partial<Record<UpgradeId, string>> = {
   heart: ICON.heart(true),
@@ -180,7 +183,7 @@ export class UI {
   private toastEl: HTMLElement;
   private toastT: ReturnType<typeof setTimeout> | null = null;
   private stickEl: HTMLElement;
-  private actionEl: HTMLElement;
+  private stickUsed = false;
   private dashBtn: HTMLElement;
   private spinBtn: HTMLElement;
   private pulseBtn: HTMLElement;
@@ -213,8 +216,8 @@ export class UI {
     const ring = (cls: string) => `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;
     this.hud = h(`<div class="hidden">
       <div class="hud-left"><div class="hearts"></div><div class="strength hidden">${label('STRENGTH')}<div class="track"><i></i></div></div><div class="counter bolts">${ICON.bolt}<b>0</b></div></div>
-      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="tide hidden"><i class="tube"><i class="sea"></i></i><b></b></div><div class="argobar hidden"><div class="name"></div><div class="track"><div class="fill"></div><i class="ship">${ARGO_ICON}</i></div></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="chunk"></div><div class="fill"></div><div class="marks"></div></div></div></div>
-      <div class="hud-right"><div class="shards"></div><div class="round-btn clickable pause">${ICON.pause}</div></div>
+      <div class="hud-top"><div class="objective hidden"></div><div class="countdown hidden">${ICON.clock}<b></b><span class="dots"></span></div><div class="tide hidden"><i class="tube"><i class="sea"></i></i><b></b></div><div class="argobar hidden"><div class="name"></div><div class="track"><div class="fill"></div><i class="ship">${ARGO_ICON}</i></div></div><div class="bossbar hidden"><div class="name"></div><div class="track"><div class="chunk"></div><div class="fill"></div><div class="marks"></div></div></div><div class="toast"><div class="portrait"></div><div class="t"></div></div></div>
+      <div class="hud-right"><div class="shards"></div><div class="side-col"><div class="round-btn clickable pause">${ICON.pause}</div><div class="swap-slot"><div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div></div></div></div>
       <div class="waypoint hidden"><i class="wp-arrow"></i><i class="wp-gem"></i><b></b></div>
       <div class="stick hidden"><div class="knob"></div></div>
       <div class="stick-hint">${label('MOVE')}</div>
@@ -226,12 +229,11 @@ export class UI {
         <div class="heat hm"><i></i></div>
         <div class="btn spin clickable" data-b="spin">${only(ICON.spin, 'hj')}${only(ICON.kick, 'ha')}${only(ICON.guard, 'hb')}${only(ICON.punch, 'hm')}${label('SPIN', 'hj')}${label('KICK', 'ha')}${label('SHIELD', 'hb')}${label('PUNCH', 'hm')}${ring('cd-ring')}<div class="charges"></div></div>
         <div class="btn dash clickable hidden" data-b="dash">${only(ICON.dash, 'hj')}${only(ICON.slide, 'ha')}${only(ICON.charge, 'hb')}${only(ICON.thrust, 'hm')}${label('DASH', 'hj')}${label('SLIDE', 'ha')}${label('CHARGE', 'hb')}${label('THRUST', 'hm')}<div class="charges"></div></div>
-        <div class="btn swap clickable hidden" data-b="swap"><i class="face"></i><i class="badge">${ICON.swap}</i>${ring('cd-ring')}</div>
-        <div class="btn pulse clickable hidden" data-b="pulse">${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em></div>
-        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><div class="wname"><b></b><div class="wcard-stats"></div></div></div>
+        <div class="btn pulse clickable hidden" data-b="action"><i class="face">${portrait('bolt')}</i>${ICON.pulse}${label('PULSE')}${ring('cd-ring')}<em></em><b class="act"></b></div>
+        <div class="btn weapon clickable hidden" data-b="weapon"><i class="wicon"></i><div class="wname"><b></b></div></div>
+        <div class="btn cam left clickable" data-b="camLeft">${CAM_ICON}</div>
+        <div class="btn cam right clickable" data-b="camRight">${CAM_ICON}</div>
       </div>
-      <div class="action clickable hidden"><i class="face">${portrait('bolt')}</i><b></b></div>
-      <div class="toast"><div class="portrait"></div><div class="t"></div></div>
       <div class="threat"><img alt=""/><div><div class="tag">${label('NEW ENEMY')}</div><b></b><p></p></div></div>
       <div class="fps"></div>
     </div>`);
@@ -256,7 +258,6 @@ export class UI {
     });
     this.toastEl = $(this.hud, '.toast');
     this.stickEl = $(this.hud, '.stick');
-    this.actionEl = $(this.hud, '.action');
     this.dashBtn = $(this.hud, '.btn.dash');
     this.spinBtn = $(this.hud, '.btn.spin');
     this.pulseBtn = $(this.hud, '.btn.pulse');
@@ -285,12 +286,6 @@ export class UI {
       btn.addEventListener('pointercancel', up);
       btn.addEventListener('lostpointercapture', up);
     }
-    this.actionEl.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.input.press('action', true);
-      this.input.press('action', false);
-    });
     $(this.hud, '.pause').addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -298,7 +293,9 @@ export class UI {
     });
     input.onStick = (active, ox, oy, kx, ky) => {
       this.stickEl.classList.toggle('hidden', !active);
-      $(this.hud, '.stick-hint').classList.toggle('hidden', active);
+      // The MOVE hint only teaches the first touch: once the stick has been used it stays away.
+      if (active) this.stickUsed = true;
+      $(this.hud, '.stick-hint').classList.toggle('hidden', this.stickUsed);
       if (!active) return;
       this.stickEl.style.left = `${ox}px`;
       this.stickEl.style.top = `${oy}px`;
@@ -322,11 +319,9 @@ export class UI {
   }
 
   showControls(on: boolean) {
-    for (const sel of ['.buttons', '.stick-hint']) $(this.hud, sel).classList.toggle('hidden', !on);
-    if (!on) {
-      this.actionEl.classList.add('hidden');
-      this.setWaypoint(null);
-    }
+    for (const sel of ['.buttons', '.swap-slot']) $(this.hud, sel).classList.toggle('hidden', !on);
+    $(this.hud, '.stick-hint').classList.toggle('hidden', !on || this.stickUsed);
+    if (!on) this.setWaypoint(null);
   }
 
   /** Hearts, then a blue shield for each Armor Plating point (dim once spent). */
@@ -490,22 +485,36 @@ export class UI {
     return this.helperNow === 'iris' ? tr('IRIS HACK') : this.helperNow === 'wrist' ? tr('WRIST HACK') : tr('LUX HACK');
   }
 
-  /** The action button wears the helper's face (LUX, IRIS or Jason's wrist computer), and so does the hacking panel. */
+  /** The LUX button wears the helper's face (LUX, IRIS or Jason's wrist computer) while it uses something, and so does the hacking panel. */
   setHelper(who: Helper | null) {
-    $(this.actionEl, '.face').innerHTML = who === 'wrist' ? WRIST_FACE : portrait(who === 'iris' ? 'iris' : 'bolt');
+    $(this.pulseBtn, '.face').innerHTML = who === 'wrist' ? WRIST_FACE : portrait(who === 'iris' ? 'iris' : 'bolt');
     this.helperNow = who;
   }
 
-  /** The action button next to things the helper can use (terminals, pylons, the shop, lifts). */
+  private actionText: string | null = null;
+  private pulseOn = false;
+
+  /**
+   * Something the helper can use is in reach (terminals, pylons, the shop, lifts, grapple rings): the LUX
+   * button turns into its USE button, showing the helper's face and what it does. Otherwise it's the force pulse.
+   */
   setAction(text: string | null) {
-    this.actionEl.classList.toggle('hidden', !text);
-    if (text) $(this.actionEl, 'b').textContent = tr(text);
+    if (text === this.actionText) return;
+    this.actionText = text;
+    if (text) $(this.pulseBtn, '.act').textContent = tr(text);
+    this.drawLuxButton();
+  }
+
+  private drawLuxButton() {
+    const use = !!this.actionText;
+    this.pulseBtn.classList.toggle('use', use);
+    this.pulseBtn.classList.toggle('hidden', !use && !this.pulseOn);
   }
 
   private lastAbility = '';
   private lastWeapon = '';
 
-  /** The weapon button: the equipped weapon's icon, and its name popping up for a moment after a switch. */
+  /** The weapon button: the equipped weapon's icon, and its name popping up for a moment after a switch (the stats live in the shop). */
   private setWeapon(id: WeaponId, owned: number) {
     const btn = $(this.hud, '.btn.weapon');
     btn.classList.toggle('hidden', owned < 2);
@@ -514,10 +523,8 @@ export class UI {
     const first = this.lastWeapon === '';
     this.lastWeapon = id;
     $(btn, '.wicon').innerHTML = WEAPON_ICON[id];
-    // The card that pops up after a switch: the weapon's name and its stat bars.
     const name = $(btn, '.wname');
     $(name, 'b').textContent = tr(WEAPONS[id].name);
-    $(name, '.wcard-stats').innerHTML = weaponStats(WEAPONS[id]);
     name.style.setProperty('--wc', WEAPONS[id].glow);
     if (first || owned < 2) return;
     name.classList.remove('show');
@@ -552,7 +559,8 @@ export class UI {
       pips(this.dashBtn, a.energy, a.energyMax);
       this.dashBtn.classList.toggle('empty', a.energy === 0);
     }
-    this.pulseBtn.classList.toggle('hidden', !a.pulse);
+    this.pulseOn = a.pulse;
+    this.drawLuxButton();
     if (a.pulse) {
       const ready = a.pulseCharge >= 1;
       this.pulseBtn.classList.toggle('ready', ready);
@@ -612,6 +620,7 @@ export class UI {
     const text = this.rewardQueue.shift();
     if (!text) {
       this.rewardBusy = false;
+      el.classList.remove('show');
       return;
     }
     this.rewardBusy = true;
@@ -696,7 +705,7 @@ export class UI {
     setTimeout(() => {
       el.classList.remove('show');
       setTimeout(() => this.nextThreat(), 500);
-    }, 4200);
+    }, 3600);
   }
 
   setFps(text: string) {
@@ -706,11 +715,24 @@ export class UI {
   toast(text: string, speaker: Speaker = 'bolt') {
     const who = this.voice(speaker, true);
     const t = tr(text);
+    // On foot it sits under the objective; in a vehicle the top belongs to the course bar, so it goes low.
+    const low = !!this.hud.querySelector('.buttons.vehicle');
+    const home = low ? this.hud : $(this.hud, '.hud-top');
+    if (this.toastEl.parentElement !== home) home.append(this.toastEl);
+    this.toastEl.classList.toggle('low', low);
     $(this.toastEl, '.portrait').innerHTML = portrait(who);
     $(this.toastEl, '.t').textContent = t;
+    this.toastEl.classList.remove('out');
     this.toastEl.classList.add('show');
     if (this.toastT) clearTimeout(this.toastT);
-    this.toastT = setTimeout(() => this.toastEl.classList.remove('show'), 2400 + t.length * 35);
+    // A quick read, never a wall of text: it sits under the objective and fades after a few seconds.
+    this.toastT = setTimeout(
+      () => {
+        this.toastEl.classList.add('out');
+        this.toastT = setTimeout(() => this.toastEl.classList.remove('show', 'out'), 250);
+      },
+      Math.min(5200, 1600 + t.length * 30),
+    );
   }
 
   /* ---------------- overlays ---------------- */
