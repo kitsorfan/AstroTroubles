@@ -284,10 +284,10 @@ export function dressAtalantaOutfit(m: AtalantaModel, id: string | undefined, pu
   if (!o) return;
   if (o.id === 'artemis') {
     const moon = mat('#f4f8ff', { emissive: '#bcd4ff', ei: 1.2, metal: 0.4, rough: 0.2 });
-    const crescent = mesh(new THREE.TorusGeometry(0.075, 0.02, 6, 16, Math.PI * 1.2), moon, 0, 0.25, 0.3, false);
+    const crescent = mesh(new THREE.TorusGeometry(0.075, 0.02, 6, 16, Math.PI * 1.2), moon, 0, 0.22, 0.385, false);
     crescent.rotation.z = -Math.PI / 2 - Math.PI * 0.6;
     const glint = glowSprite('#cfe0ff', 0.32, 0.6);
-    glint.position.set(0, 0.25, 0.32);
+    glint.position.set(0, 0.22, 0.4);
     put(m.head, crescent, glint);
     // Silver stars on the back of the cape (cape space: an open half-cylinder round her back).
     const star = mat('#ffffff', { emissive: '#dfe8ff', ei: 1.5 });
