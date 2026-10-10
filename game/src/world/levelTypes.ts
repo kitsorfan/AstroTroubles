@@ -1,3 +1,4 @@
+import type { Track } from '../core/songs';
 import type { PuzzleKind } from '../game/puzzles';
 import type { PanelId } from '../ui/panels/ids';
 import type { FlightCourse } from '../vehicles/course';
@@ -298,7 +299,8 @@ export interface LevelDef {
   index: number;
   name: string;
   subtitle: string;
-  music: string;
+  /** The level's own song (see core/songs.ts). */
+  music: Track;
   map: string;
   legend: Record<string, Spec>;
   intro?: string;

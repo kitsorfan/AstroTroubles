@@ -1,4 +1,4 @@
-import { audio, type Track } from '../../core/audio';
+import { audio } from '../../core/audio';
 import { haptic } from '../../core/bridge';
 import { ORGAN, OrganFight, type OrganEvents } from './organ';
 import { makeOrgan, type OrganModel } from './organModel';
@@ -39,7 +39,7 @@ export class OrganBattle {
   /** The Dolphin reached the arena: the Organ's entrance the first time, straight into the fight after that. */
   begin() {
     const w = this.sub.world;
-    w.hooks.music('boss');
+    w.hooks.music('organ');
     if (this.introSeen) {
       this.engage();
       return;
@@ -153,7 +153,7 @@ export class OrganBattle {
       for (const b of this.sub.dive.buoys) if (!b.quiet) b.quiet = 'song';
       this.waves.clear();
       void w.hooks.cutscene((d) => organOutro(d, this.sub, this)).then(() => {
-        w.hooks.music(w.def.music as Track);
+        w.hooks.music(w.def.music);
         this.sub.dive.release();
       });
     },

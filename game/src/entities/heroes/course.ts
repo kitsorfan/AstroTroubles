@@ -5,6 +5,7 @@
  * left wall over a chasm, a low gap to slide under, an arrow target on an island that opens the
  * door, and a few sporelings to try the bow and the kick on.
  */
+import type { Track } from '../../core/songs';
 import type { DeckId, LevelDef } from '../../world/levelTypes';
 
 const MAP = `
@@ -49,14 +50,14 @@ W......................#
 ########################
 `;
 
-/** The course, dressed as deck `id` (its theme and music); nothing in it needs new text. */
-export function heroCourse(id: DeckId, name: string): LevelDef {
+/** The course, dressed as deck `id` (its theme) with that deck's music; nothing in it needs new text. */
+export function heroCourse(id: DeckId, name: string, music: Track): LevelDef {
   return {
     id,
     index: 13,
     name,
     subtitle: '',
-    music: id,
+    music,
     map: MAP,
     legend: {
       C: { type: 'checkpoint', id: 'goal' },
