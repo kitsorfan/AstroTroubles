@@ -2604,8 +2604,150 @@ canvas#game {
   opacity: 1;
 }
 
-.shop-item.weapon.on {
+.shop-item.weapon.on,
+.shop-item.outfit.on {
   border-color: rgba(125, 255, 154, 0.6);
+}
+
+/* In chapter 3 there are four tabs: they share the row, names on one line. */
+.shop-tabs button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-tabs button[data-tab='atalanta'] svg {
+  border-radius: 50%;
+  background: rgba(95, 224, 200, 0.25);
+}
+
+/* Outfits: a heading for each hero, and a tall picture of the hero wearing it on each card. */
+.shop-sec {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 -2px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.shop-sec .face svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.shop-grid .shop-item.outfit .icon {
+  width: 40px;
+  height: 52px;
+}
+
+/* The outfit's picture is a button: it opens the fitting room. */
+.shop-item.outfit .try {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 40%, rgba(127, 230, 255, 0.22), transparent 70%);
+  cursor: pointer;
+}
+
+.shop-item.outfit .try svg {
+  width: 100%;
+  height: 100%;
+}
+
+.shop-item.outfit .try::after {
+  content: '⟳';
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* The fitting room: the hero turning round in 3D, over the shop. */
+.fitting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 8, 24, 0.55);
+  z-index: 2;
+}
+
+.fit-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: radial-gradient(circle at 50% 35%, #2a3a6a, var(--panel-hi) 70%);
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.55);
+}
+
+.fit-card canvas {
+  display: block;
+  width: min(220px, 52vh);
+  height: min(250px, 62vh);
+}
+
+.fit-card b {
+  font-size: 15px;
+}
+
+.fit-card .icon-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.shop-grid .shop-item.outfit .info i {
+  -webkit-line-clamp: 2;
+}
+
+.shop-grid .shop-item.outfit .buy {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+@media (max-height: 460px) {
+  .shop-tabs button {
+    padding: 5px 6px;
+    gap: 5px;
+    font-size: 14px;
+  }
+  .shop-tabs button svg {
+    width: 18px;
+    height: 18px;
+  }
+  .shop-grid .shop-item.outfit {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  .shop-grid .shop-item.outfit .icon {
+    width: 32px;
+    height: 42px;
+  }
+}
+
+/* A narrow screen keeps just the tabs' pictures and short names. */
+@media (max-width: 560px) {
+  .shop-tabs button span {
+    font-size: 12px;
+  }
 }
 
 /* Mk II levels (sold on Gaia Nova) show as cyan stars after the gold ones. */

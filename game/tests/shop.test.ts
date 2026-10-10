@@ -1,9 +1,25 @@
-import { MAX_HEARTS, MAX_HEARTS_MK2 } from '../src/core/constants';
-import { newSave, type SaveData, type UpgradeId } from '../src/core/save';
+import { ATALANTA, MAX_HEARTS, MAX_HEARTS_MK2, PLAYER } from '../src/core/constants';
+import { migrateSave, newSave, type SaveData, type UpgradeId } from '../src/core/save';
+import { atalantaStats } from '../src/entities/heroes/atalantaStats';
+import { OUTFITS } from '../src/entities/outfits';
 import { difficultyFor } from '../src/game/difficulty';
 import { givePrize, shardMilestone } from '../src/game/quests';
-import { UPGRADES, UPGRADE_MAX, buyUpgrade, heartCap, shopChapter, shopStock, upgradeCap } from '../src/game/shop';
-import { CHAPTER_DECKS } from '../src/levels';
+import {
+  ATALANTA_UPGRADES,
+  UPGRADES,
+  UPGRADE_MAX,
+  atalantaJoined,
+  buyAtalantaUpgrade,
+  buyOutfit,
+  buyUpgrade,
+  heartCap,
+  shopChapter,
+  shopStock,
+  takeOffOutfit,
+  upgradeCap,
+  wearOutfit,
+} from '../src/game/shop';
+import { CHAPTER_DECKS, LEVEL_ORDER } from '../src/levels';
 
 // newSave() reads navigator for its quality default; give Jest a stand-in.
 beforeAll(() => {
@@ -128,5 +144,186 @@ describe('difficulty with Mk II', () => {
     const up = difficultyFor(8, s).tier - base;
     expect(up).toBeGreaterThan(0);
     expect(up).toBeLessThan(0.5);
+  });
+});
+
+/** A save that has reached chapter 3 (with chapter 2's upgrades maxed) and has Atalanta on the team. */
+function inColchis(): SaveData {
+  const s = maxedShip(true);
+  s.unlocked = LEVEL_ORDER.indexOf('harpies') + 2;
+  s.bolts = 99999;
+  return s;
+}
+
+describe('chapter 3 stock', () => {
+  it('opens once chapter 3 is reached, and keeps chapter 2’s upgrades and weapons', () => {
+    expect(shopChapter(newSave(), 'harpies')).toBe(3);
+    expect(shopChapter(inColchis())).toBe(3);
+    expect(shopChapter(maxedShip(true))).toBe(2);
+    expect(upgradeCap('blaster', inColchis())).toBe(3);
+    const stock = shopStock(inColchis(), 'reef');
+    expect(stock.upgrades).toHaveLength(UPGRADES.length);
+    expect(stock.weapons.length).toBeGreaterThan(0);
+  });
+
+  it('sells nothing for Atalanta and no outfits before chapter 3', () => {
+    for (const [s, deck] of [[maxedShip(false), 'bridge'], [maxedShip(true), 'volcano']] as const) {
+      const stock = shopStock(s, deck);
+      expect(stock.atalanta).toEqual([]);
+      expect(stock.outfits).toEqual([]);
+    }
+  });
+
+  it('opens Atalanta’s tab and her outfits once she has joined (the Harpy Isles on)', () => {
+    const early = newSave();
+    early.unlocked = LEVEL_ORDER.indexOf('rocks') + 1;
+    expect(atalantaJoined(early, 'rocks')).toBe(false);
+    const before = shopStock(early, 'rocks');
+    expect(before.atalanta).toEqual([]);
+    expect(before.outfits.every((o) => o.outfit.hero === 'jason')).toBe(true);
+    expect(before.outfits.length).toBeGreaterThanOrEqual(4);
+    expect(atalantaJoined(early, 'harpies')).toBe(true);
+    expect(shopStock(early, 'harpies').atalanta).toHaveLength(ATALANTA_UPGRADES.length);
+    // Back on an old deck later on, the stock is still there.
+    expect(shopStock(inColchis(), 'cryo').atalanta).toHaveLength(ATALANTA_UPGRADES.length);
+  });
+});
+
+describe('Atalanta’s upgrades', () => {
+  it('have 1 to 3 levels each, priced like the Mk II stock and rising', () => {
+    expect(ATALANTA_UPGRADES.length).toBeGreaterThanOrEqual(4);
+    for (const u of ATALANTA_UPGRADES) {
+      expect(u.prices.length).toBeGreaterThanOrEqual(1);
+      expect(u.prices.length).toBeLessThanOrEqual(3);
+      for (const p of u.prices) {
+        expect(p).toBeGreaterThanOrEqual(200);
+        expect(p).toBeLessThanOrEqual(900);
+      }
+      for (let i = 1; i < u.prices.length; i++) expect(u.prices[i]).toBeGreaterThan(u.prices[i - 1]);
+    }
+    expect(ATALANTA_UPGRADES.filter((u) => u.prices.length >= 2).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('are bought a level at a time, until maxed or the bolts run out', () => {
+    const s = inColchis();
+    const [p1, p2, p3] = ATALANTA_UPGRADES.find((u) => u.id === 'bow')?.prices ?? [];
+    expect(buyAtalantaUpgrade(s, 'bow', 'harpies')).toBe(true);
+    expect(s.ataUpgrades.bow).toBe(1);
+    expect(s.bolts).toBe(99999 - p1);
+    expect(buyAtalantaUpgrade(s, 'bow', 'harpies')).toBe(true);
+    expect(buyAtalantaUpgrade(s, 'bow', 'harpies')).toBe(true);
+    expect(s.bolts).toBe(99999 - p1 - p2 - p3);
+    expect(buyAtalantaUpgrade(s, 'bow', 'harpies')).toBe(false);
+    expect(shopStock(s, 'harpies').atalanta.find((o) => o.item.id === 'bow')?.price).toBeNull();
+    s.bolts = 10;
+    expect(buyAtalantaUpgrade(s, 'kick', 'harpies')).toBe(false);
+    expect(s.ataUpgrades.kick).toBeUndefined();
+    // Not on sale before she joins.
+    const early = newSave();
+    early.bolts = 99999;
+    expect(buyAtalantaUpgrade(early, 'bow', 'rocks')).toBe(false);
+  });
+
+  it('change her stats', () => {
+    const base = atalantaStats({});
+    expect(base).toMatchObject({
+      speed: ATALANTA.speed,
+      sprintSpeed: ATALANTA.sprintSpeed,
+      climbGrip: ATALANTA.climbGrip,
+      chargeTime: ATALANTA.chargeTime,
+      kickRadius: PLAYER.spinRadius,
+      arrowDamage: 0,
+      powerDamage: 0,
+      kickDamage: 0,
+      triple: false,
+    });
+    const up = atalantaStats({ bow: 3, draw: 2, sandals: 2, gloves: 2, kick: 2, triple: 1 });
+    expect(up.arrowDamage).toBeGreaterThan(0);
+    expect(up.powerDamage).toBe(3);
+    expect(up.chargeTime).toBeLessThan(base.chargeTime);
+    expect(up.arrowCooldown).toBeLessThan(base.arrowCooldown);
+    expect(up.powerCooldown).toBeLessThan(base.powerCooldown);
+    expect(up.sprintSpeed).toBeGreaterThan(base.sprintSpeed);
+    expect(up.sprintBuild).toBeLessThan(base.sprintBuild);
+    expect(up.speed).toBeGreaterThan(base.speed);
+    expect(up.climbGrip).toBeGreaterThan(base.climbGrip);
+    expect(up.climbSpeed).toBeGreaterThan(base.climbSpeed);
+    expect(up.kickDamage).toBe(2);
+    expect(up.kickRadius).toBeGreaterThan(base.kickRadius);
+    expect(up.triple).toBe(true);
+    // Each level counts.
+    expect(atalantaStats({ gloves: 1 }).climbGrip).toBeGreaterThan(base.climbGrip);
+    expect(atalantaStats({ gloves: 2 }).climbGrip).toBeGreaterThan(atalantaStats({ gloves: 1 }).climbGrip);
+  });
+});
+
+describe('outfits', () => {
+  it('has at least four for each hero, with unique ids', () => {
+    for (const hero of ['jason', 'atalanta'] as const) expect(OUTFITS.filter((o) => o.hero === hero).length).toBeGreaterThanOrEqual(4);
+    expect(new Set(OUTFITS.map((o) => o.id)).size).toBe(OUTFITS.length);
+    for (const o of OUTFITS) expect(o.price).toBeGreaterThan(0);
+  });
+
+  it('are bought once and put on straight away', () => {
+    const s = inColchis();
+    const price = OUTFITS.find((o) => o.id === 'bronze')?.price ?? 0;
+    expect(buyOutfit(s, 'bronze', 'reef')).toBe(true);
+    expect(s.bolts).toBe(99999 - price);
+    expect(s.outfits).toEqual(['bronze']);
+    expect(s.wearing.jason).toBe('bronze');
+    expect(buyOutfit(s, 'bronze', 'reef')).toBe(false);
+    expect(s.bolts).toBe(99999 - price);
+    const offer = shopStock(s, 'reef').outfits.find((o) => o.outfit.id === 'bronze');
+    expect(offer).toMatchObject({ owned: true, worn: true, price: null });
+    s.bolts = 1;
+    expect(buyOutfit(s, 'artemis', 'reef')).toBe(false);
+  });
+
+  it('go on and come off for free, one per hero', () => {
+    const s = inColchis();
+    buyOutfit(s, 'bronze', 'reef');
+    buyOutfit(s, 'captain', 'reef');
+    buyOutfit(s, 'olympic', 'reef');
+    const bolts = s.bolts;
+    expect(s.wearing).toEqual({ jason: 'captain', atalanta: 'olympic' });
+    expect(wearOutfit(s, 'bronze')).toBe(true);
+    expect(s.wearing).toEqual({ jason: 'bronze', atalanta: 'olympic' });
+    expect(wearOutfit(s, 'artemis')).toBe(false);
+    expect(takeOffOutfit(s, 'jason')).toBe(true);
+    expect(takeOffOutfit(s, 'jason')).toBe(false);
+    expect(s.wearing).toEqual({ atalanta: 'olympic' });
+    expect(s.bolts).toBe(bolts);
+  });
+});
+
+describe('saves with chapter 3’s shop', () => {
+  it('keep Atalanta’s upgrades and the outfits', () => {
+    const s = inColchis();
+    buyAtalantaUpgrade(s, 'gloves', 'reef');
+    buyOutfit(s, 'starlight', 'reef');
+    buyOutfit(s, 'crystal', 'reef');
+    const back = migrateSave(JSON.parse(JSON.stringify(s)) as SaveData);
+    expect(back.ataUpgrades).toEqual({ gloves: 1 });
+    expect(back.outfits).toEqual(['starlight', 'crystal']);
+    expect(back.wearing).toEqual({ jason: 'starlight', atalanta: 'crystal' });
+  });
+
+  it('give old saves the new fields', () => {
+    const old = JSON.parse(JSON.stringify(newSave())) as Partial<SaveData>;
+    delete old.ataUpgrades;
+    delete old.outfits;
+    delete old.wearing;
+    const s = migrateSave(old as SaveData);
+    expect(s.ataUpgrades).toEqual({});
+    expect(s.outfits).toEqual([]);
+    expect(s.wearing).toEqual({});
+  });
+
+  it('drop unknown outfits, and anything worn that isn’t owned or is the other hero’s', () => {
+    const s = migrateSave({ ...newSave(), outfits: ['ranger', 'tuxedo', 'bronze', 'ranger'], wearing: { jason: 'ranger', atalanta: 'ranger' } });
+    expect(s.outfits).toEqual(['bronze', 'ranger']);
+    expect(s.wearing).toEqual({ atalanta: 'ranger' });
+    const t = migrateSave({ ...newSave(), outfits: [], wearing: { jason: 'bronze' } });
+    expect(t.wearing).toEqual({});
   });
 });

@@ -64,9 +64,9 @@ export class TitleScene {
     this.camera.updateProjectionMatrix();
   }
 
-  /** `upgrades` dresses Jason in the gear he has bought (cheap when nothing changed). */
-  update(dt: number, upgrades: SaveData['upgrades']) {
-    dressJason(this.jason, upgrades);
+  /** `upgrades` dresses Jason in the gear he has bought, and `outfit` in what he wears (cheap when nothing changed). */
+  update(dt: number, upgrades: SaveData['upgrades'], outfit?: string) {
+    dressJason(this.jason, upgrades, 'blaster', outfit);
     this.t += dt;
     const t = this.t;
     this.ship.update(dt);

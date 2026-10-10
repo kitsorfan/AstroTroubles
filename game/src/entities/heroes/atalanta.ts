@@ -15,6 +15,8 @@
  * - SLIDE (the DASH button): low and fast, under low gaps, tripping enemies. Jump out of it for a long jump.
  * - BOW (the BLAST button): tap for quick arrows, hold for a power arrow (pierces, sets off targets).
  * - KICK (the SPIN button): a spinning kick from the shared spin charges, on the ground or in the air.
+ *
+ * Her chapter 3 shop upgrades change the numbers (see atalantaStats.ts), read fresh every frame.
  */
 import * as THREE from 'three';
 
@@ -28,6 +30,7 @@ import { Grid } from '../../world/grid';
 import type { Player } from '../player';
 import type { Target } from '../entity';
 import { ATALANTA_COLORS, dressAtalanta, makeAtalanta, type AtalantaModel } from './atalantaModel';
+import { atalantaStats, type AtalantaStats } from './atalantaStats';
 import { heroWorld } from './heroProps';
 
 interface WallFace {
@@ -40,6 +43,10 @@ interface WallFace {
 
 /** A cliff face she climbs: the face, the cell it belongs to, and the height of its top. */
 type Climb = WallFace & { cx: number; cz: number; top: number };
+
+/** Triple Arrow: how far (radians) the two extra power arrows fan out from the middle one. */
+const TRIPLE_ANGLE = 0.2;
+const UP = new THREE.Vector3(0, 1, 0);
 
 const SIDES = [
   [1, 0],
@@ -91,9 +98,15 @@ export class AtalantaMoves {
     this.dress();
   }
 
-  /** Blaster Power upgrades the bow; returns true if her gear changed. */
+  /** Blaster Power, her own upgrades and her outfit; returns true if her gear changed. */
   dress() {
-    return dressAtalanta(this.model, this.world.save.upgrades.blaster ?? 0);
+    const s = this.world.save;
+    return dressAtalanta(this.model, s.upgrades.blaster ?? 0, s.ataUpgrades, s.wearing.atalanta);
+  }
+
+  /** Her numbers with the shop upgrades bought so far. */
+  private get stats(): AtalantaStats {
+    return atalantaStats(this.world.save.ataUpgrades);
   }
 
   get sliding() {
@@ -230,7 +243,7 @@ export class AtalantaMoves {
    * Climbing: pushing into the cliff climbs up, pulling away climbs down, sideways shimmies along it
    * (only as far as the handholds go). Jump kicks off; at the top she pulls herself over.
    */
-  private updateClimb(dt: number, input: Input, wx: number, wz: number, mag: number) {
+  private updateClimb(dt: number, input: Input, wx: number, wz: number, mag: number, st: AtalantaStats) {
     const p = this.p;
     const b = p.body;
     const c = this.climb;
@@ -254,7 +267,7 @@ export class AtalantaMoves {
       const nz = Grid.toCell(b.z + tz * off - c.nz * (b.r + 0.3));
       if (!heroWorld(this.world).climbs.has(nz * g.width + nx)) along = 0;
     }
-    b.vy = up * ATALANTA.climbSpeed;
+    b.vy = up * st.climbSpeed;
     // Pressed lightly against the face so she keeps touching it.
     p.vx = tx * along - c.nx * 1.2;
     p.vz = tz * along - c.nz * 1.2;
@@ -322,7 +335,8 @@ export class AtalantaMoves {
     const w = this.world;
     const b = p.body;
     const { wx, wz, mag } = p.moveInput(input);
-    if (b.grounded && !this.climb) this.grip = ATALANTA.climbGrip;
+    const st = this.stats;
+    if (b.grounded && !this.climb) this.grip = st.climbGrip;
     if (this.mantle) {
       this.updateMantle(dt);
       // The body was placed by hand: only a gentle settle onto the top (no gravity while pulling up).
@@ -331,7 +345,7 @@ export class AtalantaMoves {
       return;
     }
     if (this.climb) {
-      this.updateClimb(dt, input, wx, wz, mag);
+      this.updateClimb(dt, input, wx, wz, mag, st);
       p.tickSpins(dt);
       if (this.climb || this.mantle) {
         if (!p.stepBody(dt, () => {}, { noGravity: true })) {
@@ -370,7 +384,7 @@ export class AtalantaMoves {
         if (b.grounded) this.sprinting = false;
       } else {
         this.sprintT += dt;
-        if (this.sprintT >= ATALANTA.sprintBuild && b.grounded && !this.sprinting) {
+        if (this.sprintT >= st.sprintBuild && b.grounded && !this.sprinting) {
           this.sprinting = true;
           audio.play('dash', 1.5, 0.5);
         }
@@ -382,10 +396,10 @@ export class AtalantaMoves {
 
     // Moving: sliding, wall-running, crawling or running.
     if (this.slideT > 0) this.updateSlide(dt);
-    else if (this.run) this.updateRun(dt, wx, wz, mag);
+    else if (this.run) this.updateRun(dt, wx, wz, mag, st);
     else {
       const onIce = b.grounded && b.ground?.kind === 'ice';
-      const base = this.crouched ? ATALANTA.crawlSpeed : this.sprinting ? ATALANTA.sprintSpeed : ATALANTA.speed;
+      const base = this.crouched ? ATALANTA.crawlSpeed : this.sprinting ? st.sprintSpeed : st.speed;
       const speed = base * (p.carrying ? 0.85 : 1) * (p.inMud ? OUTDOOR.sandSpeed : 1);
       const accel = b.grounded ? (onIce ? PLAYER.iceAccel : PLAYER.accel * (this.sprinting ? 1.2 : 1)) : PLAYER.airAccel;
       p.steer(dt, wx, wz, mag, speed, accel);
@@ -412,7 +426,7 @@ export class AtalantaMoves {
     }
     p.tickSpins(dt);
 
-    this.updateBow(dt, input);
+    this.updateBow(dt, input, st);
 
     if (this.run) b.vy += GRAVITY * (1 - ATALANTA.wallRunGravity) * dt;
     const ok = p.stepBody(dt, (impact) => {
@@ -500,7 +514,7 @@ export class AtalantaMoves {
     haptic('light');
   }
 
-  private updateRun(dt: number, wx: number, wz: number, mag: number) {
+  private updateRun(dt: number, wx: number, wz: number, mag: number, st: AtalantaStats) {
     const p = this.p;
     const b = p.body;
     const r = this.run;
@@ -512,7 +526,7 @@ export class AtalantaMoves {
       this.run = null;
       return;
     }
-    const along = Math.max(ATALANTA.sprintSpeed * 0.95, p.vx * r.tx + p.vz * r.tz);
+    const along = Math.max(st.sprintSpeed * 0.95, p.vx * r.tx + p.vz * r.tz);
     // Pressed lightly into the wall so she keeps touching it.
     p.vx = r.tx * along - r.nx;
     p.vz = r.tz * along - r.nz;
@@ -570,19 +584,19 @@ export class AtalantaMoves {
 
   /* ---------------- the bow ---------------- */
 
-  private updateBow(dt: number, input: Input) {
+  private updateBow(dt: number, input: Input, st: AtalantaStats) {
     const p = this.p;
     const held = input.isHeld('shoot');
     this.shootBuf = input.take('shoot') ? PLAYER.shootBuffer : this.shootBuf - dt;
     if (this.shootBuf > 0 && this.shootCd <= 0 && p.spinLeft <= 0 && this.slideT <= 0) {
       this.shootBuf = 0;
-      this.loose(false);
+      this.loose(false, st);
     }
     if (held) {
       this.holdT += dt;
       if (this.holdT > ATALANTA.chargeDelay && p.spinLeft <= 0 && this.slideT <= 0) {
         if (p.charge === 0) audio.play('charge', 1.2);
-        p.charge = Math.min(1, p.charge + dt / ATALANTA.chargeTime);
+        p.charge = Math.min(1, p.charge + dt / st.chargeTime);
         if (p.charge >= 1 && !this.chargedFx) {
           this.chargedFx = true;
           audio.play('charged', 1.15);
@@ -590,7 +604,7 @@ export class AtalantaMoves {
         }
       }
     } else if (this.wasHeld) {
-      if (p.charge >= 1) this.loose(true);
+      if (p.charge >= 1) this.loose(true, st);
       p.charge = 0;
       this.holdT = 0;
       this.chargedFx = false;
@@ -624,8 +638,8 @@ export class AtalantaMoves {
     return best;
   }
 
-  /** Looses an arrow: a quick one, or the charged power arrow. */
-  private loose(power: boolean) {
+  /** Looses an arrow: a quick one, or the charged power arrow (three in a fan with Triple Arrow). */
+  private loose(power: boolean, st: AtalantaStats) {
     const p = this.p;
     const w = this.world;
     const b = p.body;
@@ -643,10 +657,11 @@ export class AtalantaMoves {
     origin.x += Math.sin(p.facing) * 0.6;
     origin.z += Math.cos(p.facing) * 0.6;
     const bonus = w.save.upgrades.blaster ?? 0;
-    const dmg = power ? ATALANTA.powerDamage + bonus * 2 : 1 + bonus;
+    const dmg = power ? ATALANTA.powerDamage + bonus * 2 + st.powerDamage : 1 + bonus + st.arrowDamage;
     if (!arrows.fire(origin, dir, power, dmg)) return;
+    if (power && st.triple) for (const k of [-1, 1]) arrows.fire(origin, dir.clone().applyAxisAngle(UP, k * TRIPLE_ANGLE), true, dmg);
     const rapid = w.save.upgrades.rapid ?? 0;
-    this.shootCd = power ? 0.4 : ATALANTA.arrowCooldown * Math.max(0.5, 1 - rapid * 0.15);
+    this.shootCd = power ? st.powerCooldown : st.arrowCooldown * Math.max(0.5, 1 - rapid * 0.15);
     this.aimT = power ? 0.5 : 0.35;
     if (power) {
       p.vx -= dir.x * 3;

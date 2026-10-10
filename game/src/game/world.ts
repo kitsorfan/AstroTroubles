@@ -28,6 +28,7 @@ import { Raft, Tide } from '../entities/reef/tide';
 import type { Entity, HitKind, Interactable, Target } from '../entities/entity';
 import { Beams, Rings } from '../entities/fx';
 import { ArrowTarget, ClimbWall, LowGap, WallRun } from '../entities/heroes/heroProps';
+import { atalantaStats } from '../entities/heroes/atalantaStats';
 import { CommandPost, CrackedWall, HeavyPlate, legionWorld } from '../entities/heroes/legion';
 import { AllyBot, LegionBot } from '../entities/heroes/legionBots';
 import { BrittleFloor, BronzeGate } from '../entities/forge/forgeProps';
@@ -977,7 +978,9 @@ export class World {
   spinAttack(player: Player, hitSet: Set<unknown>) {
     const b = player.body;
     tmpV.set(b.x, b.y + 0.9, b.z);
-    this.hitAll(tmpV.clone(), PLAYER.spinRadius, 1 + (this.save.upgrades.blaster ?? 0), 'spin', hitSet);
+    // Atalanta's spinning kick: Iron Kick makes it hit harder and reach wider.
+    const kick = player.hero === 'atalanta' ? atalantaStats(this.save.ataUpgrades) : null;
+    this.hitAll(tmpV.clone(), kick?.kickRadius ?? PLAYER.spinRadius, 1 + (this.save.upgrades.blaster ?? 0) + (kick?.kickDamage ?? 0), 'spin', hitSet);
     // Sparks thrown off the rim of the spin swoosh.
     const a = Math.random() * Math.PI * 2;
     this.particles.emit(b.x + Math.cos(a) * 1.9, b.y + 0.85, b.z + Math.sin(a) * 1.9, { count: 2, color: '#bff4ff', speed: 3, life: 0.3, size: 0.3, gravity: 0 });

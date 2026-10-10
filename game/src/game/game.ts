@@ -24,7 +24,8 @@ import { THEMES } from '../world/themes';
 import { PANEL_IDS, type PanelId } from '../ui/panels';
 import { UI } from '../ui/ui';
 import { equippedWeapon, ownedWeapons } from '../entities/weapons';
-import { buyUpgrade, buyWeapon, equipWeapon } from './shop';
+import { knownOutfits, outfitFor } from '../entities/outfits';
+import { buyAtalantaUpgrade, buyOutfit, buyUpgrade, buyWeapon, equipWeapon, takeOffOutfit, wearOutfit } from './shop';
 import { PostFx } from './post';
 import { enemyIconUrl } from '../entities/badges';
 import { findKind, lootLabels, plannedFinds } from './collectibles';
@@ -197,7 +198,9 @@ export class Game {
       this.save.unlocked = LEVEL_ORDER.length;
     }
     // &bolts=N sets the bolt count, &weapons=spread,frost hands over weapons (&weapon=frost equips one),
-    // &up=heart:4,armor:1 sets upgrade levels, and &shop opens PANDORA's shop once the deck is up.
+    // &up=heart:4,armor:1 sets upgrade levels, &ata=bow:3,triple:1 Atalanta's, &outfit=bronze,artemis
+    // hands over outfits and puts them on, and &shop opens PANDORA's shop once the deck is up
+    // (&shop=weapons|atalanta|outfits on that tab, &try=<outfit> in the fitting room).
     const bolts = Number(dev.get('bolts'));
     if (bolts > 0) this.save.bolts = bolts;
     const hearts = Number(dev.get('hearts'));
@@ -208,6 +211,14 @@ export class Game {
     for (const pair of dev.get('up')?.split(',') ?? []) {
       const [id, n] = pair.split(':');
       this.save.upgrades[id as keyof SaveData['upgrades']] = Number(n) || 0;
+    }
+    for (const pair of dev.get('ata')?.split(',') ?? []) {
+      const [id, n] = pair.split(':');
+      this.save.ataUpgrades[id as keyof SaveData['ataUpgrades']] = Number(n) || 0;
+    }
+    for (const id of knownOutfits(dev.get('outfit')?.split(',') ?? [])) {
+      if (!this.save.outfits.includes(id)) this.save.outfits.push(id);
+      for (const hero of ['jason', 'atalanta'] as const) if (outfitFor(hero, id)) this.save.wearing[hero] = id;
     }
     // &heroes=jason,atalanta lets you switch heroes on any deck; &hero=atalanta starts as her.
     const heroes = parseHeroes(dev.get('heroes'));
@@ -226,7 +237,10 @@ export class Game {
     const deck = dev.get('deck') as DeckId | null;
     if (deck && LEVELS[deck]) {
       this.startDeck(deck, false, dev.has('still') ? 'none' : 'auto');
-      if (dev.get('shop') === 'weapons') this.ui.shopTab = 'weapons';
+      const tab = dev.get('shop');
+      if (tab === 'weapons' || tab === 'atalanta' || tab === 'outfits') this.ui.shopTab = tab;
+      // &try=<outfit> (with &shop=outfits) opens the fitting room on it.
+      this.ui.shopTry = dev.get('try');
       // &fire keeps tapping BLAST (&fire=charge holds it for charged shots), for looking at the weapons.
       const fire = dev.get('fire');
       if (fire !== null) {
@@ -798,6 +812,10 @@ export class Game {
           equip: (id) => {
             if (equipWeapon(this.save, id)) this.world?.player.refreshGear();
           },
+          buyAtalanta: (id) => this.bought(buyAtalantaUpgrade(this.save, id, deck)),
+          buyOutfit: (id) => this.bought(buyOutfit(this.save, id, deck)),
+          wear: (id) => this.dressed(wearOutfit(this.save, id)),
+          takeOff: (hero) => this.dressed(takeOffOutfit(this.save, hero)),
           close: () => {
             this.ui.close();
             this.state = 'play';
@@ -898,6 +916,13 @@ export class Game {
   private dashHintAt = -1e9;
 
   /** After a shop purchase (see game/shop.ts): heal for a new heart, put the gear on, and celebrate. */
+  /** An outfit went on or came off (free): dress the heroes and keep it. */
+  private dressed(ok: boolean) {
+    if (!ok) return;
+    this.world?.player.refreshGear();
+    writeSave(this.save);
+  }
+
   private bought(ok: boolean, heart = false) {
     if (!ok) return;
     if (heart) this.world?.player.heal(99);
@@ -1082,7 +1107,7 @@ export class Game {
       this.post.render(w.scene, w.camera);
       return;
     }
-    this.title.update(dt, this.save.upgrades);
+    this.title.update(dt, this.save.upgrades, this.save.wearing.jason);
     this.post.setStrength(0.2);
     this.post.render(this.title.scene, this.title.camera);
   }

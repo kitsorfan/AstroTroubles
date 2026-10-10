@@ -20,6 +20,7 @@ import { EL_SNOW } from './el/snow';
 import { EL_VOLCANO } from './el/volcano';
 import { EL_WEAPONS } from './el/weapons';
 import { EL_ARSENAL } from './el/arsenal';
+import { EL_SHOP3 } from './el/shop3';
 
 /**
  * Greek translations, keyed by the English text. Written as natural Greek for young players rather
@@ -683,6 +684,7 @@ export const EL: Record<string, string> = {
   ...EL_COMPANIONS,
   ...EL_WEAPONS,
   ...EL_ARSENAL,
+  ...EL_SHOP3,
   ...EL_HEROES,
   ...EL_BRENNUS3,
   ...EL_SIRENS,

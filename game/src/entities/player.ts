@@ -171,7 +171,7 @@ export class Player {
     this.body = makeBody(x, y, z, PLAYER.radius, PLAYER.height);
     this.body.grounded = true;
     this.jason = makeJason();
-    dressJason(this.jason, world.save.upgrades, this.weapon);
+    dressJason(this.jason, world.save.upgrades, this.weapon, world.save.wearing.jason);
     this.cast = heroRoster(world.def.heroes, heroDev);
     this.hero = this.roster[0];
     const withAtalanta = this.cast.includes('atalanta');
@@ -480,12 +480,18 @@ export class Player {
     return true;
   }
 
-  /** Puts on the gear for any newly bought upgrades, with a little sparkle when something changed. */
+  /**
+   * Puts on the gear for any newly bought upgrades (and the outfits being worn), with a little sparkle
+   * on the playing hero when something changed.
+   */
   refreshGear() {
-    if (this.ata?.dress()) this.world.hooks.hud();
+    const s = this.world.save;
+    const ata = this.ata?.dress() ?? false;
+    if (ata) this.world.hooks.hud();
     const before = this.jason.gearKey;
-    dressJason(this.jason, this.world.save.upgrades, this.weapon);
-    if (this.jason.gearKey === before || this.hero !== 'jason') return;
+    dressJason(this.jason, s.upgrades, this.weapon, s.wearing.jason);
+    const changed = this.hero === 'jason' ? this.jason.gearKey !== before : this.hero === 'atalanta' && ata;
+    if (!changed) return;
     const b = this.body;
     this.world.particles.emit(b.x, b.y + 1, b.z, { count: 26, color: '#ffd166', speed: 4, life: 0.6, size: 0.45, up: 2 });
     this.squash = 0.25;
@@ -1645,6 +1651,8 @@ export class Player {
       const target = jet * (0.85 + Math.random() * 0.3);
       j.scale.setScalar(damp(j.scale.x, target, 20, dt));
     }
+    // An outfit's cape flies out behind him as he runs and jumps.
+    if (m.cape) m.cape.rotation.x = damp(m.cape.rotation.x, Math.min(0.6, Math.hypot(this.vx, this.vz) * 0.05 + (air ? 0.2 : 0)), 10, dt);
     m.visor.emissiveIntensity = 0.35 + this.world.darkness * 1.2;
     const glow = this.charge > 0 ? 0.4 + this.charge * 1.6 + (this.charge >= 1 ? Math.sin(this.phase * 3) * 0.3 : 0) : 0;
     m.gunGlow.scale.setScalar(Math.max(0.001, glow));

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import type { UpgradeId } from '../core/save';
 import { glowTexture, shadowTexture } from '../world/textures';
+import { dressJasonOutfit } from './outfitModels';
 
 const matCache = new Map<string, THREE.Material>();
 
@@ -103,9 +104,35 @@ export interface JasonModel extends HeroModel {
   suit: THREE.MeshStandardMaterial;
   /** Glow at the blaster's muzzle while a fireball charges. */
   gunGlow: THREE.Sprite;
-  /** Parts added by shop upgrades (see `dressJason`), and the upgrade levels they were built for. */
+  /** Parts added by shop upgrades and his outfit (see `dressJason`), and what they were built for. */
   gear: THREE.Object3D[];
   gearKey: string;
+  /** An outfit's cape, which flies out behind him as he runs (null: no cape). */
+  cape: THREE.Object3D | null;
+}
+
+/**
+ * Remembers which colour role (suit, trim...) each part of a hero plays, and its own material, so an
+ * outfit can repaint the hero (`paintParts`) and taking it off can put everything back. Parts marked
+ * `userData.keep` (the blaster, the bow) are never repainted, and neither is gear added later.
+ */
+export function tagParts(root: THREE.Object3D, roles: Map<THREE.Material, string>) {
+  root.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || o.userData.keep) return;
+    const role = roles.get(o.material as THREE.Material);
+    if (!role) return;
+    o.userData.role = role;
+    o.userData.baseMat = o.material;
+  });
+}
+
+/** Paints each tagged part with the outfit's material for its role, or back in its own. */
+export function paintParts(root: THREE.Object3D, paint: Partial<Record<string, THREE.Material>>) {
+  root.traverse((o) => {
+    const role = o.userData.role as string | undefined;
+    if (!role || !(o instanceof THREE.Mesh)) return;
+    o.material = paint[role] ?? (o.userData.baseMat as THREE.Material);
+  });
 }
 
 /**
@@ -233,6 +260,7 @@ export function makeJason(): JasonModel {
   armL.add(mesh(sphere(0.12, 12), white, 0, -0.44, 0));
   armR.add(mesh(sphere(0.12, 12), white, 0, -0.44, 0));
   const gun = mesh(boxG(0.16, 0.18, 0.46), grey, 0, -0.48, 0.16);
+  gun.userData.keep = true;
   armR.add(gun);
   armR.add(mesh(cyl(0.06, 0.06, 0.08), mat('#5ee0ff', { emissive: '#5ee0ff', ei: 1.4 }), 0, -0.48, 0.42, false));
   armR.children[armR.children.length - 1].rotation.x = Math.PI / 2;
@@ -247,7 +275,9 @@ export function makeJason(): JasonModel {
   root.add(carry);
 
   root.add(blobShadow(1.3));
-  return { root, body, head, armL, armR, legL, legR, jets, visor, suit, carry, eyes: face.eyes, gunGlow, gear: [], gearKey: '' };
+  // What an outfit repaints (see outfitModels.ts).
+  tagParts(body, new Map<THREE.Material, string>([[suit, 'suit'], [white, 'trim'], [grey, 'metal'], [dark, 'legs'], [shellMat, 'helmet']]));
+  return { root, body, head, armL, armR, legL, legR, jets, visor, suit, carry, eyes: face.eyes, gunGlow, gear: [], gearKey: '', cape: null };
 }
 
 /**
@@ -258,15 +288,17 @@ export function makeJason(): JasonModel {
  * - Quick Reload: cooling fins on the blaster, then a forearm gauntlet.
  * - LUX Zapper: a LUX link on his left wrist, then a second, crackling antenna.
  * - Bolt Magnet: a horseshoe magnet on his backpack, which grows and glows gold.
- * Gear hangs off the body, arms and head (never the root, whose last child is the shadow).
+ * Gear hangs off the body, arms and head (never the root, whose last child is the shadow). The
+ * `outfit` (chapter 3's shop) repaints his suit underneath and adds its own pieces; the gear stays on top.
  */
-export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>, weapon = 'blaster') {
+export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, number>>, weapon = 'blaster', outfit?: string) {
   const lv = (id: UpgradeId) => upgrades[id] ?? 0;
-  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet', 'armor', 'dashCell', 'spinCharge', 'grapple'] as const).map(lv).join('') + weapon;
+  const key = (['heart', 'blaster', 'clip', 'rapid', 'boltZap', 'magnet', 'armor', 'dashCell', 'spinCharge', 'grapple'] as const).map(lv).join('') + weapon + (outfit ?? '');
   if (key === m.gearKey) return;
   m.gearKey = key;
   for (const o of m.gear) o.removeFromParent();
   m.gear = [];
+  m.cape = null;
   const put = (parent: THREE.Object3D, ...parts: THREE.Object3D[]) => {
     parent.add(...parts);
     m.gear.push(...parts);
@@ -375,6 +407,7 @@ export function dressJason(m: JasonModel, upgrades: Partial<Record<UpgradeId, nu
 
   dressMk2(m, lv, put);
   dressWeapon(weapon, (...parts) => put(m.armR, ...parts));
+  dressJasonOutfit(m, outfit, lv, put);
 }
 
 /**
