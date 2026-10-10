@@ -4,11 +4,10 @@ import { ease, type Director, type Rig } from '../cinema/director';
 import { audio } from '../core/audio';
 import { FLYOVER } from '../game/story';
 import type { ArgoFlight } from './argo';
-import { CLASH, clashState, type Clash, type Hold } from './course';
 
 /**
- * The flight level's cutscenes: the opening (the Argo sets off into the belt), LUX's dove showing the
- * way through the first Clashing Rocks, and the Argo sailing through the gate of the moons at the end.
+ * The flight level's cutscenes: the opening (the Argo sets off into the belt) and the Argo sailing
+ * through the gate of the moons at the end. (LUX's dove flies during play, without stopping the Argo.)
  */
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -39,51 +38,6 @@ export async function flightIntro(d: Director, a: ArgoFlight) {
   await caption;
   d.rig.fov = end.fov;
   await d.say(w.dialogue('intro'));
-}
-
-/**
- * LUX's dove at the first Clashing Rocks. Like the dove in the myth, it goes a little late and the rocks
- * snip off a tail feather: so the trick is to go the moment they OPEN.
- */
-export async function doveScene(d: Director, a: ArgoFlight, h: Hold, group: Clash[]) {
-  const w = a.world;
-  const f = a.flight;
-  const first = group[0];
-  a.autoDove = false;
-  try {
-    const rel = first.s - f.s;
-    d.cut(V(10, 4, 6), V(-1, 0.5, -rel * 0.7), 50);
-    await d.say(w.dialogue('dove'));
-    // Wait for a late moment in the rocks' rhythm, just like the myth's dove.
-    const P = first.period;
-    const late = P - CLASH.shut - CLASH.slam - (CLASH.depth / 2 + 8 + rel) / 42 - 0.12;
-    const u = clashState(first, f.t).phase;
-    await d.wait((((late - u) % P) + P) % P);
-    a.launchDove(h, group);
-    audio.play('blip', 1.4);
-    let snipped = false;
-    await d.tween(
-      2.8,
-      () => {
-        const p = a.dove.root.position;
-        d.rig.pos.set(p.x + 7, p.y + 2.6, p.z + 10);
-        d.rig.look.set(p.x, p.y, p.z - 4);
-        if (!snipped && clashState(first, f.t).gap < 0.4) {
-          // SNAP! The rocks close right behind it and pinch off one tail feather.
-          snipped = true;
-          a.dove.tail.visible = false;
-          w.particles.emit(p.x, p.y, p.z + 3, { count: 8, color: '#ffffff', speed: 1.2, life: 2.2, size: 1.4, gravity: -0.4, drag: 1.5 });
-        }
-      },
-      ease.linear,
-    );
-    a.dove.tail.visible = false;
-    await d.say(w.dialogue('doveSafe'));
-    const back = chase(a);
-    d.cut(back.pos, back.look, back.fov);
-  } finally {
-    a.autoDove = true;
-  }
 }
 
 /** The end: the Argo sails through the gate of the moons, and the moons of the gas giant fill the sky. */

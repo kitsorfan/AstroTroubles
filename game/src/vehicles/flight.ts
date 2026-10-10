@@ -4,51 +4,48 @@ import {
   approach,
   clashRoom,
   crushed,
-  holdGroup,
-  holdSpeed,
   laneAt,
   type Beacon,
   type BoltPick,
   type Clash,
   type CourseThing,
   type Crystal,
+  type DoveCue,
   type FlightCourse,
-  type Hold,
   type Radio,
   type Ring,
   type Rock,
 } from './course';
 
 /**
- * The Argo's flight, step by step: forward speed, steering, boosts, hold lines and launches, and
- * bumping into the course (asteroids, crystals, rings, bolts, the Clashing Rocks). No three.js: the
- * flight controller draws it, and the tests fly it with an autopilot.
+ * The Argo's flight, step by step: the throttle lever and forward speed, steering, and bumping into
+ * the course (asteroids, crystals, rings, bolts, the Clashing Rocks). The Argo never stops by itself:
+ * the player slows down to wait for the rocks and pushes the lever up to dart through. No three.js:
+ * the flight controller draws it, and the tests fly it with an autopilot.
  */
 
 export interface FlightInput {
   /** Stick: -1..1 left/right and down/up. */
   steerX: number;
   steerY: number;
-  /** BOOST was pressed this step. */
-  boost: boolean;
+  /** The lever dragged to this position (0 stops, 1 is full speed) this step. */
+  lever?: number;
+  /** A key held to move the lever: +1 up, -1 down. */
+  leverMove?: number;
   /** ROCKET was pressed this step. */
   rocket?: boolean;
 }
 
 /** What happened during a step, for sounds, effects and the HUD. */
 export interface FlightEvents {
-  bump?(thing: Rock | Crystal, shielded: boolean): void;
+  bump?(thing: Rock | Crystal): void;
   crush?(c: Clash): void;
   ring?(r: Ring): void;
   bolt?(b: BoltPick): void;
   beacon?(b: Beacon): void;
   radio?(r: Radio): void;
-  /** The Argo has stopped at a hold line and waits for BOOST. */
-  hold?(h: Hold): void;
-  launch?(h: Hold): void;
-  boost?(): void;
-  /** BOOST pressed with an empty meter. */
-  empty?(): void;
+  /** The Argo passed the spot where LUX's dove sets off. */
+  dove?(d: DoveCue): void;
   /** A rocket set off toward a pair of Clashing Rocks (it lands after `eta` seconds). */
   rocket?(c: Clash, eta: number): void;
   /** A rocket reached its pair and blew it to bits. */
@@ -69,17 +66,10 @@ export class Flight {
   y = 0;
   v: number = FLIGHT.cruise;
   t = 0;
+  /** The throttle lever: 0 holds the Argo still, 1 is full speed. */
+  lever: number = FLIGHT.lever;
   hull: number = FLIGHT.hull;
   invuln = 0;
-  /** Boost meter (0..1) and the time left on the current boost. */
-  meter = 1;
-  boostT = 0;
-  /** True while stopped at a hold line. */
-  holding = false;
-  /** While launched through a row of Clashing Rocks, the distance where the sprint ends. */
-  launchUntil = -1;
-  /** Hold lines already launched from (by `s`), so the Argo doesn't stop at them again. */
-  private cleared = new Set<number>();
   /** Rings and bolts taken, crystals and rocks broken (indices into `things`). */
   readonly gone = new Set<number>();
   finished = false;
@@ -104,42 +94,21 @@ export class Flight {
     this.s = s;
     [this.x, this.y] = laneAt(this.course.guide, s);
     this.v = FLIGHT.cruise;
-    this.holding = false;
-    this.launchUntil = -1;
-    this.boostT = 0;
+    this.lever = FLIGHT.lever;
     this.invuln = 0;
     this.hull = FLIGHT.hull;
     this.rockets = this.savedRockets;
     this.flying.length = 0;
     for (const c of [...this.broken]) if (c.s > s) this.broken.delete(c);
-    for (const s0 of [...this.cleared]) if (s0 > s) this.cleared.delete(s0);
     // Everything ahead comes back: rings to fly through again, crystals to blast again.
     for (const i of [...this.gone]) if (this.things[i].s > s) this.gone.delete(i);
     this.passed = this.things.findIndex((t) => t.s > s);
     if (this.passed < 0) this.passed = this.things.length;
   }
 
-  /** The hold line ahead that the Argo is going to stop at, if any. */
-  get hold(): Hold | null {
-    if (this.launchUntil > this.s) return null;
-    for (let i = this.passed - 1; i < this.things.length; i++) {
-      const th = this.things[Math.max(0, i)];
-      if (th.s < this.s - 0.5) continue;
-      // A hold line whose rocks have all been blown up doesn't stop the Argo any more.
-      if (th.kind === 'hold' && !this.cleared.has(th.s) && !this.openWay(th)) return th;
-      if (th.s > this.s + FLIGHT.brake + 2) break;
-    }
-    return null;
-  }
-
-  get boosting() {
-    return this.boostT > 0;
-  }
-
-  /** True once every pair of rocks after a hold line has been blown up. */
-  openWay(h: Hold): boolean {
-    const group = holdGroup(this.things, h);
-    return group.length > 0 && group.every((c) => this.broken.has(c));
+  /** The speed the lever asks for. */
+  get target() {
+    return this.lever * FLIGHT.top;
   }
 
   /** The next pair of Clashing Rocks a rocket would lock on to: the nearest one ahead, not yet hit or targeted. */
@@ -193,8 +162,6 @@ export class Flight {
     if (this.finished) return;
     this.t += dt;
     this.invuln = Math.max(0, this.invuln - dt);
-    if (this.boostT > 0) this.boostT = Math.max(0, this.boostT - dt);
-    else this.meter = Math.min(1, this.meter + FLIGHT.boostRecharge * dt);
 
     // Rockets: off they go, and any that arrive blow their pair of rocks to bits.
     if (input.rocket) this.fireRocket(ev);
@@ -206,49 +173,14 @@ export class Flight {
       this.broken.add(r.c);
       ev.blast?.(r.c);
     }
-    if (this.holding) {
-      // Waiting at a hold line whose rocks are all gone now: the way is open, so fly on.
-      const at = this.things.find((th): th is Hold => th.kind === 'hold' && Math.abs(th.s - this.s) < 0.1);
-      if (at && this.openWay(at)) {
-        this.cleared.add(at.s);
-        this.holding = false;
-      }
-    }
 
-    const hold = this.hold;
-    if (input.boost) {
-      if (this.holding && hold) {
-        // Launch! Sprint through every pair of rocks after this hold line.
-        const group = holdGroup(this.things, hold);
-        this.cleared.add(hold.s);
-        this.holding = false;
-        this.launchUntil = (group.length ? group[group.length - 1].s : hold.s) + CLASH.depth / 2 + 6;
-        ev.launch?.(hold);
-      } else if (!this.holding && this.boostT <= 0) {
-        if (this.meter >= FLIGHT.boostCost - 1e-6) {
-          this.meter -= FLIGHT.boostCost;
-          this.boostT = FLIGHT.boostTime;
-          ev.boost?.();
-        } else ev.empty?.();
-      }
-    }
-
-    // Forward speed: sprinting, boosting, braking for a hold line, or cruising.
-    const launched = this.launchUntil > this.s;
-    let want: number = launched || this.boostT > 0 ? FLIGHT.launch : FLIGHT.cruise;
-    const h = launched ? null : this.hold;
-    if (h) want = Math.min(want, holdSpeed(this.s, h));
-    this.v = approach(this.v, want, dt);
+    // Forward speed follows the throttle lever, with a little weight to it.
+    if (input.lever !== undefined) this.lever = input.lever;
+    else if (input.leverMove) this.lever += input.leverMove * FLIGHT.leverRate * dt;
+    this.lever = Math.max(0, Math.min(1, this.lever));
+    this.v = approach(this.v, this.target, dt);
     const s0 = this.s;
     this.s += this.v * dt;
-    if (h && this.s >= h.s - 0.05) {
-      this.s = Math.min(this.s, h.s);
-      if (!this.holding) {
-        this.holding = true;
-        this.v = 0;
-        ev.hold?.(h);
-      }
-    }
 
     // Steering inside the corridor; between Clashing Rocks the rock faces funnel the Argo into the gap.
     this.x += input.steerX * FLIGHT.steer * dt;
@@ -264,17 +196,16 @@ export class Flight {
         this.crushes += 1;
         this.hurt(ev);
         ev.crush?.(c);
-        // The rocks spit the Argo back out to the hold line of its row.
-        const back = this.things.filter((th): th is Hold => th.kind === 'hold' && th.s < c.s).pop();
-        if (back) {
-          this.cleared.delete(back.s);
-          this.s = back.s;
-          this.holding = true;
-          ev.hold?.(back);
-        } else this.s = c.s - CLASH.depth / 2 - 8;
+        // The rocks spit the Argo back out in front of the pair (but never into the pair before it),
+        // with the engines knocked down to a stop: push the lever up again when the rocks open.
+        const prev = this.clashesNear(CLASH.depth * 4).filter((p) => p.s < c.s).pop();
+        let back = c.s - CLASH.depth / 2 - FLIGHT.spit;
+        if (prev) back = Math.max(back, prev.s + CLASH.depth / 2 + FLIGHT.radius + 1);
+        this.s = Math.min(this.s, back);
         this.v = 0;
-        this.launchUntil = -1;
+        this.lever = 0;
         this.passed = this.things.findIndex((th) => th.s > this.s);
+        if (this.passed < 0) this.passed = this.things.length;
         return;
       }
     }
@@ -292,12 +223,10 @@ export class Flight {
       if (th.kind === 'rock' || th.kind === 'crystal') {
         const r = th.kind === 'rock' ? th.r : 1.3;
         if (Math.hypot(th.x - this.x, th.y - this.y, th.s - this.s) < r + R) {
-          // A boost wraps the Argo in light: rocks just bounce off it.
-          const shielded = this.boostT > 0;
-          if (shielded || this.hurt(ev)) {
+          if (this.hurt(ev)) {
             this.gone.add(i);
-            this.bumps += shielded ? 0 : 1;
-            ev.bump?.(th, shielded);
+            this.bumps += 1;
+            ev.bump?.(th);
           }
         }
       } else if (th.kind === 'bolt') {
@@ -320,6 +249,7 @@ export class Flight {
         ev.beacon?.(th);
       }
       else if (th.kind === 'radio') ev.radio?.(th);
+      else if (th.kind === 'dove') ev.dove?.(th);
       else if (th.kind === 'gate') {
         this.finished = true;
         ev.finish?.();

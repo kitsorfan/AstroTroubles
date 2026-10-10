@@ -5,9 +5,10 @@ import type { VehicleHud } from './vehicle';
 
 /**
  * The vehicle HUD, drawn over the usual one while a vehicle level is played: a BOOST button with its
- * meter (next to BLAST), a course progress bar at the top, a ring counter, and a big call-out in the
- * middle ("BOOST NOW!"). It brings its own styles, and hides Jason's on-foot buttons while it's on
- * (BLAST stays: it fires the vehicle's guns). The hearts are the usual ones, showing the hull.
+ * meter (next to BLAST), or on the Argo a throttle lever in its place, a course progress bar at the
+ * top, a ring counter, and a big call-out in the middle ("FULL SPEED NOW!"). It brings its own styles,
+ * and hides Jason's on-foot buttons while it's on (BLAST stays: it fires the vehicle's guns). The
+ * hearts are the usual ones, showing the hull.
  */
 
 const CSS = `
@@ -19,6 +20,24 @@ const CSS = `
 #ui .btn.boost { display:none; right:106px; bottom:0; width:80px; height:80px;
   background: radial-gradient(circle at 35% 30%, #ffe6a0, #e08a1a); pointer-events:auto; }
 #ui .buttons.vehicle .btn.boost { display:flex; }
+#ui .buttons.vehicle.has-lever .btn.boost { display:none; }
+#ui .lever { display:none; position:absolute; right:108px; bottom:2px; width:70px; height:176px; pointer-events:auto; touch-action:none; }
+#ui .buttons.vehicle.has-lever .lever { display:block; }
+#ui .lever .slot { position:absolute; left:50%; top:22px; bottom:20px; width:18px; margin-left:-9px; border-radius:9px;
+  background:rgba(10,14,40,.7); border:2px solid rgba(255,255,255,.45); overflow:hidden; box-shadow:inset 0 2px 6px rgba(0,0,0,.6); }
+#ui .lever .slot .speed { position:absolute; left:0; right:0; bottom:0; background:linear-gradient(0deg,#5ee0ff,#ffd166 80%,#ff9a3a); }
+#ui .lever .notch { position:absolute; left:50%; width:30px; height:2px; margin-left:-15px; background:rgba(255,255,255,.35); }
+#ui .lever .knob { position:absolute; left:50%; width:62px; height:30px; margin:-15px 0 0 -31px; border-radius:15px;
+  background:radial-gradient(circle at 35% 30%, #ffe6a0, #e08a1a); border:2px solid #fff6d0; box-shadow:0 4px 12px rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center; }
+#ui .lever .knob i { width:34px; height:4px; border-radius:2px; background:rgba(90,40,0,.55); box-shadow:0 -7px 0 rgba(90,40,0,.35), 0 7px 0 rgba(90,40,0,.35); }
+#ui .lever.full .knob { box-shadow:0 0 20px #ffd166, 0 4px 12px rgba(0,0,0,.5); }
+#ui .lever.stop .knob { background:radial-gradient(circle at 35% 30%, #d8e6ff, #5a76b8); border-color:#e6f0ff; }
+#ui .lever span { position:absolute; left:-10px; right:-10px; text-align:center; color:#fff; font:800 12px Fredoka, sans-serif;
+  letter-spacing:.06em; text-shadow:0 1px 3px #000; }
+#ui .lever span.top { top:0; color:#ffd166; }
+#ui .lever span.bot { bottom:0; }
+@media (max-height: 460px) { #ui .lever { height:146px; right:104px; } }
 #ui .btn.boost .cd-ring circle { stroke:#fff6d0; }
 #ui .btn.boost.on { box-shadow: 0 0 24px #ffd166, 0 4px 14px rgba(0,0,0,.45); }
 #ui .btn.boost.empty svg, #ui .btn.boost.empty span { opacity:.45; }
@@ -77,6 +96,9 @@ export class VehicleHudView {
   private el: HTMLElement;
   private btn: HTMLElement;
   private rocketBtn: HTMLElement;
+  private lever: HTMLElement;
+  /** True while a thumb is on the lever (it shows the thumb's position, not the flight's). */
+  private dragging = false;
   private buttons: HTMLElement | null;
   private last = '';
   private lastPrompt = '';
@@ -112,6 +134,30 @@ export class VehicleHudView {
     this.rocketBtn.dataset.b = 'spin';
     this.rocketBtn.innerHTML = `${ROCKET_ICON}<span data-t="ROCKET">${tr('ROCKET')}</span><div class="slots"></div>`;
     this.buttons?.append(this.rocketBtn);
+    // The Argo's throttle lever (where BOOST sits on the other vehicles): drag it up for speed, down to stop.
+    this.lever = document.createElement('div');
+    this.lever.className = 'lever clickable';
+    this.lever.innerHTML = `<span class="top" data-t="FAST">${tr('FAST')}</span><div class="slot"><i class="speed"></i></div>${'<i class="notch"></i>'.repeat(3)}<div class="knob"><i></i></div><span class="bot" data-t="STOP">${tr('STOP')}</span>`;
+    this.buttons?.append(this.lever);
+    const drag = (e: PointerEvent) => {
+      const at = this.leverAt(e.clientY);
+      input.setLever(at);
+      this.placeKnob(at);
+    };
+    this.lever.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.lever.setPointerCapture?.(e.pointerId);
+      this.dragging = true;
+      drag(e);
+    });
+    this.lever.addEventListener('pointermove', (e) => {
+      if (this.dragging) drag(e);
+    });
+    const release = () => (this.dragging = false);
+    this.lever.addEventListener('pointerup', release);
+    this.lever.addEventListener('pointercancel', release);
+    this.lever.addEventListener('lostpointercapture', release);
     for (const [btn, name] of [
       [this.btn, 'dash'],
       [this.rocketBtn, 'spin'],
@@ -135,10 +181,39 @@ export class VehicleHudView {
     }
   }
 
+  /** The lever's travel inside its slot, in pixels from the top (full speed) and its length. */
+  private travel(): [number, number] {
+    const slot = this.lever.querySelector('.slot') as HTMLElement;
+    const top = slot.offsetTop + 6;
+    return [top, Math.max(20, slot.offsetHeight - 12)];
+  }
+
+  /** Lever position (0..1) for a finger at screen height `y`. */
+  private leverAt(y: number): number {
+    const [top, len] = this.travel();
+    const r = this.lever.getBoundingClientRect();
+    return Math.max(0, Math.min(1, 1 - (y - r.top - top) / len));
+  }
+
+  private placeKnob(at: number) {
+    const [top, len] = this.travel();
+    (this.lever.querySelector('.knob') as HTMLElement).style.top = `${top + (1 - at) * len}px`;
+    this.lever.classList.toggle('full', at > 0.97);
+    this.lever.classList.toggle('stop', at < 0.03);
+  }
+
   /** Switches the vehicle HUD on (for a kind of vehicle) or off. */
   show(kind: VehicleKind | null) {
     this.el.classList.toggle('hidden', !kind);
     this.buttons?.classList.toggle('vehicle', !!kind);
+    this.buttons?.classList.toggle('has-lever', kind === 'argo');
+    if (kind === 'argo') {
+      // Mark the lever's cruise, half and stop notches once it's on screen.
+      requestAnimationFrame(() => {
+        const [top, len] = this.travel();
+        this.lever.querySelectorAll<HTMLElement>('.notch').forEach((n, i) => (n.style.top = `${top + (i / 2) * len}px`));
+      });
+    }
     if (this.buttons) this.buttons.dataset.vehicle = kind ?? '';
     this.last = '';
     this.lastPrompt = '';
@@ -177,6 +252,11 @@ export class VehicleHudView {
 
   update(h: VehicleHud) {
     this.setLabel(h.button ?? 'BOOST');
+    if (h.lever) {
+      const [at, speed] = h.lever;
+      if (!this.dragging) this.placeKnob(at);
+      (this.lever.querySelector('.speed') as HTMLElement).style.height = `${Math.round(speed * 100)}%`;
+    }
     (this.el.querySelector('.vtrack') as HTMLElement).style.display = h.track === false ? 'none' : '';
     this.drawSong(h.song ?? null);
     const key = `${Math.round(h.boost * 30)}|${h.boostSlots}|${h.boosting}|${h.counter?.join(',')}|${Math.round(h.progress * 400)}|${h.marks.length}|${h.rockets?.join(',')}`;
@@ -224,6 +304,7 @@ export class VehicleHudView {
     if (s) s.textContent = tr(this.label);
     const r = this.rocketBtn.querySelector('span');
     if (r) r.textContent = tr('ROCKET');
+    this.lever.querySelectorAll<HTMLElement>('span[data-t]').forEach((x) => (x.textContent = tr(x.dataset.t as string)));
     this.lastPrompt = '';
   }
 }

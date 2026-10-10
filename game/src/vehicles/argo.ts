@@ -9,8 +9,8 @@ import { damp } from '../core/math';
 import type { World } from '../game/world';
 import type { Line } from '../world/levelTypes';
 import { makeArgo, makeDove, makeRocket, type ArgoModel, type DoveModel } from './argoModel';
-import { flightIntro, flightOutro, doveScene } from './argoScenes';
-import { CLASH, FLIGHT, clashState, holdGroup, laneAt, untilOpen, type Beacon, type Clash, type Hold } from './course';
+import { flightIntro, flightOutro } from './argoScenes';
+import { CLASH, FLIGHT, clashRows, clashState, goNow, laneAt, type Beacon, type Clash, type DoveCue } from './course';
 import { CourseView, lowerBound } from './courseView';
 import { Drones, type Drone } from './drones';
 import { Flight, type FlightEvents } from './flight';
@@ -20,11 +20,12 @@ import type { Vehicle, VehicleHud } from './vehicle';
 
 /**
  * The Argo in flight (chapter 3, level 1): it flies forward on its own while the player steers it
- * around the corridor, blasts Aeëtes's salvage drones and pink crystals, flies through gold rings,
- * boosts (a burst of speed in a shield of light), and launches through the Clashing Rocks. LUX's dove
- * shows the timing at the first pair only; after that Jason reads the rocks himself, and has three
- * rockets to blow up the pairs he'd rather not risk. The rules of flight live in flight.ts; this
- * draws it and adds the shooting.
+ * around the corridor and sets its speed with the throttle lever, blasts Aeëtes's salvage drones and
+ * pink crystals, flies through gold rings, and times its way through the Clashing Rocks without ever
+ * stopping: ease off to wait for a pair, push the lever up the moment it opens. LUX's dove flies ahead
+ * through the first pair once, and is never seen again; after that Jason reads the rocks himself, and
+ * has three rockets to blow up the pairs he'd rather not risk. The rules of flight live in flight.ts;
+ * this draws it and adds the shooting.
  */
 
 interface Laser {
@@ -38,6 +39,8 @@ interface Laser {
 }
 
 const LASER_SPEED = 120;
+/** The dove's flying speed, where it waits in front of its pair, and how close the rocks come before a feather goes. */
+const DOVE = { speed: 48, wait: 26, snip: 4.2 } as const;
 
 /** A rocket on its way to a pair of Clashing Rocks (the flight times it; this draws it). */
 interface RocketView {
@@ -79,17 +82,16 @@ export class ArgoFlight implements Vehicle {
   private said = new Set<string>();
   /** Drone waves already sent (indices into the course). */
   private sent = new Set<number>();
-  /** The dove's run through the rocks: where it started, when, and where it stops. */
-  doveRun: { from: number; t0: number; until: number } | null = null;
-  /** While false (during the dove's cutscene) the dove only flies when told to. */
-  autoDove = true;
+  /**
+   * LUX's dove, once it sets off: it flies ahead of the Argo, waits in front of the first pair of
+   * Clashing Rocks, darts through a little late (losing a tail feather) and flies away for good.
+   */
+  private doveRun: { state: 'ahead' | 'go' | 'away'; s: number; row: Clash[]; u: number } | null = null;
   /** Moves the drawn Argo away from its flight position (the ending cutscene sails it through the gate). */
   readonly offset = new THREE.Vector3();
-  private lastOpen = 0;
   /** Distance of the last checkpoint reached (where a lost section restarts). */
   private cpS = 0;
   private wrecked = false;
-  private emptyHintAt = -99;
   private warned = new Set<Clash>();
   /** Distance of the gate of the moons (the end), and the checkpoint marks for the progress bar. */
   readonly length: number;
@@ -97,8 +99,8 @@ export class ArgoFlight implements Vehicle {
   private ringTotal: number;
   private rocketViews: RocketView[] = [];
   private rocketHintAt = -99;
-  /** The hold line where LUX's dove shows the timing (the first one); after it, Jason is on his own. */
-  private doveHold: Hold | null;
+  /** The first row of Clashing Rocks (where the dove shows the timing): the only one with a "GO NOW!" call-out. */
+  private lessonRow: Clash[] | null;
 
   constructor(readonly world: World) {
     const course = world.def.flight;
@@ -108,7 +110,7 @@ export class ArgoFlight implements Vehicle {
     this.length = things.find((t) => t.kind === 'gate')?.s ?? things[things.length - 1].s;
     this.beacons = things.filter((t): t is Beacon => t.kind === 'checkpoint');
     this.ringTotal = things.filter((t) => t.kind === 'ring').length;
-    this.doveHold = things.find((t): t is Hold => t.kind === 'hold' && t.dialogue === 'dove') ?? null;
+    this.lessonRow = clashRows(things)[0] ?? null;
     const scene = world.scene;
     // Space is big: let the camera see the gas giant far away.
     world.camera.far = 1600;
@@ -125,6 +127,8 @@ export class ArgoFlight implements Vehicle {
     this.model.root.scale.setScalar(0.72);
     scene.add(this.model.root);
     this.dove = makeDove();
+    // Bigger than life, so it can be followed all the way to the rocks without a cutscene.
+    this.dove.root.scale.setScalar(2.2);
     this.dove.root.visible = false;
     scene.add(this.dove.root);
     this.drones = new Drones(scene);
@@ -171,20 +175,19 @@ export class ArgoFlight implements Vehicle {
       return;
     }
     const s0 = f.s;
-    const boost = input.take('dash') || input.take('jump');
     const rocket = input.take('spin');
-    f.step(dt, { steerX: input.moveX, steerY: -input.moveZ, boost, rocket }, this.events);
+    // The throttle lever: dragged on screen, or nudged with JUMP (up) and DASH (down) on a keyboard.
+    const leverMove = (input.isHeld('jump') ? 1 : 0) - (input.isHeld('dash') ? 1 : 0);
+    f.step(dt, { steerX: input.moveX, steerY: -input.moveZ, lever: input.takeLever(), leverMove, rocket }, this.events);
     this.fireCd -= dt;
     if (input.take('shoot') || (input.isHeld('shoot') && this.fireCd <= 0)) this.fire();
     this.sendWaves();
-    const calm = f.holding || f.launchUntil > f.s;
+    // Drones won't follow the Argo into the Clashing Rocks.
+    const calm = f.clashesNear(70).length > 0;
     const hit = this.drones.update(dt, f, calm, (from) => {
       if (from.z > -70) audio.play('enemyShoot', 0.8, 0.5);
     });
-    if (hit) {
-      if (f.boosting) this.sparks(f.x, f.y, -1, '#ffd166', 10);
-      else f.hurt(this.events);
-    }
+    if (hit) f.hurt(this.events);
     this.updateLasers(dt);
     this.updateRockets();
     this.updateDove(dt);
@@ -198,12 +201,12 @@ export class ArgoFlight implements Vehicle {
 
   /** Flight events: sounds, effects, the HUD and the save. */
   private events: FlightEvents = {
-    bump: (th, shielded) => {
+    bump: (th) => {
       const r = th.kind === 'rock' ? th.r : 1.2;
       const z = -(th.s - this.flight.s);
       this.world.particles.emit(th.x, th.y, z, { count: 16 + Math.round(r * 6), color: th.kind === 'crystal' ? '#ff8ae0' : '#a89cb8', speed: 6, life: 0.9, size: 1.2, gravity: 0, vel: [0, 0, this.flight.v] });
-      audio.play(shielded ? 'bounce' : 'break', shielded ? 1.2 : 0.8);
-      this.world.shake(shielded ? 0.25 : 0.5);
+      audio.play('break', 0.8);
+      this.world.shake(0.5);
     },
     crush: (c) => {
       this.world.shake(1.4);
@@ -213,8 +216,8 @@ export class ArgoFlight implements Vehicle {
       this.sparks(this.flight.x, this.flight.y, -2, '#ffb84a', 30);
       if (!this.warned.has(c)) {
         this.warned.add(c);
-        if (this.flight.rockets > 0) this.world.hooks.toast('BONK! The rocks spat us back out. Wait for them to OPEN, then BOOST! Or blow them up with a ROCKET!', 'bolt');
-        else this.world.hooks.toast('BONK! The rocks spat us back out. Wait for them to OPEN, then BOOST!', 'bolt');
+        if (this.flight.rockets > 0) this.world.hooks.toast('BONK! The rocks spat us back out. Wait for them to OPEN, then push the lever up! Or blow them up with a ROCKET!', 'bolt');
+        else this.world.hooks.toast('BONK! The rocks spat us back out. Wait for them to OPEN, then push the lever up!', 'bolt');
       }
     },
     rocket: (c) => {
@@ -269,22 +272,7 @@ export class ArgoFlight implements Vehicle {
     },
     beacon: (b) => this.reachBeacon(b),
     radio: (r) => this.queueRadio(r.dialogue),
-    hold: (h) => this.reachHold(h),
-    launch: () => {
-      audio.play('dash', 0.8);
-      haptic('medium');
-      this.world.shake(0.3);
-    },
-    boost: () => {
-      audio.play('dash', 1.3);
-      haptic('light');
-    },
-    empty: () => {
-      if (this.time - this.emptyHintAt > 15) {
-        this.emptyHintAt = this.time;
-        this.world.hooks.toast('The boost is still charging! Watch the gold lights on the button.', 'bolt');
-      }
-    },
+    dove: (cue) => this.sendDove(cue),
     hurt: () => {
       audio.play('hurt');
       haptic('warning');
@@ -321,21 +309,15 @@ export class ArgoFlight implements Vehicle {
     this.world.hooks.hud();
   }
 
-  private reachHold(h: Hold) {
-    const group = holdGroup(this.flight.things, h);
-    if (group.length) this.lastOpen = untilOpen(group[0], this.flight.t);
-    if (!h.dialogue || this.said.has(h.dialogue)) return;
-    this.said.add(h.dialogue);
-    if (h.dialogue === 'dove' && !this.world.flags.has('argo:dove')) {
-      this.world.flags.add('argo:dove');
-      void this.world.hooks.cutscene((d) => doveScene(d, this, h, group));
-    } else this.world.hooks.say(this.world.dialogue(h.dialogue));
-  }
-
-  private queueRadio(key: string) {
+  /** Radio chatter, one toast after another; `now` puts it first in line and cuts off the line on screen. */
+  private queueRadio(key: string, now = false) {
     if (this.said.has(key)) return;
     this.said.add(key);
-    this.radioQueue.push(...this.world.dialogue(key));
+    const lines = this.world.dialogue(key);
+    if (now) {
+      this.radioQueue.unshift(...lines);
+      this.radioT = 0;
+    } else this.radioQueue.push(...lines);
   }
 
   private updateRadio(dt: number) {
@@ -349,7 +331,6 @@ export class ArgoFlight implements Vehicle {
   /** Sends in each drone wave a little before the Argo reaches it. */
   private sendWaves() {
     const f = this.flight;
-    if (f.holding) return;
     const things = f.things;
     for (let i = lowerBound(things, f.s - 5); i < things.length; i++) {
       const th = things[i];
@@ -465,50 +446,62 @@ export class ArgoFlight implements Vehicle {
 
   /* ---------------- LUX's dove ---------------- */
 
-  /** Sends the dove through the rocks of a hold line, flying the guide route at launch speed. */
-  launchDove(h: Hold, group: Clash[]) {
-    const last = group[group.length - 1];
-    this.doveRun = { from: h.s, t0: this.flight.t, until: (last ? last.s : h.s) + CLASH.depth / 2 + 8 };
+  /** The dove sets off from the Argo's bow toward the next row of Clashing Rocks: only ever once. */
+  private sendDove(cue: DoveCue) {
+    const w = this.world;
+    if (w.flags.has('argo:dove') || this.doveRun) return;
+    const row = clashRows(this.flight.things).find((r) => r[0].s > cue.s);
+    if (!row) return;
+    w.flags.add('argo:dove');
+    this.doveRun = { state: 'ahead', s: this.flight.s + 3, row, u: 0 };
     this.dove.tail.visible = true;
+    audio.play('blip', 1.4);
+    this.queueRadio('dove', true);
   }
 
   private updateDove(dt: number) {
     const f = this.flight;
     const d = this.dove;
-    // Only the first pair gets the dove: after that Jason reads the rocks on his own.
-    const held = f.holding ? f.hold : null;
-    const h = held && held === this.doveHold ? held : null;
-    const run = this.doveRun;
-    if (!run && h && this.autoDove) {
-      // While waiting at a hold line the dove sets off on its own every time the rocks start to open.
-      const group = holdGroup(f.things, h);
-      if (group.length) {
-        const u = untilOpen(group[0], f.t);
-        if (u > this.lastOpen + 0.5) this.launchDove(h, group);
-        this.lastOpen = u;
+    const r = this.doveRun;
+    if (!r) {
+      d.root.visible = false;
+      return;
+    }
+    const first = r.row[0];
+    const last = r.row[r.row.length - 1];
+    const wait = first.s - DOVE.wait;
+    if (r.state === 'ahead') {
+      // Out in front of the Argo to its waiting spot, then off a little late, like the dove in the myth:
+      // it leaves while the rocks rumble, and comes out just as they slam.
+      r.s = Math.min(wait, r.s + DOVE.speed * dt);
+      const u = clashState(first, f.t).phase;
+      const go = first.period - CLASH.shut - CLASH.slam * 0.4 - (DOVE.wait + CLASH.depth / 2 + 1) / DOVE.speed;
+      const time = r.s >= wait && r.u < go && u >= go;
+      // If the Argo catches up first, it just goes.
+      if (time || (r.s >= wait && f.s > wait - 16)) r.state = 'go';
+      r.u = u;
+    } else r.s += DOVE.speed * dt;
+    if (r.state === 'go') {
+      // SNAP! The rocks close right behind it and pinch off one tail feather.
+      const between = r.row.find((c) => Math.abs(r.s - c.s) < CLASH.depth / 2);
+      if (between && d.tail.visible && clashState(between, f.t).gap < DOVE.snip) {
+        d.tail.visible = false;
+        const z = -(r.s - f.s);
+        this.world.particles.emit(0, 0.4, z + 2, { count: 8, color: '#ffffff', speed: 1.2, life: 2.2, size: 1.4, gravity: -0.4, drag: 1.5, vel: [0, 0, f.v] });
+      }
+      if (r.s > last.s + CLASH.depth / 2 + 6) {
+        r.state = 'away';
+        this.queueRadio('doveSafe', true);
       }
     }
-    if (this.doveRun) {
-      const r = this.doveRun;
-      const s = r.from + (f.t - r.t0) * FLIGHT.launch;
-      const [gx, gy] = laneAt(this.flight.course.guide, Math.min(s, r.until));
-      const past = Math.max(0, s - r.until);
-      d.root.visible = true;
-      d.root.position.set(gx, gy + 0.6 + past * 0.25, -(s - f.s));
-      d.root.rotation.set(-Math.min(0.6, past * 0.05), 0, Math.sin(f.t * 3) * 0.15);
-      d.flap(this.time, 1);
-      if (past > 40) {
-        this.doveRun = null;
-        d.tail.visible = true;
-      }
-    } else if (h) {
-      // Perched in the air just above the Argo's bow, ready to go.
-      d.root.visible = true;
-      d.root.position.set(f.x + 1.6, f.y + 1.9 + Math.sin(this.time * 3) * 0.12, -2.6);
-      d.root.rotation.set(0, 0, 0);
-      d.flap(this.time, 0.5);
-    } else d.root.visible = false;
-    void dt;
+    const [gx, gy] = laneAt(f.course.guide, r.s);
+    const past = r.state === 'away' ? r.s - (last.s + CLASH.depth / 2 + 6) : 0;
+    d.root.visible = true;
+    d.root.position.set(gx, gy + 0.6 + past * 0.3, -(r.s - f.s));
+    d.root.rotation.set(-Math.min(0.6, past * 0.05), 0, Math.sin(this.time * 3) * 0.15);
+    d.flap(this.time, r.state === 'ahead' && r.s >= wait ? 0.6 : 1);
+    // Up and away over the rocks, and that's the last anyone sees of it.
+    if (past > 60) this.doveRun = null;
   }
 
   /* ---------------- drawing ---------------- */
@@ -525,12 +518,9 @@ export class ArgoFlight implements Vehicle {
     this.pos.set(f.x, f.y, 0);
     m.root.position.copy(this.pos).add(this.offset);
     m.body.rotation.set(this.steerVY * 0.025, -this.steerVX * 0.012, -this.steerVX * 0.035);
-    const launched = f.launchUntil > f.s;
-    const thrust = f.boosting || launched ? 1 : Math.min(0.6, f.v / FLIGHT.launch);
-    m.update(this.time, thrust);
+    m.update(this.time, f.v / FLIGHT.top);
     m.body.visible = f.invuln <= 0 || Math.floor(f.invuln * 14) % 2 === 0;
-    m.shield.visible = f.boosting;
-    if (f.boosting) (m.shield.material as THREE.MeshBasicMaterial).opacity = 0.16 + Math.sin(this.time * 24) * 0.05;
+    m.shield.visible = false;
     this.view.update(f.s, f.t, f.gone, f.broken);
     this.belt.update(dt, ds);
     this.giant.update(dt);
@@ -538,8 +528,10 @@ export class ArgoFlight implements Vehicle {
     const k = Math.min(1, f.s / this.length);
     this.giant.group.position.set(-260 + k * 60, 90 - k * 30, -980 + k * 260);
     this.giant.group.scale.setScalar(190 + k * 50);
-    if (dt > 0 && Math.random() < 0.7) {
-      for (const side of [-1, 1]) this.world.particles.emit(f.x + side * 0.36, f.y - 0.1, 2.6, { count: 1, color: f.boosting ? '#ffd166' : '#7fe6ff', speed: 0.3, life: 0.3, size: 0.35, gravity: 0, vel: [0, 0, 18 + f.v * 0.5] });
+    // The engines' trail: thin while the Argo idles, long and gold at full speed.
+    if (dt > 0 && Math.random() < 0.2 + 0.6 * (f.v / FLIGHT.top)) {
+      const hot = f.v > FLIGHT.top * 0.85;
+      for (const side of [-1, 1]) this.world.particles.emit(f.x + side * 0.36, f.y - 0.1, 2.6, { count: 1, color: hot ? '#ffd166' : '#7fe6ff', speed: 0.3, life: 0.3, size: 0.35, gravity: 0, vel: [0, 0, 18 + f.v * 0.5] });
     }
     // Dust shakes off the Clashing Rocks while they rumble, and the slam is loud.
     for (const c of this.view.visibleClashes) {
@@ -576,8 +568,8 @@ export class ArgoFlight implements Vehicle {
     }
     out.pos.copy(this.camPos);
     out.look.copy(this.camLook);
-    const speed = Math.max(0, Math.min(1, (f.v - FLIGHT.cruise) / (FLIGHT.launch - FLIGHT.cruise)));
-    out.fov = 50 + speed * 10;
+    // The view widens with speed (and narrows a little when the Argo eases right off).
+    out.fov = 47 + (f.v / FLIGHT.top) * 13;
     return out;
   }
 
@@ -600,6 +592,7 @@ export class ArgoFlight implements Vehicle {
     }
     for (const i of [...this.sent]) if (f.things[i].s > this.cpS) this.sent.delete(i);
     this.dronesShot = this.savedDrones;
+    // The dove only ever flies once: if a restart catches it mid-flight, it has flown home.
     this.doveRun = null;
     this.clearRockets();
     this.radioQueue = [];
@@ -612,28 +605,19 @@ export class ArgoFlight implements Vehicle {
     const f = this.flight;
     let prompt: string | null = null;
     let urgent = false;
-    // The "wait for the dove / BOOST NOW!" call-out is the first pair's lesson only.
-    const h = f.holding && f.hold === this.doveHold ? f.hold : null;
-    if (h) {
-      const group = holdGroup(f.things, h);
-      if (group.length) {
-        const first = group[0];
-        const last = group[group.length - 1];
-        // The latest moment to launch and still clear the last pair before it slams.
-        const exit = (last.s + CLASH.depth / 2 + FLIGHT.radius - h.s) / FLIGHT.launch + FLIGHT.launch / (2 * FLIGHT.accel);
-        const slamAt = first.period - CLASH.shut - CLASH.slam;
-        const safe = Math.max(0.3, Math.min(1.6, slamAt + 0.1 - exit));
-        const u = clashState(first, f.t).phase;
-        urgent = u <= safe;
-        prompt = urgent ? label('BOOST NOW!') : label('Wait for the dove...');
-      }
+    // The "slow down / FULL SPEED NOW!" call-out is the first row's lesson only.
+    const row = this.lessonRow;
+    if (row && !row.every((c) => f.broken.has(c)) && f.s > row[0].s - 110 && f.s < row[0].s - CLASH.depth / 2) {
+      urgent = goNow(row, f.s, f.v, f.t);
+      prompt = urgent ? label('FULL SPEED NOW!') : label('Slow down... wait for them to OPEN');
     }
     return {
       hull: f.hull,
       hullMax: FLIGHT.hull,
-      boost: f.meter,
-      boostSlots: Math.round(1 / FLIGHT.boostCost),
-      boosting: f.boosting || f.launchUntil > f.s,
+      boost: 0,
+      boostSlots: 0,
+      boosting: false,
+      lever: [f.lever, f.v / FLIGHT.top],
       counter: ['ring', this.rings, this.ringTotal],
       rockets: [f.rockets, FLIGHT.rockets, !!f.rocketTarget()],
       progress: Math.min(1, f.s / this.length),

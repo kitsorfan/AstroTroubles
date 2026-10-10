@@ -14,7 +14,7 @@ function check(id: DeckId, showMap: boolean) {
   if (def.flight) {
     // A flight level has no map to walk: its course is checked by game/tests/chapter3.test.ts.
     const n = (k: string) => def.flight?.things.filter((t) => t.kind === k).length ?? 0;
-    console.log(`== ${id} (flight: ${def.vehicle}) rocks ${n('rock')} crystals ${n('crystal')} rings ${n('ring')} bolts ${n('bolt')} drone waves ${n('drones')} clashing pairs ${n('clash')} hold lines ${n('hold')} checkpoints ${n('checkpoint')}`);
+    console.log(`== ${id} (flight: ${def.vehicle}) rocks ${n('rock')} crystals ${n('crystal')} rings ${n('ring')} bolts ${n('bolt')} drone waves ${n('drones')} clashing pairs ${n('clash')} checkpoints ${n('checkpoint')}`);
     return;
   }
   if (def.dive) {

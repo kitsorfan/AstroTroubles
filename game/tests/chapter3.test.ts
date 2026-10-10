@@ -16,7 +16,7 @@ import {
   isVehicleLevel,
   nextChapterStart,
 } from '../src/levels';
-import { CLASH, FLIGHT, clashState, holdGroup, inCorridor, laneAt, type Clash, type FlightCourse, type Hold } from '../src/vehicles/course';
+import { CLASH, FLIGHT, ROW_GAP, clashRows, clashState, goNow, inCorridor, laneAt, type Clash, type FlightCourse } from '../src/vehicles/course';
 import { Flight, type FlightEvents } from '../src/vehicles/flight';
 import { flightGoals, flightTotals, recordFlight } from '../src/vehicles/quests';
 import { parseLevel } from '../src/world/grid';
@@ -99,10 +99,10 @@ describe('flight levels', () => {
   it('have every dialogue their course and cutscenes use', () => {
     for (const id of FLIGHTS) {
       const def = LEVELS[id];
-      const keys = new Set(['intro', 'finish', 'doveSafe']);
+      const keys = new Set(['intro', 'finish']);
       for (const t of def.flight?.things ?? []) {
         if (t.kind === 'radio') keys.add(t.dialogue);
-        if (t.kind === 'hold' && t.dialogue) keys.add(t.dialogue);
+        if (t.kind === 'dove') keys.add('dove').add('doveSafe');
       }
       for (const k of keys) expect([k, (def.dialogues[k]?.length ?? 0) > 0]).toEqual([k, true]);
     }
@@ -173,97 +173,99 @@ describe.each(FLIGHTS)('%s course', (id: DeckId) => {
     }
   });
 
-  it('puts a hold line before every pair of Clashing Rocks, with nothing in the way', () => {
+  it('puts a clear run-up before every row of Clashing Rocks, with nothing in the way', () => {
     const clashes = things.filter((t): t is Clash => t.kind === 'clash');
     expect(clashes.length).toBeGreaterThanOrEqual(5);
-    const holds = things.filter((t): t is Hold => t.kind === 'hold');
-    const grouped = new Set(holds.flatMap((h) => holdGroup(things, h)));
     for (const c of clashes) {
-      expect(grouped.has(c)).toBe(true);
       // The pair sits in the middle of the guide route, and no asteroid floats inside its rocks.
       const [gx, gy] = laneAt(course.guide, c.s);
       expect(Math.hypot(gx, gy)).toBeLessThan(0.5);
       const near = things.filter((t) => (t.kind === 'rock' || t.kind === 'ring' || t.kind === 'crystal') && Math.abs(t.s - c.s) < CLASH.depth);
       expect(near).toEqual([]);
     }
-    for (const h of holds) {
-      const group = holdGroup(things, h);
-      expect(group.length).toBeGreaterThan(0);
-      expect(group[0].s - CLASH.depth / 2 - h.s).toBeGreaterThan(15);
+    // Room to ease off and wait in front of each row, and no checkpoint in the middle of one.
+    const rows = clashRows(things);
+    for (let i = 1; i < rows.length; i++) expect(rows[i][0].s - rows[i - 1][rows[i - 1].length - 1].s).toBeGreaterThanOrEqual(ROW_GAP);
+    for (const row of rows) {
+      const inside = things.filter((t) => t.kind === 'checkpoint' && t.s > row[0].s - CLASH.depth && t.s < row[row.length - 1].s + CLASH.depth);
+      expect(inside).toEqual([]);
     }
   });
 
-  it('can be flown start to finish by following the guide and launching with the dove, without a scratch', () => {
+  it('can be flown start to finish by following the guide and waiting for each row of rocks to open, without a scratch', () => {
     const f = new Flight(course);
-    const hits = { bump: 0, crush: 0, rings: 0, holds: 0 };
+    const rows = clashRows(things);
+    const hits = { bump: 0, crush: 0, rings: 0 };
     const ev: FlightEvents = {
       bump: () => (hits.bump += 1),
       crush: () => (hits.crush += 1),
       ring: () => (hits.rings += 1),
-      hold: () => (hits.holds += 1),
     };
     const dt = 1 / 60;
     let time = 0;
+    let waited = 0;
     while (!f.finished && time < 600) {
       // Steer toward the guide a little way ahead.
       const [gx, gy] = laneAt(course.guide, f.s + 4);
       const steerX = Math.max(-1, Math.min(1, (gx - f.x) * 2));
       const steerY = Math.max(-1, Math.min(1, (gy - f.y) * 2));
-      // At a hold line, go the moment the rocks start to open (just like the dove).
-      const h = f.holding ? f.hold : null;
-      const boost = !!h && clashState(holdGroup(f.things, h)[0], f.t).phase < 0.1;
-      f.step(dt, { steerX, steerY, boost }, ev);
+      // Coming up to a row of rocks: ease right off, and push the lever all the way up once that gets through.
+      const row = rows.find((r) => r[r.length - 1].s + CLASH.depth / 2 > f.s);
+      let lever: number = FLIGHT.lever;
+      if (row && f.s > row[0].s - 60) lever = goNow(row, f.s, f.v, f.t) ? 1 : 0;
+      if (lever === 0) waited += dt;
+      f.step(dt, { steerX, steerY, lever }, ev);
       time += dt;
     }
     expect(f.finished).toBe(true);
-    expect(hits).toEqual({ bump: 0, crush: 0, rings: things.filter((t) => t.kind === 'ring').length, holds: things.filter((t) => t.kind === 'hold').length });
+    expect(hits).toEqual({ bump: 0, crush: 0, rings: things.filter((t) => t.kind === 'ring').length });
     expect(f.hull).toBe(FLIGHT.hull);
+    expect(waited).toBeGreaterThan(0);
     // Three to five minutes of flying, waits at the rocks included.
     expect(time / 60).toBeGreaterThan(2.5);
     expect(time / 60).toBeLessThan(5);
   });
 
-  it('squishes a launch while the rocks rumble, and sends the Argo back to its hold line', () => {
-    const h = things.find((t): t is Hold => t.kind === 'hold') as Hold;
-    const first = holdGroup(things, h)[0];
+  it('squishes the Argo if it goes while the rocks rumble, and spits it back out with the engines stopped', () => {
+    const first = clashRows(things)[0][0];
     const f = new Flight(course);
-    f.restart(h.s - 20);
+    f.restart(first.s - 40);
     const dt = 1 / 60;
     let crushes = 0;
-    // Wait at the line until the rocks start to rumble, then launch: too late.
-    let launched = false;
+    // Hover in front of the pair until the rocks start to rumble, then go: too late.
+    let go = false;
     for (let i = 0; i < 60 * 30 && !crushes; i++) {
-      const st = clashState(first, f.t);
-      const boost = f.holding && !launched && st.warn > 0.15;
-      if (boost) launched = true;
-      f.step(dt, { steerX: 0, steerY: 0, boost }, { crush: () => (crushes += 1) });
+      if (clashState(first, f.t).warn > 0.15) go = true;
+      f.step(dt, { steerX: 0, steerY: 0, lever: go ? 1 : 0 }, { crush: () => (crushes += 1) });
     }
     expect(crushes).toBe(1);
-    expect(f.holding).toBe(true);
-    expect(f.s).toBe(h.s);
+    expect(f.s).toBe(first.s - CLASH.depth / 2 - FLIGHT.spit);
+    expect([f.v, f.lever]).toEqual([0, 0]);
     expect(f.hull).toBe(FLIGHT.hull - 1);
   });
 
-  it('gives a fair window to launch at every hold line: over a second, even for the last row of three', () => {
-    for (const h of things.filter((t): t is Hold => t.kind === 'hold')) {
-      const group = holdGroup(things, h);
-      const P = group[0].period;
+  it('gives a fair window to go at every row: over a second, from a standstill in front of it', () => {
+    for (const row of clashRows(things)) {
+      const P = row[0].period;
       let safe = 0;
+      let agree = 0;
       const samples = 100;
       for (let k = 0; k < samples; k++) {
         const f = new Flight(course);
-        f.restart(h.s - 1);
-        // Arrive at the line, then wait for this moment in the rhythm.
-        f.step(0.1, { steerX: 0, steerY: 0, boost: false });
+        f.restart(row[0].s - 30);
+        f.v = 0;
+        // Wait for this moment in the rhythm, then full speed through the whole row.
         const want = (k / samples) * P;
-        const u = clashState(group[0], f.t).phase;
+        const u = clashState(row[0], f.t).phase;
         f.t += (((want - u) % P) + P) % P;
+        const called = goNow(row, f.s, f.v, f.t);
         let crushed = false;
-        f.step(1 / 60, { steerX: 0, steerY: 0, boost: true }, { crush: () => (crushed = true) });
-        for (let i = 0; i < 60 * 4 && !crushed && f.s < group[group.length - 1].s + CLASH.depth; i++) f.step(1 / 60, { steerX: 0, steerY: 0, boost: false }, { crush: () => (crushed = true) });
+        for (let i = 0; i < 60 * 6 && !crushed && f.s < row[row.length - 1].s + CLASH.depth; i++) f.step(1 / 60, { steerX: 0, steerY: 0, lever: 1 }, { crush: () => (crushed = true) });
         if (!crushed) safe += P / samples;
+        // The "FULL SPEED NOW!" call-out agrees with what really happens (give or take a frame at the edges).
+        if (called === !crushed) agree += 1;
       }
-      expect([h.s, safe > 1.2]).toEqual([h.s, true]);
+      expect([row[0].s, safe > 1.2, agree >= samples - 4]).toEqual([row[0].s, true, true]);
     }
   });
 });
@@ -271,13 +273,14 @@ describe.each(FLIGHTS)('%s course', (id: DeckId) => {
 describe('The Clashing Rocks', () => {
   const course = LEVELS.rocks.flight as FlightCourse;
   const things = [...course.things].sort((a, b) => a.s - b.s);
-  const holds = things.filter((t): t is Hold => t.kind === 'hold');
+  const rows = clashRows(things);
 
-  /** Flies from just before a hold line until the Argo stops at it. */
-  function arriveAt(h: Hold): Flight {
+  /** Flies up to just in front of a row of rocks and stops there. */
+  function arriveAt(row: Clash[]): Flight {
     const f = new Flight(course);
-    f.restart(h.s - 30);
-    for (let i = 0; i < 60 * 10 && !f.holding; i++) f.step(1 / 60, { steerX: 0, steerY: 0, boost: false });
+    f.restart(row[0].s - 60);
+    for (let i = 0; i < 60 * 10 && f.s < row[0].s - 30; i++) f.step(1 / 60, { steerX: 0, steerY: 0 });
+    for (let i = 0; i < 60 && f.v > 0; i++) f.step(1 / 60, { steerX: 0, steerY: 0, lever: 0 });
     return f;
   }
 
@@ -286,30 +289,51 @@ describe('The Clashing Rocks', () => {
     expect(things.filter((t) => t.kind === 'checkpoint')).toHaveLength(4);
   });
 
-  it('only shows the dove at the first pair: every other hold line is up to the player', () => {
-    expect(holds[0].dialogue).toBe('dove');
-    expect(holds.filter((h) => h.dialogue === 'dove')).toHaveLength(1);
+  it('sends the dove once, toward the first pair, after the second checkpoint', () => {
+    const doves = things.filter((t) => t.kind === 'dove');
+    expect(doves).toHaveLength(1);
+    const cp2 = things.find((t) => t.kind === 'checkpoint' && t.id === 'cp2');
+    expect(doves[0].s).toBeGreaterThan(cp2?.s ?? 0);
+    // Far enough out for the dove to get there first and show the timing.
+    expect(rows[0][0].s - doves[0].s).toBeGreaterThan(200);
   });
 
-  it('fires one of three rockets at the nearest pair, which blows it up and opens the hold line', () => {
-    const h = holds[1];
-    const f = arriveAt(h);
-    expect(f.holding).toBe(true);
-    const target = holdGroup(things, h)[0];
+  it('never stops by itself: the lever sets the speed, from a standstill to full speed', () => {
+    const f = new Flight(course);
+    f.restart(100);
+    for (let i = 0; i < 60; i++) f.step(1 / 60, { steerX: 0, steerY: 0, lever: 0 });
+    const s0 = f.s;
+    for (let i = 0; i < 60; i++) f.step(1 / 60, { steerX: 0, steerY: 0 });
+    expect([f.v, f.s]).toEqual([0, s0]);
+    // A held key pushes the lever up bit by bit, and the Argo picks up speed with it.
+    for (let i = 0; i < 30; i++) f.step(1 / 60, { steerX: 0, steerY: 0, leverMove: 1 });
+    expect(f.lever).toBeCloseTo(FLIGHT.leverRate * 0.5, 2);
+    for (let i = 0; i < 60; i++) f.step(1 / 60, { steerX: 0, steerY: 0, lever: 1 });
+    expect(f.v).toBe(FLIGHT.top);
+    // Left alone, it keeps flying at whatever speed the lever is at.
+    const v = f.v;
+    for (let i = 0; i < 60 * 5; i++) f.step(1 / 60, { steerX: 0, steerY: 0 });
+    expect(f.v).toBe(v);
+  });
+
+  it('fires one of three rockets at the nearest pair, which blows it up so the Argo flies straight through', () => {
+    const row = rows[1];
+    const f = arriveAt(row);
+    const target = row[0];
     expect(f.rocketTarget()).toBe(target);
     let blasts = 0;
+    let crushes = 0;
     expect(f.fireRocket()).toBe(true);
     expect(f.rockets).toBe(FLIGHT.rockets - 1);
-    for (let i = 0; i < 60 * 3; i++) f.step(1 / 60, { steerX: 0, steerY: 0, boost: false }, { blast: () => (blasts += 1) });
+    for (let i = 0; i < 60 * 3; i++) f.step(1 / 60, { steerX: 0, steerY: 0, lever: 1 }, { blast: () => (blasts += 1), crush: () => (crushes += 1) });
     expect(blasts).toBe(1);
     expect(f.broken.has(target)).toBe(true);
-    // Its only pair is gone: the Argo flies on by itself, straight through where the rocks were.
-    expect(f.holding).toBe(false);
+    expect(crushes).toBe(0);
     expect(f.s).toBeGreaterThan(target.s);
   });
 
   it('runs out after three rockets, and gives back the ones fired in a section that is lost', () => {
-    const f = arriveAt(holds[holds.length - 1]);
+    const f = arriveAt(rows[rows.length - 1]);
     const empty: string[] = [];
     for (let k = 0; k < 4; k++) f.fireRocket({ noRocket: (why) => empty.push(why) });
     expect(f.rockets).toBe(0);

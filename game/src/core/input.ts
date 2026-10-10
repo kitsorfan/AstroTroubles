@@ -124,6 +124,20 @@ export class Input {
     return this.enabled;
   }
 
+  /** Where an on-screen lever was last dragged to (the Argo's throttle, 0..1), until a vehicle reads it. */
+  private leverAt: number | undefined;
+
+  setLever(at: number) {
+    this.leverAt = Math.max(0, Math.min(1, at));
+  }
+
+  /** The lever's new position if it was dragged since the last read; consumed on read. */
+  takeLever(): number | undefined {
+    const at = this.leverAt;
+    this.leverAt = undefined;
+    return this.enabled ? at : undefined;
+  }
+
   /** Called once per frame before gameplay reads input. */
   poll() {
     let kx = 0;

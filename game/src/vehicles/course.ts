@@ -4,16 +4,20 @@
  *
  * Course space: `s` is the distance flown along the course (forward, in world units); `x` (left and
  * right) and `y` (down and up) place things inside the flight corridor, centred on 0. The Argo flies
- * forward on its own at `FLIGHT.cruise`; the player steers inside the corridor, shoots and boosts.
+ * forward on its own; the player sets its speed with the throttle lever (from a full stop to `FLIGHT.top`),
+ * steers inside the corridor and shoots.
  */
 
 export const FLIGHT = {
-  /** Forward speed (units a second) while cruising. */
+  /** Forward speed (units a second) at the lever's starting notch, a comfortable cruise. */
   cruise: 24,
-  /** Forward speed while boosting, and when launching through the Clashing Rocks. */
-  launch: 42,
-  /** How fast the Argo changes forward speed (units a second, per second). */
-  accel: 120,
+  /** Forward speed with the lever pushed all the way up (rows of Clashing Rocks are timed for it). */
+  top: 42,
+  /** Where the lever starts (0 stops the Argo, 1 is full speed), and how fast a held key moves it (per second). */
+  lever: 24 / 42,
+  leverRate: 0.9,
+  /** How fast the Argo changes forward speed (units a second, per second): heavy, but quick enough to dart through. */
+  accel: 70,
   /** Half the corridor's width and height. */
   halfW: 9,
   halfH: 5,
@@ -25,12 +29,8 @@ export const FLIGHT = {
   hull: 5,
   /** Seconds of blinking safety after a hit. */
   invuln: 1.6,
-  /** A boost lasts this long, costs this much of the meter, and the meter refills at this rate. */
-  boostTime: 1.1,
-  boostCost: 1 / 3,
-  boostRecharge: 0.085,
-  /** Distance before a hold line where the Argo starts to slow down. */
-  brake: 34,
+  /** After the rocks spit the Argo out, it waits this far in front of the pair. */
+  spit: 14,
   /** A ring counts if the Argo crosses it this close to its centre. */
   ringRadius: 2.5,
   /** Bolts are picked up from this far away. */
@@ -103,12 +103,10 @@ export interface Clash {
   /** Shifts the rhythm (seconds), so a row of pairs can open one after another. */
   offset: number;
 }
-/** A hold line before Clashing Rocks: the Argo slows to a hover there and waits for BOOST. LUX's dove shows the timing. */
-export interface Hold {
-  kind: 'hold';
+/** LUX's dove sets off from the Argo here, flies ahead and shows the timing through the next pair of Clashing Rocks. */
+export interface DoveCue {
+  kind: 'dove';
   s: number;
-  /** Lines (a dialogue key) said the first time the Argo stops here. */
-  dialogue?: string;
 }
 /** A checkpoint beacon: the hull is mended and a lost section restarts from here. */
 export interface Beacon {
@@ -128,7 +126,7 @@ export interface Finish {
   s: number;
 }
 
-export type CourseThing = Rock | Crystal | Ring | BoltPick | DroneWave | Clash | Hold | Beacon | Radio | Finish;
+export type CourseThing = Rock | Crystal | Ring | BoltPick | DroneWave | Clash | DoveCue | Beacon | Radio | Finish;
 
 export interface FlightCourse {
   /** Everything along the course (any order; the flight sorts it by `s`). */
@@ -196,25 +194,36 @@ export function approach(v: number, target: number, dt: number): number {
   return v < target ? Math.min(target, v + dv) : Math.max(target, v - dv);
 }
 
-/** The forward speed the Argo wants at `s`, slowing down to stop at the next hold line (if it is waiting at one). */
-export function holdSpeed(s: number, hold: Hold | null): number {
-  if (!hold) return FLIGHT.cruise;
-  const left = hold.s - s;
-  if (left <= 0.05) return 0;
-  if (left >= FLIGHT.brake) return FLIGHT.cruise;
-  // Ease to a stop: fast enough to arrive, gentle at the end.
-  return Math.max(1.2, FLIGHT.cruise * Math.sqrt(left / FLIGHT.brake));
+/** Rows of Clashing Rocks: pairs closer together than this are flown as one row, at full speed. */
+export const ROW_GAP = 60;
+
+/** The course's Clashing Rocks in rows (pairs less than `ROW_GAP` apart), in order. */
+export function clashRows(things: CourseThing[]): Clash[][] {
+  const rows: Clash[][] = [];
+  const clashes = things.filter((t): t is Clash => t.kind === 'clash').sort((a, b) => a.s - b.s);
+  for (const c of clashes) {
+    const row = rows[rows.length - 1];
+    if (row && c.s - row[row.length - 1].s < ROW_GAP) row.push(c);
+    else rows.push([c]);
+  }
+  return rows;
 }
 
-/** The pairs of Clashing Rocks that belong to a hold line: every pair after it, up to the next hold or beacon. */
-export function holdGroup(things: CourseThing[], hold: Hold): Clash[] {
-  const after = things.filter((t) => t.s > hold.s).sort((a, b) => a.s - b.s);
-  const out: Clash[] = [];
-  for (const t of after) {
-    if (t.kind === 'clash') out.push(t);
-    else if (t.kind === 'hold' || t.kind === 'checkpoint' || t.kind === 'gate') break;
+/**
+ * True if pushing the lever all the way up right now (at distance `s`, speed `v`, time `t`) carries the
+ * Argo down the middle of a row of Clashing Rocks without a squish. The flight's "GO NOW!" call-out,
+ * and the tests' autopilot.
+ */
+export function goNow(row: Clash[], s: number, v: number, t: number): boolean {
+  const last = row[row.length - 1];
+  const dt = 1 / 30;
+  for (let i = 0; i < 30 * 12 && s < last.s + CLASH.depth / 2 + FLIGHT.radius; i++) {
+    v = approach(v, FLIGHT.top, dt);
+    s += v * dt;
+    t += dt;
+    if (row.some((c) => crushed(c, s, 0, 0, t))) return false;
   }
-  return out;
+  return true;
 }
 
 /** True if a ball of radius `r` at (x, y) fits inside the corridor. */
@@ -313,7 +322,7 @@ export function crystalsNear(seed: number, lane: Lane, at: number[]): Crystal[] 
   });
 }
 
-/** A row of Clashing Rocks pairs `gap` units apart whose rhythms line up for a ship launched at `FLIGHT.launch`. */
+/** A row of Clashing Rocks pairs `gap` units apart whose rhythms line up for a ship flying through at `FLIGHT.top`. */
 export function clashRow(s: number, axes: ('x' | 'y')[], gap: number, period: number, offset = 0): Clash[] {
-  return axes.map((axis, i) => ({ kind: 'clash', s: s + i * gap, axis, period, offset: Math.round((offset - (i * gap) / FLIGHT.launch) * 1000) / 1000 }));
+  return axes.map((axis, i) => ({ kind: 'clash', s: s + i * gap, axis, period, offset: Math.round((offset - (i * gap) / FLIGHT.top) * 1000) / 1000 }));
 }

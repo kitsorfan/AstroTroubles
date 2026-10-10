@@ -39,7 +39,7 @@ export interface Vehicle {
   dispose(): void;
 }
 
-/** The vehicle HUD: hull hearts, a boost meter, a counter, a progress bar and a prompt. */
+/** The vehicle HUD: hull hearts, a boost meter (or a throttle lever), a counter, a progress bar and a prompt. */
 export interface VehicleHud {
   hull: number;
   hullMax: number;
@@ -48,6 +48,8 @@ export interface VehicleHud {
   boostSlots: number;
   /** True while a boost is running (the button glows). */
   boosting: boolean;
+  /** The throttle lever, on vehicles that have one instead of BOOST: [lever position, speed], both 0..1. */
+  lever?: [number, number] | null;
   /** A counter in the top right: [icon kind, got, total]. */
   counter: ['ring', number, number] | null;
   /** Rockets: [left, how many it holds, a target is in range]; null when the vehicle has none. */
@@ -57,7 +59,7 @@ export interface VehicleHud {
   marks: number[];
   /** A big call-out in the middle of the screen (already in English; the HUD translates it). */
   prompt: string | null;
-  /** The prompt is urgent (flashing gold, e.g. "BOOST NOW!"). */
+  /** The prompt is urgent (flashing gold, e.g. "FULL SPEED NOW!"). */
   urgent: boolean;
   /** What the BOOST button says right now, if it does something else on this vehicle (the sub's PING, or SING). */
   button?: string;
