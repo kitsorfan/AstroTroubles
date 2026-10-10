@@ -886,16 +886,15 @@ export class Game {
       },
       dashEmpty: () => {
         this.ui.dashEmpty();
-        const now = performance.now();
-        if (now - this.dashHintAt > 20000) {
-          this.dashHintAt = now;
+        // The button shakes every time; LUX explains why only once.
+        const seen = (this.save.hints ??= []);
+        if (!seen.includes('dashEmpty')) {
+          seen.push('dashEmpty');
           this.ui.toast('Out of dash energy! Checkpoints and violet energy cells fill it back up.', 'bolt');
         }
       },
     };
   }
-
-  private dashHintAt = -1e9;
 
   /** After a shop purchase (see game/shop.ts): heal for a new heart, put the gear on, and celebrate. */
   private bought(ok: boolean, heart = false) {
