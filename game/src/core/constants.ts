@@ -172,33 +172,69 @@ export const BRENNUS = {
 
 /**
  * The Gardeners' bronze mech suit (Talos's Forge): Jason pilots it, Atalanta rides on its shoulder. Big,
- * heavy and a little slow, with one strong hydraulic jump, a forward THRUST (its jets) for gaps, a
- * PUNCH that breaks bronze gates, a SLAM that breaks cracked floors, and a slow cannon.
+ * heavy and slow, but far stronger than anyone on foot: one strong hydraulic jump, a forward THRUST (its
+ * jets) for gaps, a PUNCH that breaks bronze gates and flattens robots, a SLAM that breaks cracked
+ * floors, and a big FLAMETHROWER. Aboard there are no hearts: hits wear its STRENGTH down instead.
  */
 export const MECH = {
-  speed: 6.4,
+  /** A heavy walk: clearly slower than Jason (7) and even General Brennus (5.6). */
+  speed: 4.8,
   /** A wider, taller body than Jason's: corridors in the forge are at least one cell wide. */
   radius: 0.75,
   height: 3,
   /** One strong jump: apex about 2.4 units (four floor steps, with a little to spare). */
   jumpV: 12.4,
-  /** THRUST (the DASH button): a burst of its back jets, on the ground or once per jump; gravity pauses while it lasts. */
-  thrustSpeed: 16,
-  thrustTime: 0.3,
+  /**
+   * THRUST (the DASH button): a burst of its back jets, on the ground or once per jump; gravity pauses
+   * while it lasts. Strong enough that a jump and a THRUST still clear a wide lava channel at the slow walk.
+   */
+  thrustSpeed: 18,
+  thrustTime: 0.32,
   thrustCooldown: 0.7,
-  /** PUNCH (the SPIN button on the ground): a one-two of bronze fists, each a heavy `smash` just in front. */
+  /**
+   * PUNCH (the SPIN button on the ground): a one-two of bronze fists, each a heavy `smash` just in front.
+   * Its damage (like the SLAM's and the flames') is multiplied by how tough the level's enemies are, so a
+   * small robot or drone always goes down in one or two punches.
+   */
   punchTime: 0.3,
   punchCooldown: 0.12,
-  punchDamage: 3,
-  punchRadius: 1.5,
+  punchDamage: 5,
+  punchRadius: 1.6,
   punchReach: 1.5,
   /** SLAM (SPIN in the air): straight down, like a ground pound; it smashes cracked floors. */
   slamSpeed: 26,
+  slamDamage: 5,
+  slamRadius: 3.6,
   /** A landing at least this fast (falling) counts as a heavy landing: it also cracks brittle floors. */
   heavyLanding: 17,
-  /** The cannon (BLAST): no heat, just a slower rhythm than Brennus's. */
-  shellCooldown: 0.75,
-  aimRange: 15,
+  /**
+   * FLAMETHROWER (BLAST, held): a big cone of fire from the right arm, longer and wider than Jason's, that
+   * reaches up to drones overhead. Damage per second (times the enemies' toughness), seconds between damage
+   * ticks, how far auto-aim looks, seconds of fire in a full tank, and seconds to refill an empty one.
+   */
+  flameRange: 7.5,
+  flameCone: 0.6,
+  flameReachY: 4.5,
+  flameDps: 4,
+  flameTick: 0.2,
+  flameAim: 9,
+  flameFuel: 4,
+  flameRefill: 3,
+  /**
+   * STRENGTH, instead of hearts: a hit that costs a hero a heart costs the mech only `hitCost` (lava costs
+   * `hazardCost`). It comes back at `regen` a second once `regenDelay` seconds pass without a hit. At 0 the
+   * mech overheats: it kneels, the heroes hop out, and it can't be boarded for `cool` seconds while it
+   * cools down (and fills back up).
+   */
+  strength: 100,
+  hitCost: 10,
+  hazardCost: 15,
+  invuln: 0.7,
+  regenDelay: 4,
+  regen: 5,
+  cool: 10,
+  /** How close a hero must stand to the parked mech to climb back in. */
+  boardRange: 3.4,
 } as const;
 
 /** Switching heroes: a short cooldown, and how the hero you're not playing follows along. */

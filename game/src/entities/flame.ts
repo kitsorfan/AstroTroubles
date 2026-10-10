@@ -41,16 +41,32 @@ export function inCone(ox: number, oz: number, dirX: number, dirZ: number, tx: n
 const brambles = new Set<Bramble>();
 
 /**
- * One tick of flame from `origin` along `dir`: hurts and ignites the enemies (and bosses) in the cone,
- * and scorches brambles. Walls and cliffs stop the fire. Returns how many targets it reached.
+ * A flame cone's size and bite, for a flamethrower other than Jason's (the bronze mech's bigger one):
+ * reach, half-angle, how far above or below the nozzle it still burns, damage per tick, and the burn's
+ * damage per second.
  */
-export function burnCone(w: World, origin: THREE.Vector3, dir: THREE.Vector3, up: ArmsUpgrades): number {
-  const range = WEAPONS.flame.range;
-  const dmg = flameTick(up);
+export interface ConeSpec {
+  range: number;
+  cone: number;
+  reachY: number;
+  dmg: number;
+  dps: number;
+}
+
+/**
+ * One tick of flame from `origin` along `dir`: hurts and ignites the enemies (and bosses) in the cone,
+ * and scorches brambles. Walls and cliffs stop the fire. Returns how many targets it reached. Without
+ * `spec` it is Jason's Flamethrower (with his upgrades).
+ */
+export function burnCone(w: World, origin: THREE.Vector3, dir: THREE.Vector3, up: ArmsUpgrades, spec?: ConeSpec): number {
+  const range = spec?.range ?? WEAPONS.flame.range;
+  const half = spec?.cone ?? FLAME.cone;
+  const reachY = spec?.reachY ?? 2.4;
+  const dmg = spec?.dmg ?? flameTick(up);
   let n = 0;
   const reaches = (t: Target) => {
-    if (Math.abs(t.aim.y - origin.y) > 2.4) return false;
-    if (!inCone(origin.x, origin.z, dir.x, dir.z, t.aim.x, t.aim.z, range, FLAME.cone, t.radius)) return false;
+    if (Math.abs(t.aim.y - origin.y) > reachY) return false;
+    if (!inCone(origin.x, origin.z, dir.x, dir.z, t.aim.x, t.aim.z, range, half, t.radius)) return false;
     // The fire can't go through walls: check the way there.
     for (const k of [0.35, 0.7]) {
       tmp.copy(origin).lerp(t.aim, k);
@@ -58,10 +74,10 @@ export function burnCone(w: World, origin: THREE.Vector3, dir: THREE.Vector3, up
     }
     return true;
   };
-  for (const t of w.targetsNear(origin, range + 2)) {
+  for (const t of w.targetsNear(origin, range + 2, reachY + 1.6)) {
     if (!reaches(t) || !t.hit(dmg, 'burn', origin)) continue;
     n += 1;
-    ignite(w, t, up);
+    ignite(w, t, up, spec?.dps);
   }
   for (const b of brambles) {
     // Brambles left over from an earlier deck are forgotten.
@@ -72,8 +88,8 @@ export function burnCone(w: World, origin: THREE.Vector3, dir: THREE.Vector3, up
 }
 
 /** Sets a target burning: enemies for the full time, bosses only briefly (a boss's weak spot passes it on). */
-export function ignite(w: World, t: Target, up: ArmsUpgrades) {
-  const dps = burnDps(up);
+export function ignite(w: World, t: Target, up: ArmsUpgrades, burn?: number) {
+  const dps = burn ?? burnDps(up);
   if (t instanceof Boss) t.ignite(FLAME.burn * FLAME.bossBurn, dps);
   else if (canBurn(t)) t.ignite(FLAME.burn, dps);
   else if (w.boss?.started && !w.boss.defeated && t.aim.distanceTo(w.boss.where) < 14) w.boss.ignite(FLAME.burn * FLAME.bossBurn, dps);
@@ -83,7 +99,8 @@ const FLAME_COLORS = ['#ffd166', '#ffa030', '#ff7a1a', '#ff4a10'];
 
 /**
  * The fire coming out of the nozzle: three flickering glow sprites along the cone, plus a stream of
- * particles that roll forward, swell and rise. All of it is hidden while the Flamethrower rests.
+ * particles that roll forward, swell and rise. All of it is hidden while the Flamethrower rests. The
+ * bronze mech's jet is the same fire, `size` times bigger, rolling out to its own `range`.
  */
 export class FlameJet {
   private glows: THREE.Sprite[];
@@ -91,7 +108,11 @@ export class FlameJet {
   private t = 0;
   private flashT = 0;
 
-  constructor(private w: World) {
+  constructor(
+    private w: World,
+    private size = 1,
+    private range: number = WEAPONS.flame.range,
+  ) {
     this.glows = [
       glowSprite('#ffc860', 1, 0.6),
       glowSprite('#ff8a20', 1, 0.5),
@@ -109,30 +130,32 @@ export class FlameJet {
     this.t += dt;
     this.level = Math.max(0, Math.min(1, this.level + (on ? dt * 9 : -dt * 7)));
     const show = this.level > 0.02;
-    const range = WEAPONS.flame.range;
+    const range = this.range;
+    const long = range / WEAPONS.flame.range;
+    const size = this.size;
     this.glows.forEach((g, i) => {
       g.visible = show;
       if (!show) return;
-      const along = [0.7, 2.1, 3.7][i] * (0.6 + this.level * 0.4);
+      const along = [0.7, 2.1, 3.7][i] * long * (0.6 + this.level * 0.4);
       const flicker = 0.85 + Math.sin(this.t * (31 + i * 7)) * 0.1 + Math.random() * 0.1;
       g.position.copy(origin).addScaledVector(dir, along);
-      g.position.y += i * 0.25;
-      g.scale.setScalar([0.8, 1.9, 2.8][i] * this.level * flicker);
+      g.position.y += i * 0.25 * size;
+      g.scale.setScalar([0.8, 1.9, 2.8][i] * size * this.level * flicker);
     });
     if (!on) return;
-    const speed = WEAPONS.flame.speed;
+    const speed = WEAPONS.flame.speed * long;
     const life = (range / speed) * 0.9;
     for (let i = 0; i < 4; i++) {
       const c = FLAME_COLORS[(Math.random() * FLAME_COLORS.length) | 0];
       const s = speed * (0.75 + Math.random() * 0.4);
-      this.w.particles.emit(origin.x, origin.y, origin.z, { count: 1, color: c, vel: [dir.x * s, dir.y * s + 0.6, dir.z * s], speed: 2.4, spread: 1, life, size: 0.45 + i * 0.2, gravity: -3, drag: 0.6 });
+      this.w.particles.emit(origin.x, origin.y, origin.z, { count: 1, color: c, vel: [dir.x * s, dir.y * s + 0.6, dir.z * s], speed: 2.4 * size, spread: 1, life, size: (0.45 + i * 0.2) * size, gravity: -3, drag: 0.6 });
     }
     // A warm light on the ground around the flames, now and then.
     this.flashT -= dt;
     if (this.flashT <= 0) {
       this.flashT = 0.18;
-      tmp.copy(origin).addScaledVector(dir, 2.2);
-      this.w.flash(tmp.x, tmp.y, tmp.z, '#ff8a2a', 12, 0.2);
+      tmp.copy(origin).addScaledVector(dir, 2.2 * long);
+      this.w.flash(tmp.x, tmp.y, tmp.z, '#ff8a2a', 12 * size, 0.2);
     }
   }
 

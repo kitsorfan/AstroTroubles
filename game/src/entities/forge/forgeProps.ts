@@ -40,7 +40,7 @@ function burst(world: World, at: THREE.Vector3, color: string) {
 
 /**
  * A heavy bronze gate, a hand thick, with the Gardeners' leaf rivets on it: one cell of wall until the
- * mech PUNCHes it (or blasts it with a big cannon blast). Jason and Atalanta on foot can't dent it.
+ * mech PUNCHes it. Jason and Atalanta on foot can't dent it.
  */
 export class BronzeGate extends Entity implements Target {
   readonly aim: THREE.Vector3;

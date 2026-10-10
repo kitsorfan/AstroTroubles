@@ -2,21 +2,22 @@ import * as THREE from 'three';
 
 import { audio } from '../core/audio';
 import { haptic } from '../core/bridge';
-import { CELL, DEATH_Y, GAZE, GEAR, GRAPPLE, HERO_SWITCH, MIRROR, OUTDOOR, PLAYER } from '../core/constants';
+import { CELL, DEATH_Y, GAZE, GEAR, GRAPPLE, HERO_SWITCH, MECH, MIRROR, OUTDOOR, PLAYER } from '../core/constants';
 import type { Input } from '../core/input';
 import { clamp, damp, dampAngle } from '../core/math';
 import type { World } from '../game/world';
 import { Grid } from '../world/grid';
 import type { Ability, HeroId } from '../world/levelTypes';
-import { makeBody, moveBody, type Body, type MoveOpts } from '../world/physics';
+import { makeBody, moveBody, pointBlocked, type Body, type MoveOpts } from '../world/physics';
 import { dressJason, makeJason, type HeroModel, type JasonModel } from './models';
 import type { Target } from './entity';
 import { Arrows } from './heroes/arrows';
 import { AtalantaMoves } from './heroes/atalanta';
 import { BrennusMoves } from './heroes/brennus';
 import { Follower } from './heroes/follower';
-import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, switchBlock, type SwitchBlock, type TrailMove } from './heroes/heroes';
+import { HEROES, heroDev, heroRoster, joinedRoster, nextHero, parkedFlag, switchBlock, type SwitchBlock, type TrailMove } from './heroes/heroes';
 import { MechMoves } from './heroes/mech';
+import { spent } from './heroes/mechPower';
 import { makeMirrorShield, stoneSkin, type MirrorShieldModel } from './labyrinth/stone';
 import { JasonFx } from './moveFx';
 import { FlameJet, burnCone } from './flame';
@@ -142,6 +143,9 @@ export class Player {
   readonly fx: JasonFx;
   /** Seconds since the last hit; the HUD uses it to show hearts. */
   sinceHurt = 99;
+  /** Whether the heroes could climb out of the mech here, and when that was last worked out (world time). */
+  private leaveOk = false;
+  private leaveAskedT = -1;
   /** Lets a cutscene pose the playing hero's model (called after the normal animation each frame). */
   pose: ((m: HeroModel, dt: number) => void) | null = null;
   /** The follower being helped up a ledge right now: the playing hero holds still, reaching down. */
@@ -198,6 +202,8 @@ export class Player {
     this.showHero();
     // Back at a checkpoint after climbing into the mech: everyone is already aboard.
     if (this.hero === 'mech' && this.mech) this.mech.seat(this.jason, this.ata?.model ?? null);
+    // The action button's GET OUT (aboard) and CLIMB IN (beside the parked mech).
+    if (this.mech) world.addInteractable(this.mech);
   }
 
   /**
@@ -207,11 +213,28 @@ export class Player {
   get roster(): HeroId[] {
     const joins = this.world.def.joins ?? {};
     if (heroDev.heroes?.length) return this.cast;
-    // Once the bronze mech has joined, the others ride inside it (see `joinedRoster`).
+    // Once the bronze mech has joined, the others ride inside it (see `joinedRoster`), unless they
+    // have climbed out and left it parked.
     return joinedRoster(this.cast, (h) => {
       const flag = joins[h];
+      if (flag && HEROES[h].vehicle && this.world.hasFlag(parkedFlag(h))) return false;
       return !flag || this.world.hasFlag(flag);
     });
+  }
+
+  /** True while the heroes ride the bronze mech. */
+  get aboard() {
+    return this.hero === 'mech';
+  }
+
+  /** What a hit takes away: the hearts on foot, the mech's STRENGTH aboard (enemies check whether a hit landed). */
+  get health(): number {
+    return this.hero === 'mech' && this.mech ? this.mech.power.strength : this.hearts;
+  }
+
+  /** Where the empty mech stands, kneeling, while the heroes are out on foot (null otherwise). */
+  get mechParked(): THREE.Vector3 | null {
+    return this.hero !== 'mech' ? (this.mech?.parked ?? null) : null;
   }
 
   /**
@@ -296,6 +319,143 @@ export class Player {
     this.world.hooks.hud();
   }
 
+  /** True on the plain, steady floor of a level cell (not lava, a moving box or a cracked plate). */
+  private onSolidFloor(): boolean {
+    const g = this.body.grounded ? this.body.ground : null;
+    if (!g || g.kind === 'box' || g.kind === 'hazard') return false;
+    return !this.world.floorEffect(g)?.unsafe;
+  }
+
+  /**
+   * Two spots beside the mech standing at (x, y, z) where Jason and Atalanta can stand once they climb
+   * out: floor at about the mech's height, with headroom, close together on one side of it (so the one
+   * who follows doesn't walk through the mech to catch up), else wherever there is room. Null if there
+   * isn't room for both.
+   */
+  private exitSpots(x: number, y: number, z: number, facing: number): [THREE.Vector3, THREE.Vector3] | null {
+    const w = this.world;
+    const g = w.grid;
+    const out: THREE.Vector3[] = [];
+    const free = (px: number, pz: number) => {
+      const cx = Grid.toCell(px);
+      const cz = Grid.toCell(pz);
+      const c = g.cell(cx, cz);
+      if (c.kind !== 'floor' && c.kind !== 'ice' && c.kind !== 'grate') return false;
+      if (Math.abs(c.h - y) > 0.6 || w.floorEffect({ kind: c.kind, cx, cz })?.unsafe) return false;
+      return !pointBlocked(g, w.boxes, px, c.h + 0.5, pz) && !pointBlocked(g, w.boxes, px, c.h + 1.6, pz);
+    };
+    for (const a of [Math.PI / 2, (Math.PI * 3) / 4, -Math.PI / 2, (-Math.PI * 3) / 4, Math.PI, Math.PI / 4, -Math.PI / 4]) {
+      const r = MECH.radius + 1.15;
+      const px = x + Math.sin(facing + a) * r;
+      const pz = z + Math.cos(facing + a) * r;
+      // The spot, and the way out to it (no climbing out through a wall corner).
+      if (!free(px, pz) || !free((x + px) / 2, (z + pz) / 2)) continue;
+      if (out.some((o) => Math.hypot(o.x - px, o.z - pz) < 1.3)) continue;
+      out.push(new THREE.Vector3(px, g.cell(Grid.toCell(px), Grid.toCell(pz)).h, pz));
+      if (out.length === 2) return [out[0], out[1]];
+    }
+    return null;
+  }
+
+  /**
+   * The mech can be left here: aboard, on solid ground, with room beside it for the heroes. The action
+   * button asks every frame, so the answer is kept for a moment (getting out checks again for real).
+   */
+  canLeaveMech(): boolean {
+    if (!this.mech || this.hero !== 'mech' || this.down || this.world.cutscene) return false;
+    const now = this.world.time;
+    if (now - this.leaveAskedT < 0.15) return this.leaveOk;
+    this.leaveAskedT = now;
+    this.leaveOk = !this.mech.busy && this.onSolidFloor() && this.exitSpots(this.body.x, this.body.y, this.body.z, this.facing) !== null;
+    return this.leaveOk;
+  }
+
+  /**
+   * GET OUT: Jason and Atalanta climb out beside the mech and play on foot (switching, their own hearts),
+   * and the empty mech stays parked, kneeling, where they left it. `overheated`: it ran out of STRENGTH
+   * and throws them out wherever it stands (if that isn't solid ground, it stumbles back to the last safe
+   * spot first), and must cool down before they can climb back in.
+   */
+  leaveMech(overheated: boolean): boolean {
+    const mech = this.mech;
+    if (!mech || this.hero !== 'mech') return false;
+    const w = this.world;
+    const b = this.body;
+    const solid = this.onSolidFloor();
+    const at = solid ? new THREE.Vector3(b.x, b.y, b.z) : this.safe.clone();
+    const room = this.exitSpots(at.x, at.y, at.z, this.facing);
+    if (!overheated && (!room || !solid || mech.busy || this.down || w.cutscene)) {
+      audio.play('empty');
+      return false;
+    }
+    // Thrown out with no room around: they tumble out right where it kneels, and walk off.
+    const spots = room ?? [at, at];
+    mech.park(at, this.facing, overheated);
+    w.setFlag(parkedFlag('mech'));
+    const hero = this.roster[0];
+    this.hero = hero;
+    b.r = PLAYER.radius;
+    b.h = HEROES[hero].height;
+    const [mine, theirs] = spots;
+    this.teleport(mine.x, mine.y + 0.05, mine.z);
+    this.showHero();
+    this.followers[0]?.place(theirs.x, theirs.y, theirs.z, this.facing);
+    this.swapCd = 0.6;
+    this.invuln = overheated ? 1.6 : 0.4;
+    this.squash = 0.25;
+    this.refreshGear();
+    w.refreshCompanions();
+    w.particles.emit(at.x, at.y + 2, at.z, { count: 26, color: overheated ? '#d8d8d8' : '#ffd8a0', speed: 4, life: 0.6, size: 0.6, up: 2, gravity: overheated ? -2 : 3 });
+    if (overheated) {
+      audio.play('vent', 0.8);
+      audio.play('pound', 1.2);
+      w.shake(0.5);
+      haptic('heavy');
+    } else {
+      audio.play('door', 1.3);
+      audio.play('land', 1.1);
+      haptic('light');
+      if (!w.hasFlag('mechhint')) {
+        w.setFlag('mechhint');
+        w.hooks.toast('Out we hop! The mech waits here for us. Walk up to it and press CLIMB IN to get back aboard.', 'bolt');
+      }
+    }
+    w.hooks.hud();
+    return true;
+  }
+
+  /** CLIMB IN: everyone climbs back into the parked mech (no story scene this time). */
+  climbIn() {
+    const at = this.mech?.parked?.clone();
+    if (!at || this.down || !this.reboard()) return;
+    const w = this.world;
+    w.particles.emit(at.x, at.y + 1.8, at.z, { count: 30, color: '#5ff0d0', speed: 4, life: 0.6, size: 0.6, gravity: -1 });
+    w.rings.burst(at.x, at.y + 0.05, at.z, 4, '#5ff0d0', 0.4);
+    audio.play('charged', 0.7);
+    audio.play('door', 1.1);
+    haptic('medium');
+  }
+
+  /**
+   * Back at a checkpoint (knocked out, or "back to last checkpoint"): once the mech has joined, everyone
+   * starts again aboard it, cooled down and at full STRENGTH, wherever it was left.
+   */
+  backAboard() {
+    if (!this.mech) return;
+    this.mech.refill();
+    this.reboard();
+  }
+
+  /** Everyone back into the parked mech, right where it kneels. False if it isn't parked. */
+  private reboard(): boolean {
+    const mech = this.mech;
+    if (!mech?.parked || this.hero === 'mech') return false;
+    this.world.clearFlag(parkedFlag('mech'));
+    mech.unpark();
+    this.board('mech');
+    return true;
+  }
+
   /**
    * Shows the playing hero, and hands the others (if any) to the followers, in switch order. Heroes who
    * haven't joined yet are left alone (they wait at their marker, see `showWaiting`).
@@ -310,6 +470,7 @@ export class Player {
     for (let id = nextHero(roster, this.hero); id && id !== this.hero && !others.includes(id); id = nextHero(roster, id)) others.push(id);
     // Nobody left on foot (everyone climbed into the mech): nobody follows.
     if (!others.length) {
+      for (const f of this.followers) f.dispose();
       this.followers = [];
       return;
     }
@@ -930,6 +1091,11 @@ export class Player {
   /** `hazard` damage (lasers, zap floors, lava) gets through a spin; enemy and boss attacks do not. */
   hurt(n: number, fromX?: number, fromZ?: number, hazard = false) {
     if (this.invuln > 0 || this.down || this.world.cutscene) return;
+    // Aboard the mech, its STRENGTH takes the hit: the heroes' hearts are safe inside.
+    if (this.hero === 'mech' && this.mech) {
+      this.mech.hurt(n, fromX, fromZ, hazard);
+      return;
+    }
     if (this.spinT > 0 && !hazard) {
       // The spin guards Jason: the attack glances off in a spray of sparks.
       audio.play('zap', 2.4);
@@ -1067,6 +1233,8 @@ export class Player {
     for (const f of this.followers) f.update(dt, this);
     this.tickStone(dt);
     this.mirrorFlash = Math.max(0, this.mirrorFlash - dt * 3);
+    // The empty mech kneels where it was left, cooling down and getting its strength back.
+    if (this.mech && this.hero !== 'mech') this.mech.updateParked(dt);
     if (this.down || w.cutscene) {
       this.cancelCharge();
       this.mirrorUp = false;
@@ -1077,7 +1245,6 @@ export class Player {
       if (this.ata && this.hero === 'atalanta') this.ata.animate(dt, 0);
       else if (this.mech && this.hero === 'mech') {
         this.mech.reset();
-        this.mech.cannon.update(dt);
         this.mech.animate(dt, 0);
       } else if (this.bren && this.hero === 'brennus') {
         this.bren.cannon.update(dt);
@@ -1108,6 +1275,11 @@ export class Player {
       return;
     }
     if (this.mech && this.hero === 'mech') {
+      // Out of STRENGTH: as soon as it stands on the ground, it kneels and everyone hops out.
+      if (spent(this.mech.power) && this.mech.canBail) {
+        this.leaveMech(true);
+        return;
+      }
       this.mech.update(dt, input);
       return;
     }
@@ -1492,7 +1664,8 @@ export class Player {
       const dir = tmp.set(Math.sin(this.facing), this.flameDir.y, Math.cos(this.facing)).normalize();
       this.jet.update(dt, this.flaming, this.nozzle(), dir);
     }
-    audio.flame(this.flaming);
+    // One roar for whichever flamethrower is burning (Jason's, or the mech's).
+    audio.flame(this.flaming || (this.hero === 'mech' && !!this.mech?.flaming));
   }
 
   /** Where shots leave the blaster, and which way they fly (auto-aiming at the best target). */

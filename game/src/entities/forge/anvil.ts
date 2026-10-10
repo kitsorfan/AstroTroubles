@@ -14,7 +14,7 @@ import { blobShadow, boxG, cyl, glowSprite, mat, mesh, ownMat, sphere } from '..
  * An ANVIL DRONE, one of Aeëtes's gold work drones (Talos's Forge). It hovers high over the hero with an
  * iron anvil on a cable. A red circle shows where the anvil will land (the warning), then it lets go;
  * the anvil thumps down, sits there a moment, and the drone swoops down low to hook it back up. That's
- * the moment to PUNCH it (or blast it any time with the cannon). Gentle numbers: one heart if the anvil
+ * the moment to PUNCH it (or roast it any time with the mech's flamethrower). Gentle numbers: one heart if the anvil
  * lands on you, and the circle is big and slow.
  */
 

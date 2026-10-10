@@ -54,8 +54,12 @@ export const EL_FORGE: Record<string, string> = {
   "Its eye is lighting up! It likes us. I think it likes us. Please like us.": "Το μάτι της ανάβει! Μας συμπαθεί. Νομίζω ότι μας συμπαθεί. Σε παρακαλώ, συμπάθησέ μας.",
   "The mech is awake! Jason pilots it, Atalanta rides on its shoulder, and LUX and IRIS fly alongside.":
     "Η ρομποστολή ξύπνησε! Ο Ιάσονας την οδηγεί, η Αταλάντη κάθεται στον ώμο της, κι ο ΛΟΥΞ με την ΙΡΙΔΑ πετάνε δίπλα.",
-  "SPIN is PUNCH. In the air, SPIN is a big SLAM. DASH fires the back jets: THRUST! And BLAST fires its cannon.":
-    "Η ΣΒΟΥΡΑ είναι ΓΡΟΘΙΑ. Στον αέρα, η ΣΒΟΥΡΑ είναι ένα μεγάλο ΚΑΡΦΩΜΑ. Η ΟΡΜΗ ανάβει τους πίσω πυραύλους: ΩΘΗΣΗ! Και η ΒΟΛΗ ρίχνει με το κανόνι της.",
+  "SPIN is PUNCH. In the air, SPIN is a big SLAM. DASH fires the back jets: THRUST! And hold BLAST for its FLAMETHROWER.":
+    "Η ΣΒΟΥΡΑ είναι ΓΡΟΘΙΑ. Στον αέρα, η ΣΒΟΥΡΑ είναι ένα μεγάλο ΚΑΡΦΩΜΑ. Η ΟΡΜΗ ανάβει τους πίσω πυραύλους: ΩΘΗΣΗ! Και κράτα πατημένη τη ΒΟΛΗ για το ΦΛΟΓΟΒΟΛΟ της.",
+  "No hearts in a mech: it has STRENGTH. Hits wear it down, and it comes back slowly. If it runs out, the mech overheats and you all hop out until it cools.":
+    "Μια ρομποστολή δεν έχει καρδιές: έχει ΔΥΝΑΜΗ. Τα χτυπήματα τη λιγοστεύουν, κι αυτή γεμίζει ξανά σιγά σιγά. Αν τελειώσει, η ρομποστολή υπερθερμαίνεται και πηδάτε όλοι έξω μέχρι να κρυώσει.",
+  "It’s slow, but SO strong. And the action button lets us GET OUT, and CLIMB back IN.":
+    "Είναι αργή, αλλά ΤΟΣΟ δυνατή. Και με το κουμπί δράσης μπορούμε να ΒΓΟΥΜΕ ΕΞΩ και να ΜΠΟΥΜΕ ΠΑΛΙ ΜΕΣΑ.",
   "Comfy up here! You steer, Jason. I’ll do the cheering.": "Βολικά εδώ πάνω! Εσύ οδηγείς, Ιάσονα. Εγώ θα επευφημώ.",
   // Across the island.
   "You found a TOY in my forge? How sweet. Anvil drones! Drop something heavy on it.":
@@ -91,15 +95,17 @@ export const EL_FORGE: Record<string, string> = {
   "The Gardeners’ bronze guardian · reprogrammed by Aeëtes": "Ο χάλκινος φύλακας των Κηπουρών · τον προγραμμάτισε ο Αιήτης",
   "Talos is lifting his foot! Get out of the red circle, then PUNCH his ankle while his foot is stuck!":
     "Ο Τάλως σηκώνει το πόδι του! Βγες από τον κόκκινο κύκλο και μετά δώσε ΓΡΟΘΙΕΣ στον αστράγαλό του όσο το πόδι του είναι κολλημένο!",
-  "Too thick for little shells! Get close and PUNCH his ankle (the SPIN button).":
-    "Πολύ χοντρή πανοπλία για μικρές οβίδες! Πλησίασε και δώσε ΓΡΟΘΙΑ στον αστράγαλό του (το κουμπί ΣΒΟΥΡΑ).",
+  "Too thick! Get close and PUNCH his ankle (the SPIN button), or hold the FLAMETHROWER on it.":
+    "Πολύ χοντρή πανοπλία! Πλησίασε και δώσε ΓΡΟΘΙΑ στον αστράγαλό του (το κουμπί ΣΒΟΥΡΑ), ή κράτα το ΦΛΟΓΟΒΟΛΟ πάνω του.",
+  "Only the mech is strong enough to fight Talos! Climb back in!": "Μόνο η ρομποστολή είναι αρκετά δυνατή για να τα βάλει με τον Τάλω! Μπείτε πάλι μέσα!",
   "He’s down on one knee! Walk round behind him and PULL the plug in his heel!": "Γονάτισε! Πήγαινε από πίσω του και ΤΡΑΒΑ το βούλωμα από τη φτέρνα του!",
   "He’s back up, and the armour is back on! Next time, pull the plug while he kneels.":
     "Σηκώθηκε ξανά, κι η πανοπλία ξαναμπήκε στη θέση της! Την άλλη φορά, τράβα το βούλωμα όσο είναι γονατιστός.",
   "The plug moved! It’s stuck tight, though. Knock his armour off again and pull some more!":
     "Το βούλωμα κουνήθηκε! Είναι όμως πολύ σφιχτό. Ρίξε του ξανά την πανοπλία και τράβα κι άλλο!",
   "Almost out! One more pull!": "Σχεδόν βγήκε! Ένα τράβηγμα ακόμα!",
-  "Aeëtes is sending anvil drones! Blast them with the CANNON.": "Ο Αιήτης στέλνει Ρομπότ-Αμόνια! Ρίξ’ τους με το ΚΑΝΟΝΙ.",
+  "Aeëtes is sending anvil drones! Roast them with the FLAMETHROWER, or PUNCH them when they swoop down.":
+    "Ο Αιήτης στέλνει Ρομπότ-Αμόνια! Ψήσ’ τα με το ΦΛΟΓΟΒΟΛΟ, ή δώσ’ τους ΓΡΟΘΙΑ όταν κατεβαίνουν χαμηλά.",
   "PULL": "ΤΡΑΒΑ",
   // Talos rests.
   "The golden light ran out of his heel like warm honey, and the great bronze giant sat down.":
@@ -132,14 +138,14 @@ export const EL_FORGE: Record<string, string> = {
     "Μια ΧΑΛΚΙΝΗ ΠΥΛΗ, χοντρή μια παλάμη. Κανείς με τα πόδια δεν μπορεί να την ανοίξει... αλλά η ΓΡΟΘΙΑ μιας ρομποστολής (το κουμπί ΣΒΟΥΡΑ) μπορεί!",
   "LAVA CHANNELS! Narrow ones: just JUMP. Wide ones: JUMP, then THRUST (the DASH button) in the air. The jets carry you across.":
     "ΚΑΝΑΛΙΑ ΛΑΒΑΣ! Στα στενά: απλώς κάνε ΑΛΜΑ. Στα φαρδιά: ΑΛΜΑ και μετά ΩΘΗΣΗ (το κουμπί ΟΡΜΗ) στον αέρα. Οι πύραυλοι σε περνάνε απέναντι.",
-  "Watch the sky! Anvil drones drop anvils on red circles. Step out of the circle, then PUNCH the drone while it picks its anvil back up.":
-    "Πρόσεχε τον ουρανό! Τα Ρομπότ-Αμόνια ρίχνουν αμόνια στους κόκκινους κύκλους. Βγες από τον κύκλο και μετά δώσε ΓΡΟΘΙΑ στο ρομπότ όσο σηκώνει πάλι το αμόνι του.",
+  "Watch the sky! Anvil drones drop anvils on red circles. Step out of the circle, then PUNCH the drone while it picks its anvil back up, or roast it with the FLAMETHROWER.":
+    "Πρόσεχε τον ουρανό! Τα Ρομπότ-Αμόνια ρίχνουν αμόνια στους κόκκινους κύκλους. Βγες από τον κύκλο και μετά δώσε ΓΡΟΘΙΑ στο ρομπότ όσο σηκώνει πάλι το αμόνι του, ή ψήσ’ το με το ΦΛΟΓΟΒΟΛΟ.",
   "Cracked floor plates! Walking won’t break them. JUMP and SLAM (press SPIN in the air) to smash straight through.":
     "Ραγισμένες πλάκες στο πάτωμα! Αν περπατάς δεν σπάνε. Κάνε ΑΛΜΑ και ΚΑΡΦΩΜΑ (πάτα ΣΒΟΥΡΑ στον αέρα) για να τις διαλύσεις.",
   "Two red switches, one on each side of the yard. SLAM them both and the arena gate opens.":
     "Δύο κόκκινοι διακόπτες, ένας σε κάθε μεριά της αυλής. Κάνε ΚΑΡΦΩΜΑ και στους δύο κι η πύλη της αρένας θα ανοίξει.",
-  "TALOS walks his rounds in there. When he stomps, his foot gets stuck: PUNCH the armour off his ankle! Then pull the plug in his heel.":
-    "Εκεί μέσα κάνει τον γύρο του ο ΤΑΛΩΣ. Όταν πατάει δυνατά, το πόδι του κολλάει: βγάλε του την πανοπλία από τον αστράγαλο με ΓΡΟΘΙΕΣ! Μετά τράβα το βούλωμα από τη φτέρνα του.",
+  "TALOS walks his rounds in there, and only the mech is strong enough to fight him! When he stomps, his foot gets stuck: PUNCH the armour off his ankle (or hold the FLAMETHROWER on it). Then pull the plug in his heel.":
+    "Εκεί μέσα κάνει τον γύρο του ο ΤΑΛΩΣ, και μόνο η ρομποστολή είναι αρκετά δυνατή για να τα βάλει μαζί του! Όταν πατάει δυνατά, το πόδι του κολλάει: βγάλε του την πανοπλία από τον αστράγαλο με ΓΡΟΘΙΕΣ (ή κράτα το ΦΛΟΓΟΒΟΛΟ πάνω του). Μετά τράβα το βούλωμα από τη φτέρνα του.",
   // Props.
   "Bronze is tough! PUNCH it (the SPIN button).": "Ο χαλκός είναι σκληρός! Δώσ’ του μια ΓΡΟΘΙΑ (το κουμπί ΣΒΟΥΡΑ).",
   "Solid bronze, a hand thick. Nothing on foot can open this.": "Συμπαγής χαλκός, χοντρός μια παλάμη. Κανείς με τα πόδια δεν μπορεί να τον ανοίξει.",
@@ -167,5 +173,27 @@ export const EL_FORGE: Record<string, string> = {
     "μεγάλες χάλκινες γροθιές: σπάνε χάλκινες πύλες και ρίχνουν την πανοπλία από τον αστράγαλο του Τάλω. Στον αέρα, η ΣΒΟΥΡΑ γίνεται ΚΑΡΦΩΜΑ που σπάει τα ραγισμένα πατώματα.",
   "its back jets push it forward, on the ground or once per jump: JUMP, then THRUST to cross wide lava channels.":
     "οι πίσω πύραυλοι τη σπρώχνουν μπροστά, στο έδαφος ή μία φορά σε κάθε άλμα: ΑΛΜΑ και μετά ΩΘΗΣΗ για να περάσεις φαρδιά κανάλια λάβας.",
-  "Mech: J cannon · K punch (in the air: slam) · L thrust": "Ρομποστολή: J κανόνι · K γροθιά (στον αέρα: κάρφωμα) · L ώθηση",
+  "Mech: J flamethrower · K punch (in the air: slam) · L thrust · E get out": "Ρομποστολή: J φλογοβόλο · K γροθιά (στον αέρα: κάρφωμα) · L ώθηση · E βγες έξω",
+  "FLAME": "ΦΩΤΙΑ",
+  "STRENGTH": "ΔΥΝΑΜΗ",
+  "GET OUT": "ΒΓΕΣ ΕΞΩ",
+  "hold for a big flamethrower that roasts robots and drones. Its gauge empties as it burns: let go and it fills up again.":
+    "κράτα το για ένα μεγάλο φλογοβόλο που ψήνει ρομπότ και ιπτάμενα ρομπότ. Ο δείκτης του αδειάζει όσο καίει: άφησέ το και γεμίζει ξανά.",
+  "no hearts in the mech: hits wear its STRENGTH down, and it comes back slowly. At zero it overheats and everyone hops out until it cools. Only the mech can fight TALOS.":
+    "η ρομποστολή δεν έχει καρδιές: τα χτυπήματα λιγοστεύουν τη ΔΥΝΑΜΗ της, που γεμίζει ξανά σιγά σιγά. Στο μηδέν υπερθερμαίνεται και όλοι πηδάνε έξω μέχρι να κρυώσει. Μόνο η ρομποστολή μπορεί να τα βάλει με τον ΤΑΛΩ.",
+  "the action button lets Jason and Atalanta climb out on solid ground. The mech waits, kneeling: walk up to it and CLIMB IN.":
+    "με το κουμπί δράσης ο Ιάσονας και η Αταλάντη βγαίνουν έξω σε στέρεο έδαφος. Η ρομποστολή περιμένει γονατιστή: πήγαινε κοντά της και πάτα ΜΠΕΣ ΜΕΣΑ.",
+  // Getting out, climbing back in, and the mech's STRENGTH.
+  "CLIMB IN": "ΜΠΕΣ ΜΕΣΑ",
+  "TOO HOT": "ΚΑΙΕΙ ΑΚΟΜΑ",
+  "Climb back into the bronze mech": "Μπες πάλι μέσα στη χάλκινη ρομποστολή",
+  "Out we hop! The mech waits here for us. Walk up to it and press CLIMB IN to get back aboard.":
+    "Πηδάμε έξω! Η ρομποστολή θα μας περιμένει εδώ. Πήγαινε κοντά της και πάτα ΜΠΕΣ ΜΕΣΑ για να ανέβεις ξανά.",
+  "Still too hot! When the ring over the mech is full, climb back in.": "Καίει ακόμα! Όταν γεμίσει ο κύκλος πάνω από τη ρομποστολή, μπες πάλι μέσα.",
+  "The mech has cooled down! Walk up to it and CLIMB IN.": "Η ρομποστολή κρύωσε! Πήγαινε κοντά της και πάτα ΜΠΕΣ ΜΕΣΑ.",
+  "Out of STRENGTH! The mech is overheating: everybody out until it cools down!": "Τέλος η ΔΥΝΑΜΗ! Η ρομποστολή υπερθερμαίνεται: όλοι έξω μέχρι να κρυώσει!",
+  "The mech’s STRENGTH is low! Keep away from hits for a bit and it comes back.":
+    "Η ΔΥΝΑΜΗ της ρομποστολής είναι λίγη! Απόφυγε τα χτυπήματα για λίγο και θα γεμίσει ξανά.",
+  "The flamethrower is too hot! Let go of FLAME for a moment and the gauge fills up again.":
+    "Το φλογοβόλο ζεστάθηκε πολύ! Άφησε τη ΦΩΤΙΑ για λίγο και ο δείκτης θα γεμίσει ξανά.",
 };
