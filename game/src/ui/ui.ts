@@ -2,7 +2,7 @@ import { audio } from '../core/audio';
 import { GAME_NAME, SHIP } from '../core/brand';
 import { LANGS, tr, upper } from '../core/i18n';
 import type { ButtonName, Input } from '../core/input';
-import type { Quality, SaveData, Settings, UpgradeId } from '../core/save';
+import type { AtalantaUpgradeId, OutfitHero, Quality, SaveData, Settings, UpgradeId } from '../core/save';
 import {
   PUZZLE_COLORS,
   PUZZLE_SHAPES,
@@ -24,6 +24,9 @@ import { HEROES } from '../entities/heroes/heroes';
 import { emblemSvg } from './emblem';
 import { WEAPONS, type Weapon, type WeaponId } from '../entities/weapons';
 import { shopStock } from '../game/shop';
+import type { OutfitId } from '../entities/outfits';
+import { ATA_ICON, OUTFITS_ICON, outfitFigure } from './shopArt';
+import { FittingRoom } from './fittingRoom';
 import type { FindKind } from '../game/collectibles';
 import type { Helper } from '../game/companions';
 import type { TideGauge } from '../world/tides';
@@ -112,8 +115,15 @@ export interface ShopActions {
   buyUpgrade(id: UpgradeId): void;
   buyWeapon(id: WeaponId): void;
   equip(id: WeaponId): void;
+  buyAtalanta(id: AtalantaUpgradeId): void;
+  buyOutfit(id: OutfitId): void;
+  wear(id: OutfitId): void;
+  takeOff(hero: OutfitHero): void;
   close(): void;
 }
+
+/** The shop's tabs: upgrades always; weapons from Gaia Nova on; Atalanta's upgrades and outfits in chapter 3. */
+export type ShopTab = 'upgrades' | 'weapons' | 'atalanta' | 'outfits';
 
 export interface DeckInfo {
   index: number;
@@ -1344,17 +1354,51 @@ export class UI {
   }
 
   /** The shop tab showing (kept while the shop is open, and between visits). */
-  shopTab: 'upgrades' | 'weapons' = 'upgrades';
+  shopTab: ShopTab = 'upgrades';
+  /** An outfit to show in the fitting room as soon as the shop opens (a developer shortcut, `&try=`). */
+  shopTry: string | null = null;
 
   /**
    * PANDORA's shop. On the ship it sells upgrades only; on Gaia Nova it has two tabs, upgrades (with
-   * their Mk II levels) and weapons. Prices and levels come from game/shop.ts.
+   * their Mk II levels) and weapons; in chapter 3 two more, Atalanta's upgrades and outfits for both
+   * heroes. Prices and levels come from game/shop.ts.
    */
   shop(save: SaveData, deck: DeckId, act: ShopActions) {
+    let room: FittingRoom | null = null;
+    const leaveRoom = () => {
+      room?.dispose();
+      room = null;
+      this.overlay.querySelector('.fitting')?.remove();
+    };
+    /** The fitting room: the hero in an outfit, turning round in 3D. Tap anywhere to close it. */
+    const tryOn = (id: string) => {
+      const o = shopStock(save, deck).outfits.find((x) => x.outfit.id === id);
+      if (!o) return;
+      leaveRoom();
+      const box = h(`<div class="fitting"><div class="fit-card"><canvas></canvas><b>${tr(o.outfit.name)}</b><button class="icon-btn" aria-label="${tr('Close')}">${ICON.close}</button></div></div>`);
+      this.overlay.append(box);
+      box.addEventListener('click', (e) => {
+        e.stopPropagation();
+        audio.play('select');
+        leaveRoom();
+      });
+      try {
+        room = new FittingRoom($(box, 'canvas') as HTMLCanvasElement, o.outfit.hero, id, save);
+      } catch {
+        // No WebGL to spare: the card's picture will have to do.
+        box.remove();
+      }
+    };
     const render = (bought?: string) => {
+      leaveRoom();
       const stock = shopStock(save, deck);
-      const tabs = stock.weapons.length > 0;
-      if (!tabs) this.shopTab = 'upgrades';
+      // Keep the list where it was scrolled to when a purchase redraws it.
+      const scrolled = this.overlay.querySelector('.shop-panel')?.scrollTop ?? 0;
+      const tabs: [ShopTab, string, string][] = [['upgrades', ICON.star, tr('Upgrades')]];
+      if (stock.weapons.length) tabs.push(['weapons', WEAPON_ICON.spread, tr('Weapons')]);
+      if (stock.atalanta.length) tabs.push(['atalanta', portrait('atalanta'), tr('Atalanta')]);
+      if (stock.outfits.length) tabs.push(['outfits', OUTFITS_ICON, tr('Outfits')]);
+      if (!tabs.some(([t]) => t === this.shopTab)) this.shopTab = 'upgrades';
       const card = (id: string, cls: string, icon: string, name: string, stars: string, desc: string, button: string, tag = '') =>
         `<div class="shop-item ${cls} ${bought === id ? 'bought' : ''}"><div class="icon">${icon}</div><div class="info"><b>${tr(name)}${tag}</b>${stars}<i>${tr(desc)}</i></div>${button}</div>`;
       const price = (n: number) => `${ICON.bolt}${n}`;
@@ -1381,14 +1425,50 @@ export class UI {
           return card(id, `weapon ${o.equipped ? 'on' : ''}`, WEAPON_ICON[id], o.weapon.name, weaponStats(o.weapon) + special, o.weapon.desc, btn);
         })
         .join('');
-      const tabBar = tabs
-        ? `<div class="shop-tabs seg"><button data-tab="upgrades" class="${this.shopTab === 'upgrades' ? 'on' : ''}">${ICON.star}${tr('Upgrades')}</button><button data-tab="weapons" class="${this.shopTab === 'weapons' ? 'on' : ''}">${WEAPON_ICON.spread}${tr('Weapons')}</button></div>`
-        : '';
+      // Atalanta's upgrades: plain levels (gold stars), no Mk II.
+      const atalanta = stock.atalanta
+        .map((o) => {
+          const maxed = o.price === null;
+          const stars = `<span class="stars">${'★'.repeat(o.level)}<em>${'★'.repeat(o.max - o.level)}</em></span>`;
+          const btn = `<button class="buy" data-ata="${o.item.id}" ${!maxed && save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${maxed ? tr('MAX') : price(o.price ?? 0)}</button>`;
+          return card(o.item.id, `ata ${maxed ? 'maxed' : ''}`, ATA_ICON[o.item.id], o.item.name, stars, o.item.desc, btn);
+        })
+        .join('');
+      // Outfits, by hero: buy once, then WEAR or TAKE OFF for free.
+      const outfits = (['jason', 'atalanta'] as const)
+        .map((hero) => {
+          const list = stock.outfits.filter((o) => o.outfit.hero === hero);
+          if (!list.length) return '';
+          const head = `<div class="shop-sec"><span class="face">${portrait(hero)}</span>${tr(SPEAKER_NAME[hero])}</div>`;
+          return (
+            head +
+            list
+              .map((o) => {
+                const id = o.outfit.id;
+                const btn = o.worn
+                  ? `<button class="buy equip" data-off="${hero}">${tr('TAKE OFF')}</button>`
+                  : o.owned
+                    ? `<button class="buy equip" data-wear="${id}">${tr('WEAR')}</button>`
+                    : `<button class="buy" data-fit="${id}" ${save.bolts >= (o.price ?? 0) ? '' : 'disabled'}>${price(o.price ?? 0)}</button>`;
+                // The picture opens the fitting room.
+                const pic = `<button class="try" data-try="${id}" aria-label="${tr('Try it on')}">${outfitFigure(o.outfit)}</button>`;
+                return card(id, `outfit ${o.worn ? 'on' : ''}`, pic, o.outfit.name, '', o.outfit.desc, btn);
+              })
+              .join('')
+          );
+        })
+        .join('');
+      const pages: Record<ShopTab, string> = { upgrades, weapons, atalanta, outfits };
+      const tabBar =
+        tabs.length > 1
+          ? `<div class="shop-tabs seg">${tabs.map(([t, icon, name]) => `<button data-tab="${t}" class="${this.shopTab === t ? 'on' : ''}">${icon}<span>${name}</span></button>`).join('')}</div>`
+          : '';
       const el = this.open(`<div class="panel shop-panel">
         <div class="panel-head"><div class="portrait">${portrait('vendy')}</div>
         <div class="shop-title"><h2>${tr('PANDORA’S UPGRADES')}</h2><div class="tagline">${tr('“Bolts in, awesome out!”')}</div></div>
         <div class="counter">${ICON.bolt}<b>${save.bolts}</b></div><button class="icon-btn close" aria-label="${tr('Leave shop')}">${ICON.close}</button></div>
-        ${tabBar}<div class="shop-grid">${this.shopTab === 'weapons' ? weapons : upgrades}</div></div>`);
+        ${tabBar}<div class="shop-grid ${this.shopTab}">${pages[this.shopTab]}</div></div>`);
+      if (bought) $(el, '.shop-panel').scrollTop = scrolled;
       const on = (sel: string, fn: (b: HTMLElement) => void) => {
         for (const b of el.querySelectorAll<HTMLElement>(sel)) b.addEventListener('click', () => fn(b));
       };
@@ -1405,15 +1485,43 @@ export class UI {
         audio.play('select');
         render(b.dataset.eq);
       });
+      on('[data-ata]', (b) => {
+        act.buyAtalanta(b.dataset.ata as AtalantaUpgradeId);
+        render(b.dataset.ata);
+      });
+      on('[data-fit]', (b) => {
+        act.buyOutfit(b.dataset.fit as OutfitId);
+        render(b.dataset.fit);
+      });
+      on('[data-wear]', (b) => {
+        act.wear(b.dataset.wear as OutfitId);
+        audio.play('select');
+        render(b.dataset.wear);
+      });
+      on('[data-off]', (b) => {
+        const worn = save.wearing[b.dataset.off as OutfitHero];
+        act.takeOff(b.dataset.off as OutfitHero);
+        audio.play('select');
+        render(worn);
+      });
+      on('[data-try]', (b) => {
+        audio.play('select');
+        tryOn(b.dataset.try as string);
+      });
       on('[data-tab]', (b) => {
         if (this.shopTab === b.dataset.tab) return;
-        this.shopTab = b.dataset.tab as 'upgrades' | 'weapons';
+        this.shopTab = b.dataset.tab as ShopTab;
         audio.play('select');
         render();
       });
-      this.button(el, '.close', act.close);
+      this.button(el, '.close', () => {
+        leaveRoom();
+        act.close();
+      });
     };
     render();
+    if (this.shopTry && this.shopTab === 'outfits') tryOn(this.shopTry);
+    this.shopTry = null;
   }
 
   /**

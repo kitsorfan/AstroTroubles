@@ -3,9 +3,14 @@ import { post } from './bridge';
 import { START_HEARTS } from './constants';
 import { detectLang, type Lang } from './i18n';
 import { equippedWeapon, ownedWeapons } from '../entities/weapons';
+import { knownOutfits, outfitFor } from '../entities/outfits';
 
 /** Shop upgrades. The last four are only sold on Gaia Nova (chapter 2). */
 export type UpgradeId = 'blaster' | 'rapid' | 'clip' | 'boltZap' | 'magnet' | 'heart' | 'armor' | 'dashCell' | 'spinCharge' | 'grapple';
+/** Atalanta's own shop upgrades (chapter 3, once she has joined; see game/shop.ts). */
+export type AtalantaUpgradeId = 'bow' | 'draw' | 'sandals' | 'gloves' | 'kick' | 'triple';
+/** The heroes PANDORA sells outfits for. */
+export type OutfitHero = 'jason' | 'atalanta';
 export type Quality = 'low' | 'medium' | 'high';
 
 export interface Settings {
@@ -62,6 +67,11 @@ export interface SaveData {
   weapons: string[];
   /** The weapon he has equipped. */
   weapon: string;
+  /** Atalanta's upgrade levels (chapter 3). */
+  ataUpgrades: Partial<Record<AtalantaUpgradeId, number>>;
+  /** Outfits bought (see entities/outfits.ts), and the one each hero is wearing (none: their usual suit). */
+  outfits: string[];
+  wearing: Partial<Record<OutfitHero, string>>;
 }
 
 /** Named after the game's old title; kept so existing saves carry over. */
@@ -91,6 +101,9 @@ export function newSave(): SaveData {
     playSeconds: 0,
     weapons: ['blaster'],
     weapon: 'blaster',
+    ataUpgrades: {},
+    outfits: [],
+    wearing: {},
   };
 }
 
@@ -102,6 +115,15 @@ export function migrateSave(s: SaveData): SaveData {
   // Weapons came with chapter 2: older saves own just the Blaster.
   s.weapons = ownedWeapons(Array.isArray(s.weapons) ? s.weapons : []);
   s.weapon = equippedWeapon(s.weapons, s.weapon);
+  // Atalanta's upgrades and the outfits came with chapter 3's shop. An outfit only stays on if it was bought.
+  s.ataUpgrades = s.ataUpgrades && typeof s.ataUpgrades === 'object' ? s.ataUpgrades : {};
+  s.outfits = knownOutfits(Array.isArray(s.outfits) ? s.outfits : []);
+  const wearing: SaveData['wearing'] = {};
+  for (const hero of ['jason', 'atalanta'] as const) {
+    const id = s.wearing?.[hero];
+    if (outfitFor(hero, id) && s.outfits.includes(id as string)) wearing[hero] = id;
+  }
+  s.wearing = wearing;
   return s;
 }
 

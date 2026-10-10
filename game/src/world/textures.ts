@@ -53,6 +53,38 @@ export function shadowTexture(): THREE.Texture {
   return t;
 }
 
+/**
+ * A night sky full of little stars, for the Starlight Explorer outfit: `base` is the cloth (navy with
+ * white stars), the other the same stars alone on black, used as the glow map so only they shine.
+ */
+export function starTexture(base: boolean): THREE.Texture {
+  const key = `stars|${base}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const S = 128;
+  const [c, g] = canvas(S);
+  g.fillStyle = base ? '#1b2350' : '#000000';
+  g.fillRect(0, 0, S, S);
+  // The same stars in both maps: a fixed little random sequence.
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 46; i++) {
+    const x = rnd() * S;
+    const y = rnd() * S;
+    const r = 0.6 + rnd() * (i % 7 === 0 ? 2.4 : 1.1);
+    g.fillStyle = i % 5 === 0 ? '#bfe0ff' : i % 3 === 0 ? '#ffe8a8' : '#ffffff';
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  }
+  const t = finish(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 1);
+  cache.set(key, t);
+  return t;
+}
+
 /** Yellow/black hazard stripes for platform edges and warning floors. */
 export function stripeTexture(a: string, b: string): THREE.Texture {
   const key = `stripe|${a}|${b}`;

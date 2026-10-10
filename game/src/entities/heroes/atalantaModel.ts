@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 
-import { blobShadow, boxG, capsule, cyl, glowSprite, makeFace, mat, mesh, ownMat, sphere, type HeroModel } from '../models';
+import type { AtalantaUpgradeId } from '../../core/save';
+import { blobShadow, boxG, capsule, cyl, glowSprite, makeFace, mat, mesh, ownMat, sphere, tagParts, torus, type HeroModel } from '../models';
+import { dressAtalantaOutfit } from '../outfitModels';
 
 /** Atalanta's colours: a teal-and-white scout suit with gold trim, dark auburn hair, green eyes. */
 export const ATALANTA_COLORS = {
@@ -30,6 +32,11 @@ export interface AtalantaModel extends HeroModel {
   suit: THREE.MeshStandardMaterial;
   /** The light visor band's lens, which glows brighter in dark rooms. */
   visor: THREE.MeshStandardMaterial;
+  /** The quiver on her back (Hunter's Bow fills it), and both bows' own groups (Triple Arrow decorates them). */
+  quiver: THREE.Group;
+  bows: THREE.Group[];
+  /** Parts added by her upgrades and outfit (see `dressAtalanta`), and what they were built for. */
+  gear: THREE.Object3D[];
   gearKey: string;
 }
 
@@ -130,6 +137,8 @@ export function makeAtalanta(): AtalantaModel {
   quiver.add(mesh(cyl(0.085, 0.085, 0.04, 10), gold, 0, 0.21, 0, false));
   for (const x of [-0.03, 0.03]) quiver.add(mesh(boxG(0.03, 0.12, 0.08), mat(C.gold), x, 0.3, 0, false));
   body.add(quiver);
+  // Her bow and quiver keep their colours whatever she wears.
+  for (const g of [slung, quiver]) g.traverse((o) => (o.userData.keep = true));
 
   // Head: her face, dark auburn hair with a side-swept fringe, a long braid, and the visor band.
   const head = new THREE.Group();
@@ -180,6 +189,7 @@ export function makeAtalanta(): AtalantaModel {
   // Upright when the arm is raised, canted a little like an archer's.
   bowHand.rotation.set(Math.PI / 2, 0, 0.3);
   bowHand.visible = false;
+  bowHand.traverse((o) => (o.userData.keep = true));
   armL.add(bowHand);
   const nocked = makeArrowMesh();
   nocked.visible = false;
@@ -194,17 +204,118 @@ export function makeAtalanta(): AtalantaModel {
   root.add(carry);
 
   root.add(blobShadow(1.3));
-  return { root, body, head, armL, armR, legL, legR, carry, eyes: face.eyes, bowBack, bowHand, nocked, string, chargeGlow, braid, cape, suit, visor, gearKey: '' };
+  // What an outfit repaints (see outfitModels.ts).
+  tagParts(body, new Map<THREE.Material, string>([[suit, 'suit'], [white, 'trim'], [dark, 'legs'], [gold, 'gold'], [capeMat, 'cape']]));
+  return { root, body, head, armL, armR, legL, legR, carry, eyes: face.eyes, bowBack, bowHand, nocked, string, chargeGlow, braid, cape, suit, visor, quiver, bows: [slung, bowHand], gear: [], gearKey: '' };
 }
 
-/** Blaster Power makes her bowstring and arrowheads glow brighter and golder. */
-export function dressAtalanta(m: AtalantaModel, power: number) {
-  const key = String(power);
+const ATA_GEAR: AtalantaUpgradeId[] = ['bow', 'draw', 'sandals', 'gloves', 'kick', 'triple'];
+
+/**
+ * What Atalanta has bought shows on her, like Jason's gear:
+ * - Blaster Power: her bowstring and arrowheads glow brighter and golder.
+ * - Hunter's Bow: arrows in her quiver (three, then five), then gold fletching and a gold band.
+ * - Quick Draw: a leather bracer on her bow arm, then a glowing gem on it.
+ * - Wind Sandals: little white wings on her boots, then bigger gold ones.
+ * - Climber's Gloves: leather gloves, then gold cuffs on them.
+ * - Iron Kick: bronze shin guards, then gold ones with a glowing edge.
+ * - Triple Arrow: three gold gems on the bow's grip.
+ * Her `outfit` repaints her underneath and adds its own pieces. Returns true if anything changed.
+ */
+export function dressAtalanta(m: AtalantaModel, power: number, ups: Partial<Record<AtalantaUpgradeId, number>> = {}, outfit?: string) {
+  const lv = (id: AtalantaUpgradeId) => ups[id] ?? 0;
+  const key = `${power}|${ATA_GEAR.map(lv).join('')}|${outfit ?? ''}`;
   if (key === m.gearKey) return false;
   m.gearKey = key;
   const c = new THREE.Color(ATALANTA_COLORS.glow).lerp(new THREE.Color(ATALANTA_COLORS.gold), Math.min(1, power / 4));
   m.string.color.copy(c);
   m.string.emissive.copy(c);
   m.string.emissiveIntensity = 1.2 + power * 0.35;
+  for (const o of m.gear) o.removeFromParent();
+  m.gear = [];
+  const put = (parent: THREE.Object3D, ...parts: THREE.Object3D[]) => {
+    parent.add(...parts);
+    m.gear.push(...parts);
+  };
+  const C = ATALANTA_COLORS;
+  const goldGlow = mat('#ffd36a', { emissive: '#ffae1a', ei: 0.9, metal: 0.6, rough: 0.3 });
+  const teal = mat(C.glow, { emissive: C.glow, ei: 1 });
+  const leather = mat('#8a5a30', { rough: 0.7 });
+  const shaft = mat(C.white, { rough: 0.4 });
+
+  // Hunter's Bow: arrows standing in the quiver (it is tilted; they follow it).
+  const bow = lv('bow');
+  const arrows = bow >= 2 ? 5 : bow >= 1 ? 3 : 0;
+  for (let i = 0; i < arrows; i++) {
+    const x = (i - (arrows - 1) / 2) * 0.03;
+    const z = i % 2 ? 0.025 : -0.02;
+    put(m.quiver, mesh(cyl(0.012, 0.012, 0.3, 5), shaft, x, 0.3, z, false), mesh(boxG(0.05, 0.09, 0.008), bow >= 3 ? goldGlow : teal, x, 0.42, z, false));
+  }
+  if (bow >= 3) {
+    put(m.quiver, mesh(cyl(0.086, 0.081, 0.04, 10), goldGlow, 0, 0, 0, false));
+    const glint = glowSprite('#ffd36a', 0.35, 0.6);
+    glint.position.set(0, 0.42, 0);
+    put(m.quiver, glint);
+  }
+
+  // Quick Draw: a bracer on her bow (left) forearm.
+  const draw = lv('draw');
+  if (draw >= 1) put(m.armL, mesh(cyl(0.108, 0.1, 0.13, 12), leather, 0, -0.28, 0, false));
+  if (draw >= 2) {
+    const gem = glowSprite(C.glow, 0.25, 0.8);
+    gem.position.set(0, -0.28, 0.12);
+    put(m.armL, mesh(sphere(0.03, 8), teal, 0, -0.28, 0.105, false), gem);
+  }
+
+  // Wind Sandals: wings on the outside of each boot.
+  const sandals = lv('sandals');
+  if (sandals >= 1) {
+    const feather = sandals >= 2 ? goldGlow : mat('#ffffff', { rough: 0.5 });
+    for (const [leg, side] of [[m.legL, -1], [m.legR, 1]] as const) {
+      const wing = new THREE.Group();
+      wing.position.set(side * 0.12, -0.52, -0.04);
+      for (let i = 0; i < 3; i++) {
+        const f = mesh(boxG(0.015, 0.05, 0.12 + i * 0.035), feather, 0, 0.02 + i * 0.03, -0.06 - i * 0.015, false);
+        f.rotation.x = 0.35 + i * 0.25;
+        wing.add(f);
+      }
+      wing.rotation.y = -side * 0.25;
+      if (sandals >= 2) {
+        wing.scale.setScalar(1.35);
+        wing.add(glowSprite('#ffe8a0', 0.3, 0.5));
+      }
+      put(leg, wing);
+    }
+  }
+
+  // Climber's Gloves: over her hands.
+  const gloves = lv('gloves');
+  if (gloves >= 1) {
+    for (const arm of [m.armL, m.armR]) {
+      put(arm, mesh(sphere(0.124, 12), mat('#a0703a', { rough: 0.75 }), 0, -0.44, 0));
+      if (gloves >= 2) {
+        const cuff = mesh(torus(0.1, 0.022), goldGlow, 0, -0.37, 0, false);
+        cuff.rotation.x = Math.PI / 2;
+        put(arm, cuff);
+      }
+    }
+  }
+
+  // Iron Kick: shin guards.
+  const kick = lv('kick');
+  if (kick >= 1) {
+    const guard = kick >= 2 ? goldGlow : mat('#c08a4a', { metal: 0.6, rough: 0.35 });
+    for (const leg of [m.legL, m.legR]) {
+      put(leg, mesh(boxG(0.16, 0.2, 0.05), guard, 0, -0.32, 0.115));
+      if (kick >= 2) put(leg, mesh(boxG(0.17, 0.025, 0.055), teal, 0, -0.42, 0.117, false));
+    }
+  }
+
+  // Triple Arrow: three gems on the grip of both bows.
+  if (lv('triple') >= 1) {
+    for (const g of m.bows) for (const y of [-0.07, 0, 0.07]) put(g, mesh(sphere(0.024, 8), goldGlow, 0, y, 0.17, false));
+  }
+
+  dressAtalantaOutfit(m, outfit, put);
   return true;
 }

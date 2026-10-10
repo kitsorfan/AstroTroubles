@@ -174,11 +174,12 @@ Chapter 3, **The Argonauts**, is the voyage of the Argo to the moon Colchis, and
 | 10. The Golden Fleece | All three heroes: General Brennus joins in the root hall with his own little squad. The vault gate has three seals, one for each hero (a bullseye, a red switch only the grapple reaches, a switch behind cracked rock); ring guards that throw their rings like boomerangs | AEËTES, THE GOLDEN KING, in three phases: shoot down his ring-drones; stop his Fleece-armour charges with Brennus's shield; then Atalanta cuts his vines, Brennus cracks his clasp and Jason hits his seed-core. Then the game's final endings |
 
 - **Hacking** a terminal is a puzzle, and the kind changes from deck to deck: the light-pattern memory game (watch LUX's lights, then repeat them), **What comes next?** (find the rule in a row of shapes, arrows or dots), **Power grid** (each tap flips a tile and its neighbours; light them all) and **Colour square** (fill the gaps so no row or column repeats a colour). The puzzles live in `game/src/game/puzzles.ts`.
-- **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack.
+- **Upgrades show on Jason.** Every shop upgrade adds gear to his suit: chest plate and shoulder pads (gold at the top level), blaster coils and a power cell, a drum magazine and a belt of spare cells, cooling fins and a gauntlet, a LUX link and a second antenna, and a magnet on his backpack. Atalanta's upgrades show on her the same way (see **PANDORA's shop in Chapter 3**).
 - **LUX** lights dark rooms and hacks terminals, but in a fight he only stuns enemies now and then. Upgrade his zapper at PANDORA's shop to make it hurt. **IRIS** does all the same jobs (her zap is rainbow-coloured), and while no droid is around, Jason hacks with his wrist computer and his helmet lamp lights the dark, but there is no force pulse and no zap.
 - **Bolts** are money. Spend them at PANDORA's shop on extra hearts, blaster power, a bigger clip, quicker reloads, a stronger LUX zap and a bolt magnet.
 - **New weapons on Gaia Nova.** Once Jason reaches the planet, PANDORA's shop gets a Weapons tab (see **The arsenal** below). Switch between the weapons you own with the weapon button next to BLAST (or **X**); a little card pops up with the weapon's name and stat bars.
 - **Mk II upgrades.** In Chapter 2 the shop also sells a further level of every upgrade (the heart plating can now take Jason up to 12 hearts) and four new ones: **Armor Plating** (blocks a hit, then recharges), **Dash Cell** (an extra dash), **Spin Charge** (an extra spin) and **Grapple Range** (a longer, faster grapple).
+- **Chapter 3: Atalanta's gear and outfits.** In Chapter 3 PANDORA's shop gets two more tabs (see **PANDORA's shop in Chapter 3** below): **Atalanta**, her own upgrades (from the Harpy Isles on, once she has joined), and **Outfits**, fancy clothes for both heroes.
 - **Checkpoints** heal you. Falling or touching sludge, lava or electric water costs one heart and puts you back on the last safe ground. If you run out of hearts, you restart at the last checkpoint, and every enemy on the deck comes back. They also come back whenever you return to a deck, but rooms you've cleared stay open.
 - **The final battle.** Beating the Heart of GaScu isn't the end: it pulls every vine on the ship into itself and rises again as GaScu Reborn, a floating titan that is only hurt while its great eye is open. It has 80 health, plus 16 for each level of Blaster Power, so it stays a long fight.
 - **The Colossus**, chapter 2's final boss, is longer still: 110 health plus 20 per Blaster Power level, in three phases (shield generators, swinging arms, overheating core).
@@ -188,6 +189,34 @@ Chapter 3, **The Argonauts**, is the voyage of the Argo to the moon Colchis, and
 - **Tides** (Scylla's Reef). Every walkable floor below the high-tide line is a tidal flat: when the sea is deeper than a step over it, a hero standing there is washed back to the last dry spot (one heart, like any fall into water), and flats never count as safe ground. Driftwood rafts sit on the sand at low tide and float on the sea. The cycle (`LevelDef.tide`: low, rising, high, falling) and its rules are in `game/src/world/tides.ts`; the sea, the rafts and the gauge in `game/src/entities/reef/tide.ts`. Developer shortcut: `&time=<seconds>` winds a deck's clock (and so the tide).
 - **Harpy drones** (Chapter 3) are Aeëtes's gold thief birds: one circles you, flashes its red eye, then swoops in and snatches a handful of bolts. Blast it (or arrow it) and it drops everything it stole; a spin or kick bats it away.
 - **Gaze beams** (Medusa's Labyrinth) never hurt: a hero they touch turns to grey stone for about two seconds, then is safe from them for a moment. Statues and pillars block them. A beam that has bounced (off a Gardener mirror or the Mirror Shield) lights the crystals that open doors; one bounced back into an eye-sentry's own eye shuts it for a few seconds. **Cable snakes** rear up and hiss, then lunge straight ahead: step aside and blast them while they lie tangled.
+
+### PANDORA's shop in Chapter 3
+
+Chapter 3 keeps all of Chapter 2's stock and adds two tabs. Prices sit with the Mk II upgrades: a Chapter 3 level on foot pays a few hundred bolts, so by the end of the chapter you can own most of it, not all. Atalanta's upgrades change her numbers (`game/src/entities/heroes/atalantaStats.ts`; the level checker always plans for an Atalanta without them), and each one shows on her like Jason's gear:
+
+| Atalanta's upgrade | Price per level | What it does | How it shows |
+| --- | --- | --- | --- |
+| **Hunter's Bow** | 300, 550, 800 | Quick arrows +½ damage and power arrows +1, per level (on top of Blaster Power) | Arrows in her quiver (three, then five), then gold fletching and a gold band |
+| **Quick Draw** | 300, 550 | The power arrow charges 20% faster per level; quick arrows and power arrows come back sooner | A leather bracer on her bow arm, then a glowing gem on it |
+| **Wind Sandals** | 250, 450 | She breaks into a sprint sooner and sprints faster (+0.8 per level), so her running jumps go further; a little more run speed too | White wings on her boots, then bigger gold ones |
+| **Climber's Gloves** | 200, 400 | +1.5 seconds of grip on cliffs per level, and she climbs 12% faster | Leather gloves, then gold cuffs |
+| **Iron Kick** | 300, 500 | Her spinning kick hits for +1 per level and reaches 15% wider | Bronze shin guards, then gold ones with a glowing edge |
+| **Triple Arrow** | 900 | Every power arrow flies with two more beside it, in a fan | Three gold gems on the bow's grip |
+
+**Outfits** are only for looks. Buy one once and the hero puts it on; after that **WEAR** and **TAKE OFF** are free, one outfit per hero at a time. Tap an outfit's picture to see the hero turning round in it in 3D (the fitting room, with the gear they've bought). An outfit repaints the hero's model and adds a few pieces of its own; upgrade gear stays on top of it, and since cutscenes use the same models, the heroes wear their outfits there too (and Jason on the title screen). Atalanta's outfits are on sale once she has joined. The catalogue is in `game/src/entities/outfits.ts`, the 3D pieces in `game/src/entities/outfitModels.ts`.
+
+| Outfit | Hero | Price | Look |
+| --- | --- | --- | --- |
+| **Captain's Coat** | Jason | 400 | A navy coat with tails, gold buttons and epaulettes, a gold band round the helmet |
+| **Starlight Explorer** | Jason | 500 | A night-blue suit full of twinkling stars, glowing bands, a star badge and a glowing ring round the helmet |
+| **Argonaut Bronze** | Jason | 600 | Bronze armour and helmet with a red horsehair crest, leather strips round the waist |
+| **Golden Fleece Cape** | Jason | 750 | Royal blue and gold, a woolly golden cape (under the backpack) that flies out as he runs, a fleece collar |
+| **Forest Ranger** | Atalanta | 400 | Moss green and leather, a hood, a leaf brooch and a feather |
+| **Huntress of Artemis** | Atalanta | 500 | Moon-silver and midnight blue, a crescent moon on her brow, a longer cape with silver stars |
+| **Olympic Champion** | Atalanta | 600 | White and gold, a laurel wreath and a gold medal |
+| **Gardener's Crystal Dress** | Atalanta | 750 | Glowing Gardener crystal, a crystal skirt and tiara, two floating lights |
+
+Developer shortcuts: `&ata=bow:3,triple:1` sets Atalanta's upgrade levels, `&outfit=bronze,artemis` hands over outfits and puts them on, and `&shop=atalanta` or `&shop=outfits` opens the shop on that tab (`&try=<outfit>` opens the fitting room).
 
 ### The arsenal
 
