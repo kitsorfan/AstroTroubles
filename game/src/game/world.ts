@@ -740,7 +740,7 @@ export class World {
     this.flags.add(LUX_BACK_FLAG);
     this.boss = this.mainBoss;
     this.hooks.bossBar(null, 0);
-    this.hooks.music(this.def.music as Track);
+    this.hooks.music(this.def.music);
     void this.hooks.cutscene((d) => scenes.luxReunion(d, this, b)).then(() => this.hooks.checkpoint());
   }
 
@@ -1248,7 +1248,7 @@ export class World {
       this.boss.reset();
       this.boss.started = false;
       this.hooks.bossBar(null, 0);
-      this.hooks.music(this.def.music as Track);
+      this.hooks.music(this.def.music);
       // A mini-boss waits for Jason to come back; the deck's own boss is the one to point at again.
       if (this.mainBoss && this.boss !== this.mainBoss) this.boss = this.mainBoss;
     }
@@ -1288,7 +1288,7 @@ export class World {
     this.hooks.bossBar(null, 0);
     this.hooks.checkpoint();
     const last = isFinale(this.def.id);
-    if (!last) this.hooks.music(this.def.music as Track);
+    if (!last) this.hooks.music(this.def.music);
     const ch = chapterOf(this.def.id);
     if (last && ch === 3) {
       // The game's finale: with every light-stone, LUX and IRIS wake the Fleece's seeds (the secret ending).

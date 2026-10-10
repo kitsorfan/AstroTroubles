@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { audio, type Track } from '../../core/audio';
+import { audio } from '../../core/audio';
 import { haptic } from '../../core/bridge';
 import { damp, dampAngle } from '../../core/math';
 import type { World } from '../../game/world';
@@ -114,7 +114,6 @@ class VineKnot implements Target {
 
 export class GoldenKing extends Boss implements Target {
   readonly title = 'AEËTES, THE GOLDEN KING';
-  readonly music: Track = 'king';
   readonly camPull = 0.35;
   protected focusHeight = 2.2;
   readonly aim = new THREE.Vector3();

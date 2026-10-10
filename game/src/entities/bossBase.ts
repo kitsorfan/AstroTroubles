@@ -108,8 +108,13 @@ export abstract class Boss extends Entity {
   /** Where the fight changes phase, as shares of health (notches on the boss bar), highest first. */
   phaseMarks: number[] = [];
 
-  /** The music the fight plays to (the game's very last boss has its own). */
-  readonly music: Track = 'boss';
+  /**
+   * The music the fight plays to: every boss has its own theme, named after its kind (core/songs.ts;
+   * the small bosses of a chapter play variations of their chapter's boss theme).
+   */
+  get music(): Track {
+    return this.bossKind;
+  }
 
   /** How far (0..1) the fight's camera leans from the hero toward the boss (0: it just follows the hero). */
   readonly camPull: number = 0;

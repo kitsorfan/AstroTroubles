@@ -219,7 +219,7 @@ describe('reach checker with heroes', () => {
 });
 
 describe('the dev practice course', () => {
-  const lv = parseLevel(heroCourse('plains', 'Course'));
+  const lv = parseLevel(heroCourse('plains', 'Course', 'plains'));
 
   it('is all reachable when you can switch, and needs Atalanta', () => {
     expect(reach(lv, []).missing.map((e) => e.id)).toEqual([]);

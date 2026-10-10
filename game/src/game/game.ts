@@ -10,7 +10,7 @@ import { PlanetScene } from '../cinema/planetScene';
 import * as planet from '../cinema/planetScenes';
 import { ShipScene } from '../cinema/shipScene';
 import * as space from '../cinema/spaceScenes';
-import { audio, type Track } from '../core/audio';
+import { audio } from '../core/audio';
 import { haptic, inApp, post, setHaptics } from '../core/bridge';
 import { CELL } from '../core/constants';
 import { lang, setLang, tr } from '../core/i18n';
@@ -631,10 +631,10 @@ export class Game {
 
   private startDeck(id: DeckId, resume: boolean, opening: Opening = 'auto') {
     this.disposeWorld();
-    const def = heroDev.course ? heroCourse(id, LEVELS[id].name) : LEVELS[id];
+    const def = heroDev.course ? heroCourse(id, LEVELS[id].name, LEVELS[id].music) : LEVELS[id];
     this.state = 'card';
     this.ui.showHud(false);
-    audio.music(def.music as Track);
+    audio.music(def.music);
     const r = resume && this.save.resume?.deck === id ? this.save.resume : null;
     const build = () => {
       const w = new World(def, this.save, this.hooks(), this.save.settings.quality, r ? { checkpoint: r.checkpoint, flags: r.flags ?? [], taken: r.taken ?? [], dead: r.dead ?? [] } : null);
