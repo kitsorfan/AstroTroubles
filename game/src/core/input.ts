@@ -1,5 +1,8 @@
-/** `swap` switches heroes on levels with more than one (Atalanta and Jason in chapter 3). */
-export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause' | 'weapon' | 'swap';
+/**
+ * `swap` switches heroes on levels with more than one (Atalanta and Jason in chapter 3). `camLeft` and
+ * `camRight` are the on-screen buttons that turn the camera while held (like Q and R).
+ */
+export type ButtonName = 'jump' | 'shoot' | 'spin' | 'dash' | 'pulse' | 'action' | 'pause' | 'weapon' | 'swap' | 'camLeft' | 'camRight';
 
 const KEYMAP: Record<string, ButtonName> = {
   Space: 'jump',
@@ -132,8 +135,8 @@ export class Input {
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) kx += 1;
     if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) kz -= 1;
     if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) kz += 1;
-    if (this.keys.has('KeyQ')) this.camDrag -= 6;
-    if (this.keys.has('KeyR')) this.camDrag += 6;
+    if (this.keys.has('KeyQ') || this.held.has('camLeft')) this.camDrag -= 6;
+    if (this.keys.has('KeyR') || this.held.has('camRight')) this.camDrag += 6;
     let x = kx + this.stickVec.x;
     let z = kz + this.stickVec.y;
     const m = Math.hypot(x, z);
