@@ -1453,6 +1453,8 @@ export class Exit extends Entity implements Interactable {
   range = 2.8;
   /** The disc Jason stands on; it rises during the lift-ride cutscene. */
   readonly pad = new THREE.Group();
+  /** How far above the pad's base the heroes stand: on top of the ship's lift disc, or down inside the skiff. */
+  readonly floor: number;
   private ring: THREE.Mesh;
   private ringMat: THREE.MeshStandardMaterial;
   private used = false;
@@ -1469,6 +1471,7 @@ export class Exit extends Entity implements Interactable {
     this.ring.rotation.x = Math.PI / 2;
     this.pad.add(this.ring);
     this.obj.add(this.pad);
+    this.floor = chapterOf(world.def.id) >= 2 ? 0 : 0.3;
     if (chapterOf(world.def.id) >= 2) {
       // Outdoors (Gaia Nova, and the Argonauts' moons) the way out is a hover skiff from the shuttle or the
       // Argo: Jason stands in it and it flies up and away.

@@ -162,6 +162,9 @@ export class Follower {
     this.id = id;
   }
 
+  /** Set while the follower rides something with the playing hero (the lift or skiff out of a level): it stands there, still. */
+  riding: THREE.Vector3 | null = null;
+
   /** Puts the follower somewhere at once (a switch, a checkpoint, a cutscene), and forgets the trail. */
   place(x: number, y: number, z: number, facing: number) {
     this.x = x;
@@ -341,8 +344,16 @@ export class Follower {
   }
 
   update(dt: number, p: Player) {
-    this.sample(dt, p);
     const m = this.model;
+    if (this.riding) {
+      [this.x, this.y, this.z] = [this.riding.x, this.riding.y, this.riding.z];
+      m.root.position.copy(this.riding);
+      m.root.rotation.y = this.facing;
+      this.bubble.visible = false;
+      this.animate(dt, 0, false);
+      return;
+    }
+    this.sample(dt, p);
     // Still stone from MEDUSA's gaze: a statue stays put.
     if (p.stoneLeft(this.id) > 0) {
       this.bubble.visible = false;

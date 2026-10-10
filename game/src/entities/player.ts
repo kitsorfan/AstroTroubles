@@ -225,6 +225,11 @@ export class Player {
     return f ? f.spot : null;
   }
 
+  /** The heroes walking along behind the one being played (they ride the lift out with them). */
+  get crew(): readonly Follower[] {
+    return this.nextHero ? this.followers : [];
+  }
+
   /**
    * A hero joins (their join flag was just set): they appear beside the playing hero, ready to follow,
    * or at the given spot. The HUD then shows the switch button.

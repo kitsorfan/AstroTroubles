@@ -524,14 +524,37 @@ export async function liftRide(d: Director, w: World, exit: Exit) {
   const body = w.player.body;
   const from = jason(w);
   const toCam = toward(e, d.rig.pos);
-  w.player.facing = Math.atan2(toCam.x, toCam.z);
+  const facing = Math.atan2(toCam.x, toCam.z);
+  w.player.facing = facing;
   const hover = V(e.x + 0.9, e.y + 2.2, e.z);
   w.bolt.override = hover;
+  // Everyone rides out together: with a partner (or two) the heroes stand side by side on the skiff,
+  // a third one just behind. They all stand on the pad's floor, not sunk into it.
+  const side = V(toCam.z, 0, -toCam.x);
+  const crew = w.player.crew;
+  const seat = (i: number) => {
+    if (!crew.length) return V();
+    if (i < 2) return side.clone().multiplyScalar(i === 0 ? -0.75 : 0.75);
+    return toCam.clone().multiplyScalar(-0.9);
+  };
+  const floor = e.y + exit.floor;
+  const me = e.clone().add(seat(0));
+  const riders = crew.map((f, i) => {
+    const at = e.clone().add(seat(i + 1)).setY(floor);
+    return { f, from: V(f.spot.x, f.spot.y, f.spot.z), at, pos: V(f.spot.x, f.spot.y, f.spot.z) };
+  });
+  for (const r of riders) {
+    r.f.place(r.from.x, r.from.y, r.from.z, facing);
+    r.f.riding = r.pos;
+  }
   try {
     await Promise.all([
       d.tween(0.7, (x) => {
-        body.x = from.x + (e.x - from.x) * x;
-        body.z = from.z + (e.z - from.z) * x;
+        body.x = from.x + (me.x - from.x) * x;
+        body.z = from.z + (me.z - from.z) * x;
+        body.y = from.y + (floor - from.y) * x;
+        body.vy = 0;
+        for (const r of riders) r.pos.lerpVectors(r.from, r.at, x);
       }),
       d.cam(e.clone().addScaledVector(toCam, 7).add(V(0, 2.2, 0)), e.clone().add(V(0, 1.4, 0)), 0.9, ease.inOut, 46),
     ]);
@@ -546,8 +569,9 @@ export async function liftRide(d: Director, w: World, exit: Exit) {
         (x) => {
           const y = e.y + rise * x;
           exit.pad.position.y = y;
-          body.y = y;
+          body.y = y + exit.floor;
           body.vy = 0;
+          for (const r of riders) r.pos.y = y + exit.floor;
           hover.set(e.x + 0.9, y + 2.2, e.z);
           d.rig.pos.set(cam0.x, cam0.y + rise * x * 0.35, cam0.z);
           d.rig.look.set(e.x, y + 1.4, e.z);
@@ -559,6 +583,7 @@ export async function liftRide(d: Director, w: World, exit: Exit) {
     ]);
   } finally {
     w.bolt.override = null;
+    for (const r of riders) r.f.riding = null;
   }
 }
 
